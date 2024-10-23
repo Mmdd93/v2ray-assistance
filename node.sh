@@ -3786,7 +3786,38 @@ download_and_start_api() {
     done
 }
 
-
+#ip quality
+ip_quality_check() {
+    while true; do
+        echo -e "\n\033[1;34mPlease select an option:\033[0m"
+        echo -e "\033[1;32m1.\033[0m IPv4 international check"
+        echo -e "\033[1;32m2.\033[0m IPv6 international check"
+        echo -e "\033[1;32m3.\033[0m All nation Options"
+        echo -e "\033[1;32m0.\033[0m Return to Main Menu"
+        read -p "Enter your choice: " choice
+        case $choice in
+            1)
+                echo -e "\033[1;32mRunning command for IPv4...\033[0m"
+                bash <(curl -L -s check.unlock.media) -E en -R 0 -M 4
+                ;;
+            2)
+                echo -e "\033[1;32mRunning command for IPv6...\033[0m"
+                bash <(curl -L -s check.unlock.media) -E en -R 0 -M 6
+                ;;
+            3)
+                echo -e "\033[1;32mRunning command for both IPv4 and IPv6...\033[0m"
+                bash <(curl -L -s check.unlock.media) -E en
+                ;;
+            0)
+                echo -e "\033[1;34mReturning to Main Menu...\033[0m"
+                main_menu
+                ;;
+            *)
+                echo -e "\033[1;31mInvalid choice. Please try again.\033[0m"
+                ;;
+        esac
+    done
+}
 
 
 # Main menu function
@@ -3815,7 +3846,7 @@ main_menu() {
         
         echo -e "\033[1;32m 3.\033[0m ISP blocker"
         echo -e "\033[1;32m 4.\033[0m Light Knight BBR V 1.2"
-        echo -e "\033[1;32m25.\033[0m Linux Network Optimizer + bbr "
+        
         echo -e "\033[1;32m 5.\033[0m Speed test + system benchmark"
         echo -e "\033[1;32m 6.\033[0m Check used ports by services"
         echo -e "\033[1;32m 7.\033[0m Auto Clear cache + server reboot"
@@ -3829,7 +3860,8 @@ main_menu() {
         echo -e "\033[1;32m22.\033[0m CPU/RAM MONITORING"
         echo -e "\033[1;32m23.\033[0m UFW "
         echo -e "\033[1;32m24.\033[0m Cloudflare auto ip changer "
-        
+        echo -e "\033[1;32m25.\033[0m Linux Network Optimizer + bbr "
+	echo -e "\033[1;32m26.\033[0m Check  server IP quality "
         echo -e "\n\033[1;31mXray panel:\033[0m"
         
         echo -e "\033[1;32m11.\033[0m XUI panel"
@@ -3881,6 +3913,7 @@ main_menu() {
             23) ufw_menu ;;
             24) download_and_start_api ;;
             25) sudo apt update && sudo apt upgrade -y && bash <(curl -Ls https://raw.githubusercontent.com/develfishere/Linux_NetworkOptimizer/main/bbr.sh --ipv4) ;;
+	    26) ip_quality_check ;;
             0) exit 1
             echo "Exiting..." exit 0 ;;
             
