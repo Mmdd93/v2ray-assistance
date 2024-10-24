@@ -3835,9 +3835,9 @@ manage_nginx() {
         echo -e "\033[1;32m11. Nginx Logs\033[0m"
         echo -e "\033[1;32m12. Set Up a Reverse Proxy\033[0m"
         echo -e "\033[1;32m14. Remove Nginx\033[0m"
-        echo -e "\033[1;32m0. Exit\033[0m"
+        echo -e "\033[1;32m0. return to main menu \033[0m"
 
-        read -p "Choose an option (1-15): " option
+        read -p "Choose an option: " option
 
         case $option in
             1)
