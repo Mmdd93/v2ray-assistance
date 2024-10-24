@@ -4181,7 +4181,6 @@ else
     echo -e "\033[1;31mNginx configuration test failed. Please check the configuration.\033[0m"
 fi
 
-
                 ;;
             14)
                 echo -e "\033[1;33mRemoving Nginx...\033[0m"
