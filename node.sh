@@ -4028,14 +4028,34 @@ fi
                 done
                 ;;
             10)
-                read -p "Enter the server block to edit: " server_block_name
-                if [[ -f /etc/nginx/sites-available/$server_block_name ]]; then
-                    echo -e "\033[1;33mEditing server block: $server_block_name\033[0m"
-                    sudo nano /etc/nginx/sites-available/$server_block_name
-                    echo -e "\033[1;32mServer block $server_block_name edited successfully.\033[0m"
-                else
-                    echo -e "\033[1;31mError: Server block $server_block_name does not exist.\033[0m"
-                fi
+                echo -e "\033[1;33mAvailable server blocks:\033[0m"
+
+# List the server blocks in /etc/nginx/sites-available/
+server_blocks=($(ls /etc/nginx/sites-available))
+
+if [[ ${#server_blocks[@]} -eq 0 ]]; then
+    echo -e "\033[1;31mNo server blocks available in /etc/nginx/sites-available/.\033[0m"
+    exit 1
+fi
+
+# Display the list of server blocks
+for i in "${!server_blocks[@]}"; do
+    echo -e "\033[1;32m$((i+1)).\033[0m ${server_blocks[$i]}"
+done
+
+# Prompt the user to select a server block by number
+read -p "Enter the number of the server block to edit: " server_block_number
+
+# Check if the input is a valid number and corresponds to a server block
+if [[ $server_block_number =~ ^[0-9]+$ ]] && ((server_block_number > 0 && server_block_number <= ${#server_blocks[@]})); then
+    server_block_name=${server_blocks[$((server_block_number-1))]}
+    echo -e "\033[1;33mEditing server block: $server_block_name\033[0m"
+    sudo nano /etc/nginx/sites-available/$server_block_name
+    echo -e "\033[1;32mServer block $server_block_name edited successfully.\033[0m"
+else
+    echo -e "\033[1;31mError: Invalid selection. Please choose a valid server block number.\033[0m"
+fi
+
                 ;;
             11)
                 echo -e "\033[1;33mNginx access logs:\033[0m"
