@@ -4061,18 +4061,16 @@ fi
                 echo -e "\033[1;33mNginx access logs:\033[0m"
                 sudo tail -f /var/log/nginx/access.log
                 ;;
-            # Function to remove http/https from the input
-strip_scheme() {
-    echo "$1" | sed -e 's|^http://||' -e 's|^https://||'
-}
+           
+12)
+#!/bin/bash
 
-# Read user inputs
 # Function to remove http/https from the input
 strip_scheme() {
     echo "$1" | sed -e 's|^http://||' -e 's|^https://||'
 }
 
-# Read user inputs
+# Read user inputs for the target site
 read -p "Enter the target site to proxy (e.g., google.com): " target_site
 echo "Is the target site using http or https?"
 echo "1) http"
@@ -4082,18 +4080,13 @@ read -p "Enter 1 or 2: " scheme_choice
 # Map user's choice to the correct scheme
 if [[ "$scheme_choice" == "1" ]]; then
     scheme="http"
-    # Ask for the HTTP port
-    read -p "Enter the HTTP port to listen on (e.g., 80): " http_port
 elif [[ "$scheme_choice" == "2" ]]; then
     scheme="https"
-    # Ask for both HTTP and HTTPS ports
-    read -p "Enter the HTTP port to listen on (e.g., 80): " http_port
-    read -p "Enter the HTTPS port to listen on (e.g., 443): " https_port
 else
     echo -e "\033[1;31mInvalid option selected. Please run the script again and choose 1 for http or 2 for https.\033[0m"
     exit 1
 fi
-12)
+
 # Ask for the domain and its scheme
 read -p "Enter your domain for replacements (e.g., domain.com): " your_domain
 echo "Is your domain using http or https?"
@@ -4107,13 +4100,28 @@ if [[ "$domain_scheme_choice" == "1" ]]; then
     ssl_config=""
 elif [[ "$domain_scheme_choice" == "2" ]]; then
     domain_scheme="https"
-    ssl_config="
-    listen 443 ssl;
-    ssl_certificate /etc/ssl/certs/your_certificate.crt; # Update with your SSL certificate path
-    ssl_certificate_key /etc/ssl/private/your_key.key; # Update with your SSL certificate key path"
+    ssl_config=""
 else
     echo -e "\033[1;31mInvalid option selected. Please run the script again and choose 1 for http or 2 for https.\033[0m"
     exit 1
+fi
+
+# Ask for ports for both HTTP and HTTPS based on domain scheme
+if [[ "$domain_scheme" == "http" ]]; then
+    read -p "Enter the port for HTTP (default: 80): " http_port
+    http_port=${http_port:-80}
+else
+    read -p "Enter the port for HTTP (default: 80): " http_port
+    http_port=${http_port:-80}
+
+    read -p "Enter the port for HTTPS (default: 443): " https_port
+    https_port=${https_port:-443}
+fi
+
+# Ask for SSL certificate locations if domain uses HTTPS
+if [[ "$domain_scheme" == "https" ]]; then
+    read -p "Enter the path to your SSL certificate (e.g., /etc/ssl/certs/your_certificate.crt): " ssl_cert
+    read -p "Enter the path to your SSL certificate key (e.g., /etc/ssl/private/your_key.key): " ssl_key
 fi
 
 # Set default config name if not provided
@@ -4124,18 +4132,12 @@ config_name=${config_name:-reverse_proxy}
 target_site=$(strip_scheme "$target_site")
 your_domain=$(strip_scheme "$your_domain")
 
-# Determine domain URL formats for sub_filter
-domain_http="http://$your_domain:$http_port"
-domain_https="https://$your_domain:${https_port:-443}" # Default to 443 if not set
-
-# Create the Nginx configuration file
-sudo tee /etc/nginx/sites-available/$config_name > /dev/null <<EOF
+# Create the Nginx configuration content in a variable
+nginx_config=$(cat <<EOF
 server {
-    listen ${http_port:-80}; # Default to 80 if not set
-    $( [[ "$scheme" == "https" ]] && echo "listen $https_port ssl;" ) # If HTTPS is selected, listen on HTTPS port
-    server_name $your_domain;
+    listen $http_port; # Listen on the specified HTTP port
 
-    $ssl_config
+    server_name $your_domain;
 
     location / {
         proxy_pass $scheme://$target_site;
@@ -4152,22 +4154,54 @@ server {
         proxy_redirect $scheme://$target_site /;
 
         # Replace the target site URLs with your domain's URLs
-        sub_filter '$scheme://$target_site' '$domain_http';
-        sub_filter 'www.$target_site' '$domain_http';
-
-        # If HTTPS is selected, also replace with the HTTPS URL
-        if (\$scheme = 'https') {
-            sub_filter '$scheme://$target_site' '$domain_https';
-            sub_filter 'www.$target_site' '$domain_https';
-        }
-
-        sub_filter_once off;
+        sub_filter '$scheme://$target_site' 'http://$your_domain:$http_port'; # Include the HTTP port
 
         # Ensure sub_filter works with multiple content types
         sub_filter_types text/html application/xhtml+xml;
+        sub_filter_once off;
     }
 }
 EOF
+)
+
+# If the domain uses HTTPS, create an additional server block for it
+if [[ "$domain_scheme" == "https" ]]; then
+    nginx_config+=$(cat <<EOF
+server {
+    listen $https_port ssl; # Listen on the specified HTTPS port
+    ssl_certificate $ssl_cert; # Path to your SSL certificate
+    ssl_certificate_key $ssl_key; # Path to your SSL certificate key
+
+    server_name $your_domain;
+
+    location / {
+        proxy_pass $scheme://$target_site;
+        proxy_set_header Host $target_site;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_ssl_server_name on;
+
+        # Disable compression to make sub_filter work effectively
+        proxy_set_header Accept-Encoding "";
+
+        # Prevent redirects to the target site from changing the URL in the browser
+        proxy_redirect $scheme://$target_site /;
+
+        # Replace the target site URLs with your domain's URLs
+        sub_filter '$scheme://$target_site' 'https://$your_domain:$https_port'; # Include the HTTPS port
+
+        # Ensure sub_filter works with multiple content types
+        sub_filter_types text/html application/xhtml+xml;
+        sub_filter_once off;
+    }
+}
+EOF
+)
+fi
+
+# Write the Nginx configuration to the file
+echo "$nginx_config" | sudo tee /etc/nginx/sites-available/$config_name > /dev/null
 
 # Check if the symbolic link already exists; if not, create it
 if [ ! -L /etc/nginx/sites-enabled/$config_name ]; then
@@ -4182,10 +4216,13 @@ if sudo nginx -t; then
     echo -e "\033[1;32mNginx configuration is valid.\033[0m"
     # Reload Nginx to apply the new configuration
     sudo systemctl reload nginx
-    echo -e "\033[1;34mFull proxy set up for $your_domain on ports $http_port and ${https_port:-443}.\033[0m"
+    echo -e "\033[1;34mFull proxy set up for $your_domain.\033[0m"
 else
     echo -e "\033[1;31mNginx configuration test failed. Please check the configuration.\033[0m"
 fi
+
+
+
 ;;
 
             14)
