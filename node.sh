@@ -4061,8 +4061,7 @@ fi
                 echo -e "\033[1;33mNginx access logs:\033[0m"
                 sudo tail -f /var/log/nginx/access.log
                 ;;
-            12)
-# Function to remove http/https from the input
+            # Function to remove http/https from the input
 strip_scheme() {
     echo "$1" | sed -e 's|^http://||' -e 's|^https://||'
 }
@@ -4105,7 +4104,7 @@ elif [[ "$domain_scheme_choice" == "2" ]]; then
     ssl_config="
     listen 443 ssl;
     ssl_certificate /etc/ssl/certs/your_certificate.crt; # Update with your SSL certificate path
-    ssl_certificate_key /etc/ssl/private/your_key.key; # Update with your SSL certificate key path
+    ssl_certificate_key /etc/ssl/private/your_key.key; # Update with your SSL certificate key path"
 else
     echo -e "\033[1;31mInvalid option selected. Please run the script again and choose 1 for http or 2 for https.\033[0m"
     exit 1
@@ -4119,14 +4118,9 @@ config_name=${config_name:-reverse_proxy}
 target_site=$(strip_scheme "$target_site")
 your_domain=$(strip_scheme "$your_domain")
 
-# Determine if port should be attached for sub_filter
-if [[ "$domain_scheme" == "http" ]]; then
-    domain_http="http://$your_domain:$http_port"
-    domain_https="http://$your_domain:$http_port"
-elif [[ "$domain_scheme" == "https" ]]; then
-    domain_http="http://$your_domain:$http_port"
-    domain_https="https://$your_domain:$https_port"
-fi
+# Determine domain URL formats for sub_filter
+domain_http="http://$your_domain:$http_port"
+domain_https="https://$your_domain:${https_port:-443}" # Default to 443 if not set
 
 # Create the Nginx configuration file
 sudo tee /etc/nginx/sites-available/$config_name > /dev/null <<EOF
@@ -4152,8 +4146,14 @@ server {
         proxy_redirect $scheme://$target_site /;
 
         # Replace the target site URLs with your domain's URLs
-        sub_filter '$scheme://$target_site' '$domain_https';
-        sub_filter 'www.$target_site' '$domain_https';
+        sub_filter '$scheme://$target_site' '$domain_http';
+        sub_filter 'www.$target_site' '$domain_http';
+
+        # If HTTPS is selected, also replace with the HTTPS URL
+        if ($scheme = 'https') {
+            sub_filter '$scheme://$target_site' '$domain_https';
+            sub_filter 'www.$target_site' '$domain_https';
+        }
 
         sub_filter_once off;
 
@@ -4181,7 +4181,6 @@ else
     echo -e "\033[1;31mNginx configuration test failed. Please check the configuration.\033[0m"
 fi
 
-                ;;
             14)
                 echo -e "\033[1;33mRemoving Nginx...\033[0m"
                 if sudo apt remove --purge -y nginx nginx-common; then
