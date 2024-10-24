@@ -4067,6 +4067,12 @@ strip_scheme() {
 }
 
 # Read user inputs
+# Function to remove http/https from the input
+strip_scheme() {
+    echo "$1" | sed -e 's|^http://||' -e 's|^https://||'
+}
+
+# Read user inputs
 read -p "Enter the target site to proxy (e.g., google.com): " target_site
 echo "Is the target site using http or https?"
 echo "1) http"
@@ -4087,7 +4093,7 @@ else
     echo -e "\033[1;31mInvalid option selected. Please run the script again and choose 1 for http or 2 for https.\033[0m"
     exit 1
 fi
-
+12)
 # Ask for the domain and its scheme
 read -p "Enter your domain for replacements (e.g., domain.com): " your_domain
 echo "Is your domain using http or https?"
@@ -4126,7 +4132,7 @@ domain_https="https://$your_domain:${https_port:-443}" # Default to 443 if not s
 sudo tee /etc/nginx/sites-available/$config_name > /dev/null <<EOF
 server {
     listen ${http_port:-80}; # Default to 80 if not set
-    ${scheme == "https" && https_port+"listen "+$https_port+" ssl;" || ""} # If HTTPS is selected, listen on HTTPS port
+    $( [[ "$scheme" == "https" ]] && echo "listen $https_port ssl;" ) # If HTTPS is selected, listen on HTTPS port
     server_name $your_domain;
 
     $ssl_config
@@ -4150,7 +4156,7 @@ server {
         sub_filter 'www.$target_site' '$domain_http';
 
         # If HTTPS is selected, also replace with the HTTPS URL
-        if ($scheme = 'https') {
+        if (\$scheme = 'https') {
             sub_filter '$scheme://$target_site' '$domain_https';
             sub_filter 'www.$target_site' '$domain_https';
         }
@@ -4176,10 +4182,11 @@ if sudo nginx -t; then
     echo -e "\033[1;32mNginx configuration is valid.\033[0m"
     # Reload Nginx to apply the new configuration
     sudo systemctl reload nginx
-    echo -e "\033[1;34mFull proxy set up for $your_domain on ports $http_port and $https_port.\033[0m"
+    echo -e "\033[1;34mFull proxy set up for $your_domain on ports $http_port and ${https_port:-443}.\033[0m"
 else
     echo -e "\033[1;31mNginx configuration test failed. Please check the configuration.\033[0m"
 fi
+;;
 
             14)
                 echo -e "\033[1;33mRemoving Nginx...\033[0m"
