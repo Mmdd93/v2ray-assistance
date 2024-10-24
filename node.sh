@@ -4068,10 +4068,11 @@ strip_scheme() {
 }
 
 # Read user inputs
-read -p "Enter the port to listen on (e.g., 80 or 443): " port
-read -p "Enter the target site to proxy (e.g., google.com): " target_site
-read -p "Enter your domain for replacements (e.g., domain.com): " your_domain
-read -p "Enter a name for the Nginx configuration file (default: reverse_proxy): " config_name
+
+read -p "target site to proxy (e.g., google.com  127.0.0.1:8000): " target_site
+read -p "your domain(e.g., domain.com): " your_domain
+read -p "your domain port (e.g., 80): " port
+read -p "name for the Nginx directory (default: reverse_proxy): " config_name
 
 # Set default config name if not provided
 config_name=${config_name:-reverse_proxy}
