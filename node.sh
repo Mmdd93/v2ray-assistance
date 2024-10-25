@@ -4250,28 +4250,21 @@ main_menu() {
     while true; do
     
         echo -e "\n\033[1;31mOS info:\033[0m"
-        
         echo -e "\033[1;32mOS:\033[0m $(lsb_release -d | cut -f2)"
         echo -e "\033[1;32mPublic IP:\033[0m $(curl -s https://icanhazip.com)"
-
-
         echo -e "\033[1;32mUptime:\033[0m $(uptime -p)"
         echo -e "\033[1;32mCPU Cores:\033[0m $(lscpu | grep '^CPU(s):' | awk '{print $2}')"
         echo -e "\033[1;32mCPU Frequency:\033[0m $(grep 'MHz' /proc/cpuinfo | awk '{print $4 " MHz"}' | head -n 1)"
         echo -e "\033[1;32mRAM:\033[0m $(free -h | awk '/^Mem:/ {print $3 "/" $2}')"
         echo -e "\033[1;32mTime:\033[0m $(date +"%T %Z")"
-        
+	echo -e "\033[1;32mTelegram:\033[0m https://t.me/tlgrmv2"
         echo -e "\n\033[1;31mUpdate and upgrade:\033[0m"
-        
         echo -e "\033[1;32m 1.\033[0m Update and upgrade system and install necessary packages"
         echo -e "\033[1;32m 2.\033[0m Install Docker and Docker Compose"
         echo -e "\033[1;32m20.\033[0m Install Docker on Iran servers"
-        
         echo -e "\n\033[1;31mTools:\033[0m"
-        
         echo -e "\033[1;32m 3.\033[0m ISP blocker"
         echo -e "\033[1;32m 4.\033[0m Light Knight BBR V 1.2"
-        
         echo -e "\033[1;32m 5.\033[0m Speed test + system benchmark"
         echo -e "\033[1;32m 6.\033[0m Check used ports by services"
         echo -e "\033[1;32m 7.\033[0m Auto Clear cache + server reboot"
@@ -4289,7 +4282,6 @@ main_menu() {
 	echo -e "\033[1;32m26.\033[0m Check  server IP quality "
  	echo -e "\033[1;32m27.\033[0m Nginx "
         echo -e "\n\033[1;31mXray panel:\033[0m"
-        
         echo -e "\033[1;32m11.\033[0m XUI panel"
         echo -e "\033[1;32m12.\033[0m Marzban panel"
         echo -e "\033[1;32m13.\033[0m Marzban node"
@@ -4301,34 +4293,20 @@ main_menu() {
         case $choice in
             1) update_system
                install_packages ;;
-                
             2) install_docker
-               check_docker_compose ;;
-               
+		check_docker_compose ;;
             3) isp_blocker_script ;;
-            
             4) bbr_script ;;
-            
             5) run_system_benchmark ;;
-            
             6) used_ports ;;
-            
             7) setup_cache_and_reboot ;;
-            
             8) manage_ping ;;
-            
             9) change_dns ;;
-            
             15) swap ;;
-            
             16) webtop ;;
-            
             11) xui ;;
-            
             10) ssl;;
-            
             12) marzban_commands;;
-            
             13) manage_marzban_node ;;
             17) backup_menu ;;
             18) create_dns ;;
@@ -4348,14 +4326,5 @@ main_menu() {
         esac
     done
 }
-
-
-
-
-
-
 # Start the main menu
 main_menu
-
-
-
