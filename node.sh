@@ -3406,6 +3406,7 @@ traffic() {
         case $choice in
             1)
                 setup_show_monthly_traffic
+		sudo bash /root/show_monthly_traffic.sh
                 ;;
             2)
                 edit_telegram_info
