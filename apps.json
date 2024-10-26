@@ -1,21 +1,21 @@
 [
   {
-    "name": "Streisand",
-    "urlScheme": "streisand://import/",
-    "image": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/83/a0/cd/83a0cd76-ef34-d890-7b44-a1a9a17041c5/AppIcon-0-0-1x_U007epad-0-0-0-0-85-220.png/512x512bb.jpg",
-    "link": "streisand://import/{url}",
-    "os": ["iOS"],
+    "name": "تماس با پشتیبانی",
+    "urlScheme": "tg://resolve?domain=tlgrmv2",
+    "image": "https://play-lh.googleusercontent.com/ZU9cSsyIJZo6Oy7HTHiEPwZg0m2Crep-d5ZrfajqtsH-qgUXSqKpNA2FpPDTn-7qA5Q=w240-h480-rw",
+    "link": "tg://resolve?domain=tlgrmv2",
+    "os": [""],
     "downloadLinks": {
       "iOS": "https://apps.apple.com/us/app/streisand/id6450534064"
     },
     "ShowInMenu": true
   },
   {
-    "name": "تماس با پشتیبانی",
-    "urlScheme": "https://t.me/tlgrmv2",
-    "image": "https://play-lh.googleusercontent.com/ZU9cSsyIJZo6Oy7HTHiEPwZg0m2Crep-d5ZrfajqtsH-qgUXSqKpNA2FpPDTn-7qA5Q=w240-h480-rw",
-    "link": "https://t.me/tlgrmv2",
-    "os": [""],
+    "name": "Streisand",
+    "urlScheme": "streisand://import/",
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/83/a0/cd/83a0cd76-ef34-d890-7b44-a1a9a17041c5/AppIcon-0-0-1x_U007epad-0-0-0-0-85-220.png/512x512bb.jpg",
+    "link": "streisand://import/{url}",
+    "os": ["iOS"],
     "downloadLinks": {
       "iOS": "https://apps.apple.com/us/app/streisand/id6450534064"
     },
