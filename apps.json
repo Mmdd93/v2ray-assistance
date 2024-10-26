@@ -6,7 +6,7 @@
     "link": "tg://resolve?domain=tlgrmv2",
     "os": [""],
     "downloadLinks": {
-      "iOS": "https://apps.apple.com/us/app/streisand/id6450534064"
+      "iOS": "https://play.google.com/store/apps/details?id=org.telegram.messenger"
     },
     "ShowInMenu": true
   },
@@ -17,7 +17,7 @@
     "link": "streisand://import/{url}",
     "os": ["iOS"],
     "downloadLinks": {
-      "iOS": "https://apps.apple.com/us/app/streisand/id6450534064"
+      "Android": "https://apps.apple.com/us/app/streisand/id6450534064"
     },
     "ShowInMenu": true
   },
