@@ -11,6 +11,17 @@
     "ShowInMenu": true
   },
   {
+    "name": "تماس با پشتیبانی",
+    "urlScheme": "https://t.me/tlgrmv2",
+    "image": "https://play-lh.googleusercontent.com/ZU9cSsyIJZo6Oy7HTHiEPwZg0m2Crep-d5ZrfajqtsH-qgUXSqKpNA2FpPDTn-7qA5Q=w240-h480-rw",
+    "link": "https://t.me/tlgrmv2",
+    "os": [""],
+    "downloadLinks": {
+      "iOS": "https://apps.apple.com/us/app/streisand/id6450534064"
+    },
+    "ShowInMenu": true
+  },
+  {
     "name": "V2rayNG",
     "urlScheme": "v2rayng://install-config",
     "image": "https://play-lh.googleusercontent.com/x3RFim6Fb-bgRd-HnV9VNrdqBRueyOuUjvu7ZNv7eRYC5Idl3WU_GSxa7bpx5yyUT30",
