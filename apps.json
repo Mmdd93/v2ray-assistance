@@ -50,7 +50,7 @@
     "downloadLinks": {
       "iOS": "https://apps.apple.com/us/app/shadowrocket/id932747118"
     },
-    "ShowInMenu": true
+    "ShowInMenu": false
   },
   {
     "name": "Nekoray",
@@ -66,13 +66,13 @@
     "name": "SingBox",
     "urlScheme": "sing-box://import-remote-profile",
     "image": "https://play-lh.googleusercontent.com/9hC1t0lYNRlFHt2N2NJCWYMe_M6vJh580XHdC0JeEW14AJJFZGDbgj_meooXAXHbWJ1_",
-    "link": "sing-box://import-remote-profile?url={url}#MattSub",
+    "link": "sing-box://import-remote-profile?url={url}",
     "os": ["iOS", "Android", "Linux"],
     "downloadLinks": {
       "iOS": "https://apps.apple.com/us/app/sing-box-vt/id6673731168",
       "Android": "https://github.com/SagerNet/sing-box/releases/download/v1.10.1/SFA-1.10.1-universal.apk",
       "Linux": "https://github.com/SagerNet/sing-box/releases/download/v1.10.1/sing-box_1.10.1_linux_386.deb"
     },
-    "ShowInMenu": false
+    "ShowInMenu": true
   }
 ]
