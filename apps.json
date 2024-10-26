@@ -30,7 +30,7 @@
     "link": "streisand://import/{url}",
     "os": ["iOS"],
     "downloadLinks": {
-      "Android": "https://apps.apple.com/us/app/streisand/id6450534064"
+      "iOS": "https://apps.apple.com/us/app/streisand/id6450534064"
     },
     "ShowInMenu": true
   },
