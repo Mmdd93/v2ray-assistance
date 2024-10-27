@@ -4245,11 +4245,165 @@ fi
     done
 }
 
+#!/bin/bash
+
+# Define paths to configuration files
+SYSCTL_CONF="/etc/sysctl.conf"
+LIMITS_CONF="/etc/security/limits.conf"
+
+# Function to back up existing configurations
+backup_configs() {
+    echo -e "\033[1;32mBacking up configuration files...\033[0m"
+    cp $SYSCTL_CONF $SYSCTL_CONF.bak
+    cp $LIMITS_CONF $LIMITS_CONF.bak
+    echo -e "\033[1;32mBackup completed.\033[0m"
+}
+
+# Function to apply optimizations
+apply_optimizations() {
+    echo -e "\033[1;32mApplying optimizations...\033[0m"
+    
+    # Overwrite /etc/sysctl.conf with new configurations
+    cat << EOF > $SYSCTL_CONF
+vm.swappiness=10
+vm.dirty_ratio=20
+vm.dirty_background_ratio=10
+fs.file-max=2097152
+net.core.somaxconn=4096
+net.core.netdev_max_backlog=16384
+net.ipv4.ip_local_port_range=1024 65535
+net.ipv4.ip_nonlocal_bind=1
+net.ipv4.tcp_fin_timeout=15
+net.ipv4.tcp_keepalive_time=300
+net.ipv4.tcp_syncookies=0
+net.ipv4.tcp_max_orphans=262144
+net.ipv4.tcp_max_syn_backlog=8192
+net.ipv4.tcp_max_tw_buckets=262144
+net.ipv4.tcp_reordering=3
+net.ipv4.tcp_mem=786432 1697152 1945728
+net.ipv4.tcp_rmem=4096 87380 16777216
+net.ipv4.tcp_wmem=4096 65536 16777216
+net.ipv4.tcp_syn_retries=5
+net.ipv4.tcp_tw_reuse=1
+EOF
+
+    # Overwrite /etc/security/limits.conf with new limits
+    cat << EOF > $LIMITS_CONF
+* soft nproc 65535
+* hard nproc 65535
+* soft nofile 1048576
+* hard nofile 1048576
+root soft nproc 65535
+root hard nproc 65535
+root soft nofile 1048576
+root hard nofile 1048576
+EOF
+
+    # Apply the new sysctl settings
+    sysctl -p
+
+    echo -e "\033[1;32mOptimization Complete!\033[0m"
+}
+
+# Function to disable all optimizations
+disable_optimizations() {
+    echo -e "\033[1;32mDisabling all optimizations...\033[0m"
+    
+    # Remove specific optimization settings from /etc/sysctl.conf
+    sed -i '/^vm.swappiness=/d' $SYSCTL_CONF
+    sed -i '/^vm.dirty_ratio=/d' $SYSCTL_CONF
+    sed -i '/^vm.dirty_background_ratio=/d' $SYSCTL_CONF
+    sed -i '/^fs.file-max=/d' $SYSCTL_CONF
+    sed -i '/^net.core.somaxconn=/d' $SYSCTL_CONF
+    sed -i '/^net.core.netdev_max_backlog=/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.ip_local_port_range=/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.ip_nonlocal_bind=/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_fin_timeout=/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_keepalive_time=/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_syncookies=/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_max_orphans=/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_max_syn_backlog=/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_max_tw_buckets=/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_reordering=/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_mem=/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_rmem=/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_wmem=/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_syn_retries=/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_tw_reuse=/d' $SYSCTL_CONF
+
+    # Remove specific limits from /etc/security/limits.conf
+    sed -i '/^* soft nproc/d' $LIMITS_CONF
+    sed -i '/^* hard nproc/d' $LIMITS_CONF
+    sed -i '/^* soft nofile/d' $LIMITS_CONF
+    sed -i '/^* hard nofile/d' $LIMITS_CONF
+    sed -i '/^root soft nproc/d' $LIMITS_CONF
+    sed -i '/^root hard nproc/d' $LIMITS_CONF
+    sed -i '/^root soft nofile/d' $LIMITS_CONF
+    sed -i '/^root hard nofile/d' $LIMITS_CONF
+
+    # Apply the updated sysctl settings
+    sysctl -p
+
+    echo -e "\033[1;32mAll Optimizations Disabled!\033[0m"
+}
+
+# Function to install BBR via LightKnight
+bbr_script() {
+    echo -e "\033[1;32mUpdating system and installing necessary packages...\033[0m"
+    sudo apt update && sudo apt install -y python3 python3-pip
+    echo -e "\033[1;32mFetching and running the Python script...\033[0m"
+    python3 <(curl -Ls https://raw.githubusercontent.com/kalilovers/LightKnightBBR/main/bbr.py --ipv4)
+
+    if [ $? -eq 0 ]; then
+        echo -e "\033[1;32mPython script executed successfully.\033[0m"
+    else
+        echo -e "\033[1;31mFailed to execute the Python script.\033[0m"
+    fi
+}
+
+# Function for main menu
+Optimizer() {
+    while true; do
+        clear
+        echo -e "\033[1;32m=======================\033[0m"
+        echo -e "\033[1;32m Network Optimizer \033[0m"
+        echo -e "\033[1;32m=======================\033[0m"
+        echo -e "\033[1;32m1.\033[0m Backup"
+        echo -e "\033[1;32m2.\033[0m Optimize (backup and apply optimizations)"
+        echo -e "\033[1;32m3.\033[0m Disable all optimizations"
+        echo -e "\033[1;32m4.\033[0m Set BBR by LightKnight"
+        echo -e "\033[1;32m0.\033[0m Main menu"
+        echo -e "\nSelect an option (1-4): "
+        read choice
+
+        case $choice in
+            1) backup_configs ;;
+            2) 
+                backup_configs # Backup before applying optimizations
+                apply_optimizations 
+                ;;
+            3) disable_optimizations ;;
+            4) bbr_script ;;
+            0)
+                echo -e "\033[1;34mReturning to main menu...\033[0m"
+                main_menu
+                ;;
+            *) echo -e "\033[1;31mInvalid option. Please select a number between 1 and 4.\033[0m" ;;
+        esac
+
+        # Wait for user to press enter to continue
+        echo -e "\n\033[1;34mPress Enter to return to the Optimizer menu...\033[0m"
+        read
+    done
+}
+
+
+
 
 # Main menu function
 main_menu() {
     while true; do
-    
+    clear
         echo -e "\n\033[1;31mOS info:\033[0m"
         echo -e "\033[1;32mOS:\033[0m $(lsb_release -d | cut -f2)"
         echo -e "\033[1;32mPublic IP:\033[0m $(curl -s https://icanhazip.com)"
@@ -4317,7 +4471,7 @@ main_menu() {
             22) usage ;;
             23) ufw_menu ;;
             24) download_and_start_api ;;
-            25) sudo apt update && sudo apt upgrade -y && bash <(curl -Ls https://raw.githubusercontent.com/develfishere/Linux_NetworkOptimizer/main/bbr.sh --ipv4) ;;
+            25) Optimizer ;;
             26) ip_quality_check ;;
             27) manage_nginx ;;
             0) exit 1
