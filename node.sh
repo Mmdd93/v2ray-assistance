@@ -4361,7 +4361,31 @@ bbr_script() {
     fi
 }
 
-# Function for main menu
+# Function to show contents of sysctl.conf
+show_sysctl_conf() {
+    echo -e "\033[1;34mContents of sysctl.conf:\033[0m"
+    cat $SYSCTL_CONF
+}
+
+# Function to show contents of limits.conf
+show_limits_conf() {
+    echo -e "\033[1;34mContents of limits.conf:\033[0m"
+    cat $LIMITS_CONF
+}
+
+# Function to edit sysctl.conf
+edit_sysctl_conf() {
+    echo -e "\033[1;32mOpening sysctl.conf for editing...\033[0m"
+    nano $SYSCTL_CONF
+}
+
+# Function to edit limits.conf
+edit_limits_conf() {
+    echo -e "\033[1;32mOpening limits.conf for editing...\033[0m"
+    nano $LIMITS_CONF
+}
+
+# Main menu for optimizer
 Optimizer() {
     while true; do
         clear
@@ -4372,8 +4396,12 @@ Optimizer() {
         echo -e "\033[1;32m2.\033[0m Optimize (backup and apply optimizations)"
         echo -e "\033[1;32m3.\033[0m Disable all optimizations"
         echo -e "\033[1;32m4.\033[0m Set BBR by LightKnight"
+        echo -e "\033[1;32m5.\033[0m Show sysctl.conf"
+        echo -e "\033[1;32m6.\033[0m Show limits.conf"
+        echo -e "\033[1;32m7.\033[0m Edit sysctl.conf"
+        echo -e "\033[1;32m8.\033[0m Edit limits.conf"
         echo -e "\033[1;32m0.\033[0m Main menu"
-        echo -e "\nSelect an option (1-4): "
+        echo -e "\nSelect an option (1-8): "
         read choice
 
         case $choice in
@@ -4384,11 +4412,15 @@ Optimizer() {
                 ;;
             3) disable_optimizations ;;
             4) bbr_script ;;
+            5) show_sysctl_conf ;;
+            6) show_limits_conf ;;
+            7) edit_sysctl_conf ;;
+            8) edit_limits_conf ;;
             0)
                 echo -e "\033[1;34mReturning to main menu...\033[0m"
                 main_menu
                 ;;
-            *) echo -e "\033[1;31mInvalid option. Please select a number between 1 and 4.\033[0m" ;;
+            *) echo -e "\033[1;31mInvalid option. Please select a valid number.\033[0m" ;;
         esac
 
         # Wait for user to press enter to continue
@@ -4396,6 +4428,7 @@ Optimizer() {
         read
     done
 }
+
 
 
 
