@@ -4321,7 +4321,7 @@ apply_optimizations() {
     echo -e "\033[1;32mOptimization Complete!\033[0m"
 }
 
-# Function to disable all optimizations (removes only specific entries)
+# Function to disable all optimizations (removes specific entries)
 disable_optimizations() {
     echo -e "\033[1;32mDisabling all optimizations...\033[0m"
 
