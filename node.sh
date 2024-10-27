@@ -4368,7 +4368,7 @@ Optimizer() {
         echo -e "\033[1;32m=======================\033[0m"
         echo -e "\033[1;32m Network Optimizer \033[0m"
         echo -e "\033[1;32m=======================\033[0m"
-        echo -e "\033[1;32m1.\033[0m Backup"
+        echo -e "\033[1;32m1.\033[0m Backup (sysctl.conf & limits.conf)"
         echo -e "\033[1;32m2.\033[0m Optimize (backup and apply optimizations)"
         echo -e "\033[1;32m3.\033[0m Disable all optimizations"
         echo -e "\033[1;32m4.\033[0m Set BBR by LightKnight"
