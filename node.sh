@@ -4316,6 +4316,7 @@ apply_optimizations() {
     done
 
     # Apply the new sysctl settings
+    echo -e "\033[1;32mreload\033[0m"# Apply the updated sysctl settings
     sysctl -p
 
     echo -e "\033[1;32mOptimization Complete!\033[0m"
@@ -4357,7 +4358,7 @@ disable_optimizations() {
     sed -i '/^root soft nofile/d' $LIMITS_CONF
     sed -i '/^root hard nofile/d' $LIMITS_CONF
 
-    # Apply the updated sysctl settings
+    echo -e "\033[1;32mreload\033[0m"# Apply the updated sysctl settings
     sysctl -p
 
     echo -e "\033[1;32mAll Optimizations Disabled!\033[0m"
@@ -4392,12 +4393,17 @@ show_limits_conf() {
 edit_sysctl_conf() {
     echo -e "\033[1;32mOpening sysctl.conf for editing...\033[0m"
     nano $SYSCTL_CONF
+     echo -e "\033[1;32mreload\033[0m"# Apply the updated sysctl settings
+    sysctl -p
 }
 
 # Function to edit limits.conf
 edit_limits_conf() {
     echo -e "\033[1;32mOpening limits.conf for editing...\033[0m"
     nano $LIMITS_CONF
+     echo -e "\033[1;32mreload\033[0m"# Apply the updated sysctl settings
+    sysctl -p
+
 }
 
 # Main menu for optimizer
