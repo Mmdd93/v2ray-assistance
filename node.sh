@@ -4321,19 +4321,41 @@ apply_optimizations() {
     echo -e "\033[1;32mOptimization Complete!\033[0m"
 }
 
-# Function to disable all optimizations (removes specific entries)
+# Function to disable all optimizations (remove specific entries)
 disable_optimizations() {
     echo -e "\033[1;32mDisabling all optimizations...\033[0m"
 
-    # Remove specific optimization settings from /etc/sysctl.conf
-    for key in "${!sysctl_settings[@]}"; do
-        sed -i "/^$key/d" $SYSCTL_CONF
-    done
+    # Directly remove specific optimization settings from /etc/sysctl.conf
+    sed -i '/^vm.swappiness/d' $SYSCTL_CONF
+    sed -i '/^vm.dirty_ratio/d' $SYSCTL_CONF
+    sed -i '/^vm.dirty_background_ratio/d' $SYSCTL_CONF
+    sed -i '/^fs.file-max/d' $SYSCTL_CONF
+    sed -i '/^net.core.somaxconn/d' $SYSCTL_CONF
+    sed -i '/^net.core.netdev_max_backlog/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.ip_local_port_range/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.ip_nonlocal_bind/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_fin_timeout/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_keepalive_time/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_syncookies/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_max_orphans/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_max_syn_backlog/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_max_tw_buckets/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_reordering/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_mem/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_rmem/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_wmem/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_syn_retries/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_tw_reuse/d' $SYSCTL_CONF
 
-    # Remove specific limits from /etc/security/limits.conf
-    for key in "${!limits_settings[@]}"; do
-        sed -i "/^$key/d" $LIMITS_CONF
-    done
+    # Directly remove specific limits from /etc/security/limits.conf
+    sed -i '/^\* soft nproc/d' $LIMITS_CONF
+    sed -i '/^\* hard nproc/d' $LIMITS_CONF
+    sed -i '/^\* soft nofile/d' $LIMITS_CONF
+    sed -i '/^\* hard nofile/d' $LIMITS_CONF
+    sed -i '/^root soft nproc/d' $LIMITS_CONF
+    sed -i '/^root hard nproc/d' $LIMITS_CONF
+    sed -i '/^root soft nofile/d' $LIMITS_CONF
+    sed -i '/^root hard nofile/d' $LIMITS_CONF
 
     # Apply the updated sysctl settings
     sysctl -p
