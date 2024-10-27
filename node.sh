@@ -4419,7 +4419,7 @@ main_menu() {
         echo -e "\033[1;32m20.\033[0m Install Docker on Iran servers"
         echo -e "\n\033[1;31mTools:\033[0m"
         echo -e "\033[1;32m 3.\033[0m ISP blocker"
-        echo -e "\033[1;32m 4.\033[0m Light Knight BBR V 1.2"
+        echo -e "\033[1;32m 4.\033[0m  Network Optimizer + BBR"
         echo -e "\033[1;32m 5.\033[0m Speed test + system benchmark"
         echo -e "\033[1;32m 6.\033[0m Check used ports by services"
         echo -e "\033[1;32m 7.\033[0m Auto Clear cache + server reboot"
@@ -4433,7 +4433,6 @@ main_menu() {
         echo -e "\033[1;32m22.\033[0m CPU/RAM MONITORING"
         echo -e "\033[1;32m23.\033[0m UFW "
         echo -e "\033[1;32m24.\033[0m Cloudflare auto ip changer "
-        echo -e "\033[1;32m25.\033[0m Linux Network Optimizer + bbr "
 	echo -e "\033[1;32m26.\033[0m Check  server IP quality "
  	echo -e "\033[1;32m27.\033[0m Nginx "
         echo -e "\n\033[1;31mXray panel:\033[0m"
@@ -4451,7 +4450,7 @@ main_menu() {
             2) install_docker
 		check_docker_compose ;;
             3) isp_blocker_script ;;
-            4) bbr_script ;;
+            4) Optimizer ;;
             5) run_system_benchmark ;;
             6) used_ports ;;
             7) setup_cache_and_reboot ;;
@@ -4471,7 +4470,6 @@ main_menu() {
             22) usage ;;
             23) ufw_menu ;;
             24) download_and_start_api ;;
-            25) Optimizer ;;
             26) ip_quality_check ;;
             27) manage_nginx ;;
             0) exit 1
