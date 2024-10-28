@@ -1461,10 +1461,6 @@ marzban_cli_commands() {
 }
 
 #ssl
-#!/bin/bash
-
-
-
 # Function to handle port 80 conflicts
 handle_port_80() {
     # Check if port 80 is in use
@@ -1479,7 +1475,7 @@ handle_port_80() {
             echo -e "\033[1;33mPlease choose an option:\033[0m"
             echo "1) Stop $service_name to proceed with HTTP-01 challenge."
             echo "2) Continue  (not recommended) ."
-            echo "3) Return to main menu."
+            echo "3) Return."
             read -p "Enter your choice (1-3): " menu_choice
 
             case $menu_choice in
@@ -1516,7 +1512,7 @@ while true; do
     echo -e "1. Use \033[1;34macme single domain\033[0m "
     echo -e "2. Use \033[1;34mCertbot multi domain\033[0m "
     echo -e "3. Use \033[1;34mCertbot wildcard single domain\033[0m "
-    echo -e "0. Return to main menu"
+    echo -e "0. Return"
     echo -e "\033[1;32mEnter your choice:\033[0m"
     
     read -r ssl_choice
@@ -1863,10 +1859,11 @@ sleep 1
     if ! eval "$certbot_command"; then
         echo -e "\033[1;31mWildcard SSL certificate generation failed.\033[0m"
         echo -e "\033[1;31mReturning to base domain entry.\033[0m"
-        return 1  # Return to allow retry from the main menu or calling function
+        ssl  # Return to allow retry from the main menu or calling function
     fi
 
     echo -e "\033[1;32mWildcard SSL certificate generation completed successfully.\033[0m"
+    ssl
 }
 
 
