@@ -1511,6 +1511,7 @@ handle_port_80() {
 }
 # SSL issuance function
 ssl() {
+while true; do
     echo -e "\033[1;32mSSL Installation Options\033[0m"
     echo -e "1. Use \033[1;34macme single domain\033[0m "
     echo -e "2. Use \033[1;34mCertbot multi domain\033[0m "
@@ -1540,6 +1541,7 @@ ssl() {
             echo -e "\033[1;31mInvalid choice. Please select 0, 1, or 2.\033[0m"
             ;;
     esac
+done
 }
 
 ssl1() {
