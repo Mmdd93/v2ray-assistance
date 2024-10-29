@@ -14,13 +14,6 @@ CYAN='\033[0;36m'
 RESET='\033[0m'  # Reset color
 NC="\033[0m" # No Color
 
-
-
-
-
-# Function to echo messages in red
-
-
 # Function to prompt for input with default value
 prompt_input() {
     local prompt="$1"
@@ -29,6 +22,9 @@ prompt_input() {
     if [ -n "$default_value" ]; then
         prompt_text="$prompt_text [$default_value]"
     fi
+
+    # Clear input buffer before prompting for input
+    read -t 0.1 -n 10000 discard_input
 
     read -p "$prompt_text: " user_input
     echo "${user_input:-$default_value}"
@@ -392,22 +388,7 @@ validate_port() {
     fi
 }
 
-# Function to prompt for input with default value
-prompt_input() {
-    local prompt="$1"
-    local default_value="${2:-}"
-    local prompt_text="$prompt"
-    if [ -n "$default_value" ]; then
-        prompt_text="$prompt_text [$default_value]"
-    fi
 
-    # Clear input buffer before prompting for input
-    read -t 0.1 -n 10000 discard_input
-
-    read -p "$prompt_text: " user_input
-    echo "${user_input:-$default_value}"
-    log_message "$prompt: ${user_input:-$default_value}"
-}
 
 # Function to update and upgrade the system
 update_system() {
