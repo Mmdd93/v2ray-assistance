@@ -101,7 +101,7 @@ set_custom_xray_version() {
             echo_green "Disabling custom Xray..."
             sed -i '/XRAY_EXECUTABLE_PATH:/d' "$docker_compose_file"
             echo_green "Custom Xray version has been disabled."
-            log_message "XRAY_EXECUTABLE_PATH disabled."
+           
             changes_made=true
         else
             echo_green "Custom Xray remains enabled."
@@ -117,7 +117,7 @@ set_custom_xray_version() {
             local xray_path="\"$xray_binary_path\""
             sed -i '/environment:/a\      XRAY_EXECUTABLE_PATH: '"$xray_path" "$docker_compose_file"
             echo_green "Custom Xray version has been enabled."
-            log_message "XRAY_EXECUTABLE_PATH set with path: $xray_path"
+            
             changes_made=true
         else
             echo_green "Custom Xray remains disabled."
@@ -155,7 +155,7 @@ list_and_download_xray_core() {
 
     if [ ! -s "$versions_file" ]; then
         echo_red "Failed to fetch Xray core versions."
-        log_message "Failed to fetch Xray core versions."
+       
         return 1
     fi
 
@@ -191,7 +191,7 @@ list_and_download_xray_core() {
     # Check for unzip installation
     if ! command -v unzip &> /dev/null; then
         echo_yellow "Unzip is not installed. Installing now..."
-        log_message "Installing unzip..."
+      
 
         if command -v apt-get &> /dev/null; then
             sudo apt-get update && sudo apt-get install -y unzip
@@ -199,13 +199,13 @@ list_and_download_xray_core() {
             sudo yum install -y unzip
         else
             echo_red "Could not determine package manager. Please install unzip manually."
-            log_message "Failed to install unzip: package manager not found."
+           
             return 1
         fi
 
         if ! command -v unzip &> /dev/null; then
             echo_red "Failed to install unzip."
-            log_message "Failed to install unzip."
+           
             return 1
         fi
     fi
@@ -218,12 +218,12 @@ list_and_download_xray_core() {
     cd "$xray_core_dir"
 
     echo_yellow "Downloading Xray core version $selected_version..."
-    log_message "Downloading Xray core from $xray_core_url"
+   
     sudo curl -L -o Xray-linux-64.zip "$xray_core_url"
 
     if [ $? -ne 0 ]; then
         echo_red "Failed to download Xray core."
-        log_message "Failed to download Xray core."
+       
         return 1
     fi
 
@@ -232,14 +232,14 @@ list_and_download_xray_core() {
 
     if [ $? -ne 0 ]; then
         echo_red "Failed to unzip Xray core."
-        log_message "Failed to unzip Xray core."
+        
         return 1
     fi
 
     sudo rm Xray-linux-64.zip
 
     echo_green "Version $selected_version downloaded and unzipped successfully in $xray_core_dir."
-    log_message "Xray core version $selected_version downloaded and unzipped successfully."
+   
 
     rm "$versions_file"
 
@@ -256,43 +256,43 @@ install_docker() {
     # Check if Docker is installed
     if ! command -v docker &> /dev/null; then
         echo_yellow "Docker is not installed. Installing Docker..."
-        log_message "Installing Docker..."
+       
         curl -fsSL https://get.docker.com -o get-docker.sh
         sudo sh get-docker.sh
 
         if [ $? -eq 0 ]; then
             echo_green "Docker installed successfully."
-            log_message "Docker installed successfully."
+           
             sudo usermod -aG docker $USER
             echo "Please log out and log back in to finalize Docker installation and permissions."
-            log_message "User added to Docker group."
+           
         else
             echo_red "Installation of Docker failed."
-            log_message "Failed to install Docker."
+           
             return 1
         fi
         sudo rm get-docker.sh
     else
         echo_green "Docker is already installed."
-        log_message "Docker found on system."
+       
     fi
 
     # Check if Docker is running
     if ! docker info &> /dev/null; then
         echo_yellow "Docker is not running. Attempting to start Docker..."
-        log_message "Docker is not running."
+      
 
         # Attempt to start Docker if not running
         sudo systemctl start docker
         if ! docker info &> /dev/null; then
             echo_red "Failed to start Docker. Please manually start Docker."
-            log_message "Failed to start Docker."
+          
             return 1
         fi
     fi
 
     echo_green "Docker is running."
-    log_message "Docker is running."
+  
 }
 
 
@@ -301,7 +301,7 @@ check_docker_compose() {
     # Check if jq is installed
     if ! command -v jq &> /dev/null; then
         echo_yellow "jq is not installed. Installing now..."
-        log_message "Installing jq..."
+     
 
         # Install jq based on the package manager available
         if command -v apt-get &> /dev/null; then
@@ -312,13 +312,13 @@ check_docker_compose() {
             brew install jq
         else
             echo_red "Could not determine package manager. Please install jq manually."
-            log_message "Failed to install jq: package manager not found."
+          
             return 1
         fi
 
         if ! command -v jq &> /dev/null; then
             echo_red "Failed to install jq."
-            log_message "Failed to install jq."
+          
             return 1
         fi
     fi
@@ -327,7 +327,7 @@ check_docker_compose() {
     if ! command -v docker-compose &> /dev/null; then
         # Docker Compose is not installed
         echo_yellow "Docker Compose is not installed. Installing now..."
-        log_message "Installing Docker Compose..."
+     
 
         # Fetch the latest version of Docker Compose using GitHub API and jq to parse JSON
         latest_version=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r '.tag_name')
@@ -335,7 +335,7 @@ check_docker_compose() {
         # Check if fetching the latest version was successful
         if [ -z "$latest_version" ]; then
             echo_red "Failed to fetch the latest Docker Compose version."
-            log_message "Failed to fetch the latest Docker Compose version."
+          
             return 1
         fi
 
@@ -345,7 +345,7 @@ check_docker_compose() {
         # Check if the download was successful
         if [ $? -ne 0 ]; then
             echo_red "Failed to download Docker Compose."
-            log_message "Failed to download Docker Compose."
+           
             return 1
         fi
 
@@ -355,17 +355,17 @@ check_docker_compose() {
         # Verify that Docker Compose was installed correctly
         if ! docker-compose --version &> /dev/null; then
             echo_red "Failed to install Docker Compose."
-            log_message "Failed to install Docker Compose."
+         
             return 1
         fi
 
         # Installation successful
         echo_green "Docker Compose installed successfully."
-        log_message "Docker Compose installed successfully."
+       
     else
         # Docker Compose is already installed
         echo_green "Docker Compose is already installed."
-        log_message "Docker Compose is already installed."
+     
     fi
 }
 
@@ -377,12 +377,12 @@ validate_port() {
     local port="$1"
     if ! [[ "$port" =~ ^[0-9]+$ ]]; then
         echo_red "Error: Port must be a number."
-        log_message "Invalid port: $port"
+     
         exit 1
     fi
     if (( port < 1 || port > 65535 )); then
         echo_red "Error: Port number out of range (1-65535)."
-        log_message "Port number out of range: $port"
+   
         exit 1
     fi
 }
@@ -396,7 +396,7 @@ update_system() {
 
     echo_yellow "Upgrading installed packages..."
     sudo apt-get upgrade -y
-    log_message "System updated and upgraded."
+ 
 }
 
 # Function to install necessary packages
@@ -438,7 +438,7 @@ install_packages() {
         fi
     done
 
-    log_message "Necessary packages checked and installed where needed."
+   
 }
 
 # Function to install marzban node
