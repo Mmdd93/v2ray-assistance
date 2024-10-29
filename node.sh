@@ -5,8 +5,6 @@ set -euo pipefail
 # Constants
 MARZBAN_NODE_DIR=~/Marzban-node
 MARZBAN_NODE_DATA_DIR="/var/lib/marzban-node"
-CONFIG_FILE="marzban_config.txt"
-LOG_FILE="marzban_setup.log"
 # Color definitions
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -18,11 +16,7 @@ NC="\033[0m" # No Color
 
 
 
-# Function to log messages to a file
-log_message() {
-    local message="$1"
-    echo "$(date +"%Y-%m-%d %H:%M:%S") - $message" >> "$LOG_FILE"
-}
+
 
 # Function to echo messages in red
 
@@ -259,11 +253,7 @@ list_and_download_xray_core() {
 
 
 
-# Function to log messages to a file
-log_message() {
-    local message="$1"
-    echo "$(date +"%Y-%m-%d %H:%M:%S") - $message" >> "$LOG_FILE"
-}
+
 
 
 # Function to check if Docker is installed and running
