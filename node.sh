@@ -4422,6 +4422,7 @@ Optimizer() {
         echo -e "\033[1;32m6.\033[0m Show limits.conf"
         echo -e "\033[1;32m7.\033[0m Edit sysctl.conf"
         echo -e "\033[1;32m8.\033[0m Edit limits.conf"
+	echo -e "\033[1;32m9.\033[0m Apply changes.conf"
         echo -e "\033[1;32m0.\033[0m Main menu"
         echo -e "\nSelect an option (1-8): "
         read choice
@@ -4438,6 +4439,7 @@ Optimizer() {
             6) show_limits_conf ;;
             7) edit_sysctl_conf ;;
             8) edit_limits_conf ;;
+	    9) sysctl -p ;;
             0)
                 echo -e "\033[1;34mReturning to main menu...\033[0m"
                 main_menu
