@@ -4274,6 +4274,8 @@ apply_optimizations() {
         ["net.ipv4.ip_nonlocal_bind"]="1"
         ["net.ipv4.tcp_fin_timeout"]="15"
         ["net.ipv4.tcp_keepalive_time"]="300"
+	["net.ipv4.tcp_keepalive_intvl"]="30"
+ 	["net.ipv4.tcp_keepalive_probes"]="5"
         ["net.ipv4.tcp_syncookies"]="0"
         ["net.ipv4.tcp_max_orphans"]="262144"
         ["net.ipv4.tcp_max_syn_backlog"]="8192"
@@ -4348,6 +4350,8 @@ disable_optimizations() {
     sed -i '/^net.ipv4.tcp_syn_retries/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.tcp_tw_reuse/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.ip_forward/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_keepalive_intvl/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_keepalive_probes/d' $SYSCTL_CONF
 
     # Directly remove specific limits from /etc/security/limits.conf
     sed -i '/^\* soft nproc/d' $LIMITS_CONF
