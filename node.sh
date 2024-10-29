@@ -4284,6 +4284,7 @@ apply_optimizations() {
         ["net.ipv4.tcp_wmem"]="4096 65536 16777216"
         ["net.ipv4.tcp_syn_retries"]="5"
         ["net.ipv4.tcp_tw_reuse"]="1"
+	["net.ipv4.ip_forward"]="1"
     )
 
     for key in "${!sysctl_settings[@]}"; do
@@ -4346,6 +4347,7 @@ disable_optimizations() {
     sed -i '/^net.ipv4.tcp_wmem/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.tcp_syn_retries/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.tcp_tw_reuse/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.ip_forward/d' $SYSCTL_CONF
 
     # Directly remove specific limits from /etc/security/limits.conf
     sed -i '/^\* soft nproc/d' $LIMITS_CONF
