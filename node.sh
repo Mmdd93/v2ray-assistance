@@ -28,7 +28,6 @@ prompt_input() {
 
     read -p "$prompt_text: " user_input
     echo "${user_input:-$default_value}"
-    log_message "$prompt: ${user_input:-$default_value}"
 }
 #update_marzban_node
 update_marzban_node() {
