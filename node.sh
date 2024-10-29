@@ -4292,6 +4292,7 @@ apply_optimizations() {
    	["net.ipv4.tcp_sack"]="1"
     	["net.ipv4.conf.all.rp_filter"]="1"
      	["net.ipv4.conf.default.rp_filter"]="1"
+      	["net.ipv4.ip_no_pmtu_disc"]="1"
  	
     )
 
@@ -4363,6 +4364,7 @@ disable_optimizations() {
     sed -i '/^net.ipv4.tcp_sack/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.conf.all.rp_filter/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.conf.default.rp_filter/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.ip_no_pmtu_disc/d' $SYSCTL_CONF
     
     # Directly remove specific limits from /etc/security/limits.conf
     sed -i '/^\* soft nproc/d' $LIMITS_CONF
