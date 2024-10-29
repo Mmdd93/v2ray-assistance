@@ -25,24 +25,7 @@ log_message() {
 }
 
 # Function to echo messages in red
-echo_red() {
-    echo -e "${RED}$1${NC}"
-}
 
-# Function to echo messages in yellow
-echo_yellow() {
-    echo -e "${YELLOW}$1${NC}"
-}
-
-# Function to echo messages in green
-echo_green() {
-    echo -e "${GREEN}$1${NC}"
-}
-
-# Function to echo messages in cyan
-echo_cyan() {
-    echo -e "${CYAN}$1${NC}"
-}
 
 # Function to prompt for input with default value
 prompt_input() {
