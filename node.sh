@@ -1890,14 +1890,18 @@ initial_check() {
     pause
 }
 
+# Function to set the swappiness value
 set_swappiness() {
     echo -e "\033[1;34mTip:\033[0m Swappiness values range from 0 to 100."
     echo -e " - \033[1;34mLow\033[0m values (0-30) keep more data in RAM for better performance."
     echo -e " - \033[1;34mMedium\033[0m values (40-60) offer a balanced approach."
     echo -e " - \033[1;34mHigh\033[0m values (70-100) may lead to increased latency."
+    echo -e "\033[1;34mDefault swappiness:\033[0m 1"
 
     while true; do
-        read -p "Enter new swappiness value (0-100): " NEW_SWAPPINESS
+        read -p "Enter new swappiness value (0-100) [default: 1]: " NEW_SWAPPINESS
+        NEW_SWAPPINESS=${NEW_SWAPPINESS:-1}  # Set default to 1 if no input is provided
+
         if [[ "$NEW_SWAPPINESS" =~ ^[0-9]{1,2}$ ]] && [ "$NEW_SWAPPINESS" -ge 0 ] && [ "$NEW_SWAPPINESS" -le 100 ]; then
             sudo sysctl vm.swappiness=$NEW_SWAPPINESS
             echo -e "\033[1;32mSwappiness set to\033[0m $NEW_SWAPPINESS"
@@ -1908,17 +1912,48 @@ set_swappiness() {
     done
 
     read -p "Do you want to make this swappiness value persistent? (yes/no, default: yes): " PERSIST
-    if [ -z "$PERSIST" ]; then
-        PERSIST="yes"
-    fi
+    PERSIST=${PERSIST:-yes}
 
     if [ "$PERSIST" = "yes" ]; then
         sudo sed -i '/vm.swappiness/d' /etc/sysctl.conf
         echo "vm.swappiness=$NEW_SWAPPINESS" | sudo tee -a /etc/sysctl.conf
         echo -e "\033[1;32mSwappiness value will persist across reboots.\033[0m"
     fi
-    pause
 }
+
+# Function to set the vfs_cache_pressure value
+set_vfs_cache_pressure() {
+    echo -e "\033[1;34mTip:\033[0m vfs_cache_pressure controls how much the kernel prioritizes caching of directory and inode structures."
+    echo -e " - \033[1;34mLower\033[0m values (e.g., 1) will cache more for faster directory access."
+    echo -e " - Higher values will favor freeing up memory used by cache over other data."
+
+    while true; do
+        read -p "Enter new vfs_cache_pressure value (1-1000, default: 1): " NEW_VFS_CACHE_PRESSURE
+        NEW_VFS_CACHE_PRESSURE=${NEW_VFS_CACHE_PRESSURE:-1}  # Set default to 1 if no input is provided
+
+        if [[ "$NEW_VFS_CACHE_PRESSURE" =~ ^[0-9]+$ ]] && [ "$NEW_VFS_CACHE_PRESSURE" -ge 1 ] && [ "$NEW_VFS_CACHE_PRESSURE" -le 1000 ]; then
+            sudo sysctl vm.vfs_cache_pressure=$NEW_VFS_CACHE_PRESSURE
+            echo -e "\033[1;32mvfs_cache_pressure set to\033[0m $NEW_VFS_CACHE_PRESSURE"
+            break
+        else
+            echo -e "\033[1;31mInvalid input. Please enter a number between 1 and 1000.\033[0m"
+        fi
+    done
+
+    read -p "Do you want to make this vfs_cache_pressure value persistent? (yes/no, default: yes): " PERSIST
+    PERSIST=${PERSIST:-yes}
+
+    if [ "$PERSIST" = "yes" ]; then
+        sudo sed -i '/vm.vfs_cache_pressure/d' /etc/sysctl.conf
+        echo "vm.vfs_cache_pressure=$NEW_VFS_CACHE_PRESSURE" | sudo tee -a /etc/sysctl.conf
+        echo -e "\033[1;32mvfs_cache_pressure value will persist across reboots.\033[0m"
+    fi
+}
+
+# Pause function to keep the script interactive
+pause
+}
+
 
 backup_fstab() {
     TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
