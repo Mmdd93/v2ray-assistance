@@ -1948,11 +1948,10 @@ set_vfs_cache_pressure() {
         echo "vm.vfs_cache_pressure=$NEW_VFS_CACHE_PRESSURE" | sudo tee -a /etc/sysctl.conf
         echo -e "\033[1;32mvfs_cache_pressure value will persist across reboots.\033[0m"
     fi
+    pause
 }
 
-# Pause function to keep the script interactive
-pause
-}
+
 
 
 backup_fstab() {
