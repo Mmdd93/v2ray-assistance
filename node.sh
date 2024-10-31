@@ -4293,6 +4293,11 @@ apply_optimizations() {
      	["net.ipv4.conf.default.rp_filter"]="1"
       	["net.ipv4.ip_no_pmtu_disc"]="1"
         ["vm.vfs_cache_pressure"]="10"
+	["net.ipv4.tcp_fastopen"]="3"
+	["net.ipv4.tcp_ecn"]="1"
+	["net.ipv4.tcp_retries2"]="15"
+
+
  	
     )
 
@@ -4366,7 +4371,10 @@ disable_optimizations() {
     sed -i '/^net.ipv4.conf.default.rp_filter/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.ip_no_pmtu_disc/d' $SYSCTL_CONF
     sed -i '/^vm.vfs_cache_pressure/d' $SYSCTL_CONF
-    
+    sed -i '/^net.ipv4.tcp_fastopen/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_ecn/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_retries2/d' $SYSCTL_CONF
+
     # Directly remove specific limits from /etc/security/limits.conf
     sed -i '/^\* soft nproc/d' $LIMITS_CONF
     sed -i '/^\* hard nproc/d' $LIMITS_CONF
