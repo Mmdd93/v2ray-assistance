@@ -4264,8 +4264,8 @@ apply_optimizations() {
     # Update /etc/sysctl.conf with new configurations (only overwrite existing values or add if missing)
     declare -A sysctl_settings=(
         ["vm.swappiness"]="1"
-        ["vm.dirty_ratio"]="20"
-        ["vm.dirty_background_ratio"]="10"
+        ["vm.dirty_ratio"]="60"
+        ["vm.dirty_background_ratio"]="5"
         ["fs.file-max"]="2097152"
         ["net.core.somaxconn"]="4096"
         ["net.core.netdev_max_backlog"]="16384"
