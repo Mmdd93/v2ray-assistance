@@ -1870,6 +1870,7 @@ pause() {
 initial_check() {
     SWAP_INFO=$(free | grep Swap)
     SWAPPINESS=$(cat /proc/sys/vm/swappiness)
+    CACHE_PRESSURE=$(cat /proc/sys/vm/vfs_cache_pressure)
 
     if [[ $SWAP_INFO ]]; then
         TOTAL_SWAP=$(echo $SWAP_INFO | awk '{print $2}')
@@ -1887,8 +1888,10 @@ initial_check() {
     fi
 
     echo -e "\033[1;33mCurrent swappiness value:\033[0m $SWAPPINESS"
+    echo -e "\033[1;33mCurrent vfs_cache_pressure value:\033[0m $CACHE_PRESSURE"
     pause
 }
+
 
 # Function to set the swappiness value
 set_swappiness() {
@@ -1919,6 +1922,7 @@ set_swappiness() {
         echo "vm.swappiness=$NEW_SWAPPINESS" | sudo tee -a /etc/sysctl.conf
         echo -e "\033[1;32mSwappiness value will persist across reboots.\033[0m"
     fi
+    pause
 }
 
 # Function to set the vfs_cache_pressure value
@@ -2031,7 +2035,8 @@ swap() {
         echo -e "\033[1;32m2.\033[0m Uninstall swap space"
         echo -e "\033[1;32m3.\033[0m Recover /etc/fstab from backup"
         echo -e "\033[1;32m4.\033[0m Set swappiness value"
-        echo -e "\033[1;32m5.\033[0m Check swap status"
+	echo -e "\033[1;32m5.\033[0m Set Cache Pressure value"
+        echo -e "\033[1;32m6.\033[0m Check swap status"
         echo -e "\033[1;32m0.\033[0m Return to Main Menu"
 
         read -p "Choose an option (1-5): " OPTION
@@ -2041,7 +2046,8 @@ swap() {
             2) remove_swap ;;
             3) recover_fstab ;;
             4) set_swappiness ;;
-            5) initial_check ;;  # Show current swap and swappiness info
+	    5) set_vfs_cache_pressure ;;
+            6) initial_check ;;  # Show current swap and swappiness info
             0) return ;;  # Exit to the main menu
             *) 
                 echo -e "\033[1;31mInvalid option. Please choose again.\033[0m" 
