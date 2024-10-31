@@ -2031,12 +2031,12 @@ swap() {
     initial_check  # Perform initial checks
 
     while true; do
-        echo -e "\033[1;32m1.\033[0m Install swap space"
-        echo -e "\033[1;32m2.\033[0m Uninstall swap space"
+        echo -e "\033[1;32m1.\033[0m Install SWAP"
+        echo -e "\033[1;32m2.\033[0m Uninstall SWAP"
         echo -e "\033[1;32m3.\033[0m Recover /etc/fstab from backup"
         echo -e "\033[1;32m4.\033[0m Set swappiness value"
 	echo -e "\033[1;32m5.\033[0m Set Cache Pressure value"
-        echo -e "\033[1;32m6.\033[0m Check swap status"
+        echo -e "\033[1;32m6.\033[0m SWAP status"
         echo -e "\033[1;32m0.\033[0m Return to Main Menu"
 
         read -p "Choose an option (1-5): " OPTION
