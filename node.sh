@@ -2037,6 +2037,9 @@ swap() {
         echo -e "\033[1;32m4.\033[0m Set swappiness value"
 	echo -e "\033[1;32m5.\033[0m Set Cache Pressure value"
         echo -e "\033[1;32m6.\033[0m SWAP status"
+	echo -e "\033[1;32m7.\033[0m Edit sysctl.conf"
+	echo -e "\033[1;32m8.\033[0m Edit fstab"
+	echo -e "\033[1;32m9.\033[0m apply changes"
         echo -e "\033[1;32m0.\033[0m Return to Main Menu"
 
         read -p "Choose an option (1-5): " OPTION
@@ -2047,7 +2050,10 @@ swap() {
             3) recover_fstab ;;
             4) set_swappiness ;;
 	    5) set_vfs_cache_pressure ;;
-            6) initial_check ;;  # Show current swap and swappiness info
+            6) initial_check ;;
+	    7) sudo nano /etc/sysctl.conf ;;
+	    8) sudo nano /etc/fstab ;;
+	    9) sudo sysctl -p ;;
             0) return ;;  # Exit to the main menu
             *) 
                 echo -e "\033[1;31mInvalid option. Please choose again.\033[0m" 
