@@ -4496,7 +4496,7 @@ main_menu() {
         echo -e "\033[1;32m 9.\033[0m Change server DNS"
         echo -e "\033[1;32m18.\033[0m Create your DNS"
         echo -e "\033[1;32m10.\033[0m Get SSL"
-        echo -e "\033[1;32m15.\033[0m Manage swap"
+        echo -e "\033[1;32m15.\033[0m SWAP"
         echo -e "\033[1;32m16.\033[0m Desktop + firefox on ubuntu server"
         echo -e "\033[1;32m21.\033[0m Server monthly traffic limit"
         echo -e "\033[1;32m22.\033[0m CPU/RAM MONITORING"
