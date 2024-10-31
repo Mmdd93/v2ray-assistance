@@ -4217,7 +4217,7 @@ apply_optimizations() {
 
     # Update /etc/sysctl.conf with new configurations (only overwrite existing values or add if missing)
     declare -A sysctl_settings=(
-        ["vm.swappiness"]="10"
+        ["vm.swappiness"]="1"
         ["vm.dirty_ratio"]="20"
         ["vm.dirty_background_ratio"]="10"
         ["fs.file-max"]="2097152"
@@ -4246,6 +4246,7 @@ apply_optimizations() {
     	["net.ipv4.conf.all.rp_filter"]="1"
      	["net.ipv4.conf.default.rp_filter"]="1"
       	["net.ipv4.ip_no_pmtu_disc"]="1"
+        ["vm.vfs_cache_pressure"]="10"
  	
     )
 
@@ -4318,6 +4319,7 @@ disable_optimizations() {
     sed -i '/^net.ipv4.conf.all.rp_filter/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.conf.default.rp_filter/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.ip_no_pmtu_disc/d' $SYSCTL_CONF
+    sed -i '/^vm.vfs_cache_pressure/d' $SYSCTL_CONF
     
     # Directly remove specific limits from /etc/security/limits.conf
     sed -i '/^\* soft nproc/d' $LIMITS_CONF
