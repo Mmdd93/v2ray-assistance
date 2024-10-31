@@ -4285,7 +4285,6 @@ apply_optimizations() {
         ["net.ipv4.tcp_wmem"]="4096 65536 16777216"
         ["net.ipv4.tcp_syn_retries"]="5"
         ["net.ipv4.tcp_tw_reuse"]="1"
-	["net.ipv4.ip_forward"]="1"
  	["net.ipv4.tcp_mtu_probing"]="1"
   	["net.ipv4.tcp_congestion_control"]="bbr"
    	["net.ipv4.tcp_sack"]="1"
@@ -4296,7 +4295,8 @@ apply_optimizations() {
 	["net.ipv4.tcp_fastopen"]="3"
 	["net.ipv4.tcp_ecn"]="1"
 	["net.ipv4.tcp_retries2"]="15"
-
+	["net.ipv6.conf.all.forwarding"]="1"
+	["net.ipv4.conf.all.forwarding"]="1"
 
  	
     )
@@ -4361,7 +4361,6 @@ disable_optimizations() {
     sed -i '/^net.ipv4.tcp_wmem/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.tcp_syn_retries/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.tcp_tw_reuse/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.ip_forward/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.tcp_keepalive_intvl/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.tcp_keepalive_probes/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.tcp_mtu_probing/d' $SYSCTL_CONF
@@ -4374,7 +4373,8 @@ disable_optimizations() {
     sed -i '/^net.ipv4.tcp_fastopen/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.tcp_ecn/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.tcp_retries2/d' $SYSCTL_CONF
-
+    sed -i '/^net.ipv6.conf.all.forwarding/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.conf.all.forwarding/d' $SYSCTL_CONF
     # Directly remove specific limits from /etc/security/limits.conf
     sed -i '/^\* soft nproc/d' $LIMITS_CONF
     sed -i '/^\* hard nproc/d' $LIMITS_CONF
