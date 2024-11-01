@@ -4769,11 +4769,13 @@ EOF'
                 sudo mkswap /dev/zram0
                 sudo swapon /dev/zram0
                 echo -e "\033[1;32mZRAM swap enabled.\033[0m"
+		read -p "Press Enter to continue..."
                 ;;
             2)
                 echo -e "\033[1;34mInstalling zram-tools...\033[0m"
                 sudo apt update && sudo apt install -y zram-tools
                 echo -e "\033[1;32mzram-tools installed successfully.\033[0m"
+		read -p "Press Enter to continue..."
                 ;;
             3)
                 echo -e "\033[1;34mConfiguring ZRAM...\033[0m"
@@ -4784,38 +4786,46 @@ PERCENTAGE=50
 PRIORITY=100
 EOF'
                 echo -e "\033[1;32mZRAM configuration updated in /etc/default/zramswap.\033[0m"
+		read -p "Press Enter to continue..."
                 ;;
             4)
                 echo -e "\033[1;34mEnabling ZRAM service...\033[0m"
                 sudo systemctl enable zramswap
                 echo -e "\033[1;32mZRAM service enabled.\033[0m"
+		read -p "Press Enter to continue..."
                 ;;
             5)
                 echo -e "\033[1;34mStarting ZRAM service...\033[0m"
                 sudo systemctl start zramswap
                 echo -e "\033[1;32mZRAM service started.\033[0m"
+		read -p "Press Enter to continue..."
                 ;;
             6)
                 echo -e "\033[1;34mCreating ZRAM swap area...\033[0m"
                 sudo mkswap /dev/zram0
                 sudo swapon /dev/zram0
                 echo -e "\033[1;32mZRAM swap enabled.\033[0m"
+		read -p "Press Enter to continue..."
                 ;;
             7)
                 echo -e "\033[1;34mChecking ZRAM status...\033[0m"
                 sudo zramctl
+		read -p "Press Enter to continue..."
                 ;;
             8)
                 echo -e "\033[1;34mRestarting ZRAM service...\033[0m"
                 sudo systemctl restart zramswap
                 echo -e "\033[1;32mZRAM service restarted.\033[0m"
+		read -p "Press Enter to continue..."
                 ;;
             9)
                 check_and_disable_swap
+		read -p "Press Enter to continue..."
                 ;;
             10)
                 echo -e "\033[1;34mOpening /etc/default/zramswap for editing...\033[0m"
                 sudo nano /etc/default/zramswap
+		read -p "Press Enter to continue..."
                 ;;
             0)
                 echo -e "\033[1;33mReturning to the main menu...\033[0m"
