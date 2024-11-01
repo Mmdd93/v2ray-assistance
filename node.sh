@@ -4564,19 +4564,40 @@ EOF"
                 ;;
 
             2)
-                # Restore sources.list from backup
-                echo -e "\033[1;34mAvailable backups:\033[0m"
-                ls /etc/apt/sources.list.bak.* 2>/dev/null
+    # Restore sources.list from backup
+    echo -e "\033[1;34mAvailable backups:\033[0m"
+    backups=($(ls /etc/apt/sources.list.bak.* 2>/dev/null))
+    
+    if [ ${#backups[@]} -eq 0 ]; then
+        echo -e "\033[1;31mNo backup files found.\033[0m"
+        continue
+    fi
 
-                read -p "Enter the backup filename to restore (e.g., sources.list.bak.YYYYMMDD_HHMMSS): " backup_file
+    # Display backups with numbers
+    for i in "${!backups[@]}"; do
+        echo -e "\033[1;32m$((i + 1)).\033[0m ${backups[i]}"
+    done
+    echo -e "\033[1;32m0.\033[0m Return to the previous menu"
 
-                if [[ -f "/etc/apt/$backup_file" ]]; then
-                    sudo cp "/etc/apt/$backup_file" /etc/apt/sources.list
-                    echo -e "\033[1;32mRestored sources.list from $backup_file\033[0m"
-                else
-                    echo -e "\033[1;31mBackup file not found. No changes were made.\033[0m"
-                fi
-                ;;
+    read -p "Enter the backup number to restore (1-${#backups[@]}) [default: 1]: " backup_choice
+
+    # Set default choice if no input is provided
+    if [[ -z "$backup_choice" ]]; then
+        backup_choice=1
+    fi
+
+    # Validate the choice
+    if [[ $backup_choice -eq 0 ]]; then
+        echo -e "\033[1;33mReturning to the previous menu...\033[0m"
+        continue
+    elif [[ $backup_choice -ge 1 && $backup_choice -le ${#backups[@]} ]]; then
+        selected_backup="${backups[$((backup_choice - 1))]}"
+        sudo cp "$selected_backup" /etc/apt/sources.list
+        echo -e "\033[1;32mRestored sources.list from $selected_backup\033[0m"
+    else
+        echo -e "\033[1;31mInvalid option. No changes were made.\033[0m"
+    fi
+    ;;
 
             3)
                 # Edit sources.list with nano
