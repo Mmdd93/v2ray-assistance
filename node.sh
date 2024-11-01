@@ -4524,9 +4524,10 @@ change_sources_list() {
         echo -e "\n\033[1;34mSelect an option:\033[0m"
         echo -e "\033[1;32m1.\033[0m Change sources list"
         echo -e "\033[1;32m2.\033[0m Restore sources list from backup"
-        echo -e "\033[1;32m3.\033[0m Return to main menu"
+        echo -e "\033[1;32m3.\033[0m Edit sources list with nano"
+        echo -e "\033[1;32m4.\033[0m Return to main menu"
 
-        read -p "Enter your choice (1-3): " option
+        read -p "Enter your choice (1-4): " option
 
         case $option in
             1)
@@ -4582,12 +4583,21 @@ EOF"
                 ;;
 
             3)
+                # Edit sources.list with nano
+                echo -e "\033[1;34mOpening sources.list in nano...\033[0m"
+                sudo nano /etc/apt/sources.list
+                echo -e "\033[1;32mPlease review your changes.\033[0m"
+                # Update the package lists after editing
+                sudo apt update
+                ;;
+
+            4)
                 echo -e "\033[1;33mReturning to the main menu...\033[0m"
-                main_menu
+                break
                 ;;
 
             *)
-                echo -e "\033[1;31mInvalid option. Please select 1, 2, or 3.\033[0m"
+                echo -e "\033[1;31mInvalid option. Please select 1, 2, 3, or 4.\033[0m"
                 ;;
         esac
     done
