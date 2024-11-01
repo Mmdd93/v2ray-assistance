@@ -4297,6 +4297,9 @@ apply_optimizations() {
 	["net.ipv4.tcp_retries2"]="15"
 	["net.ipv6.conf.all.forwarding"]="1"
 	["net.ipv4.conf.all.forwarding"]="1"
+	["net.ipv4.tcp_low_latency"]="1"
+	["net.ipv4.tcp_window_scaling"]="1"
+
 
  	
     )
@@ -4375,6 +4378,9 @@ disable_optimizations() {
     sed -i '/^net.ipv4.tcp_retries2/d' $SYSCTL_CONF
     sed -i '/^net.ipv6.conf.all.forwarding/d' $SYSCTL_CONF
     sed -i '/^net.ipv4.conf.all.forwarding/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_low_latency/d' $SYSCTL_CONF
+    sed -i '/^net.ipv4.tcp_window_scaling/d' $SYSCTL_CONF
+
     # Directly remove specific limits from /etc/security/limits.conf
     sed -i '/^\* soft nproc/d' $LIMITS_CONF
     sed -i '/^\* hard nproc/d' $LIMITS_CONF
