@@ -4630,6 +4630,7 @@ manage_ipv6() {
         echo -e "\033[1;32m1.\033[0m Enable IPv6"
         echo -e "\033[1;32m2.\033[0m Disable IPv6"
         echo -e "\033[1;32m3.\033[0m Make changes permanent"
+	echo -e "\033[1;32m4.\033[0m Apply changes"
         echo -e "\033[1;32m0.\033[0m Return to the main menu"
 
         read -p "Enter your choice: " choice
@@ -4670,6 +4671,7 @@ manage_ipv6() {
                     echo -e "\033[1;33mChanges not made permanent.\033[0m"
                 fi
                 ;;
+		4) sysctl -p ;;
             0)
                 echo -e "\033[1;33mReturning to the main menu...\033[0m"
                 main_menu
