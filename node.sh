@@ -4688,9 +4688,7 @@ manage_ipv6() {
 #!/bin/bash
 
 # Function to check and disable swap files
-# Function to check if ZRAM is supported and disable any active swap files
 check_and_disable_swap() {
-
     # Check if any swap is currently enabled
     if sudo swapon --show | grep -q -i swap; then
         echo -e "\033[1;33mWARNING: It is recommended to disable any enabled swap files when using ZRAM.\033[0m"
@@ -4718,12 +4716,11 @@ check_and_disable_swap() {
     fi
 }
 
-
 # Function to manage ZRAM
 manage_zram() {
     while true; do
         echo -e "\n\033[1;34mManaging ZRAM Configuration:\033[0m"
-        echo -e "\033[1;32m1.\033[0m Setup Full ZRAM
+        echo -e "\033[1;32m1.\033[0m Setup Full ZRAM"
         echo -e "\033[1;32m2.\033[0m Install zram-tools"
         echo -e "\033[1;32m3.\033[0m Configure ZRAM"
         echo -e "\033[1;32m4.\033[0m Enable ZRAM service"
@@ -4740,41 +4737,40 @@ manage_zram() {
         case $choice in
             1)
                 echo -e "\033[1;34mSetting up Full ZRAM...\033[0m"
-check_and_disable_swap  # Ensure any existing swap is disabled
+                check_and_disable_swap  # Ensure any existing swap is disabled
 
-echo -e "\033[1;34mInstalling zram-tools...\033[0m"
-sudo apt update && sudo apt install -y zram-tools
-echo -e "\033[1;32mzram-tools installed successfully.\033[0m"
+                echo -e "\033[1;34mInstalling zram-tools...\033[0m"
+                sudo apt update && sudo apt install -y zram-tools
+                echo -e "\033[1;32mzram-tools installed successfully.\033[0m"
 
-echo -e "\033[1;34mConfiguring ZRAM...\033[0m"
-sudo bash -c 'cat << EOF > /etc/default/zramswap
+                echo -e "\033[1;34mConfiguring ZRAM...\033[0m"
+                sudo bash -c 'cat << EOF > /etc/default/zramswap
 ENABLED=true
 ALGO=zstd
 PERCENTAGE=50
 PRIORITY=100
 EOF'
-echo -e "\033[1;32mZRAM configuration updated.\033[0m"
+                echo -e "\033[1;32mZRAM configuration updated.\033[0m"
 
-echo -e "\033[1;34mEnabling ZRAM service...\033[0m"
-sudo systemctl enable zramswap
-echo -e "\033[1;32mZRAM service enabled.\033[0m"
+                echo -e "\033[1;34mEnabling ZRAM service...\033[0m"
+                sudo systemctl enable zramswap
+                echo -e "\033[1;32mZRAM service enabled.\033[0m"
 
-echo -e "\033[1;34mStarting ZRAM service...\033[0m"
-sudo systemctl start zramswap
-echo -e "\033[1;32mZRAM service started.\033[0m"
+                echo -e "\033[1;34mStarting ZRAM service...\033[0m"
+                sudo systemctl start zramswap
+                echo -e "\033[1;32mZRAM service started.\033[0m"
 
-# Check if /dev/zram0 is already active
-if swapon --show | grep -q "/dev/zram0"; then
-    echo -e "\033[1;33mZRAM swap area is already enabled.\033[0m"
-else
-    echo -e "\033[1;34mCreating ZRAM swap area...\033[0m"
-    sudo mkswap /dev/zram0
-    sudo swapon /dev/zram0
-    echo -e "\033[1;32mZRAM swap enabled.\033[0m"
-fi
+                # Check if /dev/zram0 is already active
+                if swapon --show | grep -q "/dev/zram0"; then
+                    echo -e "\033[1;33mZRAM swap area is already enabled.\033[0m"
+                else
+                    echo -e "\033[1;34mCreating ZRAM swap area...\033[0m"
+                    sudo mkswap /dev/zram0
+                    sudo swapon /dev/zram0
+                    echo -e "\033[1;32mZRAM swap enabled.\033[0m"
+                fi
 
-read -p "Press Enter to continue..."
-
+                read -p "Press Enter to continue..."
                 ;;
             2)
                 echo -e "\033[1;34mInstalling zram-tools...\033[0m"
@@ -4843,6 +4839,10 @@ EOF'
         esac
     done
 }
+
+# Example call to manage_zram (uncomment this line if needed)
+# manage_zram
+
 
 
 
