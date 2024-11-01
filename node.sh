@@ -4830,25 +4830,25 @@ EOF'
                 echo -e "\033[1;34mOpening /etc/default/zramswap for editing...\033[0m"
                 sudo nano /etc/default/zramswap
                 read -p "Press Enter to continue..."
+		;;
 	    11)
                 echo -e "\033[1;34mStopping ZRAM service...\033[0m"
                 sudo systemctl stop zramswap
                 echo -e "\033[1;32mZRAM service stopped.\033[0m"
 		read -p "Press Enter to continue..."
 		;;
-  12)
+            12)
                 echo -e "\033[1;34mDisabling ZRAM service...\033[0m"
                 sudo systemctl disable zramswap
                 echo -e "\033[1;32mZRAM service disabled.\033[0m"
 		read -p "Press Enter to continue..."
 		;;
-13)
+            13)
                 echo -e "\033[1;34mRemoving ZRAM swap area...\033[0m"
                 sudo swapoff /dev/zram0
                 sudo zramctl --destroy /dev/zram0
                 echo -e "\033[1;32mZRAM swap area removed.\033[0m"
-
-                read -p "Press Enter to continue..."
+		read -p "Press Enter to continue..."
                 ;;
             0)
                 echo -e "\033[1;33mReturning to the main menu...\033[0m"
