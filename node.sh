@@ -816,9 +816,7 @@ install_speedtest_cli() {
         sudo apt-get install -y curl
     fi
     
-    # Add the Speedtest CLI repository
-    echo -e "\033[1;34mAdding Speedtest CLI repository...\033[0m"
-    curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash
+
     
     # Install Speedtest CLI
     echo -e "\033[1;34mInstalling Speedtest CLI...\033[0m"
