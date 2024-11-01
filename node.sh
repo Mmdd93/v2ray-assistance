@@ -4716,7 +4716,6 @@ check_and_disable_swap() {
     fi
 }
 
-# Function to manage ZRAM
 manage_zram() {
     while true; do
         echo -e "\n\033[1;34mManaging ZRAM Configuration:\033[0m"
@@ -4861,6 +4860,7 @@ EOF'
         esac
     done
 }
+
 
 
 # Example call to manage_zram (uncomment this line if needed)
