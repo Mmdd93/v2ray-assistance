@@ -4523,9 +4523,10 @@ change_sources_list() {
         echo -e "\033[1;32m1.\033[0m Change sources list"
         echo -e "\033[1;32m2.\033[0m Restore sources list from backup"
         echo -e "\033[1;32m3.\033[0m Edit sources list with nano"
-        echo -e "\033[1;32m4.\033[0m Return to main menu"
+        echo -e "\033[1;32m4.\033[0m Start update"
+        echo -e "\033[1;32m5.\033[0m Return to main menu"
 
-        read -p "Enter your choice (1-4): " option
+        read -p "Enter your choice (1-5): " option
 
         case $option in
             1)
@@ -4560,9 +4561,6 @@ EOF"
                 else
                     echo -e "\033[1;31mInvalid option. No changes were made.\033[0m"
                 fi
-
-                # Update the package lists
-                sudo apt update
                 ;;
 
             2)
@@ -4575,8 +4573,6 @@ EOF"
                 if [[ -f "/etc/apt/$backup_file" ]]; then
                     sudo cp "/etc/apt/$backup_file" /etc/apt/sources.list
                     echo -e "\033[1;32mRestored sources.list from $backup_file\033[0m"
-                    # Update the package lists after restoring
-                    sudo apt update
                 else
                     echo -e "\033[1;31mBackup file not found. No changes were made.\033[0m"
                 fi
@@ -4587,22 +4583,26 @@ EOF"
                 echo -e "\033[1;34mOpening sources.list in nano...\033[0m"
                 sudo nano /etc/apt/sources.list
                 echo -e "\033[1;32mPlease review your changes.\033[0m"
-                # Update the package lists after editing
-                sudo apt update
                 ;;
 
             4)
+                # Start update manually
+                echo -e "\033[1;34mStarting manual update...\033[0m"
+                sudo apt update && sudo apt upgrade -y
+                echo -e "\033[1;32mUpdate completed.\033[0m"
+                ;;
+
+            5)
                 echo -e "\033[1;33mReturning to the main menu...\033[0m"
                 main_menu
                 ;;
 
             *)
-                echo -e "\033[1;31mInvalid option. Please select 1, 2, 3, or 4.\033[0m"
+                echo -e "\033[1;31mInvalid option. Please select 1, 2, 3, 4, or 5.\033[0m"
                 ;;
         esac
     done
 }
-
 
 # Main menu function
 main_menu() {
