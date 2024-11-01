@@ -4489,6 +4489,103 @@ Optimizer() {
 
 
 
+change_sources_list() {
+    # Create a timestamp
+    timestamp=$(date +"%Y%m%d_%H%M%S")
+    
+    # Backup the existing sources list with timestamp
+    sudo cp /etc/apt/sources.list "/etc/apt/sources.list.bak.$timestamp"
+    echo -e "\033[1;32mBackup of sources.list created at /etc/apt/sources.list.bak.$timestamp\033[0m"
+
+    # Define the list of mirrors with the default one first
+    mirrors=(
+        "http://mirror.arvancloud.ir/ubuntu"  # Default mirror
+        "https://ir.ubuntu.sindad.cloud/ubuntu"
+        "https://ir.archive.ubuntu.com/ubuntu"
+        "http://ubuntu.byteiran.com/ubuntu"
+        "http://mirror.faraso.org/ubuntu"
+        "http://mirror.aminidc.com/ubuntu"
+        "https://mirror.iranserver.com/ubuntu"
+        "https://ubuntu.pars.host"
+        "http://linuxmirrors.ir/pub/ubuntu"
+        "http://repo.iut.ac.ir/repo/Ubuntu"
+        "https://mirror.0-1.cloud/ubuntu"
+        "https://ubuntu.hostiran.ir/ubuntuarchive"
+        "http://archive.ubuntu.com/ubuntu"
+        "https://archive.ubuntu.petiak.ir/ubuntu"
+        "https://mirrors.pardisco.co/ubuntu"
+        "https://ubuntu.shatel.ir/ubuntu"
+    )
+
+    # Display the menu options
+    echo -e "\n\033[1;34mSelect an option:\033[0m"
+    echo -e "\033[1;32m1.\033[0m Change sources list"
+    echo -e "\033[1;32m2.\033[0m Restore sources list from backup"
+
+    read -p "Enter your choice (1-2): " option
+
+    case $option in
+        1)
+            # Display the mirror options
+            echo -e "\n\033[1;34mSelect a new source for updates (default is 1):\033[0m"
+            for i in "${!mirrors[@]}"; do
+                echo -e "\033[1;32m$((i + 1)).\033[0m ${mirrors[i]}"
+            done
+
+            read -p "Enter your choice (1-${#mirrors[@]}) [default: 1]: " choice
+
+            # Set default choice if no input is provided
+            if [[ -z "$choice" ]]; then
+                choice=1
+            fi
+
+            # Validate the choice
+            if [[ $choice -ge 1 && $choice -le ${#mirrors[@]} ]]; then
+                selected_mirror="${mirrors[$((choice - 1))]}"
+                echo -e "\033[1;32mYou selected: $selected_mirror\033[0m"
+
+                # Update sources.list with the selected mirror
+                sudo bash -c "cat > /etc/apt/sources.list <<EOF
+deb ${selected_mirror} $(lsb_release -cs) main restricted universe multiverse
+deb ${selected_mirror} $(lsb_release -cs)-updates main restricted universe multiverse
+deb ${selected_mirror} $(lsb_release -cs)-security main restricted universe multiverse
+EOF"
+                echo -e "\033[1;32mSources updated to: ${selected_mirror}\033[0m"
+            else
+                echo -e "\033[1;31mInvalid option. No changes were made.\033[0m"
+                return
+            fi
+
+            # Update the package lists
+            sudo apt update
+            ;;
+
+        2)
+            # Restore sources.list from backup
+            echo -e "\033[1;34mAvailable backups:\033[0m"
+            ls /etc/apt/sources.list.bak.* 2>/dev/null
+
+            read -p "Enter the backup filename to restore (e.g., sources.list.bak.YYYYMMDD_HHMMSS): " backup_file
+
+            if [[ -f "/etc/apt/$backup_file" ]]; then
+                sudo cp "/etc/apt/$backup_file" /etc/apt/sources.list
+                echo -e "\033[1;32mRestored sources.list from $backup_file\033[0m"
+                # Update the package lists after restoring
+                sudo apt update
+            else
+                echo -e "\033[1;31mBackup file not found. No changes were made.\033[0m"
+            fi
+            ;;
+
+        *)
+            echo -e "\033[1;31mInvalid option. Please select 1 or 2.\033[0m"
+            ;;
+    esac
+}
+
+
+
+
 # Main menu function
 main_menu() {
     while true; do
@@ -4504,6 +4601,7 @@ main_menu() {
 	echo -e "\033[1;32mTelegram:\033[0m https://t.me/tlgrmv2"
         echo -e "\n\033[1;31mUpdate and upgrade:\033[0m"
         echo -e "\033[1;32m 1.\033[0m Update and upgrade system and install necessary packages"
+	echo -e "\033[1;32m 28.\033[0m Change Update sources to Iran"
         echo -e "\033[1;32m 2.\033[0m Install Docker and Docker Compose"
         echo -e "\033[1;32m20.\033[0m Install Docker on Iran servers"
         echo -e "\n\033[1;31mTools:\033[0m"
@@ -4539,6 +4637,7 @@ main_menu() {
             2) install_docker
 		check_docker_compose ;;
             3) isp_blocker_script ;;
+	    28)change_sources_list ;;
             4) Optimizer ;;
             5) run_system_benchmark ;;
             6) used_ports ;;
