@@ -4690,24 +4690,6 @@ manage_ipv6() {
 # Function to check and disable swap files
 # Function to check if ZRAM is supported and disable any active swap files
 check_and_disable_swap() {
-    # Check if the system supports ZRAM by looking for the zram module
-# Check if ZRAM module is loaded
-if ! lsmod | grep -q "^zram"; then
-    echo -e "\033[1;31mERROR: ZRAM module is not loaded.\033[0m"
-    echo -e "\033[1;33mPlease ensure the ZRAM kernel module is installed and loaded.\033[0m"
-    return 1
-fi
-
-# Check if any ZRAM devices are available
-if ! lsblk | grep -q "zram"; then
-    echo -e "\033[1;31mERROR: No ZRAM devices are available.\033[0m"
-    echo -e "\033[1;33mPlease create a ZRAM device using the appropriate commands.\033[0m"
-    return 1
-fi
-
-# If both checks are passed
-echo -e "\033[1;32mZRAM is supported and at least one ZRAM device is available.\033[0m"
-
 
     # Check if any swap is currently enabled
     if sudo swapon --show | grep -q -i swap; then
