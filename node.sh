@@ -4623,6 +4623,64 @@ EOF"
     done
 }
 
+
+manage_ipv6() {
+    while true; do
+        echo -e "\n\033[1;34mManage IPv6 Configuration:\033[0m"
+        echo -e "\033[1;32m1.\033[0m Enable IPv6"
+        echo -e "\033[1;32m2.\033[0m Disable IPv6"
+        echo -e "\033[1;32m3.\033[0m Make changes permanent"
+        echo -e "\033[1;32m0.\033[0m Return to the main menu"
+
+        read -p "Enter your choice: " choice
+
+        case $choice in
+            1)
+                # Enable IPv6
+                echo -e "\033[1;34mEnabling IPv6...\033[0m"
+                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                echo -e "\033[1;32mIPv6 has been enabled.\033[0m"
+                ;;
+            2)
+                # Disable IPv6
+                echo -e "\033[1;34mDisabling IPv6...\033[0m"
+                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                echo -e "\033[1;32mIPv6 has been disabled.\033[0m"
+                ;;
+            3)
+                # Make changes permanent
+                read -p "Do you want to make the current setting permanent? (y/n): " permanent_choice
+                if [[ "$permanent_choice" =~ ^[Yy]$ ]]; then
+                    if [[ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -eq 1 ]]; then
+                        # Disable IPv6 permanently
+                        echo -e "\033[1;34mMaking IPv6 disable permanent...\033[0m"
+                        echo "net.ipv6.conf.all.disable_ipv6 = 1" | sudo tee -a /etc/sysctl.conf
+                        echo "net.ipv6.conf.default.disable_ipv6 = 1" | sudo tee -a /etc/sysctl.conf
+                        echo -e "\033[1;32mIPv6 has been set to disable permanently.\033[0m"
+                    else
+                        # Enable IPv6 permanently
+                        echo -e "\033[1;34mMaking IPv6 enable permanent...\033[0m"
+                        echo "net.ipv6.conf.all.disable_ipv6 = 0" | sudo tee -a /etc/sysctl.conf
+                        echo "net.ipv6.conf.default.disable_ipv6 = 0" | sudo tee -a /etc/sysctl.conf
+                        echo -e "\033[1;32mIPv6 has been set to enable permanently.\033[0m"
+                    fi
+                else
+                    echo -e "\033[1;33mChanges not made permanent.\033[0m"
+                fi
+                ;;
+            0)
+                echo -e "\033[1;33mReturning to the main menu...\033[0m"
+                main_menu
+                ;;
+            *)
+                echo -e "\033[1;31mInvalid option. Please select 1, 2, 3, or 4.\033[0m"
+                ;;
+        esac
+    done
+}
+
 # Main menu function
 main_menu() {
     while true; do
