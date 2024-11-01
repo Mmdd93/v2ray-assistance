@@ -4872,6 +4872,7 @@ EOF'
 # Main menu function
 main_menu() {
     while true; do
+    sudo apt install curl
     clear
         echo -e "\n\033[1;31mOS info:\033[0m"
         echo -e "\033[1;32mOS:\033[0m $(lsb_release -d | cut -f2)"
