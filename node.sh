@@ -4719,7 +4719,7 @@ check_and_disable_swap() {
 manage_zram() {
     while true; do
         echo -e "\n\033[1;34mManaging ZRAM Configuration:\033[0m"
-        echo -e "\033[1;32m1.\033[0m Setup Full ZRAM"
+        echo -e "\033[1;32m1.\033[0m Setup ZRAM"
         echo -e "\033[1;32m2.\033[0m Install zram-tools"
         echo -e "\033[1;32m3.\033[0m Configure ZRAM"
         echo -e "\033[1;32m4.\033[0m Enable ZRAM service"
