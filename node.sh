@@ -4730,6 +4730,9 @@ manage_zram() {
         echo -e "\033[1;32m8.\033[0m Restart ZRAM service"
         echo -e "\033[1;32m9.\033[0m Check and Disable Swap Files"
         echo -e "\033[1;32m10.\033[0m Edit ZRAM Configuration (/etc/default/zramswap)"
+	echo -e "\033[1;32m11.\033[0m Stop ZRAM "
+	echo -e "\033[1;32m12.\033[0m Disable ZRAM "
+	echo -e "\033[1;32m13.\033[0m Remove ZRAM "
         echo -e "\033[1;32m0.\033[0m Return to the main menu"
 
         read -p "Enter your choice (0-10): " choice
@@ -4826,6 +4829,25 @@ EOF'
             10)
                 echo -e "\033[1;34mOpening /etc/default/zramswap for editing...\033[0m"
                 sudo nano /etc/default/zramswap
+                read -p "Press Enter to continue..."
+	    11)
+                echo -e "\033[1;34mStopping ZRAM service...\033[0m"
+                sudo systemctl stop zramswap
+                echo -e "\033[1;32mZRAM service stopped.\033[0m"
+		read -p "Press Enter to continue..."
+		;;
+  12)
+                echo -e "\033[1;34mDisabling ZRAM service...\033[0m"
+                sudo systemctl disable zramswap
+                echo -e "\033[1;32mZRAM service disabled.\033[0m"
+		read -p "Press Enter to continue..."
+		;;
+13)
+                echo -e "\033[1;34mRemoving ZRAM swap area...\033[0m"
+                sudo swapoff /dev/zram0
+                sudo zramctl --destroy /dev/zram0
+                echo -e "\033[1;32mZRAM swap area removed.\033[0m"
+
                 read -p "Press Enter to continue..."
                 ;;
             0)
