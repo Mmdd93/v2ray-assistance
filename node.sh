@@ -4906,7 +4906,7 @@ main_menu() {
 	echo -e "\033[1;32m26.\033[0m Check  server IP quality "
  	echo -e "\033[1;32m27.\033[0m Nginx "
         echo -e "\033[1;32m29.\033[0m Enable/Disable IPV6 "
-	echo -e "\033[1;32m30.\033[0m ZRAM (compress ram) "
+	echo -e "\033[1;32m30.\033[0m ZRAM (Optimize RAM) "
         echo -e "\n\033[1;31mXray panel:\033[0m"
         echo -e "\033[1;32m11.\033[0m XUI panel"
         echo -e "\033[1;32m12.\033[0m Marzban panel"
