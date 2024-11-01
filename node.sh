@@ -4525,9 +4525,9 @@ change_sources_list() {
         echo -e "\033[1;32m1.\033[0m Change sources list"
         echo -e "\033[1;32m2.\033[0m Restore sources list from backup"
         echo -e "\033[1;32m3.\033[0m Edit sources list with nano"
-        echo -e "\033[1;32m4.\033[0m Return to main menu"
+        echo -e "\033[1;32m0.\033[0m Return to main menu"
 
-        read -p "Enter your choice (1-4): " option
+        read -p "Enter your choice: " option
 
         case $option in
             1)
@@ -4591,9 +4591,9 @@ EOF"
                 sudo apt update
                 ;;
 
-            4)
+            0)
                 echo -e "\033[1;33mReturning to the main menu...\033[0m"
-                break
+                main_menu
                 ;;
 
             *)
