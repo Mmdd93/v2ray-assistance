@@ -4717,6 +4717,7 @@ main_menu() {
         echo -e "\033[1;32m24.\033[0m Cloudflare auto ip changer "
 	echo -e "\033[1;32m26.\033[0m Check  server IP quality "
  	echo -e "\033[1;32m27.\033[0m Nginx "
+        echo -e "\033[1;32m28.\033[0m Enable/Disable IPV6 "
         echo -e "\n\033[1;31mXray panel:\033[0m"
         echo -e "\033[1;32m11.\033[0m XUI panel"
         echo -e "\033[1;32m12.\033[0m Marzban panel"
@@ -4755,6 +4756,7 @@ main_menu() {
             24) download_and_start_api ;;
             26) ip_quality_check ;;
             27) manage_nginx ;;
+	    29) manage_ipv6 ;;
             0) exit 1
             echo "Exiting..." exit 0 ;;
             
