@@ -4577,7 +4577,7 @@ EOF"
     for i in "${!backups[@]}"; do
         echo -e "\033[1;32m$((i + 1)).\033[0m ${backups[i]}"
     done
-    echo -e "\033[1;32m0.\033[0m Return to the previous menu"
+    echo -e "\033[1;32m0.\033[0m Return"
 
     read -p "Enter the backup number to restore (1-${#backups[@]}) [default: 1]: " backup_choice
 
