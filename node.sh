@@ -4685,6 +4685,49 @@ manage_ipv6() {
 
 
 
+#!/bin/bash
+
+# Function to check and disable swap files
+# Function to check if ZRAM is supported and disable any active swap files
+check_and_disable_swap() {
+    # Check if the system supports ZRAM by looking for the zram module
+    if ! lsmod | grep -q "^zram"; then
+        echo -e "\033[1;31mERROR: ZRAM is not supported on this system.\033[0m"
+        echo -e "\033[1;33mPlease ensure the ZRAM kernel module is installed and loaded.\033[0m"
+        return 1
+    fi
+
+    echo -e "\033[1;32mZRAM support detected.\033[0m"
+
+    # Check if any swap is currently enabled
+    if sudo swapon --show | grep -q -i swap; then
+        echo -e "\033[1;33mWARNING: It is recommended to disable any enabled swap files when using ZRAM.\033[0m"
+        read -p "Do you want to disable all swap files? (yes/no): " user_input
+        
+        if [[ "$user_input" =~ ^[Yy][Ee][Ss]$ ]]; then
+            # Disable all swap
+            echo -e "\033[1;34mDisabling all swap files...\033[0m"
+            sudo swapoff -a
+            echo -e "\033[1;32mAll swap files have been disabled.\033[0m"
+
+            # Check and remove swap entry from /etc/fstab
+            if grep -q swap /etc/fstab; then
+                echo -e "\033[1;34mRemoving swap entry from /etc/fstab...\033[0m"
+                sudo sed -i.bak '/swap/d' /etc/fstab
+                echo -e "\033[1;32mSwap entry removed from /etc/fstab.\033[0m"
+            else
+                echo -e "\033[1;32mNo swap entry found in /etc/fstab.\033[0m"
+            fi
+        else
+            echo -e "\033[1;32mNo changes made. You can continue using the current swap settings.\033[0m"
+        fi
+    else
+        echo -e "\033[1;32mNo swap files are currently enabled.\033[0m"
+    fi
+}
+
+
+# Function to manage ZRAM
 manage_zram() {
     while true; do
         echo -e "\n\033[1;34mManaging ZRAM Configuration:\033[0m"
@@ -4800,6 +4843,7 @@ EOF'
         esac
     done
 }
+
 
 
 # Main menu function
