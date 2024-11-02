@@ -3270,38 +3270,59 @@ setup_show_monthly_traffic() {
 
     # Set default cron time
     echo -e "\033[1;32mSetting up default cron job to run every 2 hours.\033[0m"
-    set_cron_job 2
+    set_cron_job 
 }
 
 
-# Function to set up the cron job with custom time
+# Function to set up the cron job for running the traffic script with a default interval of 2 hours
 set_cron_job() {
-    local default_hours=$1
+    # Set default interval to 2 hours
+    local default_hours="2"
+    local hours
 
-    echo -e "\033[1;34m--- Set Cron Job ---\033[0m"
-    read -p "Enter how many hours to run the script (default is $default_hours hours): " hours
+    echo -e "\033[1;34m--- Set Traffic Script Cron Job ---\033[0m"
+    read -p "Enter the interval in hours to run the traffic script (default is $default_hours hours): " hours
 
-    # Set default values if no input is provided
+    # Use default if no input is provided
     hours=${hours:-$default_hours}
 
-    # Create the cron time string
-    cron_time="0 */$hours * * * /root/show_monthly_traffic.sh"
+    # Traffic script command
+    traffic_script_command="/root/show_monthly_traffic.sh"
 
-    # Remove any existing cron jobs that call the show_monthly_traffic.sh script
-    echo -e "\033[1;33mRemoving any existing cron jobs for /root/show_monthly_traffic.sh...\033[0m"
-    crontab -l | grep -v "/root/show_monthly_traffic.sh" | crontab -
-
-    # Add the new cron job
-    (crontab -l 2>/dev/null; echo "$cron_time") | crontab -
-    echo -e "\033[1;32mCron job added to run /root/show_monthly_traffic.sh every $hours hour(s).\033[0m"
-
-    # Restart the cron service
-    if sudo systemctl restart cron; then
-        echo -e "\033[1;32mCron service restarted successfully.\033[0m"
-    else
-        echo -e "\033[1;31mFailed to restart cron service.\033[0m"
+    # Remove any existing cron jobs that call the traffic script
+    if crontab -l | grep -q "$traffic_script_command"; then
+        echo -e "\033[1;33mUpdating existing traffic script cron job...\033[0m"
+        crontab -l | grep -v "$traffic_script_command" | crontab - || {
+            echo -e "\033[1;31mFailed to remove the existing traffic script cron job.\033[0m"
+            return 1
+        }
     fi
+
+    # Add new cron job for the traffic script
+    if [[ "$hours" -eq 0 ]]; then
+        echo -e "\033[1;31mWarning: Traffic script will run every hour!\033[0m"
+        (crontab -l 2>/dev/null | grep -v "$traffic_script_command"; echo "0 * * * * $traffic_script_command") | crontab - || {
+            echo -e "\033[1;31mFailed to set cron job for the traffic script.\033[0m"
+            return 1
+        }
+    else
+        # Set cron job to run every specified hour
+        (crontab -l 2>/dev/null | grep -v "$traffic_script_command"; echo "0 */$hours * * * $traffic_script_command") | crontab - || {
+            echo -e "\033[1;31mFailed to set cron job for the traffic script.\033[0m"
+            return 1
+        }
+    fi
+
+    # Reload cron service
+    if ! sudo service cron reload; then
+        echo -e "\033[1;31mFailed to reload cron service.\033[0m"
+        return 1
+    fi
+
+    sleep 1
+    echo -e "\033[1;32mTraffic script cron job set to run every $hours hour(s).\033[0m"
 }
+
 
 # Function to edit the cron time
 edit_cron_time() {
