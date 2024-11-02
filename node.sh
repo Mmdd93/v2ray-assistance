@@ -13,7 +13,15 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 RESET='\033[0m'  # Reset color
 NC="\033[0m" # No Color
-
+echo_green() {
+    echo -e "\033[1;32m$1\033[0m" # Prints text in green
+}
+echo_red() {
+    echo -e "\033[1;31m$1\033[0m" # Prints text in red
+}
+echo_yellow() {
+    echo -e "\033[1;33m$1\033[0m" # Prints text in yellow
+}
 # Function to prompt for input with default value
 prompt_input() {
     local prompt="$1"
@@ -3369,6 +3377,7 @@ edit_telegram_info() {
     else
         echo -e "\033[1;31mTelegram information file not found. Please set it up first.\033[0m"
     fi
+    
 }
 
 
