@@ -381,21 +381,9 @@ apply_netplan() {
   echo -e "\033[1;33mWarning: Applying an invalid YAML file could result in loss of connection.\033[0m"
 
   # Prompt the user for confirmation
-  read -p "Are you sure you want to check and apply the Netplan configuration? (yes/no): " confirm
+read -p "Press Enter to continue..."
+check_yaml_validity
 
-  if [[ "$confirm" != "yes" ]]; then
-    echo -e "\033[1;33mOperation canceled. Netplan configuration not applied.\033[0m"
-    read -p "Press Enter to continue..."
-    return
-  fi
-
-  # Check the validity of the YAML files
-  for file in "${config_files[@]}"; do
-    if ! sudo netplan try; then
-      echo -e "\033[1;31mInvalid configuration found in $file. Please fix the configuration before applying.\033[0m"
-      return
-    fi
-  done
 
   # Apply the Netplan configuration
   sudo netplan apply
@@ -408,7 +396,33 @@ apply_netplan() {
 }
 
 
+# Function to check the validity of the YAML files
+check_yaml_validity() {
+  local config_files=(/etc/netplan/*.yaml)
 
+  if [[ ! -e "${config_files[0]}" ]]; then
+    echo -e "\033[1;31mNo Netplan configuration files found.\033[0m"
+    return
+  fi
+
+  echo -e "\033[1;34mChecking validity of Netplan configuration files...\033[0m"
+  local all_valid=true
+
+  for file in "${config_files[@]}"; do
+    if ! sudo netplan try -c "$file"; then
+      echo -e "\033[1;31mInvalid configuration found in $file. Please fix the configuration before applying.\033[0m"
+      all_valid=false
+    else
+      echo -e "\033[1;32mConfiguration in $file is valid.\033[0m"
+    fi
+  done
+
+  if $all_valid; then
+    echo -e "\033[1;32mAll configurations are valid. You can apply them now.\033[0m"
+  else
+    echo -e "\033[1;31mOne or more configurations are invalid. Please correct them before proceeding.\033[0m"
+  fi
+}
 
 
 # Main menu function
