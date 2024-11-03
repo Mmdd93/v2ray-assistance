@@ -4254,11 +4254,13 @@ fi
 ;;
 
 13)
-     # Fetch the public IP address
-public_ip=$(curl -s icanhazip.com)
+# Function to strip the scheme from a URL
 strip_scheme() {
     echo "$1" | sed -e 's|^http://||' -e 's|^https://||'
 }
+
+# Fetch the public IP address
+public_ip=$(curl -s icanhazip.com)
 
 # Read user input for the target site
 read -p "Enter the target (default: 127.0.0.1:8000): " target_site
@@ -4320,16 +4322,13 @@ if sudo nginx -t; then
     # Reload Nginx to apply the new configuration
     sudo systemctl reload nginx
     echo -e "\033[1;34mProxy setup complete on port $http_port.\033[0m"
-     
 
-
-# Display Marzban URL with the public IP
-echo -e "\033[1;32m Marzban: http://$public_ip:$http_port/dashboard/\033[0m"
-read -p "Press Enter to continue..."
-
- read -p "Enter to continue.."
+    # Display Marzban URL with the public IP
+    echo -e "\033[1;32m Marzban: http://$public_ip:$http_port/dashboard/\033[0m"
+    read -p "Press Enter to continue..."
 else
     echo -e "\033[1;31mNginx configuration test failed. Please check the configuration.\033[0m"
+    read -p "Press Enter to continue..."
 fi
 
 ;;
