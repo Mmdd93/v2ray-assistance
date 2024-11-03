@@ -3861,6 +3861,7 @@ manage_nginx() {
         echo -e "\033[1;32m10. Edit Server Block\033[0m"
         echo -e "\033[1;32m11. Nginx Logs\033[0m"
         echo -e "\033[1;32m12. Set Up a Reverse Proxy\033[0m"
+	echo -e "\033[1;32m13. bypass marzban ssl with Reverse Proxy\033[0m"
         echo -e "\033[1;32m14. Remove Nginx\033[0m"
         echo -e "\033[1;32m0. return to main menu \033[0m"
 
@@ -4252,6 +4253,75 @@ fi
 
 ;;
 
+13)
+strip_scheme() {
+    echo "$1" | sed -e 's|^http://||' -e 's|^https://||'
+}
+
+# Read user input for the target site
+read -p "Enter the target site to proxy (default: 127.0.0.1:8000): " target_site
+target_site=${target_site:-127.0.0.1:8000}
+
+# Set the scheme to HTTP by default
+scheme="http"
+
+# Ask for the port for HTTP
+read -p "Enter the port for HTTP to listen (default: 8001): " http_port
+http_port=${http_port:-8001}
+
+# Set default config name if not provided
+read -p "Enter a name for the Nginx configuration file (default: default): " config_name
+config_name=${config_name:-default}
+
+# Strip the scheme from the target site
+target_site=$(strip_scheme "$target_site")
+
+# Create the Nginx configuration content in a variable
+nginx_config=$(cat <<EOF
+server {
+    listen $http_port; # Listen on the specified HTTP port
+
+    server_name _;
+
+    location / {
+        proxy_pass $scheme://$target_site;
+        proxy_set_header Host $target_site;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_ssl_server_name on;
+
+        # Disable compression to make proxy behavior more predictable
+        proxy_set_header Accept-Encoding "";
+
+        # Prevent redirects to the target site from changing the URL in the browser
+        proxy_redirect $scheme://$target_site /;
+    }
+}
+EOF
+)
+
+# Write the Nginx configuration to the file
+echo "$nginx_config" | sudo tee /etc/nginx/sites-available/$config_name > /dev/null
+
+# Check if the symbolic link already exists; if not, create it
+if [ ! -L /etc/nginx/sites-enabled/$config_name ]; then
+    sudo ln -s /etc/nginx/sites-available/$config_name /etc/nginx/sites-enabled/
+    echo -e "\033[1;32mSymbolic link created for $config_name in sites-enabled.\033[0m"
+else
+    echo -e "\033[1;33mSymbolic link for $config_name already exists in sites-enabled.\033[0m"
+fi
+
+# Test Nginx configuration
+if sudo nginx -t; then
+    echo -e "\033[1;32mNginx configuration is valid.\033[0m"
+    # Reload Nginx to apply the new configuration
+    sudo systemctl reload nginx
+    echo -e "\033[1;34mProxy setup complete on port $http_port.\033[0m"
+else
+    echo -e "\033[1;31mNginx configuration test failed. Please check the configuration.\033[0m"
+fi
+;;
             14)
                 echo -e "\033[1;33mRemoving Nginx...\033[0m"
                 if sudo apt remove --purge -y nginx nginx-common; then
