@@ -4259,14 +4259,14 @@ strip_scheme() {
 }
 
 # Read user input for the target site
-read -p "Enter the target site to proxy (default: 127.0.0.1:8000): " target_site
+read -p "Enter the target (default: 127.0.0.1:8000): " target_site
 target_site=${target_site:-127.0.0.1:8000}
 
 # Set the scheme to HTTP by default
 scheme="http"
 
 # Ask for the port for HTTP
-read -p "Enter the port for HTTP to listen (default: 8001): " http_port
+read -p "Enter the HTTP port to listen (default: 8001): " http_port
 http_port=${http_port:-8001}
 
 # Set default config name if not provided
@@ -4321,6 +4321,8 @@ if sudo nginx -t; then
 else
     echo -e "\033[1;31mNginx configuration test failed. Please check the configuration.\033[0m"
 fi
+ echo -e "\033[1;32m Marzban: http://your.ip:$http_port\033[0m
+ read -p "Enter to continue.."
 ;;
             14)
                 echo -e "\033[1;33mRemoving Nginx...\033[0m"
