@@ -396,7 +396,7 @@ check_yaml_validity
 }
 
 
-# Function to check the validity of the YAML files and install yamllint if necessary
+# Function to check the validity of the YAML files and apply them if valid
 check_yaml_validity() {
   # Check if yamllint is installed
   if ! command -v yamllint &> /dev/null; then
@@ -429,24 +429,17 @@ check_yaml_validity() {
   done
 
   if $all_valid; then
-    echo -e "\033[1;32mAll configurations are valid. Do you want to apply them now? (y/n): \033[0m"
-    read -r apply_choice
-    if [[ "$apply_choice" =~ ^[Yy]$ ]]; then
-      echo -e "\033[1;33mApplying configurations...\033[0m"
-      sudo netplan apply
+    echo -e "\033[1;32mAll configurations are valid. Applying them now...\033[0m"
+    sudo netplan apply
+    if [[ $? -eq 0 ]]; then
       echo -e "\033[1;32mNetplan configurations applied successfully.\033[0m"
     else
-      echo -e "\033[1;33mConfiguration changes were not applied.\033[0m"
+      echo -e "\033[1;31mFailed to apply Netplan configurations. Please check your settings.\033[0m"
     fi
   else
     echo -e "\033[1;31mOne or more configurations are invalid. Please correct them before proceeding.\033[0m"
   fi
 }
-
-
-
-
-
 
 
 # Main menu function
