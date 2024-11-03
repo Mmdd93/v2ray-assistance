@@ -4254,6 +4254,8 @@ fi
 ;;
 
 13)
+     # Fetch the public IP address
+public_ip=$(curl -s icanhazip.com)
 strip_scheme() {
     echo "$1" | sed -e 's|^http://||' -e 's|^https://||'
 }
@@ -4319,8 +4321,7 @@ if sudo nginx -t; then
     sudo systemctl reload nginx
     echo -e "\033[1;34mProxy setup complete on port $http_port.\033[0m"
      
-     # Fetch the public IP address
-public_ip=$(curl -s ip4.me)
+
 
 # Display Marzban URL with the public IP
 echo -e "\033[1;32m Marzban: http://$public_ip:$http_port/dashboard/\033[0m"
