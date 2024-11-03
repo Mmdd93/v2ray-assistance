@@ -398,6 +398,7 @@ check_yaml_validity
 
 # Function to check the validity of the YAML files
 check_yaml_validity() {
+sudo apt-get install yamllint
   local config_files=(/etc/netplan/*.yaml)
 
   if [[ ! -e "${config_files[0]}" ]]; then
@@ -409,20 +410,31 @@ check_yaml_validity() {
   local all_valid=true
 
   for file in "${config_files[@]}"; do
-    if ! sudo netplan try -c "$file"; then
-      echo -e "\033[1;31mInvalid configuration found in $file. Please fix the configuration before applying.\033[0m"
+    if ! yamllint "$file" > /dev/null; then
+      echo -e "\033[1;31mInvalid YAML syntax found in $file. Please fix the configuration before applying.\033[0m"
       all_valid=false
     else
-      echo -e "\033[1;32mConfiguration in $file is valid.\033[0m"
+      echo -e "\033[1;32mYAML syntax in $file is valid.\033[0m"
     fi
   done
 
   if $all_valid; then
-    echo -e "\033[1;32mAll configurations are valid. You can apply them now.\033[0m"
+    echo -e "\033[1;32mAll configurations are valid. Do you want to apply them now? (y/n): \033[0m"
+    read -r apply_choice
+    if [[ "$apply_choice" =~ ^[Yy]$ ]]; then
+      sudo netplan apply
+      echo -e "\033[1;32mNetplan configurations applied successfully.\033[0m"
+    else
+      echo -e "\033[1;33mConfiguration changes were not applied.\033[0m"
+    fi
   else
     echo -e "\033[1;31mOne or more configurations are invalid. Please correct them before proceeding.\033[0m"
   fi
 }
+
+
+
+
 
 
 # Main menu function
