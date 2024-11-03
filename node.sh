@@ -4401,13 +4401,13 @@ apply_optimizations() {
         ["vm.vfs_cache_pressure"]="10"
 	["net.ipv4.tcp_fastopen"]="3"
 	["net.ipv4.tcp_ecn"]="1"
-	["net.ipv4.tcp_retries2"]="15"
+	["net.ipv4.tcp_retries2"]="10"
 	["net.ipv6.conf.all.forwarding"]="1"
 	["net.ipv4.conf.all.forwarding"]="1"
 	["net.ipv4.tcp_low_latency"]="1"
 	["net.ipv4.tcp_window_scaling"]="1"
- ["net.ipv4.tcp_congestion_control"]="bbr"
-  ["net.core.default_qdisc"]="fq_codel"
+	["net.ipv4.tcp_congestion_control"]="bbr"
+	["net.core.default_qdisc"]="fq_codel"
 
 
  	
