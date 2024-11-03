@@ -126,7 +126,26 @@ EOF
   sudo chmod 600 /etc/netplan/$netplan_file
   echo -e "\033[1;32mapplying netplan... \033[0m"
   apply_netplan
-  read -p "Enter to continue: "
+  
+echo -e "\033[1;32mReboot your server to take effect.\033[0m"
+read -p "Would you like to reboot now? (yes/no): " choice
+
+# Check user choice
+case $choice in
+  [yY][eE][sS]|[yY])
+    echo -e "\033[1;34mRebooting now...\033[0m"
+    sudo reboot
+    ;;
+  [nN][oO]|[nN])
+    echo -e "\033[1;33mYou chose not to reboot. Changes will take effect after the next reboot.\033[0m"
+    ;;
+  *)
+    echo -e "\033[1;31mInvalid choice. Please enter 'yes' or 'no'.\033[0m"
+    ;;
+esac
+
+read -p "Press Enter to continue..."
+
 }
 
 
