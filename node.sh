@@ -4318,11 +4318,12 @@ if sudo nginx -t; then
     # Reload Nginx to apply the new configuration
     sudo systemctl reload nginx
     echo -e "\033[1;34mProxy setup complete on port $http_port.\033[0m"
+     echo -e "\033[1;32m Marzban: http://your.ip:$http_port\033[0m
+ read -p "Enter to continue.."
 else
     echo -e "\033[1;31mNginx configuration test failed. Please check the configuration.\033[0m"
 fi
- echo -e "\033[1;32m Marzban: http://your.ip:$http_port\033[0m
- read -p "Enter to continue.."
+
 ;;
             14)
                 echo -e "\033[1;33mRemoving Nginx...\033[0m"
