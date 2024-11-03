@@ -4165,7 +4165,7 @@ nginx_config=$(cat <<EOF
 server {
     listen $http_port; # Listen on the specified HTTP port
 
-    server_name $your_domain;
+    server_name _;
 
     location / {
         proxy_pass $scheme://$target_site;
@@ -4200,7 +4200,7 @@ server {
     ssl_certificate $ssl_cert; # Path to your SSL certificate
     ssl_certificate_key $ssl_key; # Path to your SSL certificate key
 
-    server_name $your_domain;
+    server_name _;
 
     location / {
         proxy_pass $scheme://$target_site;
