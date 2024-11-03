@@ -4324,7 +4324,7 @@ if sudo nginx -t; then
     echo -e "\033[1;34mProxy setup complete on port $http_port.\033[0m"
 
     # Display Marzban URL with the public IP
-    echo -e "\033[1;32m Marzban: http://$public_ip:$http_port/dashboard/\033[0m"
+    echo -e "\033[1;32mhttp://$public_ip:$http_port/dashboard/\033[0m"
     read -p "Press Enter to continue..."
 else
     echo -e "\033[1;31mNginx configuration test failed. Please check the configuration.\033[0m"
