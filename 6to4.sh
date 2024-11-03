@@ -142,9 +142,13 @@ install_openvswitch() {
 
 # Function to edit the Netplan configuration file with nano
 edit_netplan_file() {
-  # List all YAML files in the /etc/netplan/ directory
-  echo -e "\033[1;34mAvailable Netplan configuration files:\033[0m"
-  files=(/etc/netplan/*.yaml)
+  # Initialize an array to hold the YAML files
+  local files=()
+
+  # Check for existing YAML files in /etc/netplan/
+  if compgen -G "/etc/netplan/*.yaml" > /dev/null; then
+    files=(/etc/netplan/*.yaml)  # Populate the array only if files exist
+  fi
 
   # Check if any YAML files were found
   if [[ ${#files[@]} -eq 0 ]]; then
@@ -154,6 +158,7 @@ edit_netplan_file() {
   fi
 
   # Display the files with numbering
+  echo -e "\033[1;34mAvailable Netplan configuration files:\033[0m"
   for i in "${!files[@]}"; do
     echo "$((i + 1)). ${files[i]}"
   done
@@ -171,6 +176,7 @@ edit_netplan_file() {
   fi
   read -p "Press Enter to continue: "
 }
+
 
 
 
