@@ -396,9 +396,19 @@ check_yaml_validity
 }
 
 
-# Function to check the validity of the YAML files
+# Function to check the validity of the YAML files and install yamllint if necessary
 check_yaml_validity() {
-sudo apt-get install yamllint
+  # Check if yamllint is installed
+  if ! command -v yamllint &> /dev/null; then
+    echo -e "\033[1;31mYamllint is not installed. Installing now...\033[0m"
+    sudo apt-get install -y yamllint
+    if [[ $? -ne 0 ]]; then
+      echo -e "\033[1;31mFailed to install yamllint. Please install it manually.\033[0m"
+      return
+    fi
+    echo -e "\033[1;32mYamllint installed successfully.\033[0m"
+  fi
+
   local config_files=(/etc/netplan/*.yaml)
 
   if [[ ! -e "${config_files[0]}" ]]; then
@@ -422,6 +432,7 @@ sudo apt-get install yamllint
     echo -e "\033[1;32mAll configurations are valid. Do you want to apply them now? (y/n): \033[0m"
     read -r apply_choice
     if [[ "$apply_choice" =~ ^[Yy]$ ]]; then
+      echo -e "\033[1;33mApplying configurations...\033[0m"
       sudo netplan apply
       echo -e "\033[1;32mNetplan configurations applied successfully.\033[0m"
     else
@@ -431,6 +442,7 @@ sudo apt-get install yamllint
     echo -e "\033[1;31mOne or more configurations are invalid. Please correct them before proceeding.\033[0m"
   fi
 }
+
 
 
 
