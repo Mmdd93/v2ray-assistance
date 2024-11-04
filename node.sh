@@ -4360,16 +4360,22 @@ LIMITS_CONF="/etc/security/limits.conf"
 # Function to back up existing configurations
 backup_configs() {
     echo -e "\033[1;32mBacking up configuration files...\033[0m"
-    cp $SYSCTL_CONF $SYSCTL_CONF.bak
-    cp $LIMITS_CONF $LIMITS_CONF.bak
+    cp "$SYSCTL_CONF" "${SYSCTL_CONF}.bak"
+    cp "$LIMITS_CONF" "${LIMITS_CONF}.bak"
     echo -e "\033[1;32mBackup completed.\033[0m"
+}
+
+# Function to reload sysctl configurations
+reload_sysctl() {
+    echo -e "\033[1;32mReloading sysctl settings...\033[0m"
+    sysctl -p
 }
 
 # Function to apply optimizations (overwrite existing values only)
 apply_optimizations() {
     echo -e "\033[1;32mApplying optimizations...\033[0m"
 
-    # Update /etc/sysctl.conf with new configurations (only overwrite existing values or add if missing)
+    # Update /etc/sysctl.conf with new configurations (overwrite existing values or add if missing)
     declare -A sysctl_settings=(
         ["vm.swappiness"]="1"
         ["vm.dirty_ratio"]="60"
@@ -4380,8 +4386,8 @@ apply_optimizations() {
         ["net.ipv4.ip_local_port_range"]="1024 65535"
         ["net.ipv4.ip_nonlocal_bind"]="1"
         ["net.ipv4.tcp_keepalive_time"]="300"
-	["net.ipv4.tcp_keepalive_intvl"]="30"
- 	["net.ipv4.tcp_keepalive_probes"]="5"
+        ["net.ipv4.tcp_keepalive_intvl"]="30"
+        ["net.ipv4.tcp_keepalive_probes"]="5"
         ["net.ipv4.tcp_syncookies"]="0"
         ["net.ipv4.tcp_max_orphans"]="262144"
         ["net.ipv4.tcp_max_syn_backlog"]="8192"
@@ -4392,36 +4398,32 @@ apply_optimizations() {
         ["net.ipv4.tcp_wmem"]="4096 65536 16777216"
         ["net.ipv4.tcp_syn_retries"]="5"
         ["net.ipv4.tcp_tw_reuse"]="1"
- 	["net.ipv4.tcp_mtu_probing"]="1"
-  	["net.ipv4.tcp_congestion_control"]="bbr"
-   	["net.ipv4.tcp_sack"]="1"
-    	["net.ipv4.conf.all.rp_filter"]="1"
-     	["net.ipv4.conf.default.rp_filter"]="1"
-      	["net.ipv4.ip_no_pmtu_disc"]="1"
+        ["net.ipv4.tcp_mtu_probing"]="1"
+        ["net.ipv4.tcp_congestion_control"]="bbr"
+        ["net.ipv4.tcp_sack"]="1"
+        ["net.ipv4.conf.all.rp_filter"]="1"
+        ["net.ipv4.conf.default.rp_filter"]="1"
+        ["net.ipv4.ip_no_pmtu_disc"]="1"
         ["vm.vfs_cache_pressure"]="10"
-	["net.ipv4.tcp_fastopen"]="3"
-	["net.ipv4.tcp_ecn"]="1"
-	["net.ipv4.tcp_retries2"]="10"
-	["net.ipv6.conf.all.forwarding"]="1"
-	["net.ipv4.conf.all.forwarding"]="1"
-	["net.ipv4.tcp_low_latency"]="1"
-	["net.ipv4.tcp_window_scaling"]="1"
-	["net.ipv4.tcp_congestion_control"]="bbr"
-	["net.core.default_qdisc"]="fq_codel"
-
-
- 	
+        ["net.ipv4.tcp_fastopen"]="3"
+        ["net.ipv4.tcp_ecn"]="1"
+        ["net.ipv4.tcp_retries2"]="10"
+        ["net.ipv6.conf.all.forwarding"]="1"
+        ["net.ipv4.conf.all.forwarding"]="1"
+        ["net.ipv4.tcp_low_latency"]="1"
+        ["net.ipv4.tcp_window_scaling"]="1"
+        ["net.core.default_qdisc"]="fq_codel"
     )
 
     for key in "${!sysctl_settings[@]}"; do
-        if grep -q "^$key" $SYSCTL_CONF; then
-            sed -i "s|^$key.*|$key = ${sysctl_settings[$key]}|" $SYSCTL_CONF
+        if grep -q "^$key" "$SYSCTL_CONF"; then
+            sed -i "s|^$key.*|$key = ${sysctl_settings[$key]}|" "$SYSCTL_CONF"
         else
-            echo "$key = ${sysctl_settings[$key]}" >> $SYSCTL_CONF
+            echo "$key = ${sysctl_settings[$key]}" >> "$SYSCTL_CONF"
         fi
     done
 
-    # Update /etc/security/limits.conf with new limits (only overwrite existing values or add if missing)
+    # Update /etc/security/limits.conf with new limits
     declare -A limits_settings=(
         ["* soft nproc"]="65535"
         ["* hard nproc"]="65535"
@@ -4434,17 +4436,14 @@ apply_optimizations() {
     )
 
     for key in "${!limits_settings[@]}"; do
-        if grep -q "^$key" $LIMITS_CONF; then
-            sed -i "s|^$key.*|$key ${limits_settings[$key]}|" $LIMITS_CONF
+        if grep -q "^$key" "$LIMITS_CONF"; then
+            sed -i "s|^$key.*|$key ${limits_settings[$key]}|" "$LIMITS_CONF"
         else
-            echo "$key ${limits_settings[$key]}" >> $LIMITS_CONF
+            echo "$key ${limits_settings[$key]}" >> "$LIMITS_CONF"
         fi
     done
 
-    # Apply the new sysctl settings
-    echo -e "\033[1;32mreload\033[0m"# Apply the updated sysctl settings
-    sysctl -p
-
+    reload_sysctl
     echo -e "\033[1;32mOptimization Complete!\033[0m"
 }
 
@@ -4452,61 +4451,81 @@ apply_optimizations() {
 disable_optimizations() {
     echo -e "\033[1;32mDisabling all optimizations...\033[0m"
 
-    # Directly remove specific optimization settings from /etc/sysctl.conf
-    sed -i '/^vm.swappiness/d' $SYSCTL_CONF
-    sed -i '/^vm.dirty_ratio/d' $SYSCTL_CONF
-    sed -i '/^vm.dirty_background_ratio/d' $SYSCTL_CONF
-    sed -i '/^fs.file-max/d' $SYSCTL_CONF
-    sed -i '/^net.core.somaxconn/d' $SYSCTL_CONF
-    sed -i '/^net.core.netdev_max_backlog/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.ip_local_port_range/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.ip_nonlocal_bind/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_fin_timeout/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_keepalive_time/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_syncookies/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_max_orphans/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_max_syn_backlog/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_max_tw_buckets/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_reordering/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_mem/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_rmem/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_wmem/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_syn_retries/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_tw_reuse/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_keepalive_intvl/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_keepalive_probes/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_mtu_probing/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_congestion_control/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_sack/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.conf.all.rp_filter/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.conf.default.rp_filter/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.ip_no_pmtu_disc/d' $SYSCTL_CONF
-    sed -i '/^vm.vfs_cache_pressure/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_fastopen/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_ecn/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_retries2/d' $SYSCTL_CONF
-    sed -i '/^net.ipv6.conf.all.forwarding/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.conf.all.forwarding/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_low_latency/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_window_scaling/d' $SYSCTL_CONF
-    sed -i '/^net.ipv4.tcp_congestion_control/d' $SYSCTL_CONF
-    sed -i '/^net.core.default_qdisc/d' $SYSCTL_CONF
+    # Remove specific optimization settings from /etc/sysctl.conf
+    for setting in "${!sysctl_settings[@]}"; do
+        sed -i "/^$setting/d" "$SYSCTL_CONF"
+    done
 
-    # Directly remove specific limits from /etc/security/limits.conf
-    sed -i '/^\* soft nproc/d' $LIMITS_CONF
-    sed -i '/^\* hard nproc/d' $LIMITS_CONF
-    sed -i '/^\* soft nofile/d' $LIMITS_CONF
-    sed -i '/^\* hard nofile/d' $LIMITS_CONF
-    sed -i '/^root soft nproc/d' $LIMITS_CONF
-    sed -i '/^root hard nproc/d' $LIMITS_CONF
-    sed -i '/^root soft nofile/d' $LIMITS_CONF
-    sed -i '/^root hard nofile/d' $LIMITS_CONF
+    # Remove specific limits from /etc/security/limits.conf
+    for limit in "${!limits_settings[@]}"; do
+        sed -i "/^$limit/d" "$LIMITS_CONF"
+    done
 
-    echo -e "\033[1;32mreload\033[0m"# Apply the updated sysctl settings
-    sysctl -p
-
+    reload_sysctl
     echo -e "\033[1;32mAll Optimizations Disabled!\033[0m"
 }
+
+# Function to disable all optimizations (remove specific entries)
+disable_optimizations() {
+    echo -e "\033[1;32mDisabling all optimizations...\033[0m"
+
+    # Directly remove specific optimization settings from /etc/sysctl.conf
+    sed -i '/^vm.swappiness/d' "$SYSCTL_CONF"
+    sed -i '/^vm.dirty_ratio/d' "$SYSCTL_CONF"
+    sed -i '/^vm.dirty_background_ratio/d' "$SYSCTL_CONF"
+    sed -i '/^fs.file-max/d' "$SYSCTL_CONF"
+    sed -i '/^net.core.somaxconn/d' "$SYSCTL_CONF"
+    sed -i '/^net.core.netdev_max_backlog/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.ip_local_port_range/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.ip_nonlocal_bind/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_fin_timeout/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_keepalive_time/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_syncookies/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_max_orphans/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_max_syn_backlog/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_max_tw_buckets/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_reordering/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_mem/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_rmem/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_wmem/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_syn_retries/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_tw_reuse/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_keepalive_intvl/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_keepalive_probes/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_mtu_probing/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_congestion_control/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_sack/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.conf.all.rp_filter/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.conf.default.rp_filter/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.ip_no_pmtu_disc/d' "$SYSCTL_CONF"
+    sed -i '/^vm.vfs_cache_pressure/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_fastopen/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_ecn/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_retries2/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv6.conf.all.forwarding/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.conf.all.forwarding/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_low_latency/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_window_scaling/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_congestion_control/d' "$SYSCTL_CONF"
+    sed -i '/^net.core.default_qdisc/d' "$SYSCTL_CONF"
+
+    # Directly remove specific limits from /etc/security/limits.conf
+    sed -i '/^\* soft nproc/d' "$LIMITS_CONF"
+    sed -i '/^\* hard nproc/d' "$LIMITS_CONF"
+    sed -i '/^\* soft nofile/d' "$LIMITS_CONF"
+    sed -i '/^\* hard nofile/d' "$LIMITS_CONF"
+    sed -i '/^root soft nproc/d' "$LIMITS_CONF"
+    sed -i '/^root hard nproc/d' "$LIMITS_CONF"
+    sed -i '/^root soft nofile/d' "$LIMITS_CONF"
+    sed -i '/^root hard nofile/d' "$LIMITS_CONF"
+
+    # Apply the updated sysctl settings
+    echo -e "\033[1;32mReloading sysctl settings...\033[0m"
+    sysctl -p
+
+    echo -e "\033[1;32mAll optimizations have been disabled!\033[0m"
+}
+
 # Function to install BBR via LightKnight
 bbr_script() {
     echo -e "\033[1;32mUpdating system and installing necessary packages...\033[0m"
