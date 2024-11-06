@@ -1287,6 +1287,7 @@ marzban_commands() {
         echo -e "\033[1;32m13.\033[0m Edit .env"
         echo -e "\033[1;32m14.\033[0m Edit docker-compose.yml"
         echo -e "\033[1;32m15.\033[0m Change database to MySql"
+	echo -e "\033[1;32m16.\033[0m bypass ssl"
         echo -e "\033[1;32m0.\033[0m Return to the main menu"
 
         echo -e "\033[1;36m============================================\033[0m"
@@ -1309,6 +1310,7 @@ marzban_commands() {
             13) sudo nano /opt/marzban/.env || echo -e "\033[1;31mcheck [marzban status]\033[0m" ;;
             14) sudo nano /opt/marzban/docker-compose.yml || echo -e "\033[1;31mcheck [marzban status]\033[0m" ;;
             15) mysql || echo -e "\033[1;31mcheck [marzban status]\033[0m" ;;
+	    16) bypass ;;
             0) return ;;  
             *)
                 echo -e "\033[1;31mInvalid choice. Please enter a number between 0 and 15.\033[0m" ;;
@@ -1318,6 +1320,17 @@ marzban_commands() {
         echo -e "\nPress Enter to return to the Marzban Commands."
         read
     done
+}
+bypass() {
+    echo -e "\033[1;34mTo bypass SSL for Marzban:\033[0m"
+    echo -e "\033[1;32m1.\033[0m Install Nginx if it's not already installed."
+    echo -e "\033[1;32m2.\033[0m use bypass option in Nginx configuration."
+    echo -e "\033[1;32m3.\033[0m Restart Nginx to apply the changes."
+    # Prompt to continue
+    read -p "Press Enter to continue..."
+    
+    # Call manage_nginx function
+    manage_nginx
 }
 
 install_marzban() {
