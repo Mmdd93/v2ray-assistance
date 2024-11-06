@@ -1324,7 +1324,7 @@ marzban_commands() {
 bypass() {
     echo -e "\033[1;34mTo bypass SSL for Marzban:\033[0m"
     echo -e "\033[1;32m\033[0m Install Nginx if it's not already installed."
-    echo -e "\033[1;32m\033[0m use bypass option in Nginx configuration."
+    echo -e "\033[1;32m\033[0m use bypass option (13) in Nginx configuration."
     echo -e "\033[1;32m\033[0m Restart Nginx to apply the changes."
     # Prompt to continue
     read -p "Press Enter to continue..."
