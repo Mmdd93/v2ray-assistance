@@ -1,189 +1,164 @@
 #!/bin/bash
 
-# ANSI color codes
-GREEN='\033[0;32m'  # Green color for success
-RED='\033[0;31m'    # Red color for failure
-YELLOW='\033[1;33m' # Yellow color for tips
-NC='\033[0m'        # No color (default)
-
 # Configuration file paths
-CONFIG_FILE="/root/api/api_config.txt"
-TOKENS_FILE="/root/api/api_tokens.txt"
+CONFIG_FILE="/root/api_config.txt"
+TOKENS_FILE="/root/api_tokens.txt"
 
-# Function to validate IPv4 address and check if port 80 is open
-validate_ip() {
-    local ip=$1
-    if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        # Check if port 80 is open using nc (netcat)
-        nc -z -w 1 $ip 80
-        local result=$?
-        if [ $result -eq 0 ]; then
-            return 0  # Valid IPv4 address and port 80 is open
-        else
-            return 1  # Valid IPv4 address but port 80 is closed
-        fi
+# Color codes
+GREEN="\033[1;32m"
+RED="\033[1;31m"
+YELLOW="\033[1;33m"
+BLUE="\033[1;34m"
+RESET="\033[0m"
+
+# Ensure the directory exists
+DIR_PATH=$(dirname "$CONFIG_FILE")
+mkdir -p "$DIR_PATH"
+
+# Function to prompt for configuration if not found
+prompt_configuration() {
+    echo -e "${YELLOW}Configuration file is missing or incomplete. Please enter the required configuration:${RESET}"
+    read -p "Target subdomain: " SUBDOMAIN
+    read -p "Zone ID: " ZONE_ID
+    read -p "Port to check: " PORT  # Ask for the port number
+    echo -e "${YELLOW}Select Record Type:${RESET}"
+    echo -e "${BLUE}1) A${RESET}"
+    echo -e "${BLUE}2) CNAME${RESET}"
+    read -p "Enter 1 for A, 2 for CNAME: " RECORD_TYPE_CHOICE
+    
+    if [[ "$RECORD_TYPE_CHOICE" -eq 1 ]]; then
+        RECORD_TYPE="A"
+    elif [[ "$RECORD_TYPE_CHOICE" -eq 2 ]]; then
+        RECORD_TYPE="CNAME"
     else
-        return 1  # Invalid IPv4 address
+        echo -e "${RED}Invalid choice. Exiting.${RESET}"
+        exit 1
     fi
+    
+    read -p "Enter the IPs or CNAMEs separated by space: " -a IP_LIST
+
+    echo -e "${GREEN}Saving configuration...${RESET}"
+    # Save configuration to file
+    {
+        echo "SUBDOMAIN=\"$SUBDOMAIN\""
+        echo "ZONE_ID=\"$ZONE_ID\""
+        echo "PORT=\"$PORT\""
+        echo "RECORD_TYPE=\"$RECORD_TYPE\""
+        echo "IP_LIST=(${IP_LIST[*]})"
+        echo "CURRENT_INDEX=0"
+    } > "$CONFIG_FILE"
+    echo -e "${GREEN}Configuration saved to $CONFIG_FILE.${RESET}"
 }
 
-# Function to fetch DNS record ID for the specified subdomain
-fetch_record_id() {
-    local subdomain=$1
-    local response=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records" \
-        -H "Authorization: Bearer $API_TOKEN" \
-        -H "Content-Type: application/json")
-    
-    # Check if response is null or empty
-    if [[ -z "$response" ]]; then
-        echo -e "${RED}Error:${NC} API response is empty when fetching DNS records."
-        return 1
-    fi
-    
-    # Check if jq result is empty or contains null
-    local record_id=$(echo "$response" | jq -r '.result[] | select(.name == "'"$subdomain"'") | .id')
-    if [[ -z "$record_id" || "$record_id" == "null" ]]; then
-        echo -e "${RED}Error:${NC} Failed to find DNS record ID for $subdomain."
-        return 1
-    fi
-    
-    echo "$record_id"
+# Function to prompt for API token if not found
+prompt_token() {
+    echo -e "${YELLOW}Token file is missing or incomplete. Please enter your API Token:${RESET}"
+    read -p "API Token: " API_TOKEN
+    echo -e "${GREEN}Saving token...${RESET}"
+    # Save token to file
+    echo "API_TOKEN=\"$API_TOKEN\"" > "$TOKENS_FILE"
+    echo -e "${GREEN}API token saved to $TOKENS_FILE.${RESET}"
 }
 
-# Function to fetch currently set IP address from DNS record
-fetch_current_ip() {
-    local record_id=$1
-    local response=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records/$record_id" \
-        -H "Authorization: Bearer $API_TOKEN" \
-        -H "Content-Type: application/json")
-    
-    # Check if response is null or empty
-    if [[ -z "$response" ]]; then
-        echo -e "${RED}Error:${NC} API response is empty when fetching current IP address."
-        return 1
-    fi
-    
-    local current_ip=$(echo "$response" | jq -r '.result.content')
-    if [[ -z "$current_ip" ]]; then
-        echo -e "${RED}Error:${NC} Failed to fetch current IP address from DNS record."
-        return 1
-    fi
-    
-    echo "$current_ip"
+# Function to check if the IP is reachable on the specified port
+is_port_open() {
+    local ip="$1"
+    local port="$2"  # Use the port number passed as an argument
+    timeout 2 bash -c "echo '' > /dev/tcp/$ip/$port" 2>/dev/null
 }
 
-# Function to update DNS record
-update_dns() {
-    local record_id=$1
-    local found_valid_ip=0
+# Function to check or create DNS records
+check_or_create_dns_record() {
+    SUBDOMAIN="$1"
+    RECORD_TYPE="$2"
+    ZONE_ID="$3"
+    API_TOKEN="$4"
+    IP_LIST=("${!5}")
+    CURRENT_INDEX="$6"
+    PORT="$7"  # Get the port number
 
-    # Iterate through each IP address in IPS array
-    for ip_value in "${IPS[@]}"; do
-        echo "Testing IP address: $ip_value"
+    while true; do
+        # Select the next IP/CNAME from the list
+        TARGET_IP="${IP_LIST[$CURRENT_INDEX]}"
 
-        # Fetch current IP address from DNS record
-        CURRENT_IP=$(fetch_current_ip "$record_id")
+        echo -e "${YELLOW}Checking port $PORT for $TARGET_IP...${RESET}"  # Use the specified port
 
-        # Skip IP if it matches the current set IP
-        if [[ "$ip_value" == "$CURRENT_IP" ]]; then
-            echo -e "${YELLOW}Skipping IP address $ip_value as it is already set.${NC}"
-            continue
-        fi
+        # Check if the IP is reachable on the specified port
+        if is_port_open "$TARGET_IP" "$PORT"; then
+            echo -e "${GREEN}Port $PORT is open on $TARGET_IP. Processing record update...${RESET}"
 
-        # Validate IP address before updating
-        if validate_ip "$ip_value"; then
-            response=$(curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records/$record_id" \
+            # Check if the DNS record already exists
+            RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records?name=$SUBDOMAIN&type=$RECORD_TYPE" \
                 -H "Authorization: Bearer $API_TOKEN" \
-                -H "Content-Type: application/json" \
-                --data "{\"type\":\"A\",\"name\":\"$SUBDOMAIN\",\"content\":\"$ip_value\",\"ttl\":120,\"proxied\":false}")
+                -H "Content-Type: application/json")
 
-            echo "Response from API:"
-            echo "$response"
+            # Use jq to parse the response and check if the record exists
+            if echo "$RESPONSE" | jq -e '.result | length > 0' > /dev/null; then
+                # Update the existing DNS record with the new target IP/CNAME
+                RECORD_ID=$(echo "$RESPONSE" | jq -r '.result[0].id')
+                UPDATE_RESPONSE=$(curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records/$RECORD_ID" \
+                    -H "Authorization: Bearer $API_TOKEN" \
+                    -H "Content-Type: application/json" \
+                    --data "{\"type\":\"$RECORD_TYPE\",\"name\":\"$SUBDOMAIN\",\"content\":\"$TARGET_IP\",\"ttl\":1,\"proxied\":false}")
 
-            if [[ $(echo "$response" | jq -r .success) == "true" ]]; then
-                echo -e "${GREEN}Success:${NC} DNS record updated successfully with IP address: $ip_value"
-                found_valid_ip=1
-                break  # Exit loop if update is successful
+                if echo "$UPDATE_RESPONSE" | jq -e '.success == true' > /dev/null; then
+                    echo -e "${GREEN}$RECORD_TYPE record for $SUBDOMAIN updated to target $TARGET_IP.${RESET}"
+                    
+                    # Update CURRENT_INDEX after a successful update
+                    CURRENT_INDEX=$(( (CURRENT_INDEX + 1) % ${#IP_LIST[@]} ))
+                    break  # Exit the loop after a successful update
+                else
+                    echo -e "${RED}Error updating record: $(echo "$UPDATE_RESPONSE" | jq '.errors[0].message')${RESET}"
+                    # Move to the next IP without changing the index if the update fails
+                fi
             else
-                echo -e "${RED}Error:${NC} Failed to update DNS record with IP address: $ip_value"
-                echo "$response" | jq .
+                # Create a new DNS record
+                echo -e "${YELLOW}Record not found. Creating a new $RECORD_TYPE record for $SUBDOMAIN with target $TARGET_IP...${RESET}"
+                CREATE_RESPONSE=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records" \
+                    -H "Authorization: Bearer $API_TOKEN" \
+                    -H "Content-Type: application/json" \
+                    --data "{\"type\":\"$RECORD_TYPE\",\"name\":\"$SUBDOMAIN\",\"content\":\"$TARGET_IP\",\"ttl\":1,\"proxied\":false}")
+
+                if echo "$CREATE_RESPONSE" | jq -e '.success == true' > /dev/null; then
+                    echo -e "${GREEN}$RECORD_TYPE record for $SUBDOMAIN created with target $TARGET_IP.${RESET}"
+                    
+                    # Update CURRENT_INDEX after a successful creation
+                    CURRENT_INDEX=$(( (CURRENT_INDEX + 1) % ${#IP_LIST[@]} ))
+                    break  # Exit the loop after a successful creation
+                else
+                    echo -e "${RED}Error creating record: $(echo "$CREATE_RESPONSE" | jq '.errors[0].message')${RESET}"
+                    # Move to the next IP without changing the index if the creation fails
+                fi
             fi
         else
-            echo -e "${YELLOW}Tip:${NC} IP address $ip_value is not valid or port 80 is not open. Skipping."
+            echo -e "${RED}Port $PORT is not open on $TARGET_IP. Moving to the next record.${RESET}"
+            # Update CURRENT_INDEX to check the next IP
+            CURRENT_INDEX=$(( (CURRENT_INDEX + 1) % ${#IP_LIST[@]} ))
         fi
+
+        
     done
 
-    # Check if a valid IP address was found and updated
-    if [ $found_valid_ip -eq 0 ]; then
-        echo -e "${RED}Error:${NC} No valid IP addresses found to update DNS record."
-    fi
+    # Save the updated index to the configuration file
+    sed -i "s/^CURRENT_INDEX=.*/CURRENT_INDEX=$CURRENT_INDEX/" "$CONFIG_FILE"
+    echo -e "${GREEN}Next IP will be ${IP_LIST[$CURRENT_INDEX]} on the next run.${RESET}"
 }
 
-# Function to prompt user for configuration variables
-prompt_configuration() {
-    echo -e "${YELLOW}Configuration file is missing or incomplete.${NC} Please enter the required configuration:"
-    
-    read -p "Subdomain (e.g., api.example.com): " SUBDOMAIN
-    read -p "API Token: " API_TOKEN
-    read -p "Zone ID: " ZONE_ID
-    read -p "IP addresses separated by space: " IPS_INPUT
-    
-    # Validate IP addresses and format them into an array
-    IPS=()
-    for ip in $IPS_INPUT; do
-        IPS+=("$ip")
-    done
-    
-    # Save configuration to files
-    echo "API_TOKEN=\"$API_TOKEN\"" > "$TOKENS_FILE"
-    echo "ZONE_ID=\"$ZONE_ID\"" >> "$TOKENS_FILE"
-    echo "SUBDOMAIN=\"$SUBDOMAIN\"" >> "$TOKENS_FILE"
-    echo "IPS=(${IPS[@]})" > "$CONFIG_FILE"
-}
-
-# Function to load configuration variables from files
-load_configuration() {
+# Load configuration if available
+if [ -f "$CONFIG_FILE" ]; then
     source "$CONFIG_FILE"
-}
-
-# Function to load API_TOKEN, ZONE_ID, and SUBDOMAIN from tokens file
-load_tokens() {
-    source "$TOKENS_FILE"
-}
-
-# Check if tokens file exists and load API_TOKEN, ZONE_ID, and SUBDOMAIN
-if [ -s "$TOKENS_FILE" ]; then
-    load_tokens
-fi
-
-# Check if config file exists and load configuration
-if [ ! -s "$CONFIG_FILE" ]; then
-    echo -e "${YELLOW}Configuration file not found or empty.${NC} Creating a new one."
+else
+    echo -e "${RED}Error: Configuration file not found.${RESET}"
     prompt_configuration
-else
-    load_configuration
-    
-    # Check if variables are properly loaded
-    if [[ -z "$SUBDOMAIN" || ! ${IPS[@]} ]]; then
-        echo -e "${YELLOW}Tip:${NC} Configuration file is missing required variables (SUBDOMAIN, IPS)."
-        prompt_configuration
-    fi
 fi
 
-# Fetch the DNS record ID for the specified subdomain
-RECORD_ID=$(fetch_record_id "$SUBDOMAIN")
-
-if [ -z "$RECORD_ID" ]; then
-    echo -e "${RED}Error:${NC} Failed to find DNS record ID for $SUBDOMAIN"
-    exit 1
+# Load API token if available
+if [ -f "$TOKENS_FILE" ]; then
+    source "$TOKENS_FILE"
 else
-    echo -e "${GREEN}Success:${NC} Found RECORD_ID: $RECORD_ID"
+    echo -e "${RED}Error: Token file not found.${RESET}"
+    prompt_token
 fi
 
-# Update DNS record with the next IP address
-update_dns "$RECORD_ID"
-
-# Rotate the IPs array for the next run
-IPS=("${IPS[@]:1}" "${IPS[0]}")
-echo -e "Updated IP list for next run: ${YELLOW}${IPS[@]}${NC}"
-echo "IPS=(${IPS[@]})" > "$CONFIG_FILE"
+# Main function to check or create DNS records
+check_or_create_dns_record "$SUBDOMAIN" "$RECORD_TYPE" "$ZONE_ID" "$API_TOKEN" "IP_LIST[@]" "$CURRENT_INDEX" "$PORT"  # Pass the port number
