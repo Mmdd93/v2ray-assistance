@@ -3758,7 +3758,7 @@ download_and_start_api() {
         case $choice in
             1)
                 echo "Downloading api.sh to /root..."
-                if curl -o /root/api.sh http://node.aws-sub.com/api.sh; then
+                if curl -o /root/api.sh https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/api.sh; then
                     chmod +x /root/api.sh
                     echo -e "\033[1;32mDownload complete and permissions set.\033[0m"
                 else
