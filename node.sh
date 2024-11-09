@@ -5064,6 +5064,7 @@ main_menu() {
         echo -e "\033[1;32m29.\033[0m Enable/Disable IPV6 "
 	echo -e "\033[1;32m30.\033[0m ZRAM (Optimize RAM) "
         echo -e "\033[1;32m31.\033[0m Tunnel 6to4 SIT "
+	echo -e "\033[1;32m32.\033[0m Send File to Remote Server & Forward to Telegram "
         echo -e "\n\033[1;31mXray panel:\033[0m"
         echo -e "\033[1;32m11.\033[0m XUI panel"
         echo -e "\033[1;32m12.\033[0m Marzban panel"
