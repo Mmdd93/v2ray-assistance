@@ -73,27 +73,30 @@ start_sshpass_ssh() {
 # Function to prompt for values and save to configuration file
 save_ssh_config() {
     while [[ -z "$FILE" ]]; do
-        read -p "Enter the path of the file to send: " FILE
+        read -p "Enter the path of the file to send (e.g: /root/file.log): " FILE
     done
 
     while [[ -z "$REMOTE_USER" ]]; do
-        read -p "Enter the remote user: " REMOTE_USER
+        read -p "Enter remote user (default: root): " REMOTE_USER
+  REMOTE_USER="${REMOTE_USER:-root}"
     done
 
     while [[ -z "$REMOTE_HOST" ]]; do
-        read -p "Enter the remote host: " REMOTE_HOST
+        read -p "Enter the remote host ip: " REMOTE_HOST
     done
 
     while [[ -z "$REMOTE_PORT" ]]; do
-        read -p "Enter the remote SSH port: " REMOTE_PORT
+         read -p "Enter remote port (default: 22): " REMOTE_PORT
+  REMOTE_PORT="${REMOTE_PORT:-22}"
     done
 
     while [[ -z "$REMOTE_DIR" ]]; do
-        read -p "Enter the remote directory: " REMOTE_DIR
+       read -p "Enter remote directory (default: /root): " REMOTE_DIR
+  REMOTE_DIR="${REMOTE_DIR:-/root}"
     done
 
     while [[ -z "$ROOT_PASSWORD" ]]; do
-        read -sp "Enter the root password: " ROOT_PASSWORD
+        read -p "Enter the root password: " ROOT_PASSWORD
         echo
     done
 
