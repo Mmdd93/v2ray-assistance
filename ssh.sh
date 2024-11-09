@@ -303,6 +303,7 @@ show_menu() {
         echo -e "\033[1;33m 7.\033[0m Set cron job for file transfer"
         echo -e "\033[1;33m 8.\033[0m Check and save SSH configuration"
         echo -e "\033[1;33m 9.\033[0m Edit cron jobs (nano)"
+        echo -e "\033[1;33m 11.\033[0m start sending file"
         echo -e "\033[1;33m 0.\033[0m Exit\n"
         
         echo -e "\033[1;36m========================================\033[0m"
