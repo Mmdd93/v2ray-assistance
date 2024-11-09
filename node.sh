@@ -5006,11 +5006,21 @@ EOF'
     done
 }
 
+download_and_run_ssh_assistance() {
+    local url="https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/ssh.sh"
+    local script_path="/root/ssh.sh"
 
+    echo -e "\033[1;34mDownloading the SSH assistance script...\033[0m"
+    curl -o "$script_path" -s "$url"
 
-# Example call to manage_zram (uncomment this line if needed)
-# manage_zram
-
+    if [[ -f "$script_path" ]]; then
+        echo -e "\033[1;32mDownload successful. Running the script...\033[0m"
+        chmod +x "$script_path"
+        bash "$script_path"
+    else
+        echo -e "\033[1;31mFailed to download the script.\033[0m"
+    fi
+}
 
 
 
@@ -5097,6 +5107,7 @@ main_menu() {
 	    31) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/6to4.sh -o 6to4.sh
 sudo bash 6to4.sh
  ;;
+ 32) download_and_run_ssh_assistance ;;
             0) exit 1
             echo "Exiting..." exit 0 ;;
             
