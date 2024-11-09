@@ -3276,7 +3276,7 @@ setup_show_monthly_traffic() {
 
     # Download the script
     echo -e "\033[1;33mDownloading the traffic script...\033[0m"
-    wget -O /root/show_monthly_traffic.sh http://node.aws-sub.com/show_monthly_traffic.sh
+    wget -O /root/show_monthly_traffic.sh https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/show_monthly_traffic.sh
 
     # Make the script executable
     chmod +x /root/show_monthly_traffic.sh
