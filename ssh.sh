@@ -278,6 +278,11 @@ set_send_file_ssh_cron() {
     echo -e "\033[1;32mCron job for send_file_ssh.sh set to run every $send_file_hours hour(s).\033[0m"
     read -p "Press Enter to continue..."
 }
+start_send_file_ssh() {
+    echo -e "\033[1;31mstarting...\033[0m"
+    sudo bash /root/send_file_ssh.sh
+   read -p "Press Enter to continue..."
+}
 
 
 
@@ -333,6 +338,7 @@ show_menu() {
                 echo -e "\033[1;31mExiting...\033[0m"
                 exit 0
                 ;;
+            11) start_send_file_ssh ;;    
             *) 
                 echo -e "\033[1;31mInvalid option. Please try again.\033[0m"
                 sleep 1
