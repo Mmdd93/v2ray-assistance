@@ -159,10 +159,15 @@ create_send_file_to_telegram_script() {
 
         REMOTE_SCRIPT_PATH="$REMOTE_DIR/send_file_to_telegram.sh"
 
-           # Convert FILES array to a space-separated string with full remote paths
+           ## Convert FILES array to a space-separated string with each file path under REMOTE_DIR
         FILES_STRING=""
         for FILE_PATH in "${FILES[@]}"; do
-            FILES_STRING+="$REMOTE_DIR/$FILE_PATH "
+            # Prefix with REMOTE_DIR if not already there
+            if [[ "$FILE_PATH" != "$REMOTE_DIR"* ]]; then
+                FILES_STRING+="$REMOTE_DIR/$(basename "$FILE_PATH") "
+            else
+                FILES_STRING+="$FILE_PATH "
+            fi
         done
 
         # Transfer the script to the remote server
