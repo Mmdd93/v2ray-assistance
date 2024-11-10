@@ -250,6 +250,7 @@ edit_haproxy() {
 # Main menu for managing HAProxy
 haproxy_menu() {
   while true; do
+  clear
     echo -e "\n\033[1;34m--- HAProxy Configuration Management ---\033[0m"
     echo "1. Install HAProxy"
     echo "2. Remove HAProxy"
