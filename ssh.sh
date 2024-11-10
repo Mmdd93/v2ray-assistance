@@ -167,16 +167,26 @@ BOT_TOKEN="$BOT_TOKEN"
 CHAT_ID="$CHAT_ID"
 FILE_PATH="$FILE"
 
-if [ ! -f "\$FILE_PATH" ]; then
-  echo "File does not exist: \$FILE_PATH" >&2
-  exit 1
-fi
+# Loop through each file in the array
+for FILE_PATH in "${FILES[@]}"; do
+  # Check if the file exists
+  if [ ! -f "$FILE_PATH" ]; then
+    echo "Error: File does not exist: $FILE_PATH" >&2
+    continue
+  fi
 
-curl -s -X POST "https://api.telegram.org/bot\$BOT_TOKEN/sendDocument" \
-  -F chat_id="\$CHAT_ID" \
-  -F document=@"\$FILE_PATH"
+  # Send the file to Telegram
+  RESPONSE=$(curl -s -w "%{http_code}" -o /dev/null -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendDocument" \
+    -F chat_id="$CHAT_ID" \
+    -F document=@"$FILE_PATH")
 
-echo "File \$FILE_PATH sent to Telegram."
+  # Check if the file was sent successfully
+  if [ "$RESPONSE" -eq 200 ]; then
+    echo "File $FILE_PATH sent to Telegram successfully."
+  else
+    echo "Failed to send file $FILE_PATH to Telegram. HTTP response code: $RESPONSE" >&2
+  fi
+done
 EOL
 
 chmod +x "$REMOTE_SCRIPT_PATH"
