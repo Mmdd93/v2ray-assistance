@@ -167,7 +167,9 @@ d.rectangle([bar_x, bar_y, bar_x + bar_width, bar_y + bar_height], outline=(0,0,
 
 # Add text to the bar
 bar_text = f"Remaining traffic: {${REMAINING_PERCENTAGE}}%"
-text_width, text_height = d.textsize(bar_text, font=f)
+text_bbox = d.textbbox((0,0), bar_text, font=f)
+text_width = text_bbox[2] - text_bbox[0]
+text_height = text_bbox[3] - text_bbox[1]
 text_x = (img_width - text_width) // 2
 text_y = bar_y - text_height - padding
 d.text((text_x, text_y), bar_text, fill=(0,0,0), font=f)
@@ -177,6 +179,7 @@ img.save('$IMAGE_PATH')
 EOF
     send_telegram_image "$IMAGE_PATH"
 }
+
 
 # Check if traffic exceeds threshold and handle accordingly
 if (( $(echo "$TOTAL_TRAFFIC_GIB > $THRESHOLD_GIB" | bc -l) )); then
