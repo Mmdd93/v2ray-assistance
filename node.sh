@@ -4670,7 +4670,8 @@ change_sources_list() {
         echo -e "\033[1;32m2.\033[0m Restore sources list from backup"
         echo -e "\033[1;32m3.\033[0m Edit sources list with nano"
         echo -e "\033[1;32m4.\033[0m Start update"
-        echo -e "\033[1;32m5.\033[0m Return to main menu"
+	echo -e "\033[1;32m5.\033[0m Fix update issues (broken apt or dependencies)"
+        echo -e "\033[1;32m0.\033[0m Return to main menu"
 
         read -p "Enter your choice (1-5): " option
 
@@ -4697,13 +4698,15 @@ change_sources_list() {
                     selected_mirror="${mirrors[$((choice - 1))]}"
                     echo -e "\033[1;32mYou selected: $selected_mirror\033[0m"
 
-                    # Update sources.list with the selected mirror and the codename
-                    sudo bash -c "cat > /etc/apt/sources.list <<EOF
-deb ${selected_mirror} ${ubuntu_codename} main restricted universe multiverse
-deb ${selected_mirror} ${ubuntu_codename}-updates main restricted universe multiverse
-deb ${selected_mirror} ${ubuntu_codename}-security main restricted universe multiverse
+                    # Update sources.list with the selected mirror (clearing previous entries)
+sudo bash -c "cat > /etc/apt/sources.list <<EOF
+deb ${selected_mirror} $(lsb_release -cs) main restricted universe multiverse
+deb ${selected_mirror} $(lsb_release -cs)-updates main restricted universe multiverse
+deb ${selected_mirror} $(lsb_release -cs)-security main restricted universe multiverse
+deb ${selected_mirror} $(lsb_release -cs)-backports main restricted universe multiverse
 EOF"
-                    echo -e "\033[1;32mSources updated to: ${selected_mirror}\033[0m"
+echo -e "\033[1;32mSources updated to: ${selected_mirror}\033[0m"
+
                 else
                     echo -e "\033[1;31mInvalid option. No changes were made.\033[0m"
                 fi
@@ -4759,11 +4762,26 @@ EOF"
                 echo -e "\033[1;32mUpdate completed.\033[0m"
                 ;;
 
-            5)
+            0)
                 echo -e "\033[1;33mReturning to the main menu...\033[0m"
                 main_menu
                 ;;
+            5)
+                # Fix update issues (fix broken apt and dependencies)
+                echo -e "\033[1;34mFixing broken packages and apt issues...\033[0m"
 
+                # Fix broken packages
+                sudo apt --fix-broken install -y
+
+                # Clean up partial installations and dependencies
+                sudo apt-get autoremove -y
+                sudo apt-get autoclean -y
+
+                # Try fixing any other package issues
+                sudo dpkg --configure -a
+
+                echo -e "\033[1;32mUpdate issues fixed.\033[0m"
+                ;;
             *)
                 echo -e "\033[1;31mInvalid option. Please select 1, 2, 3, 4, or 5.\033[0m"
                 ;;
