@@ -159,8 +159,11 @@ create_send_file_to_telegram_script() {
 
         REMOTE_SCRIPT_PATH="$REMOTE_DIR/send_file_to_telegram.sh"
 
-        # Convert FILES array to a space-separated string
-        FILES_STRING="${FILES[@]}"
+           # Convert FILES array to a space-separated string with full remote paths
+        FILES_STRING=""
+        for FILE_PATH in "${FILES[@]}"; do
+            FILES_STRING+="$REMOTE_DIR/$FILE_PATH "
+        done
 
         # Transfer the script to the remote server
         sshpass -p "$ROOT_PASSWORD" ssh -p "$REMOTE_PORT" "$REMOTE_USER@$REMOTE_HOST" <<EOF
