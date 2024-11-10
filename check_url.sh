@@ -3,98 +3,10 @@
 CONFIG_FILE="/root/config.txt"
 IMAGE_PATH="/root/check_sites_image.png"  # Define the image path
 
-# Function to prompt for values and save them in the config file
-setup_config() {
-  read -p "Enter URL file path (default: urls.txt): " URL_FILE
-  URL_FILE="${URL_FILE:-urls.txt}"
-
-  read -p "Enter log file path (default: check_sites.log): " LOG_FILE
-  LOG_FILE="${LOG_FILE:-check_sites.log}"
-
-  read -p "Enter remote user (default: root): " REMOTE_USER
-  REMOTE_USER="${REMOTE_USER:-root}"
-
-  read -p "Enter remote host ip: " REMOTE_HOST
-
-  read -p "Enter remote port (default: 22): " REMOTE_PORT
-  REMOTE_PORT="${REMOTE_PORT:-22}"
-
-  read -p "Enter remote directory (default: /root): " REMOTE_DIR
-  REMOTE_DIR="${REMOTE_DIR:-/root}"
-
-  read -p "Enter target port to check (default: 80): " TARGET_PORT
-  TARGET_PORT="${TARGET_PORT:-80}"
-
-  read -p "Enter root password: " ROOT_PASSWORD
-  echo
-
-  # Telegram bot details
-  read -p "Enter Telegram bot token: " BOT_TOKEN
-  read -p "Enter Telegram chat ID: " CHAT_ID
-
-  # Save configuration to the config file
-  cat <<EOL > "$CONFIG_FILE"
-URL_FILE="$URL_FILE"
-LOG_FILE="$LOG_FILE"
-REMOTE_USER="$REMOTE_USER"
-REMOTE_HOST="$REMOTE_HOST"
-REMOTE_PORT="$REMOTE_PORT"
-REMOTE_DIR="$REMOTE_DIR"
-TARGET_PORT="$TARGET_PORT"
-ROOT_PASSWORD="$ROOT_PASSWORD"
-BOT_TOKEN="$BOT_TOKEN"
-CHAT_ID="$CHAT_ID"
-EOL
-
-  echo "Configuration saved to $CONFIG_FILE."
-}
-
-# Check if the config file exists; if not, run setup_config
-if [ ! -f "$CONFIG_FILE" ]; then
-  echo "Configuration file not found. Setting up configuration..."
-  setup_config
-fi
 
 # Source the config file to load the variables
 source "$CONFIG_FILE"
 
-# Define the required packages
-REQUIRED_PACKAGES=("curl" "sshpass" "dnsutils" "imagemagick" "python3-pillow")
-
-# Function to install a package if it is not installed
-install_if_missing() {
-  PACKAGE=$1
-  if ! command -v "$PACKAGE" &> /dev/null; then
-    echo "$PACKAGE is not installed. Installing..."
-    if ! sudo apt-get update && sudo apt-get install -y "$PACKAGE"; then
-      echo "Failed to install $PACKAGE" >&2
-      exit 1
-    fi
-  else
-    echo "$PACKAGE is already installed."
-  fi
-}
-
-# Check if the file with URLs exists; if not, prompt for URLs and save to the file
-if [ ! -f "$URL_FILE" ]; then
-  echo "URL file not found. Please enter the URLs you want to check."
-  echo "Enter each URL on a new line. Type 'done' when finished."
-
-  # Create a new URL file and add URLs
-  > "$URL_FILE"  # Clear or create the file
-  while true; do
-    read -p "Enter URL: " URL
-    if [ "$URL" == "done" ]; then
-      break
-    elif [[ "$URL" =~ ^https?:// ]]; then
-      echo "$URL" >> "$URL_FILE"
-    else
-      echo "Invalid URL format. Please start with http:// or https://"
-    fi
-  done
-
-  echo "URLs saved to $URL_FILE."
-fi
 
 # Clear the log file if it exists
 > "$LOG_FILE"
