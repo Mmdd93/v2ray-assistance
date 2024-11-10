@@ -5109,6 +5109,8 @@ main_menu() {
 sudo bash 6to4.sh
  ;;
  32) download_and_run_ssh_assistance ;;
+  33) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup%20_URLs%20_check.sh -o setup%20_URLs%20_check.sh
+sudo bash setup%20_URLs%20_check.sh
             0) exit 1
             echo "Exiting..." exit 0 ;;
             
