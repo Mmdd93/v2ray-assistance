@@ -72,27 +72,35 @@ start_sshpass_ssh() {
 
 # Function to prompt for values and save to configuration file
 save_ssh_config() {
-    while [[ -z "$FILE" ]]; do
-        read -p "Enter the path of the file to send (e.g: /root/file.log): " FILE
+    FILES=()  # Initialize an empty array to hold file paths
+    
+    # Prompt for each file path, line by line
+    while true; do
+        read -p "Enter the path of a file to send (or press Enter to finish): " FILE
+        if [[ -z "$FILE" ]]; then
+            break  # Exit loop if no input is given
+        fi
+        FILES+=("$FILE")  # Add the file path to the array
     done
 
+    # Set other required details
     while [[ -z "$REMOTE_USER" ]]; do
         read -p "Enter remote user (default: root): " REMOTE_USER
-  REMOTE_USER="${REMOTE_USER:-root}"
+        REMOTE_USER="${REMOTE_USER:-root}"
     done
 
     while [[ -z "$REMOTE_HOST" ]]; do
-        read -p "Enter the remote host ip: " REMOTE_HOST
+        read -p "Enter the remote host IP: " REMOTE_HOST
     done
 
     while [[ -z "$REMOTE_PORT" ]]; do
-         read -p "Enter remote port (default: 22): " REMOTE_PORT
-  REMOTE_PORT="${REMOTE_PORT:-22}"
+        read -p "Enter remote port (default: 22): " REMOTE_PORT
+        REMOTE_PORT="${REMOTE_PORT:-22}"
     done
 
     while [[ -z "$REMOTE_DIR" ]]; do
-       read -p "Enter remote directory (default: /root): " REMOTE_DIR
-  REMOTE_DIR="${REMOTE_DIR:-/root}"
+        read -p "Enter remote directory (default: /root): " REMOTE_DIR
+        REMOTE_DIR="${REMOTE_DIR:-/root}"
     done
 
     while [[ -z "$ROOT_PASSWORD" ]]; do
@@ -108,8 +116,9 @@ save_ssh_config() {
         read -p "Enter your Telegram Chat ID: " CHAT_ID
     done
 
+    # Save configuration to the file, with FILES formatted as an array
     cat <<EOL > "$CONFIG_FILE"
-FILE="$FILE"
+FILES=(${FILES[@]})
 REMOTE_USER="$REMOTE_USER"
 REMOTE_HOST="$REMOTE_HOST"
 REMOTE_PORT="$REMOTE_PORT"
@@ -122,6 +131,8 @@ EOL
     echo "Configuration saved to $CONFIG_FILE"
     read -p "Press Enter to continue..."
 }
+
+
 
 # Function to edit the configuration file with nano
 edit_ssh_config() {
