@@ -197,43 +197,56 @@ create_send_file_ssh_script() {
 
 CONFIG_FILE="/root/send-file-ssh.txt"
 
+# Check if the configuration file exists
 if [ ! -f "$CONFIG_FILE" ]; then
   echo "Configuration file $CONFIG_FILE does not exist." >&2
   exit 1
 fi
 
+# Source the configuration file
 source "$CONFIG_FILE"
 
-if [ ! -f "$FILE" ]; then
-  echo "File $FILE does not exist." >&2
-  exit 1
-fi
-
+# Check if sshpass is installed
 if ! command -v sshpass &> /dev/null; then
   echo "sshpass is not installed or not executable." >&2
   exit 1
 fi
 
-if sshpass -p "$ROOT_PASSWORD" ssh -p "$REMOTE_PORT" "$REMOTE_USER@$REMOTE_HOST" exit; then
+# Verify SSH connection
+if sshpass -p "$ROOT_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$REMOTE_PORT" "$REMOTE_USER@$REMOTE_HOST" exit; then
   echo "SSH connection to $REMOTE_USER@$REMOTE_HOST successful."
 else
   echo "Failed to connect to $REMOTE_USER@$REMOTE_HOST via SSH." >&2
   exit 1
 fi
 
-if sshpass -p "$ROOT_PASSWORD" scp -P "$REMOTE_PORT" "$FILE" "$REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR"; then
-  echo "File successfully sent to $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR"
-else
-  echo "Failed to send file to $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR" >&2
-  exit 1
-fi
+# Loop through each file in the FILES array
+for FILE_PATH in "${FILES[@]}"; do
+    # Check if the file exists
+    if [ -f "$FILE_PATH" ]; then
+        echo "Attempting to send file: $FILE_PATH"
+        
+        # Send the file using scp
+        if sshpass -p "$ROOT_PASSWORD" scp -P "$REMOTE_PORT" "$FILE_PATH" "$REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR"; then
+            echo "File $FILE_PATH successfully sent to $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR"
+        else
+            echo "Failed to send file $FILE_PATH to $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR" >&2
+            exit 1  # Exit if any file transfer fails
+        fi
+    else
+        echo "File does not exist: $FILE_PATH" >&2
+        exit 1  # Exit if any specified file is missing
+    fi
+done
 
+# Run the script on the remote server to send files to Telegram
 if sshpass -p "$ROOT_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$REMOTE_PORT" "$REMOTE_USER@$REMOTE_HOST" '/root/send_file_to_telegram.sh'; then
   echo "send_file_to_telegram.sh started successfully on $REMOTE_USER@$REMOTE_HOST"
 else
   echo "Failed to start send_file_to_telegram.sh on $REMOTE_USER@$REMOTE_HOST" >&2
   exit 1
 fi
+
 
 EOF
 
