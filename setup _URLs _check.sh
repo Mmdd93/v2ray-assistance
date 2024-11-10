@@ -5,10 +5,7 @@ IMAGE_PATH="/root/check_sites_image.png"  # Define the image path
 
 # Function to prompt for values and save them in the config file
 setup_config() {
-  read -p "Enter URL file path (default: urls.txt): " URL_FILE
   URL_FILE="${URL_FILE:-urls.txt}"
-
-  read -p "Enter log file path (default: check_sites.log): " LOG_FILE
   LOG_FILE="${LOG_FILE:-check_sites.log}"
 
   read -p "Enter remote user (default: root): " REMOTE_USER
@@ -57,9 +54,6 @@ check_config() {
   fi
 }
 
-
-
-
 # Define the required packages
 REQUIRED_PACKAGES=("curl" "sshpass" "dnsutils" "imagemagick" "python3-pillow")
 
@@ -77,248 +71,161 @@ install_if_missing() {
   fi
 }
 
-# Check if the file with URLs exists; if not, prompt for URLs and save to the file
-if [ ! -f "$URL_FILE" ]; then
-  echo "URL file not found. Please enter the URLs you want to check."
-  echo "Enter each URL on a new line. Type 'done' when finished."
+# Function to save URLs to a file
+save_urls_to_file() {
+  local URL_FILE="$1"  # The file to save URLs
 
-  # Create a new URL file and add URLs
-  > "$URL_FILE"  # Clear or create the file
-  while true; do
-    read -p "Enter URL: " URL
-    if [ "$URL" == "done" ]; then
-      break
-    elif [[ "$URL" =~ ^https?:// ]]; then
-      echo "$URL" >> "$URL_FILE"
-    else
-      echo "Invalid URL format. Please start with http:// or https://"
-    fi
-  done
+  # Check if the URL file exists
+  if [ ! -f "$URL_FILE" ]; then
+    echo "URL file not found. Please enter the URLs you want to check."
+    echo "Enter each URL on a new line. Type 'done' when finished."
 
-  echo "URLs saved to $URL_FILE."
-fi
+    # Clear or create the file
+    > "$URL_FILE"
 
-generate_check_url_script() {
-  cat << 'EOF' > /root/check_url.sh
-#!/bin/bash
+    # Loop to read and validate URLs
+    while true; do
+      read -p "Enter URL: " URL
+      if [ "$URL" == "done" ]; then
+        break
+      elif [[ "$URL" =~ ^https?:// ]]; then
+        echo "$URL" >> "$URL_FILE"
+      else
+        echo "Invalid URL format. Please start with http:// or https://"
+      fi
+    done
 
-CONFIG_FILE="/root/config.txt"
-IMAGE_PATH="/root/check_sites_image.png"  # Define the image path
-
-# Source the config file to load the variables
-source "$CONFIG_FILE"
-
-# Clear the log file if it exists
-> "$LOG_FILE"
-
-# Log header with timestamp
-echo "pishgaman $(TZ=":Asia/Tehran" date "+%Y-%m-%d %H:%M:%S")" | tee -a "$LOG_FILE"
-
-# Read and process each URL
-while IFS= read -r URL; do
-  # Validate URL format
-  if ! [[ "$URL" =~ ^https?:// ]]; then
-    echo "Invalid URL format: $URL" | tee -a "$LOG_FILE"
-    continue
-  fi
-
-  # Extract the domain from the URL
-  DOMAIN=$(echo "$URL" | awk -F[/:] '{print $4}')
-  TARGET_URL="http://$DOMAIN:$TARGET_PORT"
-
-  # Run curl and capture the HTTP status code on the specified port
-  STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 "$TARGET_URL")
-
-  # Lookup the IP address for the domain
-  IP_ADDRESS=$(dig +short "$DOMAIN" | head -n 1)
-
-  if [ "$STATUS" -eq 000 ]; then
-    echo "$DOMAIN [$IP_ADDRESS][status: $STATUS] Connection timeout on port $TARGET_PORT" | tee -a "$LOG_FILE"
+    echo "URLs saved to $URL_FILE."
   else
-    echo "$DOMAIN [$IP_ADDRESS][status: $STATUS] Success on port $TARGET_PORT" | tee -a "$LOG_FILE"
+    echo "URL file already exists at $URL_FILE."
   fi
-done < "$URL_FILE"
-
-# Function to generate an image from the log file
-generate_simple_image_from_log() {
-    local log_file="$1"
-    local image_path="$2"
-    
-    python3 - <<EOF
-from PIL import Image, ImageDraw, ImageFont
-
-# Constants
-img_width = 800
-img_height = 600
-padding = 10
-line_height = 20
-
-# Create image
-img = Image.new('RGB', (img_width, img_height), color = (255, 255, 255))
-d = ImageDraw.Draw(img)
-
-# Load font
-try:
-    f = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 16)
-except IOError:
-    f = ImageFont.load_default()
-
-# Read the log file and process its content
-with open('$log_file', 'r') as file:
-    log_text = file.readlines()
-
-# Function to draw colored text based on status
-def draw_colored_text(text, status, y_position):
-    if "Success" in status:
-        color = (0, 255, 0)  # Green for success
-    else:
-        color = (255, 0, 0)  # Red for failure
-    
-    d.text((padding, y_position), text, fill=color, font=f)
-
-# Draw each line from the log file
-y_position = padding
-for line in log_text:
-    line = line.strip()
-    if line:  # Avoid empty lines
-        # Check if the line contains a success or failure status
-        if "Success" in line:
-            draw_colored_text(line, "Success", y_position)
-        elif "Connection timeout" in line:
-            draw_colored_text(line, "Failure", y_position)
-        else:
-            # Default to black for other lines
-            d.text((padding, y_position), line, fill=(0, 0, 0), font=f)
-        
-        y_position += line_height
-
-# Save image
-img.save('$image_path')
-EOF
 }
 
-# Call the function to generate the image
-generate_simple_image_from_log "$LOG_FILE" "$IMAGE_PATH"
+# Function to set up the URL testing cron job
+set_url_test_cron() {
+  # Default interval in hours
+  default_send_file_interval=2  # Default to run once every 2 hours
 
-# Function to send the PNG file to Telegram from the remote server
-send_png_to_telegram_via_sshpass() {
-    local image_path="$1"
-    local remote_user="$2"
-    local remote_host="$3"
-    local remote_port="$4"
-    local root_password="$5"
-    local bot_token="$6"
-    local chat_id="$7"
+  # Prompt user for interval in hours
+  echo -e "\033[1;33mEnter the interval (in hours) to run the url_test.sh script:\033[0m"
+  read -p "Enter hours (default $default_send_file_interval hours): " send_file_hours
 
-    if [ ! -f "$image_path" ]; then
-        echo "PNG file does not exist. Skipping sending to Telegram."
-        return 1
-    fi
+  # If input is empty, use the default interval
+  send_file_hours=${send_file_hours:-$default_send_file_interval}
 
-    # Copy PNG file to remote server using sshpass and scp
-    if sshpass -p "$root_password" scp -P "$remote_port" "$image_path" "$remote_user@$remote_host:/root/"; then
-        echo "PNG file successfully transferred to remote server."
+  # Validate that the input is a number
+  if ! [[ "$send_file_hours" =~ ^[0-9]+$ ]]; then
+    echo -e "\033[1;31mInvalid input. Please enter a valid number.\033[0m"
+    return 1
+  fi
 
-        # Send PNG file to Telegram from the remote server
-        sshpass -p "$root_password" ssh -p "$remote_port" "$remote_user@$remote_host" << EOF
-            curl -X POST "https://api.telegram.org/bot$bot_token/sendPhoto" \
-                -F chat_id="$chat_id" \
-                -F photo=@/root/$(basename "$image_path") \
-                -F caption="url test image."
-EOF
+  # Command for running the script
+  send_file_command="/root/check_url.sh"
 
-        if [ $? -eq 0 ]; then
-            echo "PNG file successfully sent to Telegram from the remote server."
+  # Remove old cron job if it exists
+  if crontab -l | grep -q "$send_file_command"; then
+    echo -e "\033[1;33mUpdating existing cron job...\033[0m"
+    crontab -l | grep -v "$send_file_command" | crontab - || {
+      echo -e "\033[1;31mFailed to remove the existing cron job.\033[0m"
+      return 1
+    }
+  fi
+
+  # Add new cron job based on user input
+  if [[ "$send_file_hours" -eq 0 ]]; then
+    echo -e "\033[1;31mWarning: script will run every hour!\033[0m"
+    (crontab -l 2>/dev/null | grep -v "$send_file_command"; echo "0 * * * * $send_file_command") | crontab - || {
+      echo -e "\033[1;31mFailed to set cron job.\033[0m"
+      return 1
+    }
+  else
+    # Set cron job to run every specified hour
+    (crontab -l 2>/dev/null | grep -v "$send_file_command"; echo "0 */$send_file_hours * * * $send_file_command") | crontab - || {
+      echo -e "\033[1;31mFailed to set cron job.\033[0m"
+      return 1
+    }
+  fi
+
+  # Reload cron service
+  if ! sudo service cron reload; then
+    echo -e "\033[1;31mFailed to reload cron service.\033[0m"
+    return 1
+  fi
+
+  sleep 1
+  echo -e "\033[1;32mCron job set to run every $send_file_hours hour(s).\033[0m"
+  read -p "Press Enter to continue..."
+}
+
+# Function to download the check_url.sh script from GitHub
+download_check_url_script() {
+  echo -e "\033[1;33mDownloading check_url.sh script from GitHub...\033[0m"
+  curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/check_url.sh -o /root/check_url.sh
+  if [ $? -eq 0 ]; then
+    echo -e "\033[1;32mcheck_url.sh script downloaded successfully.\033[0m"
+    sudo chmod +x /root/check_url.sh
+  else
+    echo -e "\033[1;31mFailed to download check_url.sh.\033[0m"
+  fi
+}
+
+# Function to edit cron job
+edit_cron_job() {
+    # List current cron jobs and prompt user to edit
+    echo -e "\033[1;33mCurrent cron jobs:\033[0m"
+    crontab -l
+
+    echo -e "\033[1;33mDo you want to edit the cron job? (yes/no)\033[0m"
+    read -p "Enter your choice: " edit_choice
+
+    if [[ "$edit_choice" == "yes" ]]; then
+        # Edit the cron job
+        echo -e "\033[1;33mEditing cron jobs...\033[0m"
+        crontab -e  # Opens the crontab in the default editor
+        # Reload cron service after editing
+        if sudo service cron reload; then
+            echo -e "\033[1;32mCron job reloaded successfully.\033[0m"
         else
-            echo "Failed to send PNG file to Telegram." 
+            echo -e "\033[1;31mFailed to reload cron service.\033[0m"
         fi
     else
-        echo "Failed to transfer PNG file to the remote server."
+        echo -e "\033[1;32mNo changes made to the cron job.\033[0m"
     fi
-}
 
-# Send the PNG to Telegram
-send_png_to_telegram_via_sshpass "$IMAGE_PATH" "$REMOTE_USER" "$REMOTE_HOST" "$REMOTE_PORT" "$ROOT_PASSWORD" "$BOT_TOKEN" "$CHAT_ID"
-EOF
+    sleep 1  # Pause before returning to the menu
 }
 
 
-set_url_test_cron() {
-    # Default interval in hours
-    default_send_file_interval=2  # default to run once a day
-
-    # Prompt user for interval in hours
-    echo -e "\033[1;33mEnter the interval (in hours) to run the url_test.sh script:\033[0m"
-    read -p "Enter hours (default $default_send_file_interval hours): " send_file_hours
-
-    # Use default if no input is provided
-    send_file_hours=${send_file_hours:-$default_send_file_interval}
-
-    # Command for sending file using /root/send_file_ssh.sh
-    send_file_command="/root/check_url.sh"
-
-    # Remove old cron job if it exists
-    if crontab -l | grep -q "$send_file_command"; then
-        echo -e "\033[1;33mUpdating existing cron job...\033[0m"
-        crontab -l | grep -v "$send_file_command" | crontab - || {
-            echo -e "\033[1;31mFailed to remove the existing cron job.\033[0m"
-            return 1
-        }
-    fi
-
-    # Add new cron job based on user input
-    if [[ "$send_file_hours" -eq 0 ]]; then
-        echo -e "\033[1;31mWarning: script will run every hour!\033[0m"
-        (crontab -l 2>/dev/null | grep -v "$send_file_command"; echo "0 * * * * $send_file_command") | crontab - || {
-            echo -e "\033[1;31mFailed to set cron job.\033[0m"
-            return 1
-        }
-    else
-        # Set cron job to run every specified hour
-        (crontab -l 2>/dev/null | grep -v "$send_file_command"; echo "0 */$send_file_hours * * * $send_file_command") | crontab - || {
-            echo -e "\033[1;31mFailed to set cron job.\033[0m"
-            return 1
-        }
-    fi
-
-    # Reload cron service
-    if ! sudo service cron reload; then
-        echo -e "\033[1;31mFailed to reload cron service.\033[0m"
-        return 1
-    fi
-
-    sleep 1
-    echo -e "\033[1;32mCron job set to run every $send_file_hours hour(s).\033[0m"
-    read -p "Press Enter to continue..."
-}
 menu() {
-    clear
-    echo -e "\033[1;32mSelect an option:\033[0m"
-    echo "1) setup"
-    echo "5) Exit"
+    while true; do  # Start an infinite loop
+        clear
+        echo -e "\033[1;32mSelect an option:\033[0m"
+        echo "1) Setup"
+        echo "2) Edit Cron Job"
+        echo "0) Exit"
 
-    read -p "Enter your choice: " choice
+        read -p "Enter your choice: " choice
 
-    case $choice in
-        1)
-	install_if_missing
-	check_config
-	generate_check_url_script
-	set_url_test_cron
-	sudo chmod +x /root/check_url.sh
-	/bin/bash/ /root/check_url.sh
-            ;;
-        0)
-            echo "Exiting..."
-            exit 0
-            ;;
-        *)
-            echo "Invalid option. Please choose a number between 1 and 5."
-            sleep 2
-            menu  # Recursively call the menu if invalid input is given
-            ;;
-    esac
+        case $choice in
+            1)
+                install_if_missing
+                check_config
+                download_check_url_script  # Download the script as part of option 1
+                set_url_test_cron
+                sudo chmod +x /root/check_url.sh
+                /bin/bash /root/check_url.sh
+                ;;
+            2)
+                edit_cron_job
+                ;;
+            0)
+                break
+                ;;
+            *)
+                echo -e "\033[1;31mInvalid option. Please try again.\033[0m"
+                ;;
+        esac
+    done
 }
 
-# Call the menu function to display the menu
 menu
