@@ -12,7 +12,6 @@ IMAGE_PATH="/root/traffic_log.png"
 # Get current Tehran time and date
 TEHRAN_TIME=$(TZ=":Asia/Tehran" date "+%Y-%m-%d %H:%M:%S")
 
-
 # Function to send image to Telegram
 send_telegram_image() {
     local image_path="$1"
@@ -80,12 +79,12 @@ TRAFFIC_UNIT=$(echo $TOTAL_TRAFFIC | awk '{print $2}')
 # Convert traffic to bytes and then to GiB
 TOTAL_TRAFFIC_BYTES=$(convert_to_bytes $TRAFFIC_VALUE $TRAFFIC_UNIT)
 TOTAL_TRAFFIC_GIB=$(bc <<< "scale=2; $TOTAL_TRAFFIC_BYTES / (1024 * 1024 * 1024)")
+
 # Calculate remaining traffic percentage
 REMAINING_PERCENTAGE=$(bc <<< "scale=2; ($THRESHOLD_GIB - $TOTAL_TRAFFIC_GIB) / $THRESHOLD_GIB * 100")
 
 # Compose message
 message="\n\n$TITLE\n$(TZ=":Asia/Tehran" date "+%Y-%m-%d %H:%M:%S")\n"
-#message+="$CURRENT_MONTH $CURRENT_YEAR\n\n"
 message+="vnstat output:\n$VNSTAT_OUTPUT\n\n"
 message+=" $CURRENT_YEAR-$CURRENT_MONTH-01 to now: $TOTAL_TRAFFIC_GIB GiB\n\n"
 
@@ -105,7 +104,6 @@ if check_ufw_status && (( $(echo "$TOTAL_TRAFFIC_GIB <= $THRESHOLD_GIB" | bc -l)
     echo "Disabling ufw..."
     sudo ufw --force disable
 fi
-
 
 # Function to generate and send image with log message and bar visualization
 generate_and_send_image() {
@@ -153,12 +151,6 @@ d.rectangle([bar_x, bar_y, bar_x + bar_width, bar_y + bar_height], fill=(200,200
 # Calculate used bar width
 used_bar_width = int(bar_width * $TOTAL_TRAFFIC_GIB / $THRESHOLD_GIB)
 
-# Adjusted color based on remaining percentage
-if $REMAINING_PERCENTAGE <= 10:
-    bar_color="255,0,0"  # Red if remaining percentage <= 10%
-else:
-    bar_color="0,255,0"  # Green otherwise
-
 # Draw used bar
 d.rectangle([bar_x, bar_y, bar_x + used_bar_width, bar_y + bar_height], fill=($bar_color))
 
@@ -166,7 +158,7 @@ d.rectangle([bar_x, bar_y, bar_x + used_bar_width, bar_y + bar_height], fill=($b
 d.rectangle([bar_x, bar_y, bar_x + bar_width, bar_y + bar_height], outline=(0,0,0), width=2)
 
 # Add text to the bar
-bar_text = f"Remaining traffic: {${REMAINING_PERCENTAGE}}%"
+bar_text = f"Remaining traffic: {round($REMAINING_PERCENTAGE, 2)}%"
 text_bbox = d.textbbox((0,0), bar_text, font=f)
 text_width = text_bbox[2] - text_bbox[0]
 text_height = text_bbox[3] - text_bbox[1]
@@ -179,8 +171,6 @@ img.save('$IMAGE_PATH')
 EOF
     send_telegram_image "$IMAGE_PATH"
 }
-
-
 # Check if traffic exceeds threshold and handle accordingly
 if (( $(echo "$TOTAL_TRAFFIC_GIB > $THRESHOLD_GIB" | bc -l) )); then
     message+="Total traffic exceeds $THRESHOLD_GIB GiB. Enabling firewall and blocking all traffic except SSH.\n"
