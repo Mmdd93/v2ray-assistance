@@ -4636,7 +4636,7 @@ change_sources_list() {
     while true; do
         # Create a timestamp for backup
         timestamp=$(date +"%Y%m%d_%H%M%S")
-        
+
         # Backup the existing sources list with timestamp
         sudo cp /etc/apt/sources.list "/etc/apt/sources.list.bak.$timestamp"
         echo -e "\033[1;32mBackup of sources.list created at /etc/apt/sources.list.bak.$timestamp\033[0m"
@@ -4660,6 +4660,9 @@ change_sources_list() {
             "https://mirrors.pardisco.co/ubuntu"
             "https://ubuntu.shatel.ir/ubuntu"
         )
+
+        # Determine the Ubuntu release codename with a fallback for "noble"
+        ubuntu_codename=$(lsb_release -cs 2>/dev/null || echo "noble")
 
         # Display the menu options
         echo -e "\n\033[1;34mSelect an option:\033[0m"
@@ -4694,11 +4697,11 @@ change_sources_list() {
                     selected_mirror="${mirrors[$((choice - 1))]}"
                     echo -e "\033[1;32mYou selected: $selected_mirror\033[0m"
 
-                    # Update sources.list with the selected mirror
+                    # Update sources.list with the selected mirror and the codename
                     sudo bash -c "cat > /etc/apt/sources.list <<EOF
-deb ${selected_mirror} $(lsb_release -cs) main restricted universe multiverse
-deb ${selected_mirror} $(lsb_release -cs)-updates main restricted universe multiverse
-deb ${selected_mirror} $(lsb_release -cs)-security main restricted universe multiverse
+deb ${selected_mirror} ${ubuntu_codename} main restricted universe multiverse
+deb ${selected_mirror} ${ubuntu_codename}-updates main restricted universe multiverse
+deb ${selected_mirror} ${ubuntu_codename}-security main restricted universe multiverse
 EOF"
                     echo -e "\033[1;32mSources updated to: ${selected_mirror}\033[0m"
                 else
@@ -4707,40 +4710,40 @@ EOF"
                 ;;
 
             2)
-    # Restore sources.list from backup
-    echo -e "\033[1;34mAvailable backups:\033[0m"
-    backups=($(ls /etc/apt/sources.list.bak.* 2>/dev/null))
-    
-    if [ ${#backups[@]} -eq 0 ]; then
-        echo -e "\033[1;31mNo backup files found.\033[0m"
-        continue
-    fi
+                # Restore sources.list from backup
+                echo -e "\033[1;34mAvailable backups:\033[0m"
+                backups=($(ls /etc/apt/sources.list.bak.* 2>/dev/null))
 
-    # Display backups with numbers
-    for i in "${!backups[@]}"; do
-        echo -e "\033[1;32m$((i + 1)).\033[0m ${backups[i]}"
-    done
-    echo -e "\033[1;32m0.\033[0m Return"
+                if [ ${#backups[@]} -eq 0 ]; then
+                    echo -e "\033[1;31mNo backup files found.\033[0m"
+                    continue
+                fi
 
-    read -p "Enter the backup number to restore (1-${#backups[@]}) [default: 1]: " backup_choice
+                # Display backups with numbers
+                for i in "${!backups[@]}"; do
+                    echo -e "\033[1;32m$((i + 1)).\033[0m ${backups[i]}"
+                done
+                echo -e "\033[1;32m0.\033[0m Return"
 
-    # Set default choice if no input is provided
-    if [[ -z "$backup_choice" ]]; then
-        backup_choice=1
-    fi
+                read -p "Enter the backup number to restore (1-${#backups[@]}) [default: 1]: " backup_choice
 
-    # Validate the choice
-    if [[ $backup_choice -eq 0 ]]; then
-        echo -e "\033[1;33mReturning to the previous menu...\033[0m"
-        continue
-    elif [[ $backup_choice -ge 1 && $backup_choice -le ${#backups[@]} ]]; then
-        selected_backup="${backups[$((backup_choice - 1))]}"
-        sudo cp "$selected_backup" /etc/apt/sources.list
-        echo -e "\033[1;32mRestored sources.list from $selected_backup\033[0m"
-    else
-        echo -e "\033[1;31mInvalid option. No changes were made.\033[0m"
-    fi
-    ;;
+                # Set default choice if no input is provided
+                if [[ -z "$backup_choice" ]]; then
+                    backup_choice=1
+                fi
+
+                # Validate the choice
+                if [[ $backup_choice -eq 0 ]]; then
+                    echo -e "\033[1;33mReturning to the previous menu...\033[0m"
+                    continue
+                elif [[ $backup_choice -ge 1 && $backup_choice -le ${#backups[@]} ]]; then
+                    selected_backup="${backups[$((backup_choice - 1))]}"
+                    sudo cp "$selected_backup" /etc/apt/sources.list
+                    echo -e "\033[1;32mRestored sources.list from $selected_backup\033[0m"
+                else
+                    echo -e "\033[1;31mInvalid option. No changes were made.\033[0m"
+                fi
+                ;;
 
             3)
                 # Edit sources.list with nano
