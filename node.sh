@@ -5103,6 +5103,7 @@ main_menu() {
         echo -e "\033[1;32m31.\033[0m Tunnel 6to4 SIT "
 	echo -e "\033[1;32m32.\033[0m Send File to Remote Server & Forward to Telegram "
  	echo -e "\033[1;32m33.\033[0m Check URLs "
+  echo -e "\033[1;32m35.\033[0m HAProxy "
         echo -e "\n\033[1;31mXray panel:\033[0m"
         echo -e "\033[1;32m11.\033[0m XUI panel"
         echo -e "\033[1;32m12.\033[0m Marzban panel"
@@ -5150,6 +5151,7 @@ sudo bash 6to4.sh
   33) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup_URLs_check.sh -o setup_URLs_check.sh
 sudo bash setup_URLs_check.sh ;;
 34) fix_update_issues ;;
+35) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/HAproxy.sh -o HAproxy.sh sudo bash HAproxy.sh  ;;
             0) exit 1
             echo "Exiting..." exit 0 ;;
             
