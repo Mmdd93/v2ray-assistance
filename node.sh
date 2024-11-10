@@ -5043,6 +5043,21 @@ download_and_run_ssh_assistance() {
     fi
 }
 
+fix_update_issues() {
+    echo -e "\033[1;34mFixing broken packages and apt issues...\033[0m"
+
+    # Fix broken packages
+    sudo apt --fix-broken install -y
+
+    # Clean up partial installations and dependencies
+    sudo apt-get autoremove -y
+    sudo apt-get autoclean -y
+
+    # Try fixing any other package issues
+    sudo dpkg --configure -a
+
+    echo -e "\033[1;32mUpdate issues fixed successfully.\033[0m"
+}
 
 
 # Main menu function
@@ -5061,6 +5076,7 @@ main_menu() {
 	echo -e "\033[1;32mTelegram:\033[0m https://t.me/tlgrmv2"
         echo -e "\n\033[1;31mUpdate and upgrade:\033[0m"
         echo -e "\033[1;32m 1.\033[0m Update and upgrade system and install necessary packages"
+	echo -e "\033[1;32m 34.\033[0m Fix update issues (broken apt or dependencies)"
 	echo -e "\033[1;32m 28.\033[0m Change Update sources to Iran"
         echo -e "\033[1;32m 2.\033[0m Install Docker and Docker Compose"
         echo -e "\033[1;32m20.\033[0m Install Docker on Iran servers"
@@ -5133,6 +5149,7 @@ sudo bash 6to4.sh
  32) download_and_run_ssh_assistance ;;
   33) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup_URLs_check.sh -o setup_URLs_check.sh
 sudo bash setup_URLs_check.sh ;;
+34) fix_update_issues ;;
             0) exit 1
             echo "Exiting..." exit 0 ;;
             
