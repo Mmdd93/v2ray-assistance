@@ -159,6 +159,9 @@ create_send_file_to_telegram_script() {
 
         REMOTE_SCRIPT_PATH="$REMOTE_DIR/send_file_to_telegram.sh"
 
+        # Convert FILES array to a space-separated string
+        FILES_STRING="${FILES[@]}"
+
         # Transfer the script to the remote server
         sshpass -p "$ROOT_PASSWORD" ssh -p "$REMOTE_PORT" "$REMOTE_USER@$REMOTE_HOST" <<EOF
 mkdir -p "$REMOTE_DIR"
@@ -167,7 +170,7 @@ cat > "$REMOTE_SCRIPT_PATH" <<'EOL'
 
 BOT_TOKEN="$BOT_TOKEN"
 CHAT_ID="$CHAT_ID"
-FILES=(${FILES[@]})
+FILES=($FILES_STRING)
 
 # Loop through each file in the FILES array
 for FILE_PATH in "\${FILES[@]}"; do
@@ -180,7 +183,7 @@ for FILE_PATH in "\${FILES[@]}"; do
   # Send the file to Telegram
   RESPONSE=\$(curl -s -w "%{http_code}" -o /dev/null -X POST "https://api.telegram.org/bot\$BOT_TOKEN/sendDocument" \
     -F chat_id="\$CHAT_ID" \
-    -F document=@\\"\$FILE_PATH\\")
+    -F document=@\$FILE_PATH)
 
   # Check if the file was sent successfully
   if [ "\$RESPONSE" -eq 200 ]; then
@@ -200,6 +203,7 @@ EOF
     fi
     read -p "Press Enter to continue..."
 }
+
 
 
 create_send_file_ssh_script() {
