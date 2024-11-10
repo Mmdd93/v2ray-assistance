@@ -150,7 +150,8 @@ edit_ssh_config() {
 create_send_file_to_telegram_script() {
     if [ -f "$CONFIG_FILE" ]; then
         source "$CONFIG_FILE"
-        
+
+        # Check if required variables are set
         if [[ -z "$BOT_TOKEN" || -z "$CHAT_ID" || -z "$REMOTE_USER" || -z "$REMOTE_HOST" || -z "$REMOTE_PORT" || -z "$ROOT_PASSWORD" || -z "$REMOTE_DIR" ]]; then
             echo "Error: Missing required configuration details in $CONFIG_FILE."
             return 1
@@ -158,6 +159,7 @@ create_send_file_to_telegram_script() {
 
         REMOTE_SCRIPT_PATH="$REMOTE_DIR/send_file_to_telegram.sh"
 
+        # Transfer the script to the remote server
         sshpass -p "$ROOT_PASSWORD" ssh -p "$REMOTE_PORT" "$REMOTE_USER@$REMOTE_HOST" <<EOF
 mkdir -p "$REMOTE_DIR"
 cat > "$REMOTE_SCRIPT_PATH" <<'EOL'
@@ -165,26 +167,26 @@ cat > "$REMOTE_SCRIPT_PATH" <<'EOL'
 
 BOT_TOKEN="$BOT_TOKEN"
 CHAT_ID="$CHAT_ID"
-FILE_PATH="$FILE"
+FILES=(${FILES[@]})
 
-# Loop through each file in the array
-for FILE_PATH in "${FILES[@]}"; do
+# Loop through each file in the FILES array
+for FILE_PATH in "\${FILES[@]}"; do
   # Check if the file exists
-  if [ ! -f "$FILE_PATH" ]; then
-    echo "Error: File does not exist: $FILE_PATH" >&2
+  if [ ! -f "\$FILE_PATH" ]; then
+    echo "Error: File does not exist: \$FILE_PATH" >&2
     continue
   fi
 
   # Send the file to Telegram
-  RESPONSE=$(curl -s -w "%{http_code}" -o /dev/null -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendDocument" \
-    -F chat_id="$CHAT_ID" \
-    -F document=@"$FILE_PATH")
+  RESPONSE=\$(curl -s -w "%{http_code}" -o /dev/null -X POST "https://api.telegram.org/bot\$BOT_TOKEN/sendDocument" \
+    -F chat_id="\$CHAT_ID" \
+    -F document=@\\"\$FILE_PATH\\")
 
   # Check if the file was sent successfully
-  if [ "$RESPONSE" -eq 200 ]; then
-    echo "File $FILE_PATH sent to Telegram successfully."
+  if [ "\$RESPONSE" -eq 200 ]; then
+    echo "File \$FILE_PATH sent to Telegram successfully."
   else
-    echo "Failed to send file $FILE_PATH to Telegram. HTTP response code: $RESPONSE" >&2
+    echo "Failed to send file \$FILE_PATH to Telegram. HTTP response code: \$RESPONSE" >&2
   fi
 done
 EOL
@@ -198,6 +200,7 @@ EOF
     fi
     read -p "Press Enter to continue..."
 }
+
 
 create_send_file_ssh_script() {
     SCRIPT_PATH="/root/send_file_ssh.sh"
