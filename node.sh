@@ -5151,7 +5151,8 @@ sudo bash 6to4.sh
   33) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup_URLs_check.sh -o setup_URLs_check.sh
 sudo bash setup_URLs_check.sh ;;
 34) fix_update_issues ;;
-35) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/HAproxy.sh -o HAproxy.sh sudo bash HAproxy.sh
+35) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/HAproxy.sh -o HAproxy.sh
+sudo bash HAproxy.sh
 ;;
             0) exit 1
             echo "Exiting..." exit 0 ;;
