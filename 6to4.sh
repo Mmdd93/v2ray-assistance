@@ -446,6 +446,7 @@ check_yaml_validity() {
 main_menu() {
   
   while true; do
+  clear
     echo -e "\n\033[1;34m=============================\033[0m"
     echo -e "\033[1;34m     Select an option:\033[0m"
     echo -e "\033[1;33m1. Create SIT Tunnel 6to4 Configuration\033[0m"
