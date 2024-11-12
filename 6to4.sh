@@ -393,6 +393,7 @@ check_yaml_validity
   else
     echo -e "\033[1;31mFailed to apply Netplan configuration.\033[0m"
   fi
+  read -p "Enter to continue: "
 }
 
 
