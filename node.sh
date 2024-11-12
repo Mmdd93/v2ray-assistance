@@ -3829,8 +3829,9 @@ download_and_start_api() {
 #ip quality
 ip_quality_check() {
     while true; do
-	echo -e "\033[1;32m1.\033[0m Basic IPv4 Check"
+	
         echo -e "\n\033[1;34mPlease select an option:\033[0m"
+	echo -e "\033[1;32m1.\033[0m Basic IPv4 Check"
         echo -e "\033[1;32m2.\033[0m IPv4 international check"
         echo -e "\033[1;32m3.\033[0m IPv6 international check"
         echo -e "\033[1;32m4.\033[0m IPv4 IPv6  nation Options"
@@ -5103,14 +5104,14 @@ main_menu() {
         echo -e "\033[1;32m22.\033[0m CPU/RAM MONITORING"
         echo -e "\033[1;32m23.\033[0m UFW "
         echo -e "\033[1;32m24.\033[0m Cloudflare auto ip changer "
-	echo -e "\033[1;32m26.\033[0m Check  server IP quality "
+	echo -e "\033[1;32m26.\033[0m IP quality checks "
  	echo -e "\033[1;32m27.\033[0m Nginx "
-        echo -e "\033[1;32m29.\033[0m Enable/Disable IPV6 "
+        echo -e "\033[1;32m29.\033[0m IPV6 Enable/Disable "
 	echo -e "\033[1;32m30.\033[0m ZRAM (Optimize RAM) "
         echo -e "\033[1;32m31.\033[0m Tunnel 6to4 SIT "
 	echo -e "\033[1;32m32.\033[0m Send File to Remote Server & Forward to Telegram "
  	echo -e "\033[1;32m33.\033[0m Check URLs "
-  echo -e "\033[1;32m35.\033[0m HAProxy "
+	echo -e "\033[1;32m35.\033[0m HAProxy "
         echo -e "\n\033[1;31mXray panel:\033[0m"
         echo -e "\033[1;32m11.\033[0m XUI panel"
         echo -e "\033[1;32m12.\033[0m Marzban panel"
@@ -5152,15 +5153,13 @@ main_menu() {
 	    29) manage_ipv6 ;;
             30) manage_zram ;;
 	    31) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/6to4.sh -o 6to4.sh
-sudo bash 6to4.sh
- ;;
- 32) download_and_run_ssh_assistance ;;
-  33) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup_URLs_check.sh -o setup_URLs_check.sh
-sudo bash setup_URLs_check.sh ;;
-34) fix_update_issues ;;
-35) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/HAproxy.sh -o HAproxy.sh
-sudo bash HAproxy.sh
-;;
+		sudo bash 6to4.sh ;;
+	    32) download_and_run_ssh_assistance ;;
+            33) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup_URLs_check.sh -o setup_URLs_check.sh
+		sudo bash setup_URLs_check.sh ;;
+	    34) fix_update_issues ;;
+	    35) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/HAproxy.sh -o HAproxy.sh
+		sudo bash HAproxy.sh ;;
             0) exit 1
             echo "Exiting..." exit 0 ;;
             
