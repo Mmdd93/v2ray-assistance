@@ -3829,24 +3829,31 @@ download_and_start_api() {
 #ip quality
 ip_quality_check() {
     while true; do
+	echo -e "\033[1;32m1.\033[0m Basic IPv4 Check"
         echo -e "\n\033[1;34mPlease select an option:\033[0m"
-        echo -e "\033[1;32m1.\033[0m IPv4 international check"
-        echo -e "\033[1;32m2.\033[0m IPv6 international check"
-        echo -e "\033[1;32m3.\033[0m All nation Options"
+        echo -e "\033[1;32m2.\033[0m IPv4 international check"
+        echo -e "\033[1;32m3.\033[0m IPv6 international check"
+        echo -e "\033[1;32m4.\033[0m IPv4 IPv6  nation Options"
         echo -e "\033[1;32m0.\033[0m Return to Main Menu"
         read -p "Enter your choice: " choice
         case $choice in
-            1)
+            2)
                 echo -e "\033[1;32mRunning command for IPv4...\033[0m"
                 bash <(curl -L -s check.unlock.media) -E en -R 0 -M 4
                 ;;
-            2)
+            3)
                 echo -e "\033[1;32mRunning command for IPv6...\033[0m"
                 bash <(curl -L -s check.unlock.media) -E en -R 0 -M 6
                 ;;
-            3)
+            4)
                 echo -e "\033[1;32mRunning command for both IPv4 and IPv6...\033[0m"
                 bash <(curl -L -s check.unlock.media) -E en
+                ;;
+	     1)
+                echo -e "\033[1;32m Basic IPv4 Check...\033[0m"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/ip-check.sh -o ip-check.sh
+		sudo bash ip-check.sh
+  		read -p "Enter to continue "
                 ;;
             0)
                 echo -e "\033[1;34mReturning to Main Menu...\033[0m"
