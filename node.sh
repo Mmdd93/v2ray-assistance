@@ -3832,9 +3832,9 @@ ip_quality_check() {
 	
         echo -e "\n\033[1;34mPlease select an option:\033[0m"
 	echo -e "\033[1;32m1.\033[0m Basic IPv4 Check"
-        echo -e "\033[1;32m2.\033[0m IPv4 international check"
-        echo -e "\033[1;32m3.\033[0m IPv6 international check"
-        echo -e "\033[1;32m4.\033[0m IPv4 IPv6  nation Options"
+        echo -e "\033[1;32m2.\033[0m Advanced IPv4 check"
+        echo -e "\033[1;32m3.\033[0m Advanced IPv6 check"
+        echo -e "\033[1;32m4.\033[0m Advanced IPv4 IPv6 check"
         echo -e "\033[1;32m0.\033[0m Return to Main Menu"
         read -p "Enter your choice: " choice
         case $choice in
