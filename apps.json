@@ -14,10 +14,10 @@
       { "SA1": "tg://resolve?domain=chap_sajad" },
       { "ML2": "tg://resolve?domain=ElectronicsTechnician" },
       { "Ali-N": "tg://resolve?domain=alirezagamer123" },
-      { "KareVPN": "tg://resolve?domain=Aqaton_reza" }
+      { "KareVPN": "tg://resolve?domain=Aqaton_reza" },
+      {"RoyalServiceir": "tg://resolve?domain=Suproyall" },
+      {"default": "tg://resolve?domain=tlgrmv2" },
     ],
-    "RoyalServiceir": "tg://resolve?domain=Suproyall",
-    "default": "tg://resolve?domain=tlgrmv2",
     "downloadLinks": {
       "iOS": "https://play.google.com/store/apps/details?id=org.telegram.messenger"
     },
