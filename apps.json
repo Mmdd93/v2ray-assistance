@@ -15,6 +15,7 @@
 	"Ali-N": "tg://resolve?domain=alirezagamer123",
 	"KareVPN": "tg://resolve?domain=Aqaton_reza",
 	"RoyalServiceir": "tg://resolve?domain=Suproyall",
+	"default": "tg://resolve?domain=tlgrmv2",  
     "downloadLinks": {
       "iOS": "https://play.google.com/store/apps/details?id=org.telegram.messenger"
     },
