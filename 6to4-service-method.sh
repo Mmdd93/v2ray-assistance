@@ -42,7 +42,7 @@ fi
 
 # Ensure the service name has the required prefix
 if [[ ! "$service_name" =~ ^sit-tunnel- ]]; then
-    service_name="sit-tunnel-$service_name"
+    service_name="sit-$service_name"
     echo -e "${GREEN}Service name doesn't have the required prefix. Adding prefix: $service_name${RESET}"
 fi
 
