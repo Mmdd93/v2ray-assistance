@@ -91,8 +91,8 @@ create_multi_tunnel() {
         local ipv6_address=$(generate_random_ipv6)
 
         # Prompt for custom IPv6 address
-        echo -e "${YELLOW}Default generated IPv6 address: $ipv6_address  ${RESET}"
-        echo -e "${GREEN}Enter a custom IPv6 address for tunnel $i? (leave empty for $ipv6_address):${RESET}"
+        echo -e "${YELLOW}Default IPv6 address: $ipv6_address  ${RESET}"
+        echo -e "${GREEN}Enter a custom IPv6 address? (leave empty for $ipv6_address):${RESET}"
         read -r user_ipv6_address
 
         # Use the custom IPv6 address if provided, otherwise use the generated one
