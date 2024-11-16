@@ -172,6 +172,7 @@ manage_tunnels() {
 
     if [[ ${#tunnels[@]} -eq 0 ]]; then
         echo -e "${RED}No active SIT tunnels found.${RESET}"
+        read -p "Press Enter to continue..."
         return 1
     fi
 
