@@ -136,10 +136,9 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/env sh -c '\
-    /sbin/ip tunnel add $tunnel_service mode sit local $local_ip remote $remote_ip && \
-    /sbin/ip link set $tunnel_service up && \
-    /sbin/ip addr add $ipv6_address dev $tunnel_service'
+ExecStart=/sbin/ip tunnel add $tunnel_service mode sit local $local_ip remote $remote_ip
+ExecStart=/sbin/ip link set $tunnel_service up
+ExecStart=/sbin/ip addr add $ipv6_address dev $tunnel_service
 ExecStop=/sbin/ip tunnel del $tunnel_service
 Restart=always
 RestartSec=10
