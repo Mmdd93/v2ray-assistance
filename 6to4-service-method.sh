@@ -34,7 +34,7 @@ create_multi_tunnel() {
     read -r service_name
 
     # Debugging output to check user input
-    echo "DEBUG: User input is '$service_name'"
+   
 
     # If no input is given, use the default random name
     if [[ -z "$service_name" ]]; then
