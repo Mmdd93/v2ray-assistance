@@ -254,15 +254,15 @@ manage_tunnels() {
             # Remove the selected tunnel
             sudo systemctl stop "$selected_tunnel.service"
             sudo systemctl disable "$selected_tunnel.service"
-            sudo rm "/etc/systemd/system/$selected_tunnel.service" "/usr/lib/systemd/system/$selected_tunnel.service"
+            sudo rm "/usr/lib/systemd/system/$selected_tunnel.service" "/usr/lib/systemd/system/$selected_tunnel.service"
             echo -e "${GREEN}Tunnel $selected_tunnel removed.${RESET}"
             read -p "Press Enter to continue..."
             ;;
         8)
             # Edit the service file with nano
             local service_file
-            if [[ -f "/etc/systemd/system/$selected_tunnel.service" ]]; then
-                service_file="/etc/systemd/system/$selected_tunnel.service"
+            if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+                service_file="/usr/lib/systemd/system/$selected_tunnel.service"
             elif [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
                 service_file="/usr/lib/systemd/system/$selected_tunnel.service"
             else
