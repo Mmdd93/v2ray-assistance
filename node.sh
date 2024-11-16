@@ -5081,13 +5081,13 @@ clear
 
     case $choice in
         1)
-            echo -e "\033[1;32mRunning Script 1: Installing SSL...\033[0m"
+            echo -e "\033[1;32m6to4-service-method.sh\033[0m"
             # Command to run Script 1
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/6to4-service-method.sh -o 6to4-service-method.sh
 		sudo bash 6to4-service-method.sh
             ;;
         2)
-            echo -e "\033[1;32mRunning Script 2: Marzban Node Setup...\033[0m"
+            echo -e "\033[1;32mRunning 6to4.sh\033[0m"
             # Command to run Script 2
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/6to4.sh -o 6to4.sh
 		sudo bash 6to4.sh
