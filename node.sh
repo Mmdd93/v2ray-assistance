@@ -5067,6 +5067,41 @@ fix_update_issues() {
     echo -e "\033[1;32mUpdate issues fixed successfully.\033[0m"
 }
 
+#!/bin/bash
+
+# Function to run selected scripts
+run_6to4_scripts() {
+    echo -e "\033[1;34mSelect a method to run:\033[0m"
+    echo "1. Services (recommendation)"
+    echo "2. Netplan"
+    echo "0. Return"
+
+    read -p "Enter your choice: " choice
+
+    case $choice in
+        1)
+            echo -e "\033[1;32mRunning Script 1: Installing SSL...\033[0m"
+            # Command to run Script 1
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/6to4-service-method.sh -o 6to4-service-method.sh
+		sudo bash 6to4-service-method.sh
+            ;;
+        2)
+            echo -e "\033[1;32mRunning Script 2: Marzban Node Setup...\033[0m"
+            # Command to run Script 2
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/6to4.sh -o 6to4.sh
+		sudo bash 6to4.sh
+            ;;
+       
+        0)
+            echo -e "\033[1;31mExiting...\033[0m"
+            exit 0
+            ;;
+        *)
+            echo -e "\033[1;31mInvalid choice, please try again.\033[0m"
+            ;;
+    esac
+}
+
 
 # Main menu function
 main_menu() {
@@ -5152,8 +5187,7 @@ main_menu() {
             27) manage_nginx ;;
 	    29) manage_ipv6 ;;
             30) manage_zram ;;
-	    31) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/6to4.sh -o 6to4.sh
-		sudo bash 6to4.sh ;;
+	    31)  ;;
 	    32) download_and_run_ssh_assistance ;;
             33) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup_URLs_check.sh -o setup_URLs_check.sh
 		sudo bash setup_URLs_check.sh ;;
