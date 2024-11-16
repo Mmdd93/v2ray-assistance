@@ -7,7 +7,7 @@ RESET='\033[0m'
 
 # Function to generate a random name for the service between 1 and 100
 generate_random_name() {
-    echo "sit-tunnel-$(shuf -i 1-100 -n 1)"
+    echo "sit-$(shuf -i 1-100 -n 1)"
 }
 
 
@@ -166,7 +166,7 @@ manage_tunnels() {
 
     # Get all active SIT tunnel services from both directories
     for dir in  /usr/lib/systemd/system; do
-        for file in "$dir"/sit-tunnel-*.service; do
+        for file in "$dir"/sit-*.service; do
             if [[ -f "$file" ]]; then
                 tunnels+=("$(basename "$file" .service)")
             fi
