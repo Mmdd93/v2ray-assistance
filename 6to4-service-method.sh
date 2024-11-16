@@ -149,6 +149,7 @@ EOF
 
         echo -e "${GREEN}Tunnel $tunnel_service created and started successfully.${RESET}"
     done
+     read -p "enter to continue:
 }
 
 
