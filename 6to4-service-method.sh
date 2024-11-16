@@ -76,7 +76,7 @@ create_multi_tunnel() {
     declare -a IPV6_ADDRESSES
     declare -a REMOTE_IPS
 
-    echo -e "${GREEN}Enter details for $tunnel_count tunnels.${RESET}"
+    echo -e "${GREEN}Enter details for tunnel $tunnel_count.${RESET}"
 
     for ((i = 1; i <= tunnel_count; i++)); do
         echo -e "${GREEN}Tunnel $i:${RESET}"
