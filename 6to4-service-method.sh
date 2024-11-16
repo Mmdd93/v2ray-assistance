@@ -192,6 +192,7 @@ manage_tunnels() {
     selected_tunnel="${tunnels[choice - 1]}"
 
     echo -e "${GREEN}You selected tunnel: $selected_tunnel${RESET}"
+    
     # Prompt for the next action on the selected tunnel
     echo -e "${GREEN}Select an action to perform on tunnel $selected_tunnel:${RESET}"
     echo "1. Start tunnel"
@@ -267,10 +268,11 @@ manage_tunnels() {
             sudo nano "$service_file"
             ;;
         *)
-            echo -e "${RED}Invalid option.${RESET}"
+            echo -e "${RED}Invalid option. Please try again.${RESET}"
             ;;
     esac
 }
+
 
 
 # Main menu
