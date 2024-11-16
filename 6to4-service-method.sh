@@ -30,28 +30,31 @@ generate_random_ipv6() {
 
 # Function to create multiple SIT tunnels
 create_multi_tunnel() {
-    # Ask for the service name, but provide a default random name if no input is given
-    echo -e "${GREEN}Enter a service name (press Enter for a random name):${RESET}"
-    read -r service_name
+   # Ask for the service name, but provide a default random name if no input is given
+echo -e "${GREEN}Enter a service name (press Enter for a random name):${RESET}"
+read -r service_name
 
-    # Debugging output to check user input
-   
+# If no input is given, use the default random name
+if [[ -z "$service_name" ]]; then
+    service_name=$(generate_random_name)
+    echo -e "${GREEN}No name provided. Using random service name: $service_name${RESET}"
+fi
 
-    # If no input is given, use the default random name
-    if [[ -z "$service_name" ]]; then
-        service_name=$(generate_random_name)
-        echo -e "${GREEN}No name provided. Using random service name: $service_name${RESET}"
-    fi
+# Ensure the service name has the required prefix
+if [[ ! "$service_name" =~ ^sit-tunnel- ]]; then
+    service_name="sit-tunnel-$service_name"
+    echo -e "${GREEN}Service name doesn't have the required prefix. Adding prefix: $service_name${RESET}"
+fi
 
-    echo -e "${GREEN}Using service name: $service_name${RESET}"
-    echo "$service_name"
+echo -e "${GREEN}Using service name: $service_name${RESET}"
 
-    # Check if the service already exists
-    local service_file="/etc/systemd/system/sit-tunnel-${service_name}.service"
-    if [[ -f "$service_file" ]]; then
-        echo -e "${RED}A service with this name already exists. Please choose a different name.${RESET}"
-        return
-    fi
+# Check if the service already exists
+local service_file="/etc/systemd/system/$service_name.service"
+if [[ -f "$service_file" ]]; then
+    echo -e "${RED}A service with this name already exists. Please choose a different name.${RESET}"
+    return
+fi
+
 
     # Ask how many tunnels to create with a default value of 1
     echo -e "${GREEN}How many SIT tunnels do you want to create? (default: 1):${RESET}"
