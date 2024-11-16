@@ -148,7 +148,7 @@ EOF
         sudo systemctl enable "$tunnel_service"
         sudo systemctl start "$tunnel_service"
 
-        echo -e "${GREEN}Tunnel $tunnel_service created and started successfully.${RESET}"
+        echo -e "${GREEN}Tunnel $tunnel_service created.${RESET}"
         read -p "Press Enter to continue..."
 
     done
@@ -214,30 +214,36 @@ manage_tunnels() {
             # Start the selected tunnel
             sudo systemctl start "$selected_tunnel.service"
             echo -e "${GREEN}Tunnel $selected_tunnel started.${RESET}"
+            read -p "Press Enter to continue..."
             ;;
         2)
             # Stop the selected tunnel
             sudo systemctl stop "$selected_tunnel.service"
             echo -e "${GREEN}Tunnel $selected_tunnel stopped.${RESET}"
+            read -p "Press Enter to continue..."
             ;;
         3)
             # Restart the selected tunnel
             sudo systemctl restart "$selected_tunnel.service"
             echo -e "${GREEN}Tunnel $selected_tunnel restarted.${RESET}"
+            read -p "Press Enter to continue..."
             ;;
         4)
             # Enable the selected tunnel at boot
             sudo systemctl enable "$selected_tunnel.service"
             echo -e "${GREEN}Tunnel $selected_tunnel enabled at boot.${RESET}"
+            read -p "Press Enter to continue..."
             ;;
         5)
             # Disable the selected tunnel at boot
             sudo systemctl disable "$selected_tunnel.service"
             echo -e "${GREEN}Tunnel $selected_tunnel disabled at boot.${RESET}"
+            read -p "Press Enter to continue..."
             ;;
         6)
             # Check the status of the selected tunnel
             sudo systemctl status "$selected_tunnel.service"
+            read -p "Press Enter to continue..."
             ;;
         7)
             # Remove the selected tunnel
@@ -245,6 +251,7 @@ manage_tunnels() {
             sudo systemctl disable "$selected_tunnel.service"
             sudo rm "/etc/systemd/system/$selected_tunnel.service" "/usr/lib/systemd/system/$selected_tunnel.service"
             echo -e "${GREEN}Tunnel $selected_tunnel removed.${RESET}"
+            read -p "Press Enter to continue..."
             ;;
         8)
             # Edit the service file with nano
