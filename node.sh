@@ -5187,7 +5187,7 @@ main_menu() {
             27) manage_nginx ;;
 	    29) manage_ipv6 ;;
             30) manage_zram ;;
-	    31)  ;;
+	    31) run_6to4_scripts  ;;
 	    32) download_and_run_ssh_assistance ;;
             33) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup_URLs_check.sh -o setup_URLs_check.sh
 		sudo bash setup_URLs_check.sh ;;
