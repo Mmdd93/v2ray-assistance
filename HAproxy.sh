@@ -184,8 +184,9 @@ restore_haproxy() {
     echo -e "\033[1;32mConfiguration restored from: $backup_file\033[0m"
   else
     echo -e "\033[1;31mInvalid backup selection. Restoration failed.\033[0m"
+    read -p "Press Enter to continue: "
   fi
-  read -p "Press Enter to continue: "
+  
 
 }
 
@@ -196,9 +197,10 @@ restart_haproxy() {
     echo -e "\033[1;32mHAProxy service restarted successfully!\033[0m"
   else
     echo -e "\033[1;31mFailed to restart HAProxy service. Please check the service status or logs.\033[0m"
+    read -p "Press Enter to continue: "
     return 1  # Indicate failure
   fi
-  read -p "Press Enter to continue: "
+  
 
 }
 
@@ -209,9 +211,10 @@ stop_haproxy() {
     echo -e "\033[1;32mHAProxy service stopped successfully!\033[0m"
   else
     echo -e "\033[1;31mFailed to stop HAProxy service. Please check the service status or logs.\033[0m"
+    read -p "Press Enter to continue: "
     return 1  # Indicate failure
   fi
-  read -p "Press Enter to continue: "
+  
 
 }
 
@@ -222,9 +225,10 @@ start_haproxy() {
     echo -e "\033[1;32mHAProxy service started successfully!\033[0m"
   else
     echo -e "\033[1;31mFailed to start HAProxy service. Please check the service status or logs.\033[0m"
+    read -p "Press Enter to continue: "
     return 1  # Indicate failure
   fi
-  read -p "Press Enter to continue: "
+  
 
 }
 
@@ -235,9 +239,10 @@ check_haproxy_status() {
     echo -e "\033[1;32mHAProxy is running.\033[0m"
   else
     echo -e "\033[1;31mHAProxy is not running. Please check the service or start it.\033[0m"
+    read -p "Press Enter to continue: "
     return 1  # Indicate failure
   fi
-  read -p "Press Enter to continue: "
+
 }
 
 
