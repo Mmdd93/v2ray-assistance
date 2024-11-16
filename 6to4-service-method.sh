@@ -49,7 +49,7 @@ fi
 echo -e "${GREEN}Using service name: $service_name${RESET}"
 
 # Check if the service already exists
-local service_file="/etc/systemd/system/$service_name.service"
+local service_file="/usr/lib/systemd/system/$service_name.service"
 if [[ -f "$service_file" ]]; then
     echo -e "${RED}A service with this name already exists. Please choose a different name.${RESET}"
     return
@@ -129,7 +129,7 @@ fi
         echo -e "${GREEN}Creating systemd service file for $tunnel_service...${RESET}"
 
         # Generate the service file content
-        cat <<EOF > "/etc/systemd/system/$tunnel_service.service"
+        cat <<EOF > "/usr/lib/systemd/system/$tunnel_service.service"
 [Unit]
 Description=SIT Tunnel $tunnel_service
 After=network.target
@@ -165,7 +165,7 @@ manage_tunnels() {
     local tunnels=()
 
     # Get all active SIT tunnel services from both directories
-    for dir in /etc/systemd/system /usr/lib/systemd/system; do
+    for dir in  /usr/lib/systemd/system; do
         for file in "$dir"/sit-tunnel-*.service; do
             if [[ -f "$file" ]]; then
                 tunnels+=("$(basename "$file" .service)")
