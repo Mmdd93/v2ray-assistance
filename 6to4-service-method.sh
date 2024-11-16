@@ -148,7 +148,8 @@ EOF
         sudo systemctl start "$tunnel_service"
 
         echo -e "${GREEN}Tunnel $tunnel_service created and started successfully.${RESET}"
-        read -p "enter to continue:
+        read -p "Press Enter to continue..."
+
     done
      
 }
