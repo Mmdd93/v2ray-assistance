@@ -2,6 +2,7 @@
 
 GREEN='\033[1;32m'
 RED='\033[1;31m'
+YELLOW="\033[1;33m"
 RESET='\033[0m'
 
 # Function to generate a random name for the service between 1 and 100
@@ -82,7 +83,7 @@ create_multi_tunnel() {
         echo -e "${GREEN}Tunnel $i:${RESET}"
 
         # Ask for the local IP for each tunnel
-        echo -e "  Ente local IP (Default $local_ip ):"
+        echo -e "Ente local IP ${YELLOW}(Default $local_ip )${RESET}:"
         read -r user_local_ip
         local_ip=${user_local_ip:-$local_ip}
 
@@ -90,8 +91,8 @@ create_multi_tunnel() {
         local ipv6_address=$(generate_random_ipv6)
 
         # Prompt for custom IPv6 address
-        echo -e "  Default generated IPv6 address: $ipv6_address"
-        echo -e "  Enter a custom IPv6 address for tunnel $i? (leave empty for default):"
+        echo -e "${YELLOW}Default generated IPv6 address: $ipv6_address  ${RESET}"
+        echo -e "${GREEN}Enter a custom IPv6 address for tunnel $i? (leave empty for $ipv6_address):${RESET}"
         read -r user_ipv6_address
 
         # Use the custom IPv6 address if provided, otherwise use the generated one
@@ -100,7 +101,7 @@ create_multi_tunnel() {
         echo -e "  Using IPv6 address: $ipv6_address"
 
         # Ask for the remote IP for each tunnel
-        echo -e "  Enter the remote IP for tunnel $i:"
+        echo -e "${YELLOW}Enter the remote IP for tunnel $i:${RESET}"
         read -r remote_ip
 
         # Validate if the remote IP is a valid IP address format
