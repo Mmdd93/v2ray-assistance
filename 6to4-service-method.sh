@@ -82,7 +82,7 @@ create_multi_tunnel() {
         echo -e "${GREEN}Tunnel $i:${RESET}"
 
         # Ask for the local IP for each tunnel
-        echo -e "  Default local IP: $local_ip"
+        echo -e "  Ente local IP (Default $local_ip ):"
         read -r user_local_ip
         local_ip=${user_local_ip:-$local_ip}
 
