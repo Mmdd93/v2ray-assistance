@@ -5071,6 +5071,7 @@ fix_update_issues() {
 
 # Function to run selected scripts
 run_6to4_scripts() {
+clear
     echo -e "\033[1;34mSelect a method to run:\033[0m"
     echo "1. Services (recommendation)"
     echo "2. Netplan"
