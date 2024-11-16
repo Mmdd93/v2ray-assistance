@@ -140,7 +140,8 @@ ExecStart=/sbin/ip tunnel add $tunnel_service mode sit local $local_ip remote $r
 ExecStartPost=/sbin/ip link set $tunnel_service up
 ExecStartPost=/sbin/ip addr add $ipv6_address dev $tunnel_service
 ExecStop=/sbin/ip tunnel del $tunnel_service
-Restart=on-failure
+Restart=always
+TimeoutSec=600
 RemainAfterExit=true
 [Install]
 WantedBy=multi-user.target
