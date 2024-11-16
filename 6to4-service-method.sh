@@ -128,24 +128,27 @@ fi
 
         echo -e "${GREEN}Creating systemd service file for $tunnel_service...${RESET}"
 
-        # Generate the service file content
-        cat <<EOF > "/usr/lib/systemd/system/$tunnel_service.service"
+       # Generate the service file content
+cat <<EOF > "/usr/lib/systemd/system/$tunnel_service.service"
 [Unit]
 Description=SIT Tunnel $tunnel_service
 After=network.target
 
 [Service]
-Type=oneshot
-ExecStart=/sbin/ip tunnel add $tunnel_service mode sit local $local_ip remote $remote_ip
-ExecStartPost=/sbin/ip link set $tunnel_service up
-ExecStartPost=/sbin/ip addr add $ipv6_address dev $tunnel_service
+Type=simple
+ExecStart=/usr/bin/env sh -c '\
+    /sbin/ip tunnel add $tunnel_service mode sit local $local_ip remote $remote_ip && \
+    /sbin/ip link set $tunnel_service up && \
+    /sbin/ip addr add $ipv6_address dev $tunnel_service'
 ExecStop=/sbin/ip tunnel del $tunnel_service
 Restart=always
+RestartSec=10
 TimeoutSec=600
-RemainAfterExit=true
+
 [Install]
 WantedBy=multi-user.target
 EOF
+
 
         # Reload systemd and enable the service
         sudo systemctl daemon-reload
