@@ -260,6 +260,7 @@ manage_tunnels() {
             sudo systemctl stop "$selected_tunnel.service"
             sudo systemctl disable "$selected_tunnel.service"
             sudo rm "/usr/lib/systemd/system/$selected_tunnel.service" "/usr/lib/systemd/system/$selected_tunnel.service"
+            sudo systemctl daemon-reload
             echo -e "${GREEN}Tunnel $selected_tunnel removed.${RESET}"
             read -p "Press Enter to continue..."
             ;;
