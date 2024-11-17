@@ -5103,25 +5103,28 @@ clear
     esac
 }
 
-
+display_system_info() {
+    echo -e "\n\033[1;31mOS info:\033[0m"
+    echo -e "\033[1;32mOS:\033[0m $(lsb_release -d | cut -f2)"
+    echo -e "\033[1;32mPublic IP:\033[0m $(curl -s https://icanhazip.com)"
+    echo -e "\033[1;32mUptime:\033[0m $(uptime -p)"
+    echo -e "\033[1;32mCPU Cores:\033[0m $(lscpu | grep '^CPU(s):' | awk '{print $2}')"
+    echo -e "\033[1;32mCPU Frequency:\033[0m $(grep 'MHz' /proc/cpuinfo | awk '{print $4 " MHz"}' | head -n 1)"
+    echo -e "\033[1;32mRAM:\033[0m $(free -h | awk '/^Mem:/ {print $3 "/" $2}')"
+    echo -e "\033[1;32mTime:\033[0m $(date +"%T %Z")"
+}
 # Main menu function
 main_menu() {
     while true; do
-    
     clear
-        echo -e "\n\033[1;31mOS info:\033[0m"
-        echo -e "\033[1;32mOS:\033[0m $(lsb_release -d | cut -f2)"
-        echo -e "\033[1;32mPublic IP:\033[0m $(curl -s https://icanhazip.com)"
-        echo -e "\033[1;32mUptime:\033[0m $(uptime -p)"
-        echo -e "\033[1;32mCPU Cores:\033[0m $(lscpu | grep '^CPU(s):' | awk '{print $2}')"
-        echo -e "\033[1;32mCPU Frequency:\033[0m $(grep 'MHz' /proc/cpuinfo | awk '{print $4 " MHz"}' | head -n 1)"
-        echo -e "\033[1;32mRAM:\033[0m $(free -h | awk '/^Mem:/ {print $3 "/" $2}')"
-        echo -e "\033[1;32mTime:\033[0m $(date +"%T %Z")"
-	echo -e "\033[1;32mTelegram:\033[0m https://t.me/tlgrmv2"
+	echo -e "\033[1;32m+-----------------------------------------+\033[0m"
+ 	echo -e "\033[1;32m| Telegram : @tlgrmv2 |\033[0m"
+	echo -e "\033[1;32m+-----------------------------------------+\033[0m"
         echo -e "\n\033[1;31mUpdate and upgrade:\033[0m"
         echo -e "\033[1;32m 1.\033[0m Update and upgrade system and install necessary packages"
-	echo -e "\033[1;32m 34.\033[0m Fix update issues (broken apt or dependencies)"
-	echo -e "\033[1;32m 28.\033[0m Change Update sources to Iran"
+	echo -e "\033[1;32m34.\033[0m Fix update issues (broken apt or dependencies)"
+	 echo -e "\033[1;32m36.\033[0m System info"
+	echo -e "\033[1;32m28.\033[0m Change Update sources to Iran"
         echo -e "\033[1;32m 2.\033[0m Install Docker and Docker Compose"
         echo -e "\033[1;32m20.\033[0m Install Docker on Iran servers"
         echo -e "\n\033[1;31mTools:\033[0m"
@@ -5195,6 +5198,7 @@ main_menu() {
 	    34) fix_update_issues ;;
 	    35) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/HAproxy.sh -o HAproxy.sh
 		sudo bash HAproxy.sh ;;
+	    36) display_system_info ;;  
             0) exit 1
             echo "Exiting..." exit 0 ;;
             
