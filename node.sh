@@ -5122,9 +5122,10 @@ fix_timezone() {
 main_menu() {
     while true; do
     clear
-	echo -e "\033[1;32m+-----------------------------------------+\033[0m"
- 	echo -e "\033[1;32m| Telegram : @tlgrmv2 |\033[0m"
-	echo -e "\033[1;32m+-----------------------------------------+\033[0m"
+	echo -e "\033[1;31m+-----------------------------------------+\033[0m"
+        echo -e "\033[1;32m       |   v2ray-assistant  |\033[0m"
+ 	echo -e "\033[1;32m       | Telegram: @tlgrmv2 |\033[0m"
+	echo -e "\033[1;31m+-----------------------------------------+\033[0m"
         echo -e "\n\033[1;31mUpdate and upgrade:\033[0m"
         echo -e "\033[1;32m 1.\033[0m Update and upgrade system and install necessary packages"
 	echo -e "\033[1;32m34.\033[0m Fix update issues (broken apt or dependencies)"
