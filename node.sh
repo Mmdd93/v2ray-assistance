@@ -5106,7 +5106,8 @@ clear
 display_system_info() {
     echo -e "\n\033[1;31mOS info:\033[0m"
     echo -e "\033[1;32mOS:\033[0m $(lsb_release -d | cut -f2)"
-    echo -e "\033[1;32mPublic IP:\033[0m $(curl -s https://icanhazip.com)"
+    echo -e "\033[1;32mPublic IPv4:\033[0m $(curl -4 -s https://icanhazip.com)"
+    echo -e "\033[1;32mPublic IPv6:\033[0m $(curl -6 -s https://icanhazip.com)"
     echo -e "\033[1;32mUptime:\033[0m $(uptime -p)"
     echo -e "\033[1;32mCPU Cores:\033[0m $(lscpu | grep '^CPU(s):' | awk '{print $2}')"
     echo -e "\033[1;32mCPU Frequency:\033[0m $(grep 'MHz' /proc/cpuinfo | awk '{print $4 " MHz"}' | head -n 1)"
