@@ -5113,6 +5113,11 @@ display_system_info() {
     echo -e "\033[1;32mRAM:\033[0m $(free -h | awk '/^Mem:/ {print $3 "/" $2}')"
     echo -e "\033[1;32mTime:\033[0m $(date +"%T %Z")"
 }
+fix_timezone() {
+    sudo timedatectl set-timezone UTC
+    echo -e "\033[1;32mTimezone set to UTC.\033[0m"
+    read -p "Press Enter to continue..."
+}
 # Main menu function
 main_menu() {
     while true; do
@@ -5127,6 +5132,7 @@ main_menu() {
 	echo -e "\033[1;32m28.\033[0m Change Update sources to Iran"
         echo -e "\033[1;32m 2.\033[0m Install Docker and Docker Compose"
         echo -e "\033[1;32m20.\033[0m Install Docker on Iran servers"
+	
         echo -e "\n\033[1;31mTools:\033[0m"
         echo -e "\033[1;32m 3.\033[0m ISP blocker"
         echo -e "\033[1;32m 4.\033[0m Network Optimizer + BBR"
@@ -5151,6 +5157,7 @@ main_menu() {
 	echo -e "\033[1;32m32.\033[0m Send File to Remote Server & Forward to Telegram "
  	echo -e "\033[1;32m33.\033[0m Check URLs "
 	echo -e "\033[1;32m35.\033[0m HAProxy "
+ 	echo -e "\033[1;37m37.\033[0m Fix WhatsApp Time (set timezone to UTC) "
         echo -e "\n\033[1;31mXray panel:\033[0m"
         echo -e "\033[1;32m11.\033[0m XUI panel"
         echo -e "\033[1;32m12.\033[0m Marzban panel"
@@ -5198,7 +5205,8 @@ main_menu() {
 	    34) fix_update_issues ;;
 	    35) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/HAproxy.sh -o HAproxy.sh
 		sudo bash HAproxy.sh ;;
-	    36) display_system_info ;;  
+	    36) display_system_info ;; 
+            37) fix_timezone ;; 
             0) exit 1
             echo "Exiting..." exit 0 ;;
             
