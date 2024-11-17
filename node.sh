@@ -5113,7 +5113,8 @@ display_system_info() {
     echo -e "\033[1;32mCPU Frequency:\033[0m $(grep 'MHz' /proc/cpuinfo | awk '{print $4 " MHz"}' | head -n 1)"
     echo -e "\033[1;32mRAM:\033[0m $(free -h | awk '/^Mem:/ {print $3 "/" $2}')"
     echo -e "\033[1;32mTime:\033[0m $(date +"%T %Z")"
-    read -p "Press Enter to continue..."
+    show_usage
+    
 }
 fix_timezone() {
     sudo timedatectl set-timezone UTC
