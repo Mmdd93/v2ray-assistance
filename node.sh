@@ -5167,6 +5167,7 @@ main_menu() {
         echo -e "\033[1;32m17.\033[0m Backup + transfer"
         echo -e "\033[1;32m19.\033[0m Auto panel restart "
         echo -e "\033[1;31m0.\033[0m Exit"
+	 echo -e "\n\033[1;31m\033[0m"
         choice=$(prompt_input "Enter your choice" "")
         
         case $choice in
