@@ -5158,7 +5158,8 @@ main_menu() {
 	echo -e "\033[1;32m32.\033[0m Send File to Remote Server & Forward to Telegram "
  	echo -e "\033[1;32m33.\033[0m Check URLs "
 	echo -e "\033[1;32m35.\033[0m HAProxy "
- 	echo -e "\033[1;37m37.\033[0m Fix WhatsApp Time (set timezone to UTC) "
+ 	echo -e "\033[1;32m37.\033[0m Fix WhatsApp Time (set timezone to UTC) "
+  
         echo -e "\n\033[1;31mXray panel:\033[0m"
         echo -e "\033[1;32m11.\033[0m XUI panel"
         echo -e "\033[1;32m12.\033[0m Marzban panel"
