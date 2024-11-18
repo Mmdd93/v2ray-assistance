@@ -2362,12 +2362,11 @@ EOL
     fi
 }
 
-# Function to update environment variables in .env file
 update_env_variables() {
     # Ask for the MySQL root password twice
-    read -s -p "Enter the MySQL root password: " db_password_1
+    read -p "Enter the MySQL root password: " db_password_1
     echo
-    read -s -p "Confirm the MySQL root password: " db_password_2
+    read -p "Confirm the MySQL root password: " db_password_2
     echo
 
     # Check if both passwords match
@@ -2376,27 +2375,35 @@ update_env_variables() {
         return 1
     fi
 
+    # Ensure the password is not empty
+    if [[ -z "$db_password_1" ]]; then
+        echo -e "\033[1;31mError: Password cannot be empty.\033[0m"
+        return 1
+    fi
+
+
+
     if [[ -f "$env_file" ]]; then
         echo -e "\033[1;34mUpdating environment variables in $env_file...\033[0m"
 
         # Remove existing MySQL-related variables
-        sed -i '/^SQLALCHEMY_DATABASE_URL="mysql+pymysql:.*"/d' "$env_file"
-        sed -i '/^MYSQL_ROOT_PASSWORD=.*/d' "$env_file"
+        sed -i '/^SQLALCHEMY_DATABASE_URL=mysql+pymysql:.*$/d' "$env_file"
+        sed -i '/^MYSQL_ROOT_PASSWORD=.*$/d' "$env_file"
 
         # Comment out existing SQLite configuration if it exists
-        if grep -q 'SQLALCHEMY_DATABASE_URL = "sqlite:////var/lib/marzban/db.sqlite3"' "$env_file"; then
-            sed -i 's|^SQLALCHEMY_DATABASE_URL = "sqlite:////var/lib/marzban/db.sqlite3"|#SQLALCHEMY_DATABASE_URL = "sqlite:////var/lib/marzban/db.sqlite3"|g' "$env_file"
-        fi
+        sed -i 's|^SQLALCHEMY_DATABASE_URL = "sqlite:////var/lib/marzban/db.sqlite3"|#&|' "$env_file"
 
-        # Add new MySQL configuration without quotes around the password
-        echo "SQLALCHEMY_DATABASE_URL=\"mysql+pymysql://root:$db_password_1@127.0.0.1/marzban\"" >> "$env_file"
-        echo "MYSQL_ROOT_PASSWORD=$db_password_1" >> "$env_file"
+        # Add MySQL-related variables
+        sed -i "\$aSQLALCHEMY_DATABASE_URL=mysql+pymysql://root:$db_password_1@127.0.0.1/marzban" "$env_file"
+        sed -i "\$aMYSQL_ROOT_PASSWORD=$db_password_1" "$env_file"
 
         echo -e "\033[1;32mEnvironment variables updated successfully.\033[0m"
     else
         echo -e "\033[1;31mError: $env_file not found.\033[0m"
+        return 1
     fi
 }
+
 
 # Function to backup essential directories
 backup_essential_folders() {
