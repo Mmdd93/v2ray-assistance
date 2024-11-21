@@ -149,6 +149,7 @@ create_backend() {
 
   echo -e "\033[1;32m--- Backend(s) and frontend(s) created successfully! ---\033[0m"
   restart_haproxy
+  
 }
 
 
@@ -195,6 +196,7 @@ restart_haproxy() {
   echo -e "\033[1;34m--- Restarting HAProxy Service ---\033[0m"
   if sudo systemctl restart haproxy; then
     echo -e "\033[1;32mHAProxy service restarted successfully!\033[0m"
+    read -p "Press Enter to continue: "
   else
     echo -e "\033[1;31mFailed to restart HAProxy service. Please check the service status or logs.\033[0m"
     read -p "Press Enter to continue: "
@@ -209,6 +211,7 @@ stop_haproxy() {
   echo -e "\033[1;34m--- Stopping HAProxy Service ---\033[0m"
   if sudo systemctl stop haproxy; then
     echo -e "\033[1;32mHAProxy service stopped successfully!\033[0m"
+    read -p "Press Enter to continue: "
   else
     echo -e "\033[1;31mFailed to stop HAProxy service. Please check the service status or logs.\033[0m"
     read -p "Press Enter to continue: "
@@ -223,6 +226,7 @@ start_haproxy() {
   echo -e "\033[1;34m--- Starting HAProxy Service ---\033[0m"
   if sudo systemctl start haproxy; then
     echo -e "\033[1;32mHAProxy service started successfully!\033[0m"
+    read -p "Press Enter to continue: "
   else
     echo -e "\033[1;31mFailed to start HAProxy service. Please check the service status or logs.\033[0m"
     read -p "Press Enter to continue: "
@@ -237,6 +241,7 @@ check_haproxy_status() {
   echo -e "\033[1;34m--- Checking HAProxy Service Status ---\033[0m"
   if systemctl is-active --quiet haproxy; then
     echo -e "\033[1;32mHAProxy is running.\033[0m"
+    read -p "Press Enter to continue: "
   else
     echo -e "\033[1;31mHAProxy is not running. Please check the service or start it.\033[0m"
     read -p "Press Enter to continue: "
