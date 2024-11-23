@@ -21,7 +21,7 @@
     "downloadLinks": {
       "iOS": "https://play.google.com/store/apps/details?id=org.telegram.messenger"
     },
-    "ShowInMenu": true
+    "ShowInMenu": false
   },
   {
     "name": "Hiddify",
