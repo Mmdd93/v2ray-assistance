@@ -35,7 +35,7 @@
       "Linux": "https://github.com/hiddify/hiddify-next#-direct-download",
       "Windows": "https://github.com/hiddify/hiddify-next/releases/latest/download/Hiddify-Windows-Portable-x64.zip"
     },
-    "ShowInMenu": true
+    "ShowInMenu": false
   },
   {
     "name": "Streisand",
