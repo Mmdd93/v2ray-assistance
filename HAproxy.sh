@@ -42,10 +42,10 @@ create_backend() {
   sed -i "/^backend $backend_name/,/^$/d" $HAPROXY_CONFIG
 
     # Ask for backend mode (TCP or UDP)
-    echo "Select backend mode (default tcp):"
+    echo "Select backend mode:"
     echo "1) TCP"
     echo "2) UDP"
-    read -p "Enter choice: " backend_mode_choice
+    read -p "Enter choice (default tcp): " backend_mode_choice
 
     case $backend_mode_choice in
       1)
@@ -102,7 +102,7 @@ create_backend() {
     esac
 
     # Ask for the frontend port
-    read -p "Enter frontend bind (listen) port [default is 443]: " frontend_port
+    read -p "Enter bind (listen) port [default is 443]: " frontend_port
     frontend_port=${frontend_port:-443}  # Default to 443 if blank
 
     # Adding frontend configuration first
