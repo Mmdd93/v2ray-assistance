@@ -5133,8 +5133,8 @@ fix_timezone() {
 
 run_haproxy_script() {
     echo -e "\033[1;34mSelect HAproxy port forwarding mode\033[0m"
-    echo -e "\033[1;32m1.\033[0m by SNI routing (one bind port to multi port)"
-    echo -e "\033[1;32m2.\033[0m simple port forwarding"
+    echo -e "\033[1;32m1.\033[0m SNI routing (one listening port to multi port)"
+    echo -e "\033[1;32m2.\033[0m port forwarding by Musixal"
     echo -e "\033[1;31m0.\033[0m Return to Main Menu"
 
     read -p "Enter your choice (0-2): " choice
