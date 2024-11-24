@@ -62,17 +62,17 @@ create_backend() {
 
     # Initialize server array to store each server entered by the user
     server_array=()
-    echo -e "\033[1;33mEnter each backend server+port on a new line (e.g., 127.0.0.1:8999):\033[0m"
-    echo -e "\033[1;33mEnter blank to finish :\033[0m"
+    echo -e "\033[1;33mEnter each backend IP:port on a new line (e.g., 127.0.0.1:8999):\033[0m"
+    echo -e "\033[1;33mEnter blank to finish\033[0m"
     while true; do
-      read -p "Server address+port (enter blank to finish): " server
+      read -p "Server IP:port (enter blank to finish): " server
       [[ -z "$server" ]] && break  # Exit the loop if the input is blank
       server_array+=("$server")    # Add each entered server to the array
     done
 
     # Initialize SNI array to store each SNI value entered by the user for the frontend
     sni_array=()
-    echo -e "\033[1;33mEnter each SNI value for frontend on a new line (e.g., anten.ir):\033[0m"
+    echo -e "\033[1;33mEnter each SNI value on a new line (e.g., anten.ir):\033[0m"
     echo -e "\033[1;33mPress Enter blank to finish :\033[0m"
     
     while true; do
@@ -82,7 +82,7 @@ create_backend() {
     done
 
     # Prompt for SNI match type (end/equal)
-    echo "Select SNI match type for frontend (default end):"
+    echo "Select SNI type [default end]:"
     echo "1) end with SNI"
     echo "2) equal with SNI"
     read -p "Enter choice: " sni_choice
@@ -102,7 +102,7 @@ create_backend() {
     esac
 
     # Ask for the frontend port
-    read -p "Enter frontend port (default is 443): " frontend_port
+    read -p "Enter frontend bind (listen) port [default is 443]: " frontend_port
     frontend_port=${frontend_port:-443}  # Default to 443 if blank
 
     # Adding frontend configuration first
