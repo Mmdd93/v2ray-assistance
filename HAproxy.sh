@@ -264,7 +264,7 @@ haproxy_menu() {
     echo -e "\n\033[1;34m--- HAProxy Configuration Management ---\033[0m"
     echo "1. Install HAProxy"
     echo "2. Remove HAProxy"
-    echo "3. Create Frontend+Backend"
+    echo "3. Create port forwarding"
     echo "4. check haproxy status"
     echo "5. Backup HAProxy Configuration"
     echo "6. Restore HAProxy Configuration"
