@@ -65,7 +65,7 @@ create_backend() {
     echo -e "\033[1;33mEnter each backend IP:port on a new line (e.g., 127.0.0.1:8999):\033[0m"
     echo -e "\033[1;33mEnter blank to finish\033[0m"
     while true; do
-      read -p "Server IP:port (enter blank to finish): " server
+      read -p "enter Server IP:port or (enter blank to finish): " server
       [[ -z "$server" ]] && break  # Exit the loop if the input is blank
       server_array+=("$server")    # Add each entered server to the array
     done
@@ -76,7 +76,7 @@ create_backend() {
     echo -e "\033[1;33mPress Enter blank to finish :\033[0m"
     
     while true; do
-      read -p "SNI: (enter blank to finish): " sni_value
+      read -p "Enter SNI or (enter blank to finish): " sni_value
       [[ -z "$sni_value" ]] && break  # Exit the loop if the input is blank
       sni_array+=("$sni_value")       # Add each entered SNI to the array
     done
