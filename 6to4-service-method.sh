@@ -55,13 +55,24 @@ generate_random_ipv6() {
         echo -e "\033[1;32mTemplate $((i + 1)):\033[0m $template_prefix"
     done
 
+    # Prompt the user to select a template or enter a custom one
+local template_number
+echo -e "\033[1;34mSelect a template or enter a custom one:\033[0m"
+echo -e "\033[1;32m1. Select a predefined template\033[0m"
+echo -e "\033[1;32m2. Enter a custom template\033[0m"
+read -r choice
+
+if [[ "$choice" == "1" ]]; then
+    # Display available templates
+    echo -e "\033[1;34mAvailable templates:\033[0m"
+    for i in "${!templates[@]}"; do
+        echo -e "\033[1;33m$((i + 1)). ${templates[i]}\033[0m"
+    done
+
     # Prompt the user to select a template
-    local template_number
     echo -e "\033[1;34mEnter a template number (default is 1):\033[0m"
     read -r template_number
-    echo -e "\033[1;31mUse template number [$template_number] on the remote as well.\033[0m"
-    
-    # If the user doesn't provide any input, default to template number 1
+    # Default to template 1 if no input
     template_number=${template_number:-1}
 
     # Validate the user's selection
@@ -70,13 +81,33 @@ generate_random_ipv6() {
         return
     fi
 
-    read -p  "Press Enter to continue..."
-
     # Adjust template number to zero-based index
     local selected_template="${templates[$((template_number - 1))]}"
+    echo -e "\033[1;31mUsing template: $selected_template\033[0m"
 
-    # Extract the prefix from the template (e.g., "2001:db8:1::")
-    local template_prefix=$(echo "$selected_template" | cut -d':' -f1-4)
+elif [[ "$choice" == "2" ]]; then
+    # Prompt the user to enter a custom template
+    echo -e "\033[1;34mEnter your custom template:\033[0m"
+    read -r custom_template
+    # Validate the custom template format (basic validation for IPv6 prefix)
+    if [[ ! "$custom_template" =~ ^([0-9a-fA-F]{1,4}:){3,7}[0-9a-fA-F]{1,4}$ ]]; then
+        echo -e "\033[1;31mInvalid custom template format. Please enter a valid IPv6 prefix.\033[0m"
+        return
+    fi
+    local selected_template="$custom_template"
+    echo -e "\033[1;31mUsing custom template: $selected_template\033[0m"
+
+else
+    echo -e "\033[1;31mInvalid option. Please choose 1 or 2.\033[0m"
+    return
+fi
+
+# Extract the prefix from the selected template (e.g., "2001:db8:1::")
+local template_prefix=$(echo "$selected_template" | cut -d':' -f1-4)
+
+echo -e "\033[1;32mTemplate prefix extracted: $template_prefix\033[0m"
+read -p "Press Enter to continue..."
+
 
     # Check if the generated IPv6 prefix is already in use
     if ip -6 addr show | grep -q "$template_prefix"; then
