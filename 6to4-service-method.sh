@@ -86,16 +86,29 @@ if [[ "$choice" == "1" ]]; then
     echo -e "\033[1;31mUsing template: $selected_template\033[0m"
 
 elif [[ "$choice" == "2" ]]; then
-    # Prompt the user to enter a custom template
-    echo -e "\033[1;34mEnter your custom template:\033[0m"
+    # Prompt the user to enter a custom IPv6 template
+    echo -e "\033[1;34mEnter your custom IPv6 template (e.g., 2001:db8:21::21/64):\033[0m"
     read -r custom_template
-    # Validate the custom template format (basic validation for IPv6 prefix)
-    if [[ ! "$custom_template" =~ ^([0-9a-fA-F]{1,4}:){3,7}[0-9a-fA-F]{1,4}$ ]]; then
-        echo -e "\033[1;31mInvalid custom template format. Please enter a valid IPv6 prefix.\033[0m"
+
+    # Validate the custom template format
+    if [[ ! "$custom_template" =~ ^([0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}(/[0-9]{1,3})$ ]]; then
+        echo -e "\033[1;31mInvalid custom template format. Please enter a valid IPv6 prefix (e.g., 2001:db8:21::21/64).\033[0m"
         return
     fi
+
+    # Extract the IPv6 address and prefix length
+    local ipv6_address=$(echo "$custom_template" | cut -d'/' -f1)
+    local prefix_length=$(echo "$custom_template" | cut -d'/' -f2)
+
+    # Validate the prefix length (should be between 1 and 128)
+    if ((prefix_length < 1 || prefix_length > 128)); then
+        echo -e "\033[1;31mInvalid prefix length. It must be between 1 and 128.\033[0m"
+        return
+    fi
+
+    # Assign the custom template
     local selected_template="$custom_template"
-    echo -e "\033[1;31mUsing custom template: $selected_template\033[0m"
+    echo -e "\033[1;32mUsing custom IPv6 template: $selected_template\033[0m"
 
 else
     echo -e "\033[1;31mInvalid option. Please choose 1 or 2.\033[0m"
