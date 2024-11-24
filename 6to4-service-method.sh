@@ -59,7 +59,7 @@ generate_random_ipv6() {
 local template_number
 echo -e "\033[1;34mSelect a template or enter a custom one:\033[0m"
 echo -e "\033[1;32m1. \033[0mSelect template"
-echo -e "\033[1;32m2. \033[0mEnter custom template"
+echo -e "\033[1;32m2. \033[0mEnter custom ipv6 local"
 read -r choice
 
 if [[ "$choice" == "1" ]]; then
