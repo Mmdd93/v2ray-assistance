@@ -82,10 +82,10 @@ create_backend() {
     done
 
     # Prompt for SNI match type (end/equal)
-    echo "Select SNI type [default end]:"
+    echo "Select SNI type:"
     echo "1) end with SNI"
     echo "2) equal with SNI"
-    read -p "Enter choice: " sni_choice
+    read -p "Enter choice [default end]: " sni_choice
 
     # Set sni_type based on user choice
     case $sni_choice in
@@ -141,7 +141,7 @@ create_backend() {
     } >> $HAPROXY_CONFIG
 
     # Ask if the user wants to create another backend
-    read -p "Do you want to create another backend? (y/n): " create_another
+    read -p "Do you want to create another port forwarding? (y/n): " create_another
     if [[ "$create_another" != "y" ]]; then
       break
     fi
