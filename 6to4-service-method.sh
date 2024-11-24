@@ -48,12 +48,12 @@ generate_random_ipv6() {
     )
 
     # Display available templates in simplified format
-    echo -e "\033[1;33mAvailable IPv6 templates:\033[0m"
-    for i in "${!templates[@]}"; do
+    #echo -e "\033[1;33mAvailable IPv6 templates:\033[0m"
+    #for i in "${!templates[@]}"; do
         # Display only the prefix (first part) of the template, like "2001:db8:8"
-        local template_prefix=$(echo "${templates[$i]}" | cut -d':' -f1-4)
-        echo -e "\033[1;32mTemplate $((i + 1)):\033[0m $template_prefix"
-    done
+        #local template_prefix=$(echo "${templates[$i]}" | cut -d':' -f1-4)
+        #echo -e "\033[1;32mTemplate $((i + 1)):\033[0m $template_prefix"
+    #done
 
     # Prompt the user to select a template or enter a custom one
 local template_number
