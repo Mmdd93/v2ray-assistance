@@ -5111,6 +5111,7 @@ clear
 }
 
 display_system_info() {
+SERVER_IP=$(curl -4 -s https://icanhazip.com)
     echo -e "\n\033[1;31mOS info:\033[0m"
     echo -e "\033[1;32mOS:\033[0m $(lsb_release -d | cut -f2)"
     echo -e "\033[1;32mSERVER ISP:\033[0m $(curl -sS "http://ipwhois.app/json/$SERVER_IP" | jq -r '.isp')"
