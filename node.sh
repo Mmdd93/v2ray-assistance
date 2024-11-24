@@ -5128,6 +5128,36 @@ fix_timezone() {
     echo -e "\033[1;32mTimezone set to UTC.\033[0m"
     read -p "Press Enter to continue..."
 }
+
+#!/bin/bash
+
+run_haproxy_script() {
+    echo -e "\033[1;34mSelect HAproxy port forwarding mode\033[0m"
+    echo -e "\033[1;32m1.\033[0m by SNI routing (one bind port to multi port)"
+    echo -e "\033[1;32m2.\033[0m simple port forwarding"
+    echo -e "\033[1;31m0.\033[0m Return to Main Menu"
+
+    read -p "Enter your choice (0-2): " choice
+    case $choice in
+        1)
+            echo -e "\033[1;34mRunning sni mode Script...\033[0m"
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/HAproxy.sh -o HAproxy.sh
+	    sudo bash HAproxy.sh
+            ;;
+        2)
+            echo -e "\033[1;34mRunning Musixal Script...\033[0m"
+            bash <(curl -Ls --ipv4 https://github.com/Musixal/haproxy/raw/main/haproxy.sh)
+            ;;
+        0)
+            echo -e "\033[1;33mReturning to Main Menu...\033[0m"
+            return
+            ;;
+        *)
+            echo -e "\033[1;31mInvalid choice. Please select a valid option.\033[0m"
+            ;;
+    esac
+}
+
 # Main menu function
 main_menu() {
     while true; do
@@ -5216,8 +5246,7 @@ main_menu() {
             33) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup_URLs_check.sh -o setup_URLs_check.sh
 		sudo bash setup_URLs_check.sh ;;
 	    34) fix_update_issues ;;
-	    35) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/HAproxy.sh -o HAproxy.sh
-		sudo bash HAproxy.sh ;;
+	    35) run_haproxy_script ;;
 	    36) display_system_info ;; 
             37) fix_timezone ;; 
             0) exit 1
