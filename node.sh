@@ -3643,7 +3643,7 @@ find_and_allow_ports() {
                     echo -e "\033[1;31mInvalid selection: $num. Skipping.\033[0m"
 		    read -p "Enter to continue... "
                 fi
-		read -p "Enter to continue... "
+		
             done
             ;;
         *)
