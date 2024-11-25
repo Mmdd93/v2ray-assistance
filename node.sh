@@ -3558,45 +3558,103 @@ show_usage() {
     echo -e "\nReturning to the menu..."
 }
 
-
-
-# UFW Subcategory Menu
-show_ufw_menu() {
-    echo -e "\n\033[1;36m================= UFW MENU ===================\033[0m"
-    echo -e "\033[1;32m  1. \033[0m Enable UFW"
-    echo -e "\033[1;32m  2. \033[0m Disable UFW"
-    echo -e "\033[1;32m  3. \033[0m Allow ports"
-    echo -e "\033[1;32m  4. \033[0m Deny ports"
-    echo -e "\033[1;32m  5. \033[0m Allow services"
-    echo -e "\033[1;32m  6. \033[0m Deny services"
-    echo -e "\033[1;32m  7. \033[0m Delete a rule"
-    echo -e "\033[1;32m  8. \033[0m View UFW status"
-    echo -e "\033[1;32m  9. \033[0m Show UFW rules"
-    echo -e "\033[1;32m 10. \033[0m Reload UFW"
-    echo -e "\033[1;32m 11. \033[0m Set default incoming policy"
-    echo -e "\033[1;32m 12. \033[0m Set default outgoing policy"
-    echo -e "\033[1;32m 13. \033[0m Reset UFW to defaults"
-    echo -e "\033[1;32m 0. \033[0m Return to main menu"
-    echo -e "\033[1;36m===============================================\033[0m"
-    echo -n "Select an option : "
-}
-
+#ufw
 return_to_menu() {
     echo ""
     read -p "$(echo -e "\033[1;33mPress Enter to return...\033[0m")"
     show_ufw_menu
 }
+find_and_allow_ports() {
+    # Display used ports
+    echo -e "\033[1;34mFinding all used ports...\033[0m"
+    used_ports=$(sudo lsof -i -P -n | grep LISTEN | awk '{print $9}' | awk -F ':' '{print $NF}' | sort -u)
+
+    if [ -z "$used_ports" ]; then
+        echo -e "\033[1;31mNo used ports found.\033[0m"
+	read -p "Enter to countinu... "
+        return
+    fi
+
+    # Convert ports to an indexed array
+    ports_array=($used_ports)
+
+    echo -e "\033[1;32mUsed Ports Found:\033[0m"
+    for i in "${!ports_array[@]}"; do
+        echo -e "\033[1;33m$((i+1)).\033[0m ${ports_array[i]}"
+    done
+
+    # Prompt for action
+    echo -e "\033[1;33mHow would you like to proceed?\033[0m"
+    echo -e "\033[1;32m1.\033[0m Allow all ports"
+    echo -e "\033[1;33m2.\033[0m Skip all ports"
+    echo -e "\033[1;34m3.\033[0m Choose ports individually"
+    read -r action
+
+    case "$action" in
+        1)
+            echo -e "\033[1;32mAllowing all ports on UFW...\033[0m"
+            for port in "${ports_array[@]}"; do
+                sudo ufw allow "$port"
+            done
+            ;;
+        2)
+            echo -e "\033[1;31mReturn\033[0m"
+	    read -p "Enter to continue... "
+            return
+            ;;
+        3)
+            echo -e "\033[1;34mEnter the numbers of the ports(separate with commas, e.g., 1,3,5).\033[0m"
+            echo -e "\033[1;34mPress ENTER without input Return.\033[0m"
+            read -r selected_numbers
+
+            if [ -z "$selected_numbers" ]; then
+                echo -e "\033[1;31mNo ports selected. Exiting.\033[0m"
+		read -p "Enter to continue... "
+                return
+            fi
+
+            # Split input into an array using ',' as a delimiter
+            IFS=',' read -ra selected_array <<< "$selected_numbers"
+
+            for num in "${selected_array[@]}"; do
+                if [[ "$num" =~ ^[0-9]+$ ]] && [ "$num" -ge 1 ] && [ "$num" -le "${#ports_array[@]}" ]; then
+                    port="${ports_array[$((num-1))]}"
+                    echo -e "\033[1;33mAllowing port $port on UFW...\033[0m"
+                    sudo ufw allow "$port"
+		    read -p "Enter to continue... "
+                else
+                    echo -e "\033[1;31mInvalid selection: $num. Skipping.\033[0m"
+		    read -p "Enter to continue... "
+                fi
+            done
+            ;;
+        *)
+            echo -e "\033[1;31mInvalid option.\033[0m"
+	    read -p "Enter to continue... "
+            return
+            ;;
+    esac
+
+    # Reload UFW to apply changes
+    echo -e "\033[1;34mReloading UFW to apply changes...\033[0m"
+    sudo ufw reload
+    echo -e "\033[1;32mUFW configuration updated.\033[0m"
+    read -p "Enter to continue... "
+}
+
 
 # UFW Operations
 enable_ufw() {
     sudo ufw enable
     echo -e "\033[0;32mUFW has been enabled.\033[0m"
+    
     return_to_menu
 }
 
 disable_ufw() {
     sudo ufw disable
     echo -e "\033[0;31mUFW has been disabled.\033[0m"
+    
     return_to_menu
 }
 
@@ -3721,7 +3779,28 @@ reset_ufw() {
     echo -e "\033[1;33mUFW has been reset to its default state.\033[0m"
     return_to_menu
 }
-
+# UFW Subcategory Menu
+show_ufw_menu() {
+sudo apt install ufw -y
+    echo -e "\n\033[1;36m================= UFW MENU ===================\033[0m"
+    echo -e "\033[1;32m  1. \033[0m Enable UFW"
+    echo -e "\033[1;32m  2. \033[0m Disable UFW"
+    echo -e "\033[1;32m  3. \033[0m Allow ports"
+    echo -e "\033[1;32m  4. \033[0m Deny ports"
+    echo -e "\033[1;32m  5. \033[0m Allow services"
+    echo -e "\033[1;32m  6. \033[0m Deny services"
+    echo -e "\033[1;32m  7. \033[0m Delete a rule"
+    echo -e "\033[1;32m  8. \033[0m View UFW status"
+    echo -e "\033[1;32m  9. \033[0m View UFW rules"
+    echo -e "\033[1;32m 10. \033[0m Reload UFW"
+    echo -e "\033[1;32m 11. \033[0m Set default incoming policy"
+    echo -e "\033[1;32m 12. \033[0m Set default outgoing policy"
+    echo -e "\033[1;32m 13. \033[0m Reset UFW to defaults"
+    echo -e "\033[1;32m 14. \033[0m Allowing in-use ports"
+    echo -e "\033[1;32m 0. \033[0m Return to main menu"
+    echo -e "\033[1;36m===============================================\033[0m"
+    echo -n "Select an option : "
+}
 # Handle UFW menu selection
 ufw_menu() {
     while true; do
