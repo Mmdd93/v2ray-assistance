@@ -5321,7 +5321,8 @@ main_menu() {
                install_packages ;;
             2) install_docker
 		check_docker_compose ;;
-            3) isp_blocker_script ;;
+            3) curl -Ls https://raw.githubusercontent.com/Mmdd93/IR-ISP-Blocker/main/ir-isp-blocker.sh -o ir-isp-blocker.sh
+		sudo bash ir-isp-blocker.sh  ;;
 	    28)change_sources_list ;;
             4) Optimizer ;;
             5) run_system_benchmark ;;
