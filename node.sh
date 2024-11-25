@@ -3817,6 +3817,7 @@ clear
     echo -e "\033[1;32m 12. \033[0m Set default outgoing policy"
     echo -e "\033[1;32m 13. \033[0m Reset UFW to defaults"
     echo -e "\033[1;32m 14. \033[0m Allow in-use ports"
+    echo -e "\033[1;32m 16. \033[0m View in-use ports"
     echo -e "\033[1;32m 0. \033[0m Return to main menu"
     echo -e "\033[1;36m===============================================\033[0m"
     echo -n "Select an option : "
@@ -3842,6 +3843,7 @@ ufw_menu() {
             13) reset_ufw ;;
 	    14) find_and_allow_ports ;;
      	    15) install_ufw ;;
+	    16) used_ports ;;
             0) main_menu && break ;;  # Return to main menu
             *) echo -e "\033[0;31mInvalid option. Please select between 1-14.\033[0m" ;;
         esac
