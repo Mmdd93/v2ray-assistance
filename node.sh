@@ -3815,7 +3815,7 @@ clear
     echo -e "\033[1;32m 11. \033[0m Set default incoming policy"
     echo -e "\033[1;32m 12. \033[0m Set default outgoing policy"
     echo -e "\033[1;32m 13. \033[0m Reset UFW to defaults"
-    echo -e "\033[1;32m 14. \033[0m Allowing in-use ports"
+    echo -e "\033[1;32m 14. \033[0m Allow in-use ports"
     echo -e "\033[1;32m 0. \033[0m Return to main menu"
     echo -e "\033[1;36m===============================================\033[0m"
     echo -n "Select an option : "
