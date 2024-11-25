@@ -3563,7 +3563,7 @@ install_ufw() {
     echo -e "\033[1;34mChecking if UFW is installed...\033[0m"
     if ! command -v ufw >/dev/null 2>&1; then
         echo -e "\033[1;33mUFW is not installed. Installing now...\033[0m"
-        sudo apt update && sudo apt install -y ufw
+        sudo apt install -y ufw
         if [ $? -eq 0 ]; then
             echo -e "\033[1;32mUFW successfully installed.\033[0m"
         else
@@ -3799,7 +3799,7 @@ show_ufw_menu() {
 
 clear
     echo -e "\n\033[1;36m================= UFW MENU ===================\033[0m"
-    echo -e "\033[15;32m  1. \033[0m Install UFW"
+    echo -e "\033[15;32m 15. \033[0m Install UFW"
     echo -e "\033[1;32m  1. \033[0m Enable UFW"
     echo -e "\033[1;32m  2. \033[0m Disable UFW"
     echo -e "\033[1;32m  3. \033[0m Allow ports"
