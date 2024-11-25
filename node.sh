@@ -772,7 +772,7 @@ restart_docker_compose() {
 }
 # isp blocker
 isp_blocker_script() {
-    local remote_script_url="https://raw.githubusercontent.com/Kiya6955/IR-ISP-Blocker/main/ir-isp-blocker.sh"
+    local remote_script_url="https://raw.githubusercontent.com/Mmdd93/IR-ISP-Blocker/main/ir-isp-blocker.sh"
     
     echo_yellow "Fetching and running the ISP blocker from $remote_script_url..."
     
