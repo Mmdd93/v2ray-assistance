@@ -3638,11 +3638,12 @@ find_and_allow_ports() {
                     port="${ports_array[$((num-1))]}"
                     echo -e "\033[1;33mAllowing port $port on UFW...\033[0m"
                     sudo ufw allow "$port"
-		    read -p "Enter to continue... "
+		    
                 else
                     echo -e "\033[1;31mInvalid selection: $num. Skipping.\033[0m"
 		    read -p "Enter to continue... "
                 fi
+		read -p "Enter to continue... "
             done
             ;;
         *)
