@@ -3821,6 +3821,7 @@ ufw_menu() {
             11) set_default_incoming ;;
             12) set_default_outgoing ;;
             13) reset_ufw ;;
+	    14) find_and_allow_ports ;;
             0) main_menu && break ;;  # Return to main menu
             *) echo -e "\033[0;31mInvalid option. Please select between 1-14.\033[0m" ;;
         esac
