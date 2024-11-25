@@ -3782,6 +3782,7 @@ reset_ufw() {
 # UFW Subcategory Menu
 show_ufw_menu() {
 sudo apt install ufw -y
+clear
     echo -e "\n\033[1;36m================= UFW MENU ===================\033[0m"
     echo -e "\033[1;32m  1. \033[0m Enable UFW"
     echo -e "\033[1;32m  2. \033[0m Disable UFW"
