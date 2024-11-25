@@ -3571,7 +3571,7 @@ find_and_allow_ports() {
 
     if [ -z "$used_ports" ]; then
         echo -e "\033[1;31mNo used ports found.\033[0m"
-	read -p "Enter to countinu... "
+	read -p "Enter to continue... "
         return
     fi
 
@@ -3586,8 +3586,8 @@ find_and_allow_ports() {
     # Prompt for action
     echo -e "\033[1;33mHow would you like to proceed?\033[0m"
     echo -e "\033[1;32m1.\033[0m Allow all ports"
-    echo -e "\033[1;33m2.\033[0m Skip all ports"
-    echo -e "\033[1;34m3.\033[0m Choose ports individually"
+    echo -e "\033[1;33m2.\033[0m Select ports to allowing"
+    echo -e "\033[1;34m0.\033[0m return"
     read -r action
 
     case "$action" in
@@ -3597,12 +3597,12 @@ find_and_allow_ports() {
                 sudo ufw allow "$port"
             done
             ;;
-        2)
+        0)
             echo -e "\033[1;31mReturn\033[0m"
 	    read -p "Enter to continue... "
             return
             ;;
-        3)
+        2)
             echo -e "\033[1;34mEnter the numbers of the ports(separate with commas, e.g., 1,3,5).\033[0m"
             echo -e "\033[1;34mPress ENTER without input Return.\033[0m"
             read -r selected_numbers
