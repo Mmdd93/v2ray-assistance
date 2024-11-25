@@ -3559,6 +3559,21 @@ show_usage() {
 }
 
 #ufw
+install_ufw() {
+    echo -e "\033[1;34mChecking if UFW is installed...\033[0m"
+    if ! command -v ufw >/dev/null 2>&1; then
+        echo -e "\033[1;33mUFW is not installed. Installing now...\033[0m"
+        sudo apt update && sudo apt install -y ufw
+        if [ $? -eq 0 ]; then
+            echo -e "\033[1;32mUFW successfully installed.\033[0m"
+        else
+            echo -e "\033[1;31mFailed to install UFW. Please check your system and try again.\033[0m"
+            return 1
+        fi
+    else
+        echo -e "\033[1;32mUFW is already installed.\033[0m"
+    fi
+}
 return_to_menu() {
     echo ""
     read -p "$(echo -e "\033[1;33mPress Enter to return...\033[0m")"
@@ -3781,9 +3796,10 @@ reset_ufw() {
 }
 # UFW Subcategory Menu
 show_ufw_menu() {
-sudo apt install ufw -y
+
 clear
     echo -e "\n\033[1;36m================= UFW MENU ===================\033[0m"
+    echo -e "\033[15;32m  1. \033[0m Install UFW"
     echo -e "\033[1;32m  1. \033[0m Enable UFW"
     echo -e "\033[1;32m  2. \033[0m Disable UFW"
     echo -e "\033[1;32m  3. \033[0m Allow ports"
@@ -3822,6 +3838,7 @@ ufw_menu() {
             12) set_default_outgoing ;;
             13) reset_ufw ;;
 	    14) find_and_allow_ports ;;
+     	    15) install_ufw ;;
             0) main_menu && break ;;  # Return to main menu
             *) echo -e "\033[0;31mInvalid option. Please select between 1-14.\033[0m" ;;
         esac
