@@ -3566,12 +3566,14 @@ install_ufw() {
         sudo apt install -y ufw
         if [ $? -eq 0 ]; then
             echo -e "\033[1;32mUFW successfully installed.\033[0m"
+	    return_to_menu
         else
             echo -e "\033[1;31mFailed to install UFW. Please check your system and try again.\033[0m"
-            return 1
+            return_to_menu
         fi
     else
         echo -e "\033[1;32mUFW is already installed.\033[0m"
+	return_to_menu
     fi
 }
 return_to_menu() {
