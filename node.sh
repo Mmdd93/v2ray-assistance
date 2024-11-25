@@ -3621,7 +3621,7 @@ find_and_allow_ports() {
             ;;
         2)
             echo -e "\033[1;34mEnter the numbers of the ports(separate with commas, e.g., 1,3,5).\033[0m"
-            echo -e "\033[1;34mPress ENTER without input Return.\033[0m"
+            echo -e "\033[1;34m[ENTER blank to return...]\033[0m"
             read -r selected_numbers
 
             if [ -z "$selected_numbers" ]; then
