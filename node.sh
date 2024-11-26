@@ -878,7 +878,8 @@ run_system_benchmark() {
 # Function to list used ports with color-coded visibility
 used_ports() {
 
-    echo -e "\033[1;33mListening Ports:\033[0m"
+    echo -e "\n\033[1;33mListening Ports:\033[0m"
+    echo -e ""
 
     
     sudo lsof -i -P -n | grep LISTEN | awk '
