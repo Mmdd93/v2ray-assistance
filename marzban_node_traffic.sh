@@ -98,14 +98,6 @@ message="\n\n$TITLE\n$(TZ=":Asia/Tehran" date "+%Y-%m-%d %H:%M:%S")\n"
 message+="vnstat output:\n$VNSTAT_OUTPUT\n\n"
 message+=" $CURRENT_YEAR-$CURRENT_MONTH-01 to now: $TOTAL_TRAFFIC_GIB GiB\n\n"
 
-# Check if ufw is enabled and traffic is under threshold, then disable ufw
-if (( $(echo "$TOTAL_TRAFFIC_GIB <= $THRESHOLD_GIB" | bc -l) )); then
-    echo "enabling node..."
-    cd /root/Marzban-node
-    docker compose up -d
-fi
-
-
 # Function to generate and send image with log message and bar visualization
 generate_and_send_image() {
     if (( $(echo "$TOTAL_TRAFFIC_GIB > $THRESHOLD_GIB" | bc -l) )); then
@@ -176,7 +168,31 @@ img.save('$IMAGE_PATH')
 EOF
     send_telegram_image "$IMAGE_PATH"
 }
+# Function to check if Docker Compose services are running
+are_containers_running() {
+    cd /root/Marzban-node
+    if docker compose ps --services --filter "status=running" | grep -q .; then
+        return 0  # Containers are running
+    else
+        return 1  # Containers are not running
+    fi
+}
 
+# Check if traffic is under the threshold
+if (( $(echo "$TOTAL_TRAFFIC_GIB <= $THRESHOLD_GIB" | bc -l) )); then
+    echo "Traffic is under threshold, enabling node..."
+
+    # Check if containers are running
+    if are_containers_running; then
+        echo "Containers are already running. No action needed."
+    else
+        echo "Starting Docker Compose services..."
+        cd /root/Marzban-node
+        docker compose up -d
+    fi
+else
+    echo "Traffic exceeds threshold. No action taken."
+fi
 # Check if traffic exceeds threshold and handle accordingly
 if (( $(echo "$TOTAL_TRAFFIC_GIB > $THRESHOLD_GIB" | bc -l) )); then
     message+="Total traffic exceeds $THRESHOLD_GIB GiB. Disabling Marzban-node.\n"
