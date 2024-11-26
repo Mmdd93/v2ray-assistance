@@ -115,6 +115,24 @@ disable_ufw() {
     
     return_to_menu
 }
+deny_ip() {
+    read -p "Enter the IP address(es) to deny (comma-separated, e.g., 192.168.1.1,10.0.0.2): " ips
+    IFS=',' read -ra IPS <<< "$ips"
+    for ip in "${IPS[@]}"; do
+        sudo ufw deny from "$ip"
+        echo -e "\033[0;31mDenied IP $ip.\033[0m"
+    done
+    return_to_menu
+}
+allow_ip() {
+    read -p "Enter the IP address(es) to allow (comma-separated, e.g., 192.168.1.1,10.0.0.2): " ips
+    IFS=',' read -ra IPS <<< "$ips"
+    for ip in "${IPS[@]}"; do
+        sudo ufw allow from "$ip"
+        echo -e "\033[0;32mAllowed IP $ip.\033[0m"
+    done
+    return_to_menu
+}
 
 allow_ports() {
     read -p "Enter the port numbers to allow (comma-separated, e.g., 80,443,2052): " ports
@@ -258,6 +276,8 @@ clear
     echo -e "\033[1;32m 13. \033[0m Reset UFW to defaults"
     echo -e "\033[1;32m 14. \033[0m Allow in-use ports"
     echo -e "\033[1;32m 16. \033[0m View in-use ports"
+    echo -e "\033[1;32m 17. \033[0m Allow ip"
+    echo -e "\033[1;32m 18. \033[0m Deny ip"
     echo -e "\033[1;32m 0. \033[0m Return to main menu"
     echo -e "\033[1;36m===============================================\033[0m"
     echo -n "Select an option : "
@@ -281,9 +301,11 @@ ufw_menu() {
             11) set_default_incoming ;;
             12) set_default_outgoing ;;
             13) reset_ufw ;;
-			14) find_and_allow_ports ;;
+	    14) find_and_allow_ports ;;
      	    15) install_ufw ;;
-			16) used_ports ;;
+	    16) used_ports ;;
+     	    17) allow_ip ;;
+     	    18) deny_ip ;;
             0) main_menu && break ;;  # Return to main menu
             *) echo -e "\033[0;31mInvalid option. Please select between 1-14.\033[0m" ;;
         esac
