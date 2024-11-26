@@ -5259,25 +5259,23 @@ run_haproxy_script() {
 }
 
 isp_blocker() {
-    echo -e "\033[1;34mSelect firewall \033[0m"
-    echo -e "\033[1;32m1.\033[0m ufw (recomended)"
-    echo -e "\033[1;32m2.\033[0m iptable"
+    echo -e "\033[1;34mSelect a firewall:\033[0m"
+    echo -e "\033[1;32m1.\033[0m UFW (recommended)"
+    echo -e "\033[1;32m2.\033[0m IPTables"
     echo -e "\033[1;31m0.\033[0m Return"
 
     read -p "Enter your choice: " choice
     case $choice in
         1)
-            
             curl -Ls https://raw.githubusercontent.com/Mmdd93/IR-ISP-Blocker/main/ufw-isp-blocker.sh -o ufw-isp-blocker.sh
-	    sudo ufw-isp-blocker.sh
+            sudo bash ufw-isp-blocker.sh
             ;;
         2)
-           
             curl -Ls https://raw.githubusercontent.com/Mmdd93/IR-ISP-Blocker/main/ir-isp-blocker.sh -o ir-isp-blocker.sh
-	    sudo ir-isp-blocker.sh
+            sudo bash ir-isp-blocker.sh
             ;;
         0)
-            echo -e "\033[1;33mReturning to Main Menu...\033[0m"
+            echo -e "\033[1;33mReturning to the Main Menu...\033[0m"
             return
             ;;
         *)
@@ -5285,6 +5283,7 @@ isp_blocker() {
             ;;
     esac
 }
+
 # Main menu function
 main_menu() {
     while true; do
