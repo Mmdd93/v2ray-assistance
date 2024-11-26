@@ -303,7 +303,8 @@ ufw_menu() {
             17) allow_ip ;;
             18) deny_ip ;;
             0) main_menu ;;  # Return to main menu
-            *) echo -e "\033[0;31mInvalid option. Please select between 0-18.\033[0m" ;;
+            *) echo -e "\033[0;31mInvalid option. Please select between 0-18.\033[0m"
+	    return_to_menu ;;
         esac
     done
 }
