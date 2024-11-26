@@ -2,9 +2,9 @@
 # Function to list used ports with color-coded visibility
 used_ports() {
 
-    echo -e "\033[1;33mListening Ports:\033[0m"
+    echo -e "\n\033[1;33mListening Ports:\033[0m"
 
-    
+    echo  ""
     sudo lsof -i -P -n | grep LISTEN | awk '
     BEGIN {
         printf "\033[1;32m%-15s %-10s %-10s %-10s %-20s\033[0m\n", "COMMAND", "PID", "USER", "PORT", "IP"
