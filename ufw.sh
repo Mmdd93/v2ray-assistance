@@ -256,36 +256,32 @@ reset_ufw() {
     return_to_menu
 }
 # UFW Subcategory Menu
-show_ufw_menu() {
-
-clear
-    echo -e "\n\033[1;36m================= UFW MENU ===================\033[0m"
-    echo -e "\033[15;32m 15. \033[0m Install UFW"
-    echo -e "\033[1;32m  1. \033[0m Enable UFW"
-    echo -e "\033[1;32m  2. \033[0m Disable UFW"
-    echo -e "\033[1;32m  3. \033[0m Allow ports"
-    echo -e "\033[1;32m  4. \033[0m Deny ports"
-    echo -e "\033[1;32m  5. \033[0m Allow services"
-    echo -e "\033[1;32m  6. \033[0m Deny services"
-    echo -e "\033[1;32m  7. \033[0m Delete a rule"
-    echo -e "\033[1;32m  8. \033[0m View UFW status"
-    echo -e "\033[1;32m  9. \033[0m View UFW rules"
-    echo -e "\033[1;32m 10. \033[0m Reload UFW"
-    echo -e "\033[1;32m 11. \033[0m Set default incoming policy"
-    echo -e "\033[1;32m 12. \033[0m Set default outgoing policy"
-    echo -e "\033[1;32m 13. \033[0m Reset UFW to defaults"
-    echo -e "\033[1;32m 14. \033[0m Allow in-use ports"
-    echo -e "\033[1;32m 16. \033[0m View in-use ports"
-    echo -e "\033[1;32m 17. \033[0m Allow ip"
-    echo -e "\033[1;32m 18. \033[0m Deny ip"
-    echo -e "\033[1;32m 0. \033[0m Return to main menu"
-    echo -e "\033[1;36m===============================================\033[0m"
-    echo -n "Select an option : "
-}
-# Handle UFW menu selection
 ufw_menu() {
     while true; do
-        show_ufw_menu
+        clear
+        echo -e "\n\033[1;36m================= UFW MENU ===================\033[0m"
+        echo -e "\033[15;32m 15. \033[0m Install UFW"
+        echo -e "\033[1;32m  1. \033[0m Enable UFW"
+        echo -e "\033[1;32m  2. \033[0m Disable UFW"
+        echo -e "\033[1;32m  3. \033[0m Allow ports"
+        echo -e "\033[1;32m  4. \033[0m Deny ports"
+        echo -e "\033[1;32m  5. \033[0m Allow services"
+        echo -e "\033[1;32m  6. \033[0m Deny services"
+        echo -e "\033[1;32m  7. \033[0m Delete a rule"
+        echo -e "\033[1;32m  8. \033[0m View UFW status"
+        echo -e "\033[1;32m  9. \033[0m View UFW rules"
+        echo -e "\033[1;32m 10. \033[0m Reload UFW"
+        echo -e "\033[1;32m 11. \033[0m Set default incoming policy"
+        echo -e "\033[1;32m 12. \033[0m Set default outgoing policy"
+        echo -e "\033[1;32m 13. \033[0m Reset UFW to defaults"
+        echo -e "\033[1;32m 14. \033[0m Allow in-use ports"
+        echo -e "\033[1;32m 16. \033[0m View in-use ports"
+        echo -e "\033[1;32m 17. \033[0m Allow ip"
+        echo -e "\033[1;32m 18. \033[0m Deny ip"
+        echo -e "\033[1;32m 0. \033[0m Return to main menu"
+        echo -e "\033[1;36m===============================================\033[0m"
+        echo -n "Select an option : "
+        
         read ufw_option
         case $ufw_option in
             1) enable_ufw ;;
@@ -301,14 +297,16 @@ ufw_menu() {
             11) set_default_incoming ;;
             12) set_default_outgoing ;;
             13) reset_ufw ;;
-	    14) find_and_allow_ports ;;
-     	    15) install_ufw ;;
-	    16) used_ports ;;
-     	    17) allow_ip ;;
-     	    18) deny_ip ;;
-            0) main_menu && break ;;  # Return to main menu
-            *) echo -e "\033[0;31mInvalid option. Please select between 1-14.\033[0m" ;;
+            14) find_and_allow_ports ;;
+            15) install_ufw ;;
+            16) used_ports ;;
+            17) allow_ip ;;
+            18) deny_ip ;;
+            0) main_menu ;;  # Return to main menu
+            *) echo -e "\033[0;31mInvalid option. Please select between 1-18.\033[0m" ;;
         esac
     done
 }
-show_ufw_menu
+
+# Call the ufw_menu function to display the menu
+ufw_menu
