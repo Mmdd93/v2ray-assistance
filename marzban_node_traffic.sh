@@ -14,7 +14,7 @@ TEHRAN_TIME=$(date +'%Y-%m-%d %H:%M:%S')  # Replace with actual logic to get Teh
 
 VNSTAT_PATH="/usr/bin/vnstat"
 
-LOG_FILE="/var/log/show_monthly_traffic.log"
+LOG_FILE="/var/log/marzban_node_traffic.sh.log"
 
 IMAGE_PATH="/tmp/traffic_log.png"
 
