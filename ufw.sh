@@ -328,7 +328,7 @@ ufw_menu() {
             16) used_ports ;;
             17) allow_ip ;;
             18) deny_ip ;;
-            0) return ;;  # Return to main menu
+            0) exit ;;  # Return to main menu
             *) echo -e "\033[0;31mInvalid option. Please select between 0-18.\033[0m"
 	    return_to_menu ;;
         esac
