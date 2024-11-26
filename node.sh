@@ -1856,7 +1856,7 @@ manage_marzban_node() {
 	echo -e "\033[1;32m6.\033[0m Download custom Xray version"
 	echo -e "\033[1;32m7.\033[0m Enable/disable custom Xray version"
 	echo -e "\033[1;32m8.\033[0m Update Marzban Node"
- 	echo -e "\033[1;32m0.\033[0m setup Marzban Node traffic limit"
+ 	echo -e "\033[1;32m9.\033[0m setup Marzban Node traffic limit"
 	echo -e "\033[1;32m0.\033[0m Return"
         read -p "Enter your choice: " choice
 
