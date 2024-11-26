@@ -18,32 +18,19 @@ setup_show_monthly_traffic() {
     read -p "Enter the traffic threshold in GiB: " THRESHOLD_GIB
     read -p "Enter the title: " TITLE
     
-    # Ask for UFW ports to allow and save them in the file
-    read -p "Enter the ports to allow (comma-separated, e.g., 4422,22,5000,5001,3000,3001): " UFW_PORTS
-    if [[ -z "$UFW_PORTS" ]]; then
-        # Set default ports if none are provided
-        UFW_PORTS="4422,22,5000,5001,3000,3001"
-        echo "No ports entered. Using default ports: $UFW_PORTS"
-    fi
-
     # Save the variables to a text file in the root folder
     {
         echo "TELEGRAM_BOT_TOKEN=\"$TELEGRAM_BOT_TOKEN\""
         echo "TELEGRAM_CHAT_ID=\"$TELEGRAM_CHAT_ID\""
         echo "THRESHOLD_GIB=\"$THRESHOLD_GIB\""
         echo "TITLE=\"$TITLE\""
-        # Save UFW commands for each port
-        IFS=',' read -ra PORTS <<< "$UFW_PORTS"
-        for port in "${PORTS[@]}"; do
-            echo "sudo ufw allow $port"
-        done
     } > /root/telegram_info.txt
 
     echo -e "\033[1;32mInformation saved to /root/telegram_info.txt\033[0m"
 
     # Download the script
     echo -e "\033[1;33mDownloading the traffic script...\033[0m"
-    wget -O /root/marzban_node_traffic.sh https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/marzban_node_traffic.sh
+    wget -O /root/marzban_node_traffic.sh https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/marzban_node_traffic.sh
 
     # Make the script executable
     chmod +x /root/marzban_node_traffic.sh
