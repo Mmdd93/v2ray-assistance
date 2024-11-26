@@ -1849,15 +1849,14 @@ manage_marzban_node() {
         echo -e "\033[1;33m        Manage Marzban Node\033[0m"
         echo -e "\033[1;36m============================================\033[0m"
         echo -e "\033[1;32m1.\033[0m Setup Marzban-node"
-	echo -e "\033[1;32m2.\033[0m Change node ports"
-	echo -e "\033[1;32m3.\033[0m Edit node certificates"
-	echo -e "\033[1;32m4.\033[0m Edit docker-compose.yml with nano"
-	echo -e "\033[1;32m5.\033[0m Restart Docker Compose services"
-	echo -e "\033[1;32m6.\033[0m Download custom Xray version"
-	echo -e "\033[1;32m7.\033[0m Enable/disable custom Xray version"
-	echo -e "\033[1;32m8.\033[0m Update Marzban Node"
- 	echo -e "\033[1;32m9.\033[0m Setup Marzban Node traffic"
-	echo -e "\033[1;32m0.\033[0m Return"
+echo -e "\033[1;32m2.\033[0m Change node ports"
+echo -e "\033[1;32m3.\033[0m Edit node certificates"
+echo -e "\033[1;32m4.\033[0m Edit docker-compose.yml with nano"
+echo -e "\033[1;32m5.\033[0m Restart Docker Compose services"
+echo -e "\033[1;32m6.\033[0m Download custom Xray version"
+echo -e "\033[1;32m7.\033[0m Enable/disable custom Xray version"
+echo -e "\033[1;32m8.\033[0m Update Marzban Node"
+echo -e "\033[1;32m0.\033[0m Return"
         read -p "Enter your choice: " choice
 
         case $choice in
@@ -1873,8 +1872,6 @@ manage_marzban_node() {
             6) list_and_download_xray_core ;;
             7) set_custom_xray_version ;;
             8) update_marzban_node ;;
-	    9) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup_node_traffic.sh -o setup_node_traffic.sh
-		sudo bash setup_node_traffic.sh ;;
             0) return ;;
             *) echo -e "\033[1;31mInvalid choice. Please enter a number between 1 and 10.\033[0m" ;;
         esac
