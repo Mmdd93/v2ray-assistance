@@ -806,7 +806,7 @@ bbr_script() {
         echo_red "Failed to execute the Python script."
     fi
 }
-#!/bin/bash
+
 
 # Function to install Speedtest CLI
 install_speedtest_cli() {
@@ -2933,12 +2933,7 @@ manage_ping() {
         sudo sysctl -p
     done
 }
-#!/bin/bash
-#!/bin/bash
-#!/bin/bash
-#!/bin/bash
 
-#!/bin/bash
 
 # Function to check if required packages are installed
 check_requirements() {
@@ -2966,7 +2961,7 @@ check_requirements() {
     fi
 }
 
-#!/bin/bash
+
 
 # ANSI color codes for better visibility
 RED='\033[0;31m'
@@ -2989,7 +2984,7 @@ check_requirements() {
     fi
 }
 
-#!/bin/bash
+
 
 
 
@@ -3112,8 +3107,7 @@ panels_restart_cron() {
 }
 
 
-#!/bin/bash
-#!/bin/bash
+
 
 setup_docker() {
     while true; do
@@ -3236,7 +3230,7 @@ setup_docker() {
 }
 
 
-#!/bin/bash
+
 
 # Function to set up monthly traffic report
 setup_show_monthly_traffic() {
@@ -4222,7 +4216,7 @@ fi
                 ;;
            
 12)
-#!/bin/bash
+
 
 # Function to remove http/https from the input
 strip_scheme() {
@@ -4482,7 +4476,7 @@ fi
     done
 }
 
-#!/bin/bash
+
 
 # Define paths to configuration files
 SYSCTL_CONF="/etc/sysctl.conf"
@@ -4969,7 +4963,7 @@ manage_ipv6() {
 
 
 
-#!/bin/bash
+
 
 # Function to check and disable swap files
 check_and_disable_swap() {
@@ -5177,7 +5171,7 @@ fix_update_issues() {
     echo -e "\033[1;32mUpdate issues fixed successfully.\033[0m"
 }
 
-#!/bin/bash
+
 
 # Function to run selected scripts
 run_6to4_scripts() {
@@ -5235,7 +5229,7 @@ fix_timezone() {
     read -p "Press Enter to continue..."
 }
 
-#!/bin/bash
+
 
 run_haproxy_script() {
     echo -e "\033[1;34mSelect HAproxy port forwarding mode\033[0m"
@@ -5243,7 +5237,7 @@ run_haproxy_script() {
     echo -e "\033[1;32m2.\033[0m port forwarding by Musixal"
     echo -e "\033[1;31m0.\033[0m Return to Main Menu"
 
-    read -p "Enter your choice (0-2): " choice
+    read -p "Enter your choice: " choice
     case $choice in
         1)
             echo -e "\033[1;34mRunning sni mode Script...\033[0m"
@@ -5264,6 +5258,33 @@ run_haproxy_script() {
     esac
 }
 
+isp_blocker() {
+    echo -e "\033[1;34mSelect firewall \033[0m"
+    echo -e "\033[1;32m1.\033[0m ufw (recomended)"
+    echo -e "\033[1;32m2.\033[0m iptable"
+    echo -e "\033[1;31m0.\033[0m Return"
+
+    read -p "Enter your choice: " choice
+    case $choice in
+        1)
+            
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/IR-ISP-Blocker/main/ufw-isp-blocker.sh -o ufw-isp-blocker.sh
+	    sudo ufw-isp-blocker.sh
+            ;;
+        2)
+           
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/IR-ISP-Blocker/main/ir-isp-blocker.sh -o ir-isp-blocker.sh
+	    sudo ir-isp-blocker.sh
+            ;;
+        0)
+            echo -e "\033[1;33mReturning to Main Menu...\033[0m"
+            return
+            ;;
+        *)
+            echo -e "\033[1;31mInvalid choice. Please select a valid option.\033[0m"
+            ;;
+    esac
+}
 # Main menu function
 main_menu() {
     while true; do
@@ -5321,8 +5342,7 @@ main_menu() {
                install_packages ;;
             2) install_docker
 		check_docker_compose ;;
-            3) curl -Ls https://raw.githubusercontent.com/Mmdd93/IR-ISP-Blocker/main/ir-isp-blocker.sh -o ir-isp-blocker.sh
-		sudo bash ir-isp-blocker.sh  ;;
+            3) isp_blocker ;;
 	    28)change_sources_list ;;
             4) Optimizer ;;
             5) run_system_benchmark ;;
