@@ -1,4 +1,5 @@
-#ufw
+#!/bin/bash
+
 install_ufw() {
     echo -e "\033[1;34mChecking if UFW is installed...\033[0m"
     if ! command -v ufw >/dev/null 2>&1; then
@@ -13,14 +14,10 @@ install_ufw() {
         fi
     else
         echo -e "\033[1;32mUFW is already installed.\033[0m"
-	return_to_menu
+	read -p "Enter to continue... "
     fi
 }
-return_to_menu() {
-    echo ""
-    read -p "$(echo -e "\033[1;33mPress Enter to return...\033[0m")"
-    show_ufw_menu
-}
+
 find_and_allow_ports() {
     # Display used ports
     echo -e "\033[1;34mFinding all used ports...\033[0m"
@@ -28,8 +25,8 @@ find_and_allow_ports() {
 
     if [ -z "$used_ports" ]; then
         echo -e "\033[1;31mNo used ports found.\033[0m"
-	read -p "Enter to continue... "
-        return
+	return_to_menu
+        
     fi
 
     # Convert ports to an indexed array
@@ -56,8 +53,8 @@ find_and_allow_ports() {
             ;;
         0)
             echo -e "\033[1;31mReturn\033[0m"
-	    read -p "Enter to continue... "
-            return
+	    return_to_menu
+            
             ;;
         2)
             echo -e "\033[1;34mEnter the numbers of the ports(separate with commas, e.g., 1,3,5).\033[0m"
@@ -66,8 +63,7 @@ find_and_allow_ports() {
 
             if [ -z "$selected_numbers" ]; then
                 echo -e "\033[1;31mNo ports selected. Exiting.\033[0m"
-		read -p "Enter to continue... "
-                return
+		return_to_menu
             fi
 
             # Split input into an array using ',' as a delimiter
@@ -81,15 +77,14 @@ find_and_allow_ports() {
 		    
                 else
                     echo -e "\033[1;31mInvalid selection: $num. Skipping.\033[0m"
-		    read -p "Enter to continue... "
+		    return_to_menu
                 fi
 		
             done
             ;;
         *)
             echo -e "\033[1;31mInvalid option.\033[0m"
-	    read -p "Enter to continue... "
-            return
+	    return_to_menu
             ;;
     esac
 
@@ -97,7 +92,7 @@ find_and_allow_ports() {
     echo -e "\033[1;34mReloading UFW to apply changes...\033[0m"
     sudo ufw reload
     echo -e "\033[1;32mUFW configuration updated.\033[0m"
-    read -p "Enter to continue... "
+    return_to_menu
 }
 
 
@@ -255,7 +250,12 @@ reset_ufw() {
     echo -e "\033[1;33mUFW has been reset to its default state.\033[0m"
     return_to_menu
 }
-# UFW Subcategory Menu
+
+return_to_menu() {
+    read -p "Enter to continue... "
+    ufw_menu  # Call the main menu function to return
+}
+
 ufw_menu() {
     while true; do
         clear
