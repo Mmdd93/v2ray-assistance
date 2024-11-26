@@ -5007,7 +5007,7 @@ main_menu() {
         echo -e "\033[1;32m20.\033[0m Install Docker on Iran servers"
 	
         echo -e "\n\033[1;31mTools:\033[0m"
-        echo -e "\033[1;32m 3.\033[0m ISP management (allow/block)"
+        echo -e "\033[1;32m 3.\033[0m ISP defender (allow/block)"
         echo -e "\033[1;32m 4.\033[0m Network Optimizer + BBR"
         echo -e "\033[1;32m 5.\033[0m Speed test + system benchmark"
         echo -e "\033[1;32m 6.\033[0m Port (Check used ports by services)"
