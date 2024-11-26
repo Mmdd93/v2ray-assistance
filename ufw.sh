@@ -1,5 +1,31 @@
 #!/bin/bash
+# Function to list used ports with color-coded visibility
+used_ports() {
 
+    echo -e "\033[1;33mListening Ports:\033[0m"
+
+    
+    sudo lsof -i -P -n | grep LISTEN | awk '
+    BEGIN {
+        printf "\033[1;32m%-15s %-10s %-10s %-10s %-20s\033[0m\n", "COMMAND", "PID", "USER", "PORT", "IP"
+        printf "\033[1;36m---------------------------------------------------------------\033[0m\n"
+    }
+    {
+        split($9, address, ":");
+        ip = address[1];
+        port = address[2];
+        
+        # Alternate colors for each row
+        if (NR % 2 == 0)
+            printf "\033[1;37m%-15s %-10s %-10s %-10s %-20s\033[0m\n", $1, $2, $3, port, ip;
+        else
+            printf "\033[1;34m%-15s %-10s %-10s %-10s %-20s\033[0m\n", $1, $2, $3, port, ip;
+    }'
+    
+    echo -e "\033[1;36m============================================\033[0m"
+    echo -e "\nPress Enter to return..."
+    read
+}
 install_ufw() {
     echo -e "\033[1;34mChecking if UFW is installed...\033[0m"
     if ! command -v ufw >/dev/null 2>&1; then
