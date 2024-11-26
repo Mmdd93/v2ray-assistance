@@ -223,3 +223,4 @@ traffic() {
         esac
     done
 }
+traffic
