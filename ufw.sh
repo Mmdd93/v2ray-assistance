@@ -311,3 +311,4 @@ ufw_menu() {
         esac
     done
 }
+show_ufw_menu
