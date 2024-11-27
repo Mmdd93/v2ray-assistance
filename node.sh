@@ -834,16 +834,13 @@ install_speedtest_cli() {
 }
 
 # Function to run benchmarks and tests
-# Function to run benchmarks and tests
 run_system_benchmark() {
     while true; do
         echo -e "\n\033[1;34m=========================\033[0m"
         echo -e "\033[1;34m    Speedtest CLI Menu   \033[0m"
         echo -e "\033[1;34m=========================\033[0m"
         echo -e "\033[1;32m1. \033[0mSystem Benchmark + Speed Test"
-        echo -e "\033[1;32m2. \033[0mInstall Speedtest CLI"
-        echo -e "\033[1;32m3. \033[0mstart Speedtest"
-        echo -e "\033[1;32m4. \033[0mUninstall Speedtest CLI"
+        echo -e "\033[1;32m2. \033[0mSpeedtest CLI"
         echo -e "\033[1;32m0. \033[0mReturn"
         
         read -p $'\033[1;34mEnter your choice (0-4): \033[0m' choice
@@ -858,9 +855,10 @@ run_system_benchmark() {
                 fi
                 ;;
           
-              3) speedtest ;;
-              2) install_speedtest_cli  ;;
-              4) apt-get remove speedtest-cli ;;  
+              
+              2) 33) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/speedtest.sh -o speedtest.sh
+		sudo bash speedtest.sh   ;;
+              
             0)
                 echo -e "\033[1;32mExiting...\033[0m"
                 main_menu
