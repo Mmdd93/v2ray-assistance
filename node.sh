@@ -856,7 +856,7 @@ run_system_benchmark() {
                 ;;
           
               
-              2) 33) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/speedtest.sh -o speedtest.sh
+              2) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/speedtest.sh -o speedtest.sh
 		sudo bash speedtest.sh   ;;
               
             0)
