@@ -123,6 +123,12 @@ find_and_allow_ports() {
 
 
 # UFW Operations
+disable_log() {
+    sudo ufw logging off
+    echo -e "\033[0;32mUFW logs has been disabled.\033[0m"
+    
+    return_to_menu
+}
 enable_ufw() {
     sudo ufw enable
     echo -e "\033[0;32mUFW has been enabled.\033[0m"
@@ -304,6 +310,7 @@ ufw_menu() {
         echo -e "\033[1;32m 16. \033[0m View in-use ports"
         echo -e "\033[1;32m 17. \033[0m Allow ip"
         echo -e "\033[1;32m 18. \033[0m Deny ip"
+	echo -e "\033[1;32m 19. \033[0m Disable logs (better performance)"
         echo -e "\033[1;32m 0. \033[0m Return to main menu"
         echo -e "\033[1;36m===============================================\033[0m"
         echo -n "Select an option : "
@@ -328,6 +335,7 @@ ufw_menu() {
             16) used_ports ;;
             17) allow_ip ;;
             18) deny_ip ;;
+	    19) disable_log ;;
             0) exit ;;  # Return to main menu
             *) echo -e "\033[0;31mInvalid option. Please select between 0-18.\033[0m"
 	    return_to_menu ;;
