@@ -4247,6 +4247,12 @@ apply_optimizations() {
         ["net.ipv4.tcp_low_latency"]="1"
         ["net.ipv4.tcp_window_scaling"]="1"
         ["net.core.default_qdisc"]="fq_codel"
+	["net.netfilter.nf_conntrack_max"]="65536"
+	["net.ipv4.tcp_fin_timeout"]="15"
+	["net.netfilter.nf_conntrack_log_invalid"]="0"
+	["net.ipv4.conf.all.log_martians"]="0"
+	["net.ipv4.conf.default.log_martians"]="0"
+	
     )
 
     for key in "${!sysctl_settings[@]}"; do
@@ -4342,6 +4348,11 @@ disable_optimizations() {
     sed -i '/^net.ipv4.tcp_window_scaling/d' "$SYSCTL_CONF"
     sed -i '/^net.ipv4.tcp_congestion_control/d' "$SYSCTL_CONF"
     sed -i '/^net.core.default_qdisc/d' "$SYSCTL_CONF"
+    sed -i '/^net.netfilter.nf_conntrack_max/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.tcp_fin_timeout/d' "$SYSCTL_CONF"
+    sed -i '/^net.netfilter.nf_conntrack_log_invalid/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.conf.all.log_martians/d' "$SYSCTL_CONF"
+    sed -i '/^net.ipv4.conf.default.log_martians/d' "$SYSCTL_CONF"
 
     # Directly remove specific limits from /etc/security/limits.conf
     sed -i '/^\* soft nproc/d' "$LIMITS_CONF"
