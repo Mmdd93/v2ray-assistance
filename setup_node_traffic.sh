@@ -215,7 +215,7 @@ traffic() {
             7) edit_ufw ;;
             0)
                 echo -e "\033[1;31m return to main menu\033[0m"
-                main_menu
+                exit
                 ;;
             *)
                 echo -e "\033[1;31mInvalid option. Please select 1, 2, 3, 4, or 5.\033[0m"
