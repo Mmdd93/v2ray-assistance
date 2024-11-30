@@ -5045,7 +5045,9 @@ main_menu() {
 	echo -e "\033[1;32m32.\033[0m Send File to Remote Server & Forward to Telegram "
  	echo -e "\033[1;32m33.\033[0m Check URLs "
 	echo -e "\033[1;32m35.\033[0m HAProxy "
- 	echo -e "\033[1;32m37.\033[0m Fix WhatsApp Time (set timezone to UTC) "
+ 	echo -e "\033[1;32m37.\033[0m Fix WhatsApp Time (set timezone to TEHRAN) "
+  	echo -e "\033[1;32m38.\033[0m Secure SSH (fail2ban) "
+   	echo -e "\033[1;32m39.\033[0m Block torrent "
   
         echo -e "\n\033[1;31mXray panel:\033[0m"
         echo -e "\033[1;32m11.\033[0m XUI panel"
@@ -5096,7 +5098,27 @@ main_menu() {
 	    34) fix_update_issues ;;
 	    35) run_haproxy_script ;;
 	    36) display_system_info ;; 
-            37) fix_timezone ;; 
+            37) echo "Running WhatsApp Data and Time fixer..."
+            sleep 2
+            sudo timedatectl set-timezone Asia/Tehran
+            sleep 2
+            echo "Done, WhatsApp Data and Time fixed..."
+            sleep 2
+            ;;
+	    38)
+            echo "Running installer fail2ban script for ssh security..."
+            sleep 2
+            curl -fsSL https://raw.githubusercontent.com/MrAminiDev/NetOptix/main/scripts/fail2ban.sh -o /tmp/fail2ban.sh
+            bash /tmp/fail2ban.sh
+            rm /tmp/fail2ban.sh
+            ;;
+	    39)
+            echo "Running Block torrent list..."
+            sleep 2
+            curl -fsSL https://raw.githubusercontent.com/MrAminiDev/NetOptix/main/scripts/blocktorrent/blocktorrent.sh -o /tmp/blocktorrent.sh
+            bash /tmp/blocktorrent.sh
+            rm /tmp/blocktorrent.sh
+            ;;
             0) exit 1
             echo "Exiting..." exit 0 ;;
             
