@@ -304,6 +304,7 @@ manage_tunnels() {
             sudo nano "$service_file"
             sudo systemctl restart "$selected_tunnel.service"
             sudo systemctl daemon-reload
+            read -p "Press Enter to continue..."
             return
             ;;
         9)
@@ -336,6 +337,8 @@ manage_tunnels() {
     sudo systemctl restart "$selected_tunnel"
 
     echo -e "${GREEN}Remote IP has been updated to $new_remote_ip in $selected_tunnel.service.${RESET}"
+    read -p "Press Enter to continue..."
+return
 ;;
         *)
             echo -e "${RED}Invalid option. Please try again.${RESET}"
