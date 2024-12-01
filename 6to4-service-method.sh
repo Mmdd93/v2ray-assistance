@@ -240,6 +240,7 @@ manage_tunnels() {
             sudo systemctl start "$selected_tunnel.service"
             echo -e "${GREEN}Tunnel $selected_tunnel started.${RESET}"
             read -p "Press Enter to continue..."
+            return
             ;;
         2)
             # Stop the selected tunnel
@@ -247,6 +248,7 @@ manage_tunnels() {
             sudo systemctl daemon-reload
             echo -e "${GREEN}Tunnel $selected_tunnel stopped.${RESET}"
             read -p "Press Enter to continue..."
+            return
             ;;
         3)
             # Restart the selected tunnel
@@ -254,6 +256,7 @@ manage_tunnels() {
             sudo systemctl daemon-reload
             echo -e "${GREEN}Tunnel $selected_tunnel restarted.${RESET}"
             read -p "Press Enter to continue..."
+            return
             ;;
         4)
             # Enable the selected tunnel at boot
@@ -261,6 +264,7 @@ manage_tunnels() {
             sudo systemctl daemon-reload
             echo -e "${GREEN}Tunnel $selected_tunnel enabled at boot.${RESET}"
             read -p "Press Enter to continue..."
+            return
             ;;
         5)
             # Disable the selected tunnel at boot
@@ -268,11 +272,13 @@ manage_tunnels() {
             sudo systemctl daemon-reload
             echo -e "${GREEN}Tunnel $selected_tunnel disabled at boot.${RESET}"
             read -p "Press Enter to continue..."
+            return
             ;;
         6)
             # Check the status of the selected tunnel
             sudo systemctl status "$selected_tunnel.service"
             read -p "Press Enter to continue..."
+            return
             ;;
         7)
             # Remove the selected tunnel
@@ -282,6 +288,7 @@ manage_tunnels() {
             sudo systemctl daemon-reload
             echo -e "${GREEN}Tunnel $selected_tunnel removed.${RESET}"
             read -p "Press Enter to continue..."
+            return
             ;;
         8)
             # Edit the service file with nano
@@ -296,6 +303,7 @@ manage_tunnels() {
             fi
             sudo nano "$service_file"
             sudo systemctl daemon-reload
+            return
             ;;
         *)
             echo -e "${RED}Invalid option. Please try again.${RESET}"
