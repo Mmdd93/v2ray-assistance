@@ -70,7 +70,7 @@ generate_random_ipv6() {
 
     # Prompt for a custom IPv6 address
     echo -e "\033[1;33mDefault IPv6 address:\033[0m $ipv6_address"
-    echo -e "\033[1;32mEnter a custom IPv6 address (default:$ipv6_address ):\033[0m"
+    echo -e "\033[1;32mEnter a custom IPv6 address [enter to use default:$ipv6_address]\033[0m"
     read -p " > " user_ipv6_address
 
     # Use the custom IPv6 address if provided, otherwise use the generated one
