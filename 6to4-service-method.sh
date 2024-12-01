@@ -306,6 +306,37 @@ manage_tunnels() {
             sudo systemctl daemon-reload
             return
             ;;
+        9)
+        local service_file
+        local new_remote_ip
+
+    # Ask for the new remote IP address
+    echo -e "${GREEN}Please enter the new remote IP address:${RESET}"
+    read -p "> " new_remote_ip
+    
+    # Check if the service file exists in the first path
+    if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+    # Add an alternative path if needed (e.g., /etc/systemd/system/)
+    elif [[ -f "/etc/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/etc/systemd/system/$selected_tunnel.service"
+    else
+        echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
+        return
+    fi
+
+
+    # Use sed to replace the old remote IP with the new one
+    sed -i "s/remote [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*/remote $new_remote_ip/" "$service_file"
+
+    # Reload systemd to apply the changes
+    sudo systemctl daemon-reload
+
+    # Restart the service to apply the new remote IP
+    sudo systemctl restart "$selected_tunnel"
+
+    echo -e "${GREEN}Remote IP has been updated to $new_remote_ip in $selected_tunnel.service.${RESET}"
+;;
         *)
             echo -e "${RED}Invalid option. Please try again.${RESET}"
             ;;
