@@ -30,9 +30,8 @@ generate_random_ipv6() {
     done
     # Prompt the user to select a template
     echo -e "\033[1;34mSelect an IPv6 template number (1-100):\033[0m"
-    echo -e "\033[1;32m > \033[0m"
     local template_number
-    read -p template_number
+    read -r template_number
     echo -e "\033[1;31mUse template number [$template_number] on the remote as well.\033[0m"
 
     # If the user doesn't provide any input, default to template number 1
@@ -72,8 +71,7 @@ generate_random_ipv6() {
     # Prompt for a custom IPv6 address
     echo -e "\033[1;33mDefault IPv6 address:\033[0m $ipv6_address"
     echo -e "\033[1;32mEnter a custom IPv6 address (default:$ipv6_address ):\033[0m"
-    echo -e "\033[1;32m > \033[0m"
-    read -p user_ipv6_address
+    read -r user_ipv6_address
 
     # Use the custom IPv6 address if provided, otherwise use the generated one
     ipv6_address=${user_ipv6_address:-$ipv6_address}
