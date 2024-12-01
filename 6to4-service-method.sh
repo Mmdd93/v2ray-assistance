@@ -97,12 +97,12 @@ create_sit_tunnel() {
     local default_name=$(generate_random_name)
 
     # Ask for the service name, but provide a default random name if no input is given
-    read -p "$(echo -e "${GREEN}Enter a service name (default: ${default_name}): ${RESET}")" service_name
+    read -p "$(echo -e "\n${GREEN}Enter a service name (default: ${default_name}): ${RESET}")" service_name
 
     # If no input is given, use the default random name
     if [[ -z "$service_name" ]]; then
         service_name="$default_name"  # Use the default name
-        echo -e "${GREEN}No name provided. Using random service name: $service_name${RESET}"
+        echo -e "\n${GREEN}No name provided. Using random service name: $service_name${RESET}"
     fi
 
     # Ensure the service name has the required prefix
@@ -111,12 +111,12 @@ create_sit_tunnel() {
         
     fi
 
-    echo -e "${GREEN}Using service name: $service_name${RESET}"
+    echo -e "\n${GREEN}Using service name: $service_name${RESET}"
 
     # Check if the service already exists
     local service_file="/usr/lib/systemd/system/$service_name.service"
     if [[ -f "$service_file" ]]; then
-        echo -e "${RED}A service with this name already exists. Please choose a different name.${RESET}"
+        echo -e "\n${RED}A service with this name already exists. Please choose a different name.${RESET}"
         return
     fi
 
@@ -129,27 +129,27 @@ create_sit_tunnel() {
     fi
 
     # Ask for the local IP for the tunnel
-    echo -e "${GREEN}Enter the local IP for the tunnel ${YELLOW}(Default: $local_ip)${RESET}:"
+    echo -e "\n${GREEN}Enter the local IP for the tunnel ${YELLOW}(Default: $local_ip)${RESET}:"
     read -p " > " user_local_ip
     local_ip=${user_local_ip:-$local_ip}
 
     # Use the function to generate or select a custom IPv6 address
-    echo -e "${GREEN}Configuring the IPv6 address for the tunnel.${RESET}"
+    echo -e "\n${GREEN}Configuring the IPv6 address for the tunnel.${RESET}"
     generate_random_ipv6  # This function handles template selection and custom input
     local ipv6_address=$ipv6_address  # Generated or chosen IPv6 address is set globally in the function
 
     # Ask for the remote IP for the tunnel
-    echo -e "${GREEN}Enter the remote IP for the tunnel:${RESET}"
+    echo -e "\n${GREEN}Enter the remote IP for the tunnel:${RESET}"
     read -p " > " remote_ip
 
     # Validate if the remote IP is a valid IP address format
     if ! [[ "$remote_ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        echo -e "${RED}Invalid remote IP address format. Please enter a valid IPv4 address.${RESET}"
+        echo -e "\n${RED}Invalid remote IP address format. Please enter a valid IPv4 address.${RESET}"
         return
     fi
 
     # Generate the systemd service file
-    echo -e "${GREEN}Creating systemd service file for $service_name...${RESET}"
+    echo -e "\n${GREEN}Creating systemd service file for $service_name...${RESET}"
     cat <<EOF > "$service_file"
 [Unit]
 Description=SIT Tunnel $service_name
@@ -173,7 +173,7 @@ EOF
     sudo systemctl enable "$service_name"
     sudo systemctl start "$service_name"
 
-    echo -e "${GREEN}Tunnel $service_name created successfully.${RESET}"
+    echo -e "\n${GREEN}Tunnel $service_name created successfully.${RESET}"
     read -p "Press Enter to continue..."
 }
 
