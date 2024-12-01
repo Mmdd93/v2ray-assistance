@@ -32,7 +32,7 @@ generate_random_ipv6() {
     echo -e "\033[1;34mSelect an IPv6 template number (1-100):\033[0m"
     local template_number
     read -p " > " template_number
-    echo -e "\033[1;31mUse template number [$template_number] on the remote as well.\033[0m"
+    echo -e "\033[1;31mUse template number [$template_number] on the remote server as well.\033[0m"
 
     # If the user doesn't provide any input, default to template number 1
     template_number=${template_number:-1}
