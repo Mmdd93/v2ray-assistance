@@ -31,7 +31,7 @@ generate_random_ipv6() {
     # Prompt the user to select a template
     echo -e "\033[1;34mSelect an IPv6 template number (1-100):\033[0m"
     local template_number
-    read -r template_number
+    read -p " > " template_number
     echo -e "\033[1;31mUse template number [$template_number] on the remote as well.\033[0m"
 
     # If the user doesn't provide any input, default to template number 1
@@ -71,7 +71,7 @@ generate_random_ipv6() {
     # Prompt for a custom IPv6 address
     echo -e "\033[1;33mDefault IPv6 address:\033[0m $ipv6_address"
     echo -e "\033[1;32mEnter a custom IPv6 address (default:$ipv6_address ):\033[0m"
-    read -r user_ipv6_address
+    read -p " > " user_ipv6_address
 
     # Use the custom IPv6 address if provided, otherwise use the generated one
     ipv6_address=${user_ipv6_address:-$ipv6_address}
@@ -130,7 +130,7 @@ create_sit_tunnel() {
 
     # Ask for the local IP for the tunnel
     echo -e "${GREEN}Enter the local IP for the tunnel ${YELLOW}(Default: $local_ip)${RESET}:"
-    read -r user_local_ip
+    read -p " > " user_local_ip
     local_ip=${user_local_ip:-$local_ip}
 
     # Use the function to generate or select a custom IPv6 address
@@ -140,7 +140,7 @@ create_sit_tunnel() {
 
     # Ask for the remote IP for the tunnel
     echo -e "${GREEN}Enter the remote IP for the tunnel:${RESET}"
-    read -r remote_ip
+    read -p " > " remote_ip
 
     # Validate if the remote IP is a valid IP address format
     if ! [[ "$remote_ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
