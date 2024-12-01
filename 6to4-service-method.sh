@@ -29,16 +29,16 @@ generate_random_ipv6() {
         templates+=("2001:db8:$i::%x/64")
     done
     # Prompt the user to select a template
-    echo -e "\033[1;34mSelect an IPv6 template number (1-100):\033[0m"
+    echo -e "\n\033[1;34mSelect an IPv6 template number (1-100):\033[0m"
     local template_number
     read -p " > " template_number
-    echo -e "\033[1;31mUse template number [$template_number] on the remote server as well.\033[0m"
+    echo -e "\n\033[1;31mUse template number [$template_number] on the remote server as well.\033[0m"
 
     # If the user doesn't provide any input, default to template number 1
     template_number=${template_number:-1}
     # Validate the user's selection
     if [[ ! "$template_number" =~ ^[1-9]$|^[1-9][0-9]$|^100$ ]]; then
-        echo -e "\033[1;31mInvalid input. Please select a number between 1 and 100.\033[0m"
+        echo -e "\n\033[1;31mInvalid input. Please select a number between 1 and 100.\033[0m"
         return
     fi
     
@@ -69,23 +69,23 @@ generate_random_ipv6() {
     ipv6_address="${ipv6_address//%x/$block1}"
 
     # Prompt for a custom IPv6 address
-    echo -e "\033[1;33mDefault IPv6 address:\033[0m $ipv6_address"
-    echo -e "\033[1;32mEnter a custom IPv6 address [enter to use default:$ipv6_address]\033[0m"
+    echo -e "\n\033[1;33mDefault IPv6 address:\033[0m $ipv6_address"
+    echo -e "\n\033[1;32mEnter a custom IPv6 address [enter to use default:$ipv6_address]\033[0m"
     read -p " > " user_ipv6_address
 
     # Use the custom IPv6 address if provided, otherwise use the generated one
     ipv6_address=${user_ipv6_address:-$ipv6_address}
 
     # Display the final IPv6 address
-    echo -e "\033[1;32mUsing IPv6 address:\033[0m $ipv6_address"
+    echo -e "\n\033[1;32mUsing IPv6 address:\033[0m $ipv6_address"
 
     # Save the generated or custom IPv6 address to a text file
     echo "ipv6=$ipv6_address" > /root/ipv6.txt
-    echo -e "\033[1;33mIPv6 address saved to ipv6.txt\033[0m"
+    echo -e "\n\033[1;33mIPv6 address saved to ipv6.txt\033[0m"
     sleep 3
-    echo -e "\033[1;34mReading from /root/ipv6.txt...\033[0m"
+    echo -e "\n\033[1;34mReading from /root/ipv6.txt...\033[0m"
     source /root/ipv6.txt
-    echo -e "\033[1;32mIPv6 address read from file:\033[0m $ipv6"
+    echo -e "\n\033[1;32mIPv6 address read from file:\033[0m $ipv6"
 }
 
 
