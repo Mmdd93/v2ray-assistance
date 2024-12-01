@@ -227,6 +227,7 @@ manage_tunnels() {
     echo "6. Check status"
     echo "7. Remove tunnel"
     echo "8. Edit with nano"
+    echo "9. change remote ip"
     echo "0. Return to main menu"
     read -p "Choose an option [0-8]: " action
 
