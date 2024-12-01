@@ -302,6 +302,7 @@ manage_tunnels() {
                 return
             fi
             sudo nano "$service_file"
+            sudo systemctl restart "$selected_tunnel.service"
             sudo systemctl daemon-reload
             return
             ;;
