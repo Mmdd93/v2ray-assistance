@@ -23,53 +23,26 @@ get_local_ip() {
     echo $(hostname -I | awk '{print $1}')
 }
 generate_random_ipv6() {
-    # Define 20 IPv6 address templates with a simplified display format
-    local templates=( 
-        "2001:db8:1::%x/64"
-        "2001:db8:2::%x/64"
-        "2001:db8:3::%x/64"
-        "2001:db8:4::%x/64"
-        "2001:db8:5::%x/64"
-        "2001:db8:6::%x/64"
-        "2001:db8:7::%x/64"
-        "2001:db8:8::%x/64"
-        "2001:db8:9::%x/64"
-        "2001:db8:10::%x/64"
-        "2001:db8:11::%x/64"
-        "2001:db8:12::%x/64"
-        "2001:db8:13::%x/64"
-        "2001:db8:14::%x/64"
-        "2001:db8:15::%x/64"
-        "2001:db8:16::%x/64"
-        "2001:db8:17::%x/64"
-        "2001:db8:18::%x/64"
-        "2001:db8:19::%x/64"
-        "2001:db8:20::%x/64"
-    )
-
-    # Display available templates in simplified format
-    echo -e "\033[1;33mAvailable IPv6 templates:\033[0m"
-    for i in "${!templates[@]}"; do
-        # Display only the prefix (first part) of the template, like "2001:db8:8"
-        local template_prefix=$(echo "${templates[$i]}" | cut -d':' -f1-4)
-        echo -e "\033[1;32mTemplate $((i + 1)):\033[0m $template_prefix"
+     # Define 100 IPv6 address templates (hidden from display)
+    local templates=()
+    for i in {1..100}; do
+        templates+=("2001:db8:$i::%x/64")
     done
-
     # Prompt the user to select a template
+    echo -e "\033[1;34mSelect an IPv6 template number (1-100):\033[0m"
+    echo -e "\033[1;32m > \033[0m"
     local template_number
-    echo -e "\033[1;34mEnter a template number (default is 1):\033[0m"
-    read -r template_number
+    read -p template_number
     echo -e "\033[1;31mUse template number [$template_number] on the remote as well.\033[0m"
-    
+
     # If the user doesn't provide any input, default to template number 1
     template_number=${template_number:-1}
-
     # Validate the user's selection
-    if [[ ! "$template_number" =~ ^[1-9]$|^1[0-9]$|^20$ ]]; then
-        echo -e "\033[1;31mInvalid input. Please select a number between 1 and 20.\033[0m"
+    if [[ ! "$template_number" =~ ^[1-9]$|^[1-9][0-9]$|^100$ ]]; then
+        echo -e "\033[1;31mInvalid input. Please select a number between 1 and 100.\033[0m"
         return
     fi
-
+    
     read -p  "Press Enter to continue..."
 
     # Adjust template number to zero-based index
@@ -99,7 +72,8 @@ generate_random_ipv6() {
     # Prompt for a custom IPv6 address
     echo -e "\033[1;33mDefault IPv6 address:\033[0m $ipv6_address"
     echo -e "\033[1;32mEnter a custom IPv6 address (default:$ipv6_address ):\033[0m"
-    read -r user_ipv6_address
+    echo -e "\033[1;32m > \033[0m"
+    read -p user_ipv6_address
 
     # Use the custom IPv6 address if provided, otherwise use the generated one
     ipv6_address=${user_ipv6_address:-$ipv6_address}
