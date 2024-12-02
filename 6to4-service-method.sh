@@ -69,8 +69,7 @@ generate_random_ipv6() {
     ipv6_address="${ipv6_address//%x/$block1}"
 
     # Prompt for a custom IPv6 address
-    echo -e "\n\033[1;33mDefault IPv6 address:\033[0m $ipv6_address"
-    echo -e "\n\033[1;32mEnter a custom IPv6 address or enter blank to use $ipv6_address\033[0m"
+    echo -e "\n\033[1;32mEnter a custom IPv6 address or enter blank to use \033[0m $ipv6_address"
     read -p " > " user_ipv6_address
 
     # Use the custom IPv6 address if provided, otherwise use the generated one
@@ -82,10 +81,10 @@ generate_random_ipv6() {
     # Save the generated or custom IPv6 address to a text file
     echo "ipv6=$ipv6_address" > /root/ipv6.txt
     echo -e "\n\033[1;33mIPv6 address saved to ipv6.txt\033[0m"
-    sleep 3
-    echo -e "\n\033[1;34mReading from /root/ipv6.txt...\033[0m"
+    sleep 2
+    
     source /root/ipv6.txt
-    echo -e "\n\033[1;32mIPv6 address read from file:\033[0m $ipv6"
+    
 }
 
 
@@ -128,10 +127,30 @@ create_sit_tunnel() {
         return
     fi
 
-    # Ask for the local IP for the tunnel
-    echo -e "\n${GREEN}Enter the local IP for the tunnel ${YELLOW}(Default: $local_ip)${RESET}:"
-    read -p " > " user_local_ip
-    local_ip=${user_local_ip:-$local_ip}
+    # Ask for the local IP or domain for the tunnel
+    echo -e "\n${GREEN}Enter the local IP or domain for the tunnel ${YELLOW}(Default: $local_ip)${RESET}:"
+    read -p " > " user_input
+    
+    # Use the provided input or default if none is entered
+    user_input=${user_input:-$local_ip}
+    
+    # Check if the input is an IPv4 address
+    if [[ "$user_input" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        local_ip="$user_input"
+        echo -e "${CYAN}Using local IP: $local_ip${RESET}"
+    else
+        # Resolve the domain to an IP
+        resolved_ip=$(dig +short "$user_input")
+    
+        if [[ -n "$resolved_ip" ]]; then
+            local_ip="$resolved_ip"
+            echo -e "${CYAN}Domain resolved to IP: $local_ip${RESET}"
+        else
+            echo -e "${RED}Failed to resolve domain: $user_input. Please enter a valid IP or domain.${RESET}"
+            return
+        fi
+    fi
+
 
     # Use the function to generate or select a custom IPv6 address
     echo -e "\n${GREEN}Configuring the IPv6 address for the tunnel.${RESET}"
@@ -186,7 +205,7 @@ EOF
     sudo systemctl enable "$service_name"
     sudo systemctl start "$service_name"
 
-    echo -e "\n${GREEN}Tunnel $service_name created successfully.${RESET}"
+    echo -e "\n${GREEN}Tunnel $service_name created.${RESET}"
     read -p "Press Enter to continue..."
 }
 
