@@ -138,15 +138,28 @@ create_sit_tunnel() {
     generate_random_ipv6  # This function handles template selection and custom input
     local ipv6_address=$ipv6_address  # Generated or chosen IPv6 address is set globally in the function
 
-    # Ask for the remote IP for the tunnel
-    echo -e "\n${GREEN}Enter the remote IP for the tunnel:${RESET}"
-    read -p " > " remote_ip
-
-    # Validate if the remote IP is a valid IP address format
-    if ! [[ "$remote_ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        echo -e "\n${RED}Invalid remote IP address format. Please enter a valid IPv4 address.${RESET}"
-        return
+    # Ask for the remote IP or domain for the tunnel
+    echo -e "\n${GREEN}Enter the remote IP or domain for the tunnel:${RESET}"
+    read -p " > " remote_input
+    
+    # Validate if the input is a valid IP address format
+    if [[ "$remote_input" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        # Input is a valid IP address
+        remote_ip="$remote_input"
+        echo -e "${CYAN}Using remote IP: $remote_ip${RESET}"
+    else
+        # Input is not an IP address, assume it's a domain and resolve it
+        remote_ip=$(dig +short "$remote_input")
+    
+        # Check if the domain was successfully resolved
+        if [[ -z "$remote_ip" ]]; then
+            echo -e "\n${RED}Failed to resolve the domain to an IP address. Please check the domain name.${RESET}"
+            return
+        fi
+    
+        echo -e "${CYAN}Resolved domain $remote_input to IP: $remote_ip${RESET}"
     fi
+
 
     # Generate the systemd service file
     echo -e "\n${GREEN}Creating systemd service file for $service_name...${RESET}"
