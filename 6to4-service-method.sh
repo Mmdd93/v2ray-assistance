@@ -229,6 +229,7 @@ manage_tunnels() {
     echo "8. Edit with nano"
     echo "9. change remote ip"
     echo "10. change local ip"
+    echo "11. Auto sit tunnel update (check local/remote)"
     echo "0. Return to main menu"
     read -p "Choose an option [0-8]: " action
 
@@ -419,9 +420,138 @@ manage_tunnels() {
       
       echo -e "${GREEN}Local IP has been updated to $new_local_ip in $selected_tunnel.service.${RESET}"
       read -p "Press Enter to continue..."
-;;
+      ;;
+
+
+    11)
+    # Function to ask for service file, local domain, and remote domain
+    local service_file
+    local local_domain
+    local remote_domain
+    local current_local_domain
+    local current_remote_domain
+
+    # Check if the service file exists in the first path
+    if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+    # Add an alternative path if needed (e.g., /etc/systemd/system/)
+    elif [[ -f "/etc/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/etc/systemd/system/$selected_tunnel.service"
+    else
+        echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    # Validate service file path
+    if [[ ! -f "$service_file" ]]; then
+        echo -e "${RED}Error: Service file does not exist at $service_file.${RESET}"
+        return 1
+    fi
+
+    # Read current local and remote domains from /root/sit.txt if they exist
+    if [[ -f /root/sit.txt ]]; then
+        current_local_domain=$(grep '^local' /root/sit.txt | awk '{print $2}')
+        current_remote_domain=$(grep '^remote' /root/sit.txt | awk '{print $2}')
+    fi
+
+    # Show current domains (if any) and ask the user to confirm or enter new values
+    echo -e "${CYAN}Current local domain: ${GREEN}${current_local_domain:-Not set}${RESET}"
+    echo -e "${CYAN}Current remote domain: ${GREEN}${current_remote_domain:-Not set}${RESET}"
+
+    # Ask user for the local domain, defaulting to the current value
+    echo -e "${CYAN}Please enter the local domain (default: ${GREEN}${current_local_domain:-None}${RESET}):${RESET}"
+    read -r local_domain
+    local_domain="${local_domain:-$current_local_domain}"  # Use default if empty
+
+    # Ask user for the remote domain, defaulting to the current value
+    echo -e "${CYAN}Please enter the remote domain (default: ${GREEN}${current_remote_domain:-None}${RESET}):${RESET}"
+    read -r remote_domain
+    remote_domain="${remote_domain:-$current_remote_domain}"  # Use default if empty
+
+    # Validate domains using dig to resolve IPs
+    local local_ip
+    local remote_ip
+
+    # Resolve IPs using dig
+    local_ip=$(dig +short "$local_domain")
+    remote_ip=$(dig +short "$remote_domain")
+
+    # Check if IPs are resolved
+    if [[ -z "$local_ip" || -z "$remote_ip" ]]; then
+        echo -e "${RED}Error: Could not resolve IPs for the domains. Please ensure they are valid domains.${RESET}"
+        return 1
+    fi
+
+    # Save the configuration to /root/sit.txt
+    echo -e "${CYAN}Saving configuration to /root/sit.txt...${RESET}"
+    echo "service_file $service_file" > /root/sit.txt
+    echo "local $local_domain" >> /root/sit.txt
+    echo "remote $remote_domain" >> /root/sit.txt
+
+    echo -e "${GREEN}Configuration saved successfully!${RESET}"
+
+    # Download the auto_sit_update.sh script to /root
+    echo -e "${CYAN}Downloading the auto_sit_update.sh script...${RESET}"
+    curl -sL https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/auto_sit_update.sh -o /root/auto_sit_update.sh
+
+    # Make the downloaded script executable
+    chmod +x /root/auto_sit_update.sh
+
+    echo -e "${GREEN}auto_sit_update.sh downloaded and made executable!${RESET}"
+    
+    # Default interval for auto_sit_update.sh in minutes
+    default_update_interval_min=30
+    
+    # Prompt user for auto_sit_update.sh run interval in minutes
+    echo -e "\033[1;33mEnter the interval in minutes to run the auto_sit_update.sh script (default $default_update_interval_min minutes):\033[0m"
+    read -p "Enter minutes: " update_minutes
+    
+    # Use default if no input is provided
+    update_minutes=${update_minutes:-$default_update_interval_min}
+    
+    # Convert minutes to hours if needed
+    if [[ "$update_minutes" -lt 60 ]]; then
+        cron_schedule="*/$update_minutes * * * *"
+    else
+        # Convert minutes to hours for display and rounding for cron job
+        cron_schedule="0 */$((update_minutes / 60)) * * *"
+    fi
+    
+    # Define the path to the script
+    auto_sit_update_script="/root/auto_sit_update.sh"
+    
+    # Validate the existence of the script
+    if [[ ! -f "$auto_sit_update_script" ]]; then
+        echo -e "\033[1;31mError: The script $auto_sit_update_script does not exist.\033[0m"
+        return 1
+    fi
+    
+    # Overwrite the existing cron job for auto_sit_update.sh
+    (crontab -l 2>/dev/null | grep -v "$auto_sit_update_script"; echo "$cron_schedule $auto_sit_update_script") | crontab - || {
+        echo -e "\033[1;31mFailed to set cron job for auto_sit_update.sh.\033[0m"
+        return 1
+    }
+    
+    # Reload cron service
+    if ! sudo service cron reload; then
+        echo -e "\033[1;31mFailed to reload cron service.\033[0m"
+        return 1
+    fi
+    
+    sleep 1
+    echo -e "\033[1;32mauto_sit_update.sh will now run every $update_minutes minute(s).\033[0m"
+
+
+    read -p "Press Enter to continue..."
+    ;;
+
+
+    
+    
         *)
-            echo -e "${RED}Invalid option. Please try again.${RESET}"
+            echo -e "${RED}Invalid option...${RESET}"
+            read -p "Press Enter to continue..."
             ;;
     esac
 }
