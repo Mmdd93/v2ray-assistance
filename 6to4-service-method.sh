@@ -506,10 +506,10 @@ manage_tunnels() {
     echo -e "${GREEN}auto_sit_update.sh downloaded and made executable!${RESET}"
     
     # Default interval for auto_sit_update.sh in minutes
-    default_update_interval_min=30
+    default_update_interval_min=5
     
     # Prompt user for auto_sit_update.sh run interval in minutes
-    echo -e "\033[1;33mEnter the interval in minutes to run the auto_sit_update.sh script (default $default_update_interval_min minutes):\033[0m"
+    echo -e "\033[1;33mEnter the minutes to check the $selected_tunnel tunnel (default $default_update_interval_min minutes):\033[0m"
     read -p "Enter minutes: " update_minutes
     
     # Use default if no input is provided
