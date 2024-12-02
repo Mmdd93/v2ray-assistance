@@ -228,6 +228,7 @@ manage_tunnels() {
     echo "7. Remove tunnel"
     echo "8. Edit with nano"
     echo "9. change remote ip"
+    echo "10. change local ip"
     echo "0. Return to main menu"
     read -p "Choose an option [0-8]: " action
 
@@ -311,35 +312,113 @@ manage_tunnels() {
         9)
         local service_file
         local new_remote_ip
+        local current_remote_ip
 
-    # Ask for the new remote IP address
-    echo -e "${GREEN}Please enter the new remote IP address:${RESET}"
-    read -p "> " new_remote_ip
     
-    # Check if the service file exists in the first path
-    if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
-        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
-    # Add an alternative path if needed (e.g., /etc/systemd/system/)
-    elif [[ -f "/etc/systemd/system/$selected_tunnel.service" ]]; then
-        service_file="/etc/systemd/system/$selected_tunnel.service"
-    else
-        echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
+    
+            # Check if the service file exists in the first path
+            if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+                service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+            # Add an alternative path if needed (e.g., /etc/systemd/system/)
+            elif [[ -f "/etc/systemd/system/$selected_tunnel.service" ]]; then
+                service_file="/etc/systemd/system/$selected_tunnel.service"
+            else
+                echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
+                read -p "Press Enter to continue..."
+                return
+            fi
+        # Extract the current remote IP from the service file
+        current_remote_ip=$(grep -oP 'remote \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' "$service_file")
+        
+        if [[ -n "$current_remote_ip" ]]; then
+            echo -e "${CYAN}Current remote IP: ${GREEN}$current_remote_ip${RESET}"
+        else
+            echo -e "${YELLOW}No remote IP found in the service file.${RESET}"
+        fi
+        
+        # Ask for the new remote IP address
+        echo -e "${GREEN}Enter the new remote IP address or Enter blank to cancel:${RESET}"
+        read -p "> " new_remote_ip
+        
+        # Check if the input is blank
+        if [[ -z "$new_remote_ip" ]]; then
+            echo -e "${YELLOW}No changes made. Returning to the menu.${RESET}"
+            read -p "Press Enter to continue..."
+            return
+        fi
+            
+            # Use sed to replace the old remote IP with the new one
+            sed -i "s/remote [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*/remote $new_remote_ip/" "$service_file"
+        
+            # Reload systemd to apply the changes
+            sudo systemctl daemon-reload
+        
+            # Restart the service to apply the new remote IP
+            sudo systemctl restart "$selected_tunnel"
+        
+            echo -e "${GREEN}Remote IP has been updated to $new_remote_ip in $selected_tunnel.service.${RESET}"
+            read -p "Press Enter to continue..."
         return
-    fi
+        ;;
+        
+      10)
+      local service_file
+      local new_local_ip
+      local current_local_ip
+      
+      # Check if the service file exists in the first path
+      if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+          service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+      # Add an alternative path if needed (e.g., /etc/systemd/system/)
+      elif [[ -f "/etc/systemd/system/$selected_tunnel.service" ]]; then
+          service_file="/etc/systemd/system/$selected_tunnel.service"
+      else
+          echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
+          read -p "Press Enter to continue..."
+          return
+      fi
+      
+      # Extract the current local IP from the service file
+      current_local_ip=$(grep -oP 'local \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' "$service_file")
+      
+      if [[ -n "$current_local_ip" ]]; then
+          echo -e "${CYAN}Current saved local IP: ${RED}$current_local_ip${RESET}"
+      else
+          echo -e "${YELLOW}No local IP found in the service file.${RESET}"
+      fi
+      
+      # Get the current local IP
+        real_local_ip=$(get_local_ip)
+        
+        # Display the current local IP address
+        if [[ -n "$real_local_ip" ]]; then
+            echo -e "${CYAN}True local IP: ${GREEN}$real_local_ip${RESET}"
+        else
+            echo -e "${YELLOW}Unable to retrieve the local IP address.${RESET}"
+        fi
 
-
-    # Use sed to replace the old remote IP with the new one
-    sed -i "s/remote [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*/remote $new_remote_ip/" "$service_file"
-
-    # Reload systemd to apply the changes
-    sudo systemctl daemon-reload
-
-    # Restart the service to apply the new remote IP
-    sudo systemctl restart "$selected_tunnel"
-
-    echo -e "${GREEN}Remote IP has been updated to $new_remote_ip in $selected_tunnel.service.${RESET}"
-    read -p "Press Enter to continue..."
-return
+      # Ask for the new local IP address
+      echo -e "${GREEN}Enter the new local IP address or press Enter to cancel:${RESET}"
+      read -p "> " new_local_ip
+      
+      # Check if the input is blank
+      if [[ -z "$new_local_ip" ]]; then
+          echo -e "${YELLOW}No changes made. Returning to the menu.${RESET}"
+          read -p "Press Enter to continue..."
+          return
+      fi
+      
+      # Use sed to replace the old local IP with the new one
+      sed -i "s/local [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*/local $new_local_ip/" "$service_file"
+      
+      # Reload systemd to apply the changes
+      sudo systemctl daemon-reload
+      
+      # Restart the service to apply the new local IP
+      sudo systemctl restart "$selected_tunnel"
+      
+      echo -e "${GREEN}Local IP has been updated to $new_local_ip in $selected_tunnel.service.${RESET}"
+      read -p "Press Enter to continue..."
 ;;
         *)
             echo -e "${RED}Invalid option. Please try again.${RESET}"
