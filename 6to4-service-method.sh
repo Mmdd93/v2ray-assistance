@@ -218,20 +218,25 @@ manage_tunnels() {
     echo -e "${GREEN}You selected tunnel: $selected_tunnel${RESET}"
     
     # Prompt for the next action on the selected tunnel
-    echo -e "${GREEN}Select an action to perform on tunnel $selected_tunnel:${RESET}"
-    echo "1. Start tunnel"
-    echo "2. Stop tunnel"
-    echo "3. Restart tunnel"
-    echo "4. Enable at boot"
-    echo "5. Disable at boot"
-    echo "6. Check status"
-    echo "7. Remove tunnel"
-    echo "8. Edit with nano"
-    echo "9. change remote ip"
-    echo "10. change local ip"
-    echo "11. Auto sit tunnel update (check local/remote)"
-    echo "0. Return to main menu"
-    read -p "Choose an option [0-8]: " action
+    # Prompt for the next action on the selected tunnel
+    echo -e "\033[1;32m================================================\033[0m"
+    echo -e "\033[1;33mSelect an action to perform on tunnel $selected_tunnel:\033[0m"
+    echo -e "\033[1;32m================================================\033[0m"
+    echo -e "\033[1;34m1.\033[0m \033[1;36mStart tunnel\033[0m"
+    echo -e "\033[1;34m2.\033[0m \033[1;36mStop tunnel\033[0m"
+    echo -e "\033[1;34m3.\033[0m \033[1;36mRestart tunnel\033[0m"
+    echo -e "\033[1;34m4.\033[0m \033[1;36mEnable at boot\033[0m"
+    echo -e "\033[1;34m5.\033[0m \033[1;36mDisable at boot\033[0m"
+    echo -e "\033[1;34m6.\033[0m \033[1;36mCheck status\033[0m"
+    echo -e "\033[1;34m7.\033[0m \033[1;36mRemove tunnel\033[0m"
+    echo -e "\033[1;34m8.\033[0m \033[1;36mEdit with nano\033[0m"
+    echo -e "\033[1;34m9.\033[0m \033[1;36mChange remote IP\033[0m"
+    echo -e "\033[1;34m10.\033[0m \033[1;36mChange local IP\033[0m"
+    echo -e "\033[1;34m11.\033[0m \033[1;36mAuto sit tunnel update (check local/remote)\033[0m"
+    echo -e "\033[1;31m0.\033[0m \033[1;37mReturn to main menu\033[0m"
+    echo -e "\033[1;32m================================================\033[0m"
+
+    read -p "Choose an option: " action
 
     case $action in
         0) 
