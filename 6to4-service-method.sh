@@ -174,7 +174,7 @@ fi
         echo -e "${CYAN}Using remote IP: $remote_ip${RESET}"
     else
         # Input is not an IP address, assume it's a domain and resolve it
-        remote_ip=$(dig +short "$remote_input")
+       remote_ip=$(dig +short "$remote_input" | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}')
     
         # Check if the domain was successfully resolved
         if [[ -z "$remote_ip" ]]; then
@@ -526,8 +526,9 @@ local local_ip
 local remote_ip
 
 # Resolve IPs using dig
-local_ip=$(dig +short "$local_domain")
-remote_ip=$(dig +short "$remote_domain")
+local_ip=$(dig +short "$local_domain" | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}')
+remote_ip=$(dig +short "$remote_domain" | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}')
+
 
 # Check if IPs are resolved
 if [[ -z "$local_ip" || -z "$remote_ip" ]]; then
