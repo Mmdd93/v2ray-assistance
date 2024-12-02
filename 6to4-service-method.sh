@@ -613,7 +613,7 @@ while true; do
 # Main menu with enhanced styling
 clear
 echo -e "\033[1;34m=========================================\033[0m"
-echo -e "           \033[1;32mSIT Tunnel Service Method\033[0m"
+echo -e "      \033[1;32mSIT Tunnel Service Method\033[0m"
 echo -e "\033[1;34m=========================================\033[0m"
 echo -e "\033[1;36m 1.\033[0m \033[1;32mCreate SIT Tunnel\033[0m"
 echo -e "\033[1;36m 2.\033[0m \033[1;32mManage SIT Tunnels\033[0m"
