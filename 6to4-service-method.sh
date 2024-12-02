@@ -18,10 +18,7 @@ generate_random_name() {
 }
 
 
-# Function to get the local machine's IP address (IPv4)
-get_local_ip() {
-    echo $(hostname -I | awk '{print $1}')
-}
+
 generate_random_ipv6() {
      # Define 100 IPv6 address templates (hidden from display)
     local templates=()
@@ -87,7 +84,17 @@ generate_random_ipv6() {
     
 }
 
-
+# Function to get the local machine's IP address (IPv4)
+get_local_ip() {
+    # Attempt to fetch the first IPv4 address from the hostname command
+    local ip=$(hostname -I | awk '{print $1}')
+    # Verify the result is a valid IPv4 address
+    if [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "$ip"
+    else
+        echo ""
+    fi
+}
 # Function to create a SIT tunnel
 create_sit_tunnel() {
 
@@ -119,36 +126,36 @@ create_sit_tunnel() {
     fi
 
 
-    # Get the default local IP (e.g., from the first network interface)
-    local local_ip=$(get_local_ip)  # Assuming get_local_ip is defined elsewhere
-    if [[ -z "$local_ip" ]]; then
-        echo -e "${RED}No local IP address found. Exiting...${RESET}"
-        return
-    fi
 
-    # Ask for the local IP or domain for the tunnel
-    echo -e "\n${GREEN}Enter the local IP or domain for the tunnel ${YELLOW}(Default: $local_ip)${RESET}:"
-    read -p " > " user_input
-    
-    # Use the provided input or default if none is entered
-    user_input=${user_input:-$local_ip}
-    
-    # Check if the input is an IPv4 address
-    if [[ "$user_input" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        local_ip="$user_input"
-        echo -e "${CYAN}Using local IP: $local_ip${RESET}"
+# Get the default local IP
+local_ip=$(get_local_ip)
+if [[ -z "$local_ip" ]]; then
+    echo -e "\033[1;31mNo local IP address found. Exiting...\033[0m"
+    exit 1
+fi
+
+# Ask for the local IP or domain for the tunnel
+echo -e "\n\033[1;32mEnter the local IP or domain for the tunnel \033[1;33m(Default: $local_ip)\033[0m:"
+read -p " > " user_input
+
+# Use the provided input or default if none is entered
+user_input=${user_input:-$local_ip}
+
+# Check if the input is an IPv4 address
+if [[ "$user_input" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    local_ip="$user_input"
+    echo -e "\033[1;36mUsing local IP: $local_ip\033[0m"
+else
+    # Resolve the domain to an IP
+    resolved_ip=$(dig +short "$user_input" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
+    if [[ -n "$resolved_ip" ]]; then
+        local_ip="$resolved_ip"
+        echo -e "\033[1;36mDomain resolved to IP: $local_ip\033[0m"
     else
-        # Resolve the domain to an IP
-        resolved_ip=$(dig +short "$user_input")
-    
-        if [[ -n "$resolved_ip" ]]; then
-            local_ip="$resolved_ip"
-            echo -e "${CYAN}Domain resolved to IP: $local_ip${RESET}"
-        else
-            echo -e "${RED}Failed to resolve domain: $user_input. Please enter a valid IP or domain.${RESET}"
-            return
-        fi
+        echo -e "\033[1;31mFailed to resolve domain: $user_input. Please enter a valid IP or domain.\033[0m"
+        exit 1
     fi
+fi
 
 
     # Use the function to generate or select a custom IPv6 address
