@@ -610,22 +610,17 @@ while true; do
     # Clear the screen for a clean look each time
     clear
 
-    # Main menu with some styling
+# Main menu with enhanced styling
+clear
+echo -e "\033[1;34m=========================================\033[0m"
+echo -e "           \033[1;32mSIT Tunnel Service Method\033[0m"
+echo -e "\033[1;34m=========================================\033[0m"
+echo -e "\033[1;36m 1.\033[0m \033[1;32mCreate SIT Tunnel\033[0m"
+echo -e "\033[1;36m 2.\033[0m \033[1;32mManage SIT Tunnels\033[0m"
+echo -e "\033[1;36m 0.\033[0m \033[1;31mExit\033[0m"
+echo -e "\n\033[1;34m=========================================\033[0m"
+echo -e "\033[1;32mEnter your choice: \033[0m"
 
-    echo -e "\033[1;32mSIT tunnel service method\033[0m"
-
-
-    # Option 1
-    echo -e "\033[1;33m1.\033[0m \033[1;36mCreate  SIT tunnel\033[0m"
-    
-    # Option 2
-    echo -e "\033[1;33m2.\033[0m \033[1;36mManage SIT tunnels\033[0m"
-    
-    # Option 0
-    echo -e "\033[1;33m0.\033[0m \033[1;31mExit\033[0m"
-
-    # Prompt for user input
-    echo -e "\n\033[1;32mPlease select an option: \033[0m"
     read -p "Choice: " option
 
     case $option in
