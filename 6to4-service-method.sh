@@ -625,7 +625,7 @@ while true; do
     echo -e "\033[1;33m0.\033[0m \033[1;31mExit\033[0m"
 
     # Prompt for user input
-    echo -e "\n\033[1;32mPlease select an option [1-3]: \033[0m"
+    echo -e "\n\033[1;32mPlease select an option: \033[0m"
     read -p "Choice: " option
 
     case $option in
