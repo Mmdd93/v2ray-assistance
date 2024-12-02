@@ -34,6 +34,9 @@ for config_file in "$config_dir"/sit-*.txt; do
         continue
     fi
 
+    echo -e "${RED}sleep...${RESET}"
+    sleep 1
+
     # Read variables from the current sit_tunnel.txt
     echo -e "${CYAN}Reading configuration from $config_file...${RESET}"
     service_file=$(grep '^service_file' "$config_file" | awk '{print $2}')
