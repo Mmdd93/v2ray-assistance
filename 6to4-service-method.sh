@@ -101,7 +101,6 @@ create_sit_tunnel() {
     # If no input is given, use the default random name
     if [[ -z "$service_name" ]]; then
         service_name="$default_name"  # Use the default name
-        echo -e "\n${GREEN}No name provided. Using random service name: $service_name${RESET}"
     fi
 
     # Ensure the service name has the required prefix
@@ -110,7 +109,7 @@ create_sit_tunnel() {
         
     fi
 
-    echo -e "\n${GREEN}Using service name: $service_name${RESET}"
+    echo -e "\n${GREEN}Using service name:${RESET} $service_name"
 
     # Check if the service already exists
     local service_file="/usr/lib/systemd/system/$service_name.service"
