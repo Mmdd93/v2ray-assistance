@@ -49,9 +49,10 @@ for config_file in "$config_dir"/sit-*.txt; do
         continue
     fi
 
-    # Resolve domains to IPs using dig
-    new_local_ip=$(dig +short "$new_local_domain")
-    new_remote_ip=$(dig +short "$new_remote_domain")
+# Resolve domains to IPs using dig (only retrieve the IP, discard the domain)
+new_local_ip=$(dig +short "$new_local_domain" | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}')
+new_remote_ip=$(dig +short "$new_remote_domain" | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}')
+
 
     # Validate resolved IPs
     if [[ -z "$new_local_ip" || -z "$new_remote_ip" ]]; then
