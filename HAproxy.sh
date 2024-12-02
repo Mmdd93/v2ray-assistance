@@ -206,6 +206,21 @@ restart_haproxy() {
 
 }
 
+# Function to restart HAProxy service
+reload_haproxy() {
+  echo -e "\033[1;34m--- Reloading HAProxy Service ---\033[0m"
+  if sudo systemctl reload haproxy; then
+    echo -e "\033[1;32mHAProxy service reloaded successfully!\033[0m"
+    read -p "Press Enter to continue: "
+  else
+    echo -e "\033[1;31mFailed to reload HAProxy service. Please check the service status or logs.\033[0m"
+    read -p "Press Enter to continue: "
+    return 1  # Indicate failure
+  fi
+  
+
+}
+
 # Function to stop HAProxy service
 stop_haproxy() {
   echo -e "\033[1;34m--- Stopping HAProxy Service ---\033[0m"
@@ -262,18 +277,21 @@ haproxy_menu() {
   while true; do
   clear
     echo -e "\n\033[1;34m--- HAProxy Configuration Management ---\033[0m"
-    echo "1. Install HAProxy"
-    echo "2. Remove HAProxy"
-    echo "3. Create port forwarding"
-    echo "4. check haproxy status"
-    echo "5. Backup HAProxy Configuration"
-    echo "6. Restore HAProxy Configuration"
-    echo "7. Restart HAProxy"
-    echo "8. Start HAProxy"
-    echo "9. Stop HAProxy"
-    echo "10. Edit HAProxy Configuration"
-    echo "11. Exit"
+    echo -e "\033[1;32m1.\033[0m Install HAProxy"
+    echo -e "\033[1;32m2.\033[0m Remove HAProxy"
+    echo -e "\033[1;32m3.\033[0m Create Port Forwarding"
+    echo -e "\033[1;32m4.\033[0m Check HAProxy Status"
+    echo -e "\033[1;32m5.\033[0m Backup HAProxy Configuration"
+    echo -e "\033[1;32m6.\033[0m Restore HAProxy Configuration"
+    echo -e "\033[1;32m7.\033[0m Restart HAProxy"
+    echo -e "\033[1;32m8.\033[0m Start HAProxy"
+    echo -e "\033[1;32m9.\033[0m Stop HAProxy"
+    echo -e "\033[1;32m10.\033[0m Edit HAProxy Configuration"
+    echo -e "\033[1;32m11.\033[0m Reload HAProxy"
+    echo -e "\033[1;31m0.\033[0m Exit"
+    echo -e "\n\033[1;33mPlease select an option from the above menu:\033[0m"
     read -p "Select an option: " option
+
 
     case $option in
       1) install_haproxy ;;
@@ -286,7 +304,8 @@ haproxy_menu() {
       8) start_haproxy ;;
       9) stop_haproxy ;;
       10) edit_haproxy ;;
-      11) break ;;
+      11) reload_haproxy ;;
+      0) break ;;
       *) echo -e "\033[1;31mInvalid option!\033[0m" ;;
     esac
   done
