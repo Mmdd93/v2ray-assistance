@@ -1061,6 +1061,9 @@ echo -e "\033[1;32mEnter your choice: \033[0m"
         6)
             backup_files_and_dirs
             ;;
+        7)
+           transfer-sit
+            ;;
         0)
             echo -e "\n\033[1;31mExiting... Goodbye!\033[0m"
             break 
