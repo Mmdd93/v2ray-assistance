@@ -694,6 +694,84 @@ restart_sit_tunnels() {
     echo -e "${GREEN}All SIT tunnel services have been enabled and started.${RESET}"
     read -p  "Press Enter to continue..."
 }
+
+
+
+# Function to back up files and directories
+backup_files_and_dirs() {
+  # File paths and directories to back up
+  FILES=("/etc/x-ui/x-ui.db" "/var/spool/cron/crontabs/root" "/root/auto_sit_update.sh")
+  DIRS=("/root/sit")  # Directories to back up
+
+  # Ensure zip is installed
+  if ! command -v zip &> /dev/null; then
+    echo -e "${RED}zip is not installed. Installing...${RESET}"
+    
+    # Detect the package manager and install zip
+    if command -v apt &> /dev/null; then
+      sudo apt update && sudo apt install -y zip
+    elif command -v yum &> /dev/null; then
+      sudo yum install -y zip
+    elif command -v dnf &> /dev/null; then
+      sudo dnf install -y zip
+    elif command -v zypper &> /dev/null; then
+      sudo zypper install -y zip
+    elif command -v pacman &> /dev/null; then
+      sudo pacman -Sy --noconfirm zip
+    else
+      echo -e "${RED}Error:${RESET} Unable to determine package manager. Please install zip manually." >&2
+      exit 1
+    fi
+
+    # Verify installation
+    if command -v zip &> /dev/null; then
+      echo -e "${GREEN}zip has been successfully installed.${RESET}"
+    else
+      echo -e "${RED}Error:${RESET} Failed to install zip. Please check your system settings." >&2
+      exit 1
+    fi
+  else
+    echo -e "${GREEN}zip is already installed.${RESET}"
+  fi
+
+  # Create a list of all items to back up
+  TRANSFERRED_ITEMS=()
+
+  # Check if each file exists and add it to the backup list
+  for FILE_PATH in "${FILES[@]}"; do
+    if [ -f "$FILE_PATH" ]; then
+      TRANSFERRED_ITEMS+=("$FILE_PATH")
+      echo -e "${BLUE}Adding file to backup: ${YELLOW}$FILE_PATH${RESET}"
+    else
+      echo -e "${YELLOW}Warning:${RESET} File does not exist: $FILE_PATH"
+    fi
+  done
+
+  # Check if each directory exists and add it to the backup list
+  for DIR_PATH in "${DIRS[@]}"; do
+    if [ -d "$DIR_PATH" ]; then
+      TRANSFERRED_ITEMS+=("$DIR_PATH")
+      echo -e "${BLUE}Adding directory to backup: ${YELLOW}$DIR_PATH${RESET}"
+    else
+      echo -e "${YELLOW}Warning:${RESET} Directory does not exist: $DIR_PATH"
+    fi
+  done
+
+  # Create a ZIP file locally
+  # Create a ZIP file on the local system
+  ZIP_FILE="/root/backup_$(date +[%Y-%m-%d][%H:%M]).zip"
+  TRANSFERRED_ITEMS=("${FILES[@]}" "${DIRS[@]}")  # Combine files and directories
+
+  echo -e "${BLUE}Creating a ZIP archive locally: ${YELLOW}$ZIP_FILE${RESET}"
+  zip -r "$ZIP_FILE" "${TRANSFERRED_ITEMS[@]}" > /dev/null
+
+  if [ $? -eq 0 ]; then
+    echo -e "${GREEN}Success:${RESET} Local ZIP archive created at $ZIP_FILE."
+  else
+    echo -e "${RED}Error:${RESET} Failed to create local ZIP archive." >&2
+  fi
+}
+
 # Main menu
 while true; do
     # Clear the screen for a clean look each time
@@ -709,6 +787,7 @@ echo -e "\033[1;36m 2.\033[0m \033[1;32mManage SIT Tunnels\033[0m"
 echo -e "\033[1;36m 3.\033[0m \033[1;32mStart all SIT Tunnels\033[0m"
 echo -e "\033[1;36m 4.\033[0m \033[1;32mStop all SIT Tunnels\033[0m"
 echo -e "\033[1;36m 5.\033[0m \033[1;32mRestart all SIT Tunnels\033[0m"
+echo -e "\033[1;36m 6.\033[0m \033[1;32mBackup all SIT Tunnels\033[0m"
 echo -e "\033[1;36m 0.\033[0m \033[1;31mExit\033[0m"
 echo -e "\n\033[1;34m=========================================\033[0m"
 echo -e "\033[1;32mEnter your choice: \033[0m"
@@ -716,34 +795,26 @@ echo -e "\033[1;32mEnter your choice: \033[0m"
     read -p "Choice: " option
 
     case $option in
-        1) 
-            # Create multiple SIT tunnels
-
+        1)
             create_sit_tunnel
             ;;
-        2) 
-            # Manage SIT tunnels
-
+        2)
             manage_tunnels 
             ;;
-        3) 
-            # Manage SIT tunnels
-
+        3)
             enable_and_start_sit_tunnels 
             ;;
-        4) 
-            # Manage SIT tunnels
-
+        4)
             stop_all_sit_tunnels
             ;;
             
-            5) 
-            # Manage SIT tunnels
-
+        5)
             restart_sit_tunnels
             ;;
-        0) 
-            # Exit
+        6)
+            backup_files_and_dirs
+            ;;
+        0)
             echo -e "\n\033[1;31mExiting... Goodbye!\033[0m"
             break 
             ;;
