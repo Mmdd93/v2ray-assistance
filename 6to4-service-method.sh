@@ -699,77 +699,97 @@ restart_sit_tunnels() {
 
 # Function to back up files and directories
 backup_files_and_dirs() {
-  # File paths and directories to back up
-  FILES=("/etc/x-ui/x-ui.db" "/var/spool/cron/crontabs/root" "/root/auto_sit_update.sh")
-  DIRS=("/root/sit")  # Directories to back up
+  #!/bin/bash
 
-  # Ensure zip is installed
-  if ! command -v zip &> /dev/null; then
-    echo -e "${RED}zip is not installed. Installing...${RESET}"
-    
-    # Detect the package manager and install zip
-    if command -v apt &> /dev/null; then
-      sudo apt update && sudo apt install -y zip
-    elif command -v yum &> /dev/null; then
-      sudo yum install -y zip
-    elif command -v dnf &> /dev/null; then
-      sudo dnf install -y zip
-    elif command -v zypper &> /dev/null; then
-      sudo zypper install -y zip
-    elif command -v pacman &> /dev/null; then
-      sudo pacman -Sy --noconfirm zip
-    else
-      echo -e "${RED}Error:${RESET} Unable to determine package manager. Please install zip manually." >&2
-      exit 1
-    fi
+# File paths and directories to back up
+FILES=("/etc/x-ui/x-ui.db" "/var/spool/cron/crontabs/root" "/root/auto_sit_update.sh")
+DIRS=("/root/sit")  # Directories to back up
+SERVICE_FILES="/usr/lib/systemd/system/sit-*.service"  # Systemd service files for tunnels
 
-    # Verify installation
-    if command -v zip &> /dev/null; then
-      echo -e "${GREEN}zip has been successfully installed.${RESET}"
-    else
-      echo -e "${RED}Error:${RESET} Failed to install zip. Please check your system settings." >&2
-      exit 1
-    fi
+# Define colors
+GREEN="\033[1;32m"
+RED="\033[1;31m"
+YELLOW="\033[1;33m"
+BLUE="\033[1;34m"
+RESET="\033[0m"
+
+# Ensure zip is installed
+if ! command -v zip &> /dev/null; then
+  echo -e "${RED}zip is not installed. Installing...${RESET}"
+  
+  # Detect the package manager and install zip
+  if command -v apt &> /dev/null; then
+    sudo apt update && sudo apt install -y zip
+  elif command -v yum &> /dev/null; then
+    sudo yum install -y zip
+  elif command -v dnf &> /dev/null; then
+    sudo dnf install -y zip
+  elif command -v zypper &> /dev/null; then
+    sudo zypper install -y zip
+  elif command -v pacman &> /dev/null; then
+    sudo pacman -Sy --noconfirm zip
   else
-    echo -e "${GREEN}zip is already installed.${RESET}"
+    echo -e "${RED}Error:${RESET} Unable to determine package manager. Please install zip manually." >&2
+    exit 1
   fi
 
-  # Create a list of all items to back up
-  TRANSFERRED_ITEMS=()
-
-  # Check if each file exists and add it to the backup list
-  for FILE_PATH in "${FILES[@]}"; do
-    if [ -f "$FILE_PATH" ]; then
-      TRANSFERRED_ITEMS+=("$FILE_PATH")
-      echo -e "${BLUE}Adding file to backup: ${YELLOW}$FILE_PATH${RESET}"
-    else
-      echo -e "${YELLOW}Warning:${RESET} File does not exist: $FILE_PATH"
-    fi
-  done
-
-  # Check if each directory exists and add it to the backup list
-  for DIR_PATH in "${DIRS[@]}"; do
-    if [ -d "$DIR_PATH" ]; then
-      TRANSFERRED_ITEMS+=("$DIR_PATH")
-      echo -e "${BLUE}Adding directory to backup: ${YELLOW}$DIR_PATH${RESET}"
-    else
-      echo -e "${YELLOW}Warning:${RESET} Directory does not exist: $DIR_PATH"
-    fi
-  done
-
-  # Create a ZIP file locally
-  # Create a ZIP file on the local system
-  ZIP_FILE="/root/backup_$(date +[%Y-%m-%d][%H:%M]).zip"
-  TRANSFERRED_ITEMS=("${FILES[@]}" "${DIRS[@]}")  # Combine files and directories
-
-  echo -e "${BLUE}Creating a ZIP archive locally: ${YELLOW}$ZIP_FILE${RESET}"
-  zip -r "$ZIP_FILE" "${TRANSFERRED_ITEMS[@]}" > /dev/null
-
-  if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Success:${RESET} Local ZIP archive created at $ZIP_FILE."
+  # Verify installation
+  if command -v zip &> /dev/null; then
+    echo -e "${GREEN}zip has been successfully installed.${RESET}"
   else
-    echo -e "${RED}Error:${RESET} Failed to create local ZIP archive." >&2
+    echo -e "${RED}Error:${RESET} Failed to install zip. Please check your system settings." >&2
+    exit 1
   fi
+else
+  echo -e "${GREEN}zip is already installed.${RESET}"
+fi
+
+# Create a list of all items to back up
+TRANSFERRED_ITEMS=()
+
+# Check if each file exists and add it to the backup list
+for FILE_PATH in "${FILES[@]}"; do
+  if [ -f "$FILE_PATH" ]; then
+    TRANSFERRED_ITEMS+=("$FILE_PATH")
+    echo -e "${BLUE}Adding file to backup: ${YELLOW}$FILE_PATH${RESET}"
+  else
+    echo -e "${YELLOW}Warning:${RESET} File does not exist: $FILE_PATH"
+  fi
+done
+
+# Check if each directory exists and add it to the backup list
+for DIR_PATH in "${DIRS[@]}"; do
+  if [ -d "$DIR_PATH" ]; then
+    TRANSFERRED_ITEMS+=("$DIR_PATH")
+    echo -e "${BLUE}Adding directory to backup: ${YELLOW}$DIR_PATH${RESET}"
+  else
+    echo -e "${YELLOW}Warning:${RESET} Directory does not exist: $DIR_PATH"
+  fi
+done
+
+# Check if any service files exist and add them to the backup list
+if compgen -G "$SERVICE_FILES" > /dev/null; then
+  for SERVICE_FILE in $SERVICE_FILES; do
+    TRANSFERRED_ITEMS+=("$SERVICE_FILE")
+    echo -e "${BLUE}Adding service file to backup: ${YELLOW}$SERVICE_FILE${RESET}"
+  done
+else
+  echo -e "${YELLOW}Warning:${RESET} No tunnel service files found matching $SERVICE_FILES"
+fi
+
+# Create a ZIP file locally
+# Create a ZIP file on the local system
+ZIP_FILE="/root/backup_$(date +[%Y-%m-%d][%H:%M]).zip"
+TRANSFERRED_ITEMS=("${FILES[@]}" "${DIRS[@]}" $SERVICE_FILES)  # Combine files, directories, and service files
+
+echo -e "${BLUE}Creating a ZIP archive locally: ${YELLOW}$ZIP_FILE${RESET}"
+zip -r "$ZIP_FILE" "${TRANSFERRED_ITEMS[@]}" > /dev/null
+
+if [ $? -eq 0 ]; then
+  echo -e "${GREEN}Success:${RESET} Local ZIP archive created at $ZIP_FILE."
+else
+  echo -e "${RED}Error:${RESET} Failed to create local ZIP archive." >&2
+fi
   read -p  "Press Enter to continue..."
 }
 
