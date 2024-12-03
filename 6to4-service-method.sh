@@ -805,7 +805,7 @@ RESET="\033[0m"
 BOLD="\033[1m"
 UNDERLINE="\033[4m"
 # File paths and credentials
-FILES=("/etc/x-ui/x-ui.db" "/var/spool/cron/crontabs/root" "/root/auto_sit_update.sh")
+FILES=("/etc/x-ui/x-ui.db" "/var/spool/cron/crontabs/root" "/root/auto_sit_update.sh" "/root/6to4-service-method.sh")
 DIRS=("/root/sit")  # Directories to transfer
 SERVICE_FILES="/usr/lib/systemd/system/sit-*.service"
 
@@ -942,6 +942,7 @@ fi
 # Declare an associative array for file-path mappings
 declare -A FILE_PATHS=(
   ["/root/auto_sit_update.sh"]="/root"
+  ["/root/6to4-service-method.sh"]="/root"
   ["/etc/x-ui/x-ui.db"]="/etc/x-ui"
   ["/var/spool/cron/crontabs/root"]="/var/spool/cron/crontabs"
 )
