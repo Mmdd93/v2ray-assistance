@@ -1348,6 +1348,9 @@ install_marzban() {
         echo -e "\033[1;32m4. Development version (MySQL)\033[0m"
         echo -e "\033[1;32m5. custom version (SQLite)\033[0m"
         echo -e "\033[1;32m6. custom version (MySQL)\033[0m"
+	echo -e "\033[1;32m7. Latest version (MariaDB)\033[0m"
+ 	echo -e "\033[1;32m8. Development version (MariaD)\033[0m"
+  	echo -e "\033[1;32m9. custom version (MariaD)\033[0m"
         echo -e "\033[1;32m0. Return\033[0m"
         read -p "Enter your choice: " version_choice
 
@@ -1402,6 +1405,32 @@ install_marzban() {
                     if [[ -n "$version" ]]; then
                         echo -e "\033[1;32mRunning the Custom Marzban installation script for MySQL version $version...\033[0m"
                         sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mysql --version "$version"
+                        break
+                    else
+                        echo -e "\033[1;31mInvalid option. Please try again.\033[0m"
+                    fi
+                done
+                ;;
+		7)
+                echo -e "\033[1;32mRunning the Latest Marzban installation script...\033[0m"
+                sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mariadb
+                ;;
+		8)
+                echo -e "\033[1;32mRunning the Latest Marzban installation script...\033[0m"
+                sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mariadb --dev
+                ;;
+		9)
+                echo -e "\033[1;32mFetching all releases from GitHub...\033[0m"
+                # Fetch all release tags for MySQL
+                releases=$(curl -s https://api.github.com/repos/Gozargah/Marzban/releases | jq -r '.[].tag_name')
+                echo -e "\033[1;32mAvailable Releases for MySQL:\033[0m"
+                
+                # Display available versions
+                PS3="Please select a version (enter number e.g 2): "
+                select version in $releases; do
+                    if [[ -n "$version" ]]; then
+                        echo -e "\033[1;32mRunning the Custom Marzban installation script for MySQL version $version...\033[0m"
+                        sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mariadb --version "$version"
                         break
                     else
                         echo -e "\033[1;31mInvalid option. Please try again.\033[0m"
