@@ -793,6 +793,231 @@ fi
   read -p  "Press Enter to continue..."
 }
 
+
+transfer-sit() {
+#!/bin/bash
+# Define colors
+GREEN="\033[1;32m"
+RED="\033[1;31m"
+YELLOW="\033[1;33m"
+BLUE="\033[1;34m"
+RESET="\033[0m"
+BOLD="\033[1m"
+UNDERLINE="\033[4m"
+# File paths and credentials
+FILES=("/etc/x-ui/x-ui.db" "/var/spool/cron/crontabs/root" "/root/auto_sit_update.sh")
+DIRS=("/root/sit")  # Directories to transfer
+SERVICE_FILES="/usr/lib/systemd/system/sit-*.service"
+
+# Ask for credentials
+echo -e "${BOLD}${YELLOW}Please enter the SSH connection details:${RESET}"
+
+# Prompt for the remote user
+read -p "Remote User (default 'root'):" REMOTE_USER
+REMOTE_USER=${REMOTE_USER:-root}
+
+# Check if REMOTE_HOST is provided, if not, prompt for it
+if [ -z "$REMOTE_HOST" ]; then
+  read -p "Remote Host IP:" REMOTE_HOST
+fi
+
+# Prompt for the remote port with default value
+read -p "Remote Port (default '22'):" REMOTE_PORT
+REMOTE_PORT=${REMOTE_PORT:-22}
+
+# Prompt for the root password (hidden input)
+read -p "Root Password:" ROOT_PASSWORD
+echo  # To move to the next line after password input
+
+# Output confirmation of the entered credentials
+echo -e "\n${GREEN}${BOLD}Credentials Summary:${RESET}"
+echo -e "${YELLOW}Remote User:${RESET} ${REMOTE_USER}"
+echo -e "${YELLOW}Remote Host:${RESET} ${REMOTE_HOST}"
+echo -e "${YELLOW}Remote Port:${RESET} ${REMOTE_PORT}"
+echo -e "${YELLOW}Remote PASSWORD:${RESET} ${ROOT_PASSWORD}"
+# Ask if the credentials are correct
+while true; do
+  read -p "Are these credentials correct? (yes/no, default 'yes'):" CONFIRMATION
+  CONFIRMATION=${CONFIRMATION:-yes}  # Default to 'yes' if no input is given
+  
+  if [[ "$CONFIRMATION" == "yes" || "$CONFIRMATION" == "y" ]]; then
+    echo -e "${GREEN}Credentials confirmed! Proceeding...${RESET}"
+    break
+  elif [[ "$CONFIRMATION" == "no" || "$CONFIRMATION" == "n" ]]; then
+    echo -e "${RED}Please re-enter the credentials.${RESET}"
+    
+    # Ask for the credentials again
+    read -p "Remote User (default 'root'):" REMOTE_USER
+    REMOTE_USER=${REMOTE_USER:-root}
+
+    read -p "Remote Host IP:" REMOTE_HOST
+
+    read -p "Remote Port (default '22'):" REMOTE_PORT
+    REMOTE_PORT=${REMOTE_PORT:-22}
+
+    read -p "Root Password:" ROOT_PASSWORD
+    echo  # To move to the next line after password input
+
+    # Output confirmation of the new entered credentials
+    echo -e "\n${GREEN}${BOLD}New Credentials Summary:${RESET}"
+    echo -e "${YELLOW}Remote User:${RESET} ${REMOTE_USER}"
+    echo -e "${YELLOW}Remote Host:${RESET} ${REMOTE_HOST}"
+    echo -e "${YELLOW}Remote Port:${RESET} ${REMOTE_PORT}"
+    echo -e "${YELLOW}Remote PASSWORD:${RESET} ${ROOT_PASSWORD}"
+  else
+    echo -e "${RED}Invalid input. Please enter 'yes' or 'no'.${RESET}"
+  fi
+done
+
+
+# Ensure zip is installed
+if ! command -v zip &> /dev/null; then
+  echo -e "${RED}zip is not installed. Installing...${RESET}"
+  
+  # Detect the package manager and install zip
+  if command -v apt &> /dev/null; then
+    sudo apt update && sudo apt install -y zip
+  elif command -v yum &> /dev/null; then
+    sudo yum install -y zip
+  elif command -v dnf &> /dev/null; then
+    sudo dnf install -y zip
+  elif command -v zypper &> /dev/null; then
+    sudo zypper install -y zip
+  elif command -v pacman &> /dev/null; then
+    sudo pacman -Sy --noconfirm zip
+  else
+    echo -e "${RED}Error:${RESET} Unable to determine package manager. Please install zip manually." >&2
+    exit 1
+  fi
+
+  # Verify installation
+  if command -v zip &> /dev/null; then
+    echo -e "${GREEN}zip has been successfully installed.${RESET}"
+  else
+    echo -e "${RED}Error:${RESET} Failed to install zip. Please check your system settings." >&2
+    exit 1
+  fi
+else
+  echo -e "${GREEN}zip is already installed.${RESET}"
+fi
+# Check if sshpass is installed
+if ! command -v sshpass &> /dev/null; then
+  echo -e "${RED}sshpass is not installed. Installing...${RESET}"
+  
+  # Detect the package manager and install sshpass
+  if command -v apt &> /dev/null; then
+    sudo apt update && sudo apt install -y sshpass
+  elif command -v yum &> /dev/null; then
+    sudo yum install -y sshpass
+  elif command -v dnf &> /dev/null; then
+    sudo dnf install -y sshpass
+  elif command -v zypper &> /dev/null; then
+    sudo zypper install -y sshpass
+  elif command -v pacman &> /dev/null; then
+    sudo pacman -Sy --noconfirm sshpass
+  else
+    echo -e "${RED}Error:${RESET} Unable to determine package manager. Please install sshpass manually." >&2
+    exit 1
+  fi
+
+  # Verify installation
+  if command -v sshpass &> /dev/null; then
+    echo -e "${GREEN}sshpass has been successfully installed.${RESET}"
+  else
+    echo -e "${RED}Error:${RESET} Failed to install sshpass. Please check your system settings." >&2
+    exit 1
+  fi
+else
+  echo -e "${GREEN}sshpass is already installed.${RESET}"
+fi
+
+# Verify SSH connection
+if sshpass -p "$ROOT_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$REMOTE_PORT" "$REMOTE_USER@$REMOTE_HOST" exit; then
+  echo -e "${GREEN}SSH connection to $REMOTE_USER@$REMOTE_HOST successful.${RESET}"
+else
+  echo -e "${RED}Error:${RESET} Failed to connect to $REMOTE_USER@$REMOTE_HOST via SSH." >&2
+  exit 1
+fi
+
+# Declare an associative array for file-path mappings
+declare -A FILE_PATHS=(
+  ["/root/auto_sit_update.sh"]="/root"
+  ["/etc/x-ui/x-ui.db"]="/etc/x-ui"
+  ["/var/spool/cron/crontabs/root"]="/var/spool/cron/crontabs"
+)
+
+# Add dynamically matched files
+for SERVICE_FILE in $SERVICE_FILES; do
+  if [ -f "$SERVICE_FILE" ]; then
+    FILES+=("$SERVICE_FILE")
+    FILE_PATHS["$SERVICE_FILE"]="/usr/lib/systemd/system"
+  else
+    echo -e "${YELLOW}Warning:${RESET} No files matching $SERVICE_FILES found locally."
+  fi
+done
+
+# Create a list of all transferred items
+TRANSFERRED_ITEMS=()
+
+# Transfer files
+for FILE_PATH in "${FILES[@]}"; do
+  DEST_DIR="${FILE_PATHS[$FILE_PATH]}"
+  FILE_NAME=$(basename "$FILE_PATH")  # Extract file name from the path
+
+  if [ -f "$FILE_PATH" ]; then
+    # Ensure the destination directory exists on the remote server
+    echo -e "${BLUE}Ensuring destination directory exists: ${YELLOW}$DEST_DIR${RESET}"
+    sshpass -p "$ROOT_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$REMOTE_PORT" "$REMOTE_USER@$REMOTE_HOST" "mkdir -p $DEST_DIR"
+
+    # Send the file using scp
+    echo -e "${BLUE}Attempting to send file: ${YELLOW}$FILE_PATH${RESET} to ${YELLOW}$DEST_DIR/$FILE_NAME${RESET}"
+    if sshpass -p "$ROOT_PASSWORD" scp -P "$REMOTE_PORT" "$FILE_PATH" "$REMOTE_USER@$REMOTE_HOST:$DEST_DIR/$FILE_NAME"; then
+      echo -e "${GREEN}Success:${RESET} File $FILE_PATH successfully sent to $REMOTE_USER@$REMOTE_HOST:$DEST_DIR/$FILE_NAME"
+      TRANSFERRED_ITEMS+=("$DEST_DIR/$FILE_NAME")
+    else
+      echo -e "${RED}Error:${RESET} Failed to send file $FILE_PATH to $REMOTE_USER@$REMOTE_HOST:$DEST_DIR/$FILE_NAME" >&2
+    fi
+  else
+    echo -e "${YELLOW}Warning:${RESET} File does not exist: $FILE_PATH"
+  fi
+done
+
+# Transfer directories
+for DIR_PATH in "${DIRS[@]}"; do
+  DEST_DIR=$(dirname "$DIR_PATH")  # Parent directory as destination
+
+  if [ -d "$DIR_PATH" ]; then
+    # Ensure the destination directory exists on the remote server
+    echo -e "${BLUE}Ensuring destination directory exists: ${YELLOW}$DEST_DIR${RESET}"
+    sshpass -p "$ROOT_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$REMOTE_PORT" "$REMOTE_USER@$REMOTE_HOST" "mkdir -p $DEST_DIR"
+
+    # Send the directory using scp (trailing slash ensures correct structure)
+    echo -e "${BLUE}Attempting to send directory: ${YELLOW}$DIR_PATH${RESET} to ${YELLOW}$DEST_DIR/${RESET}"
+    if sshpass -p "$ROOT_PASSWORD" scp -P "$REMOTE_PORT" -r "${DIR_PATH%/}/" "$REMOTE_USER@$REMOTE_HOST:$DEST_DIR/"; then
+      echo -e "${GREEN}Success:${RESET} Directory $DIR_PATH successfully sent to $REMOTE_USER@$REMOTE_HOST:$DEST_DIR/"
+      TRANSFERRED_ITEMS+=("$DEST_DIR/")
+    else
+      echo -e "${RED}Error:${RESET} Failed to send directory $DIR_PATH to $REMOTE_USER@$REMOTE_HOST:$DEST_DIR/" >&2
+    fi
+  else
+    echo -e "${YELLOW}Warning:${RESET} Directory does not exist: $DIR_PATH"
+  fi
+done
+
+# Create a ZIP file on the local system
+ZIP_FILE="/root/backup_$(date +[%Y-%m-%d][%H:%M]).zip"
+TRANSFERRED_ITEMS=("${FILES[@]}" "${DIRS[@]}")  # Combine files and directories
+
+echo -e "${BLUE}Creating a ZIP archive locally: ${YELLOW}$ZIP_FILE${RESET}"
+zip -r "$ZIP_FILE" "${TRANSFERRED_ITEMS[@]}" > /dev/null
+
+if [ $? -eq 0 ]; then
+  echo -e "${GREEN}Success:${RESET} Local ZIP archive created at $ZIP_FILE."
+else
+  echo -e "${RED}Error:${RESET} Failed to create local ZIP archive." >&2
+fi
+read -p  "Press Enter to continue..."
+}
 # Main menu
 while true; do
     # Clear the screen for a clean look each time
@@ -809,6 +1034,7 @@ echo -e "\033[1;36m 3.\033[0m \033[1;32mStart all SIT Tunnels\033[0m"
 echo -e "\033[1;36m 4.\033[0m \033[1;32mStop all SIT Tunnels\033[0m"
 echo -e "\033[1;36m 5.\033[0m \033[1;32mRestart all SIT Tunnels\033[0m"
 echo -e "\033[1;36m 6.\033[0m \033[1;32mBackup all SIT Tunnels\033[0m"
+echo -e "\033[1;36m 7.\033[0m \033[1;32mTransfer all SIT tunnels to another server\033[0m"
 echo -e "\033[1;36m 0.\033[0m \033[1;31mExit\033[0m"
 echo -e "\n\033[1;34m=========================================\033[0m"
 echo -e "\033[1;32mEnter your choice: \033[0m"
