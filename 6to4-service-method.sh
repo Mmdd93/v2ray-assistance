@@ -770,6 +770,7 @@ backup_files_and_dirs() {
   else
     echo -e "${RED}Error:${RESET} Failed to create local ZIP archive." >&2
   fi
+  read -p  "Press Enter to continue..."
 }
 
 # Main menu
