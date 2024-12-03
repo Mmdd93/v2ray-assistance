@@ -610,8 +610,90 @@ read -p "Press Enter to continue..."
     esac
 }
 
+# Function to stop all SIT tunnel services
+stop_all_sit_tunnels() {
+    echo -e "${GREEN}Stopping all SIT tunnel services...${RESET}"
+    local stopped_any=false
 
+    # Loop through directories to find SIT tunnel services
+    for dir in /usr/lib/systemd/system; do
+        for file in "$dir"/sit-*.service; do
+            if [[ -f "$file" ]]; then
+                service_name=$(basename "$file" .service)
+                echo -e "${GREEN}Stopping $service_name...${RESET}"
+                systemctl stop "$service_name"
+                # Reload systemd to apply the changes
+                sudo systemctl daemon-reload
+                stopped_any=true
+            fi
+        done
+    done
 
+    if [[ $stopped_any == false ]]; then
+        echo -e "${RED}No active SIT tunnel services found to stop.${RESET}"
+        return 1
+    fi
+
+    echo -e "${GREEN}All SIT tunnel services have been stopped.${RESET}"
+    read -p  "Press Enter to continue..."
+}
+
+# Function to enable and start all SIT tunnel services
+enable_and_start_sit_tunnels() {
+    echo -e "${GREEN}Enabling and starting all SIT tunnel services...${RESET}"
+    local started_any=false
+
+    # Loop through directories to find SIT tunnel services
+    for dir in /usr/lib/systemd/system; do
+        for file in "$dir"/sit-*.service; do
+            if [[ -f "$file" ]]; then
+                service_name=$(basename "$file" .service)
+                echo -e "${GREEN}Enabling and starting $service_name...${RESET}"
+                systemctl enable "$service_name"
+                systemctl start "$service_name"
+                # Reload systemd to apply the changes
+                sudo systemctl daemon-reload
+                started_any=true
+            fi
+        done
+    done
+
+    if [[ $started_any == false ]]; then
+        echo -e "${RED}No SIT tunnel services found to enable or start.${RESET}"
+        return 1
+    fi
+
+    echo -e "${GREEN}All SIT tunnel services have been enabled and started.${RESET}"
+    read -p  "Press Enter to continue..."
+}
+
+# Function to enable and start all SIT tunnel services
+restart_sit_tunnels() {
+    echo -e "${GREEN}Enabling and starting all SIT tunnel services...${RESET}"
+    local started_any=false
+
+    # Loop through directories to find SIT tunnel services
+    for dir in /usr/lib/systemd/system; do
+        for file in "$dir"/sit-*.service; do
+            if [[ -f "$file" ]]; then
+                service_name=$(basename "$file" .service)
+                echo -e "${GREEN}Enabling and starting $service_name...${RESET}"
+                systemctl restart "$service_name"
+                # Reload systemd to apply the changes
+                sudo systemctl daemon-reload
+                started_any=true
+            fi
+        done
+    done
+
+    if [[ $started_any == false ]]; then
+        echo -e "${RED}No SIT tunnel services found to enable or start.${RESET}"
+        return 1
+    fi
+
+    echo -e "${GREEN}All SIT tunnel services have been enabled and started.${RESET}"
+    read -p  "Press Enter to continue..."
+}
 # Main menu
 while true; do
     # Clear the screen for a clean look each time
@@ -624,6 +706,9 @@ echo -e "      \033[1;32mSIT Tunnel Service Method\033[0m"
 echo -e "\033[1;34m=========================================\033[0m"
 echo -e "\033[1;36m 1.\033[0m \033[1;32mCreate SIT Tunnel\033[0m"
 echo -e "\033[1;36m 2.\033[0m \033[1;32mManage SIT Tunnels\033[0m"
+echo -e "\033[1;36m 3.\033[0m \033[1;32mStart all SIT Tunnels\033[0m"
+echo -e "\033[1;36m 4.\033[0m \033[1;32mStop all SIT Tunnels\033[0m"
+echo -e "\033[1;36m 5.\033[0m \033[1;32mRestart all SIT Tunnels\033[0m"
 echo -e "\033[1;36m 0.\033[0m \033[1;31mExit\033[0m"
 echo -e "\n\033[1;34m=========================================\033[0m"
 echo -e "\033[1;32mEnter your choice: \033[0m"
@@ -640,6 +725,22 @@ echo -e "\033[1;32mEnter your choice: \033[0m"
             # Manage SIT tunnels
 
             manage_tunnels 
+            ;;
+        3) 
+            # Manage SIT tunnels
+
+            enable_and_start_sit_tunnels 
+            ;;
+        4) 
+            # Manage SIT tunnels
+
+            stop_all_sit_tunnels
+            ;;
+            
+            5) 
+            # Manage SIT tunnels
+
+            restart_sit_tunnels
             ;;
         0) 
             # Exit
