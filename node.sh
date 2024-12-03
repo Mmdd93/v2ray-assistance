@@ -1342,8 +1342,12 @@ install_marzban() {
         echo -e "\033[1;31m3. Access the panel at: http://YOUR_SERVER_IP:8000/dashboard/\033[0m"
         
         echo -e "\033[1;36mChoose installation version:\033[0m"
-        echo -e "\033[1;32m1. Latest version\033[0m"
-        echo -e "\033[1;32m2. Development version\033[0m"
+        echo -e "\033[1;32m1. Latest version (SQLite)\033[0m"
+        echo -e "\033[1;32m2. Development version (SQLite)\033[0m"
+        echo -e "\033[1;32m3. Latest version (MySQL)\033[0m"
+        echo -e "\033[1;32m4. Development version (MySQL)\033[0m"
+        echo -e "\033[1;32m5. custom version (SQLite)\033[0m"
+        echo -e "\033[1;32m6. custom version (MySQL)\033[0m"
         echo -e "\033[1;32m0. Return\033[0m"
         read -p "Enter your choice: " version_choice
 
@@ -1354,7 +1358,55 @@ install_marzban() {
                 ;;
             2)
                 echo -e "\033[1;32mRunning the Dev Marzban installation script...\033[0m"
-                sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install dev
+                sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --dev
+                ;;
+                
+            3)
+                echo -e "\033[1;32mRunning the Dev Marzban installation script...\033[0m"
+                sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mysql
+                ;;
+                
+            4)
+                echo -e "\033[1;32mRunning the Dev Marzban installation script...\033[0m"
+                sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mysql --dev
+                ;;
+                
+             5)
+                echo -e "\033[1;32mFetching last 15 releases from GitHub...\033[0m"
+                # Fetch the last 15 release tags for SQLite
+                releases=$(curl -s https://api.github.com/repos/Gozargah/Marzban/releases | jq -r '.[0:15].tag_name')
+                echo -e "\033[1;32mAvailable Releases for SQLite (Last 15):\033[0m"
+                
+                # Display available versions
+                PS3="Please select a version (enter number): "
+                select version in $releases; do
+                    if [[ -n "$version" ]]; then
+                        echo -e "\033[1;32mRunning the Custom Marzban installation script for SQLite version $version...\033[0m"
+                        sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --version "$version"
+                        break
+                    else
+                        echo -e "\033[1;31mInvalid option. Please try again.\033[0m"
+                    fi
+                done
+                ;;
+
+            6)
+                echo -e "\033[1;32mFetching last 15 releases from GitHub...\033[0m"
+                # Fetch the last 15 release tags for MySQL
+                releases=$(curl -s https://api.github.com/repos/Gozargah/Marzban/releases | jq -r '.[0:15].tag_name')
+                echo -e "\033[1;32mAvailable Releases for MySQL (Last 15):\033[0m"
+                
+                # Display available versions
+                PS3="Please select a version (enter number): "
+                select version in $releases; do
+                    if [[ -n "$version" ]]; then
+                        echo -e "\033[1;32mRunning the Custom Marzban installation script for MySQL version $version...\033[0m"
+                        sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mysql --version "$version"
+                        break
+                    else
+                        echo -e "\033[1;31mInvalid option. Please try again.\033[0m"
+                    fi
+                done
                 ;;
             0)
                 echo -e "\033[1;31mReturning to Marzban Commands.\033[0m"
@@ -1372,13 +1424,6 @@ install_marzban() {
         read
     done
 }
-
-
-
-
-
-
-
 
 marzban_cli_commands() {
     while true; do
