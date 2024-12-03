@@ -1371,14 +1371,14 @@ install_marzban() {
                 sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mysql --dev
                 ;;
                 
-             5)
-                echo -e "\033[1;32mFetching last 15 releases from GitHub...\033[0m"
-                # Fetch the last 15 release tags for SQLite
-                releases=$(curl -s https://api.github.com/repos/Gozargah/Marzban/releases | jq -r '.[0:15].tag_name')
-                echo -e "\033[1;32mAvailable Releases for SQLite (Last 15):\033[0m"
+              5)
+                echo -e "\033[1;32mFetching all releases from GitHub...\033[0m"
+                # Fetch all release tags for SQLite
+                releases=$(curl -s https://api.github.com/repos/Gozargah/Marzban/releases | jq -r '.[].tag_name')
+                echo -e "\033[1;32mAvailable Releases for SQLite:\033[0m"
                 
                 # Display available versions
-                PS3="Please select a version (enter number): "
+                PS3="Please select a version (enter number e.g 1): "
                 select version in $releases; do
                     if [[ -n "$version" ]]; then
                         echo -e "\033[1;32mRunning the Custom Marzban installation script for SQLite version $version...\033[0m"
@@ -1391,13 +1391,13 @@ install_marzban() {
                 ;;
 
             6)
-                echo -e "\033[1;32mFetching last 15 releases from GitHub...\033[0m"
-                # Fetch the last 15 release tags for MySQL
-                releases=$(curl -s https://api.github.com/repos/Gozargah/Marzban/releases | jq -r '.[0:15].tag_name')
-                echo -e "\033[1;32mAvailable Releases for MySQL (Last 15):\033[0m"
+                echo -e "\033[1;32mFetching all releases from GitHub...\033[0m"
+                # Fetch all release tags for MySQL
+                releases=$(curl -s https://api.github.com/repos/Gozargah/Marzban/releases | jq -r '.[].tag_name')
+                echo -e "\033[1;32mAvailable Releases for MySQL:\033[0m"
                 
                 # Display available versions
-                PS3="Please select a version (enter number): "
+                PS3="Please select a version (enter number e.g 2): "
                 select version in $releases; do
                     if [[ -n "$version" ]]; then
                         echo -e "\033[1;32mRunning the Custom Marzban installation script for MySQL version $version...\033[0m"
