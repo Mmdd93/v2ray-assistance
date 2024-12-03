@@ -1365,12 +1365,12 @@ install_marzban() {
                 ;;
                 
             3)
-                echo -e "\033[1;32mRunning the Dev Marzban installation script...\033[0m"
+                echo -e "\033[1;32mRunning the Latest MySQL Marzban installation script...\033[0m"
                 sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mysql
                 ;;
                 
             4)
-                echo -e "\033[1;32mRunning the Dev Marzban installation script...\033[0m"
+                echo -e "\033[1;32mRunning the Dev MySQL Marzban installation script...\033[0m"
                 sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mysql --dev
                 ;;
                 
@@ -1412,11 +1412,11 @@ install_marzban() {
                 done
                 ;;
 		7)
-                echo -e "\033[1;32mRunning the Latest Marzban installation script...\033[0m"
+                echo -e "\033[1;32mRunning the Latest MariaDB Marzban installation script...\033[0m"
                 sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mariadb
                 ;;
 		8)
-                echo -e "\033[1;32mRunning the Latest Marzban installation script...\033[0m"
+                echo -e "\033[1;32mRunning the Dev MariaDB Marzban installation script...\033[0m"
                 sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mariadb --dev
                 ;;
 		9)
@@ -1429,7 +1429,7 @@ install_marzban() {
                 PS3="Please select a version (enter number e.g 2): "
                 select version in $releases; do
                     if [[ -n "$version" ]]; then
-                        echo -e "\033[1;32mRunning the Custom Marzban installation script for MySQL version $version...\033[0m"
+                        echo -e "\033[1;32mRunning the Custom Marzban installation script for MariaDB version $version...\033[0m"
                         sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mariadb --version "$version"
                         break
                     else
