@@ -1279,7 +1279,7 @@ marzban_commands() {
         echo -e "\033[1;32m6.\033[0m Restart services"
         echo -e "\033[1;32m7.\033[0m Marzban status"
         echo -e "\033[1;32m8.\033[0m Show logs"
-        echo -e "\033[1;32m9.\033[0m Update latest version"
+        echo -e "\033[1;32m9.\033[0m Update Marzban"
         echo -e "\033[1;32m10.\033[0m Uninstall Marzban"
         echo -e "\033[1;32m11.\033[0m Install Marzban script"
         echo -e "\033[1;32m12.\033[0m Update/Change Xray core"
