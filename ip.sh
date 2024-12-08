@@ -140,4 +140,4 @@ fi
 SUBDOMAIN=$(select_random_subdomain)
 
 # Main function to check or create DNS records
-check_or_create_dns_record "$ZONE_ID" "$API_TOKEN" "$RECORD_TYPE" "$SUBDOMAIN"
+check_or_create_dns_record
