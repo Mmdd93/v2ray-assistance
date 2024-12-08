@@ -20,29 +20,16 @@ mkdir -p "$DIR_PATH"
 get_public_ip() {
     curl -s http://checkip.amazonaws.com
 }
-# Function to prompt for API token if not found
-prompt_token() {
-    echo -e "${YELLOW}Token file is missing or incomplete. Please enter your API Token:${RESET}"
-    read -p "API Token: " API_TOKEN
-    echo -e "${GREEN}Saving token...${RESET}"
-    # Save token to file
-    echo "API_TOKEN=\"$API_TOKEN\"" > "$TOKENS_FILE"
-    echo -e "${GREEN}API token saved to $TOKENS_FILE.${RESET}"
-}
+
 # Function to prompt for configuration if not found
 prompt_configuration() {
     echo -e "${YELLOW}Configuration file is missing or incomplete. Please enter the required configuration:${RESET}"
     
-   # Prompt for multiple subdomains
-echo -e "${YELLOW}Enter subdomains (one per line). Press Enter without typing anything to finish:${RESET}"
-while true; do
-    read -r SUBDOMAIN
-    if [ -z "$SUBDOMAIN" ]; then
-        break
-    fi
-    echo "$SUBDOMAIN" >> "$SUBDOMAINS_FILE"
-done
-
+    # Prompt for multiple subdomains
+    echo -e "${YELLOW}Enter subdomains (one per line). Press Ctrl+D when done:${RESET}"
+    while read -r SUBDOMAIN; do
+        echo "$SUBDOMAIN" >> "$SUBDOMAINS_FILE"
+    done
 
     read -p "Zone ID: " ZONE_ID
     echo -e "${YELLOW}Select Record Type:${RESET}"
@@ -69,7 +56,15 @@ done
     echo -e "${GREEN}Configuration saved to $CONFIG_FILE.${RESET}"
 }
 
-
+# Function to prompt for API token if not found
+prompt_token() {
+    echo -e "${YELLOW}Token file is missing or incomplete. Please enter your API Token:${RESET}"
+    read -p "API Token: " API_TOKEN
+    echo -e "${GREEN}Saving token...${RESET}"
+    # Save token to file
+    echo "API_TOKEN=\"$API_TOKEN\"" > "$TOKENS_FILE"
+    echo -e "${GREEN}API token saved to $TOKENS_FILE.${RESET}"
+}
 
 # Function to randomly select a subdomain from the list
 select_random_subdomain() {
@@ -140,4 +135,4 @@ fi
 SUBDOMAIN=$(select_random_subdomain)
 
 # Main function to check or create DNS records
-check_or_create_dns_record
+check_or_create_dns_record "$SUBDOMAIN" "$RECORD_TYPE" "$ZONE_ID" "$API_TOKEN"
