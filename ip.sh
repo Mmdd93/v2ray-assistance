@@ -25,17 +25,9 @@ get_public_ip() {
 prompt_configuration() {
     echo -e "${YELLOW}Configuration file is missing or incomplete. Please enter the required configuration:${RESET}"
     
-    # Function to prompt for configuration if not found
-    prompt_configuration() {
-        echo -e "${YELLOW}Configuration file is missing or incomplete. Please enter the required configuration:${RESET}"
-        
-        # Prompt for multiple subdomains
-    echo -e "${YELLOW}Enter subdomains (one per line).${RESET} Press Enter without typing anything to finish:"
-    while true; do
-        read -r SUBDOMAIN
-        if [ -z "$SUBDOMAIN" ]; then
-            break
-        fi
+    # Prompt for multiple subdomains
+    echo -e "${YELLOW}Enter subdomains (one per line). Press Ctrl+D when done:${RESET}"
+    while read -r SUBDOMAIN; do
         echo "$SUBDOMAIN" >> "$SUBDOMAINS_FILE"
     done
 
