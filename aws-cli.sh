@@ -354,7 +354,7 @@ select_ec2_region() {
         ["eu-north-1"]="Stockholm, Sweden"
         ["eu-south-2"]="Milan, Italy"
         ["me-south-1"]="Bahrain"
-        ["sa-east-1"]="São Paulo, Brazil"
+        ["sa-east-1"]="SÃ£o Paulo, Brazil"
         ["eu-central-2"]="Warsaw, Poland"
         ["us-west-1"]="Northern California, United States"
         ["eu-west-3"]="Paris, France"
@@ -494,6 +494,7 @@ select_lightsail_region() {
         "us-west-2"
         "eu-central-1"
         "eu-west-1"
+        "eu-west-2"  # Added UK region
         "ap-southeast-1"
         "ap-northeast-1"
         "ap-south-1"
@@ -509,10 +510,11 @@ select_lightsail_region() {
         ["us-west-2"]="Oregon, United States"
         ["eu-central-1"]="Frankfurt, Germany"
         ["eu-west-1"]="Ireland"
+        ["eu-west-2"]="London, United Kingdom"  # Added UK region
         ["ap-southeast-1"]="Singapore"
         ["ap-northeast-1"]="Tokyo, Japan"
         ["ap-south-1"]="Mumbai, India"
-        ["sa-east-1"]="São Paulo, Brazil"
+        ["sa-east-1"]="SÃ£o Paulo, Brazil"
         ["ca-central-1"]="Central Canada (Montreal)"
     )
     
@@ -551,6 +553,7 @@ select_lightsail_region() {
     # Return the selected region
     echo "$selected_region"
 }
+
 
 manage_lightsail_instances() {
     # Read the region from the text file
