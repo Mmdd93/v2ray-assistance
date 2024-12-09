@@ -62,23 +62,31 @@ prompt_token() {
 prompt_subdomains() {
     echo -e "${YELLOW}Subdomains are missing. Please enter subdomains (one per line). Press Enter with no input when done:${RESET}"
     
+    # Start with an empty subdomains list
+    SUBDOMAINS_LIST=""
+    
     while true; do
         read -r SUBDOMAIN
         # Break if the input is empty (blank line)
         if [[ -z "$SUBDOMAIN" ]]; then
             break
         fi
-        # Save the subdomain to the file
-        echo "$SUBDOMAIN" >> "$SUBDOMAINS_FILE"
+        # Append subdomain to the list
+        SUBDOMAINS_LIST+="$SUBDOMAIN"$'\n'
     done
     
+    # Save subdomains to file
+    echo -e "${GREEN}Saving subdomains to $SUBDOMAINS_FILE...${RESET}"
+    echo -e "$SUBDOMAINS_LIST" > "$SUBDOMAINS_FILE"
     echo -e "${GREEN}Subdomains saved to $SUBDOMAINS_FILE.${RESET}"
 }
-
 
 # Function to prompt for domains if not found
 prompt_domains() {
     echo -e "${YELLOW}Domains are missing or incomplete. Please enter domains (one per line). Press Enter with no input when done:${RESET}"
+    
+    # Start with an empty domains list
+    DOMAINS_LIST=""
     
     while true; do
         read -r DOMAIN
@@ -86,14 +94,15 @@ prompt_domains() {
         if [[ -z "$DOMAIN" ]]; then
             break
         fi
-        # Save the domain to the file
-        echo "$DOMAIN" >> "$DOMAINS_FILE"
+        # Append domain to the list
+        DOMAINS_LIST+="$DOMAIN"$'\n'
     done
     
+    # Save domains to file
+    echo -e "${GREEN}Saving domains to $DOMAINS_FILE...${RESET}"
+    echo -e "$DOMAINS_LIST" > "$DOMAINS_FILE"
     echo -e "${GREEN}Domains saved to $DOMAINS_FILE.${RESET}"
 }
-
-
 # Function to randomly select a subdomain from the list
 select_random_subdomain() {
     if [[ ! -f "$SUBDOMAINS_FILE" ]]; then
@@ -227,7 +236,7 @@ fi
 
 # Load subdomains if available
 if [ -f "$SUBDOMAINS_FILE" ]; then
-    source "$SUBDOMAINS_FILE"
+    mapfile -t SUBDOMAINS < "$SUBDOMAINS_FILE"
 else
     echo -e "${RED}Error: Subdomains file not found.${RESET}"
     prompt_subdomains
@@ -235,7 +244,7 @@ fi
 
 # Load domains if available
 if [ -f "$DOMAINS_FILE" ]; then
-    source "$DOMAINS_FILE"
+    mapfile -t DOMAINS < "$DOMAINS_FILE"
 else
     echo -e "${RED}Error: Domains file not found.${RESET}"
     prompt_domains
