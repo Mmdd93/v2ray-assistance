@@ -5314,6 +5314,7 @@ main_menu() {
   	echo -e "\033[1;32m38.\033[0m Secure SSH (fail2ban) "
    	echo -e "\033[1;32m39.\033[0m Block torrent "
     	echo -e "\033[1;32m40.\033[0m AWS cli "
+     	echo -e "\033[1;32m41.\033[0m Cron job "
 
   
         echo -e "\n\033[1;31mXray panel:\033[0m"
@@ -5391,6 +5392,12 @@ main_menu() {
             sleep 1
             curl -fsSL https://github.com/Mmdd93/v2ray-assistance/raw/main/aws-cli.sh -o /root/aws-cli.sh
             sudo bash /root/aws-cli.sh
+            ;;
+	    41)
+            echo "Running cron..."
+            sleep 1
+            curl -fsSL https://github.com/Mmdd93/v2ray-assistance/heads/main/cron.sh -o /root/cron.sh
+            sudo bash /root/cron.sh
             ;;
             0) exit 1
             echo "Exiting..." exit 0 ;;
