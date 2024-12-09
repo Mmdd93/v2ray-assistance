@@ -35,7 +35,16 @@ prompt_configuration() {
         exit 1
     fi
     
-    read -p "Enter the IPs or CNAMEs separated by space: " -a IP_LIST
+    read -p "Enter the IPs or CNAMEs separated by commas: " input_string
+# Convert the comma-separated string into an array
+IFS=',' read -r -a IP_LIST <<< "$input_string"
+
+# Print the IP_LIST for debugging (optional)
+echo "You entered the following IPs/CNAMEs:"
+for ip in "${IP_LIST[@]}"; do
+    echo "$ip"
+done
+
 
     echo -e "${GREEN}Saving configuration...${RESET}"
     # Save configuration to file
@@ -59,7 +68,6 @@ prompt_token() {
     echo "API_TOKEN=\"$API_TOKEN\"" > "$TOKENS_FILE"
     echo -e "${GREEN}API token saved to $TOKENS_FILE.${RESET}"
 }
-
 # Function to check if the IP is reachable on the specified port
 is_port_open() {
     local ip="$1"
