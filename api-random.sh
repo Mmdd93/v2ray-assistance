@@ -130,7 +130,7 @@ generate_random_ip() {
 
     # Select a random domain from the array
     random_domain=${domains[RANDOM % ${#domains[@]}]}
-    echo "$random_domain"
+    
 
     # Get the IP address of the selected domain using dig
     ip=$(dig +short "$random_domain" | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -n 1)
