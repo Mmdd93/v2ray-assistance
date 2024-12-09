@@ -5122,6 +5122,8 @@ main_menu() {
  	echo -e "\033[1;32m37.\033[0m Fix WhatsApp Time (set timezone to TEHRAN) "
   	echo -e "\033[1;32m38.\033[0m Secure SSH (fail2ban) "
    	echo -e "\033[1;32m39.\033[0m Block torrent "
+    	echo -e "\033[1;32m40.\033[0m AWS cli "
+
   
         echo -e "\n\033[1;31mXray panel:\033[0m"
         echo -e "\033[1;32m11.\033[0m XUI panel"
@@ -5192,6 +5194,12 @@ main_menu() {
             curl -fsSL https://raw.githubusercontent.com/MrAminiDev/NetOptix/main/scripts/blocktorrent/blocktorrent.sh -o /tmp/blocktorrent.sh
             bash /tmp/blocktorrent.sh
             rm /tmp/blocktorrent.sh
+            ;;
+	    40)
+            echo "Running AWS cli..."
+            sleep 1
+            curl -fsSL https://github.com/Mmdd93/v2ray-assistance/raw/main/aws-cli.sh -o /root/aws-cli.sh
+            sudo bash /root/aws-cli.sh
             ;;
             0) exit 1
             echo "Exiting..." exit 0 ;;
