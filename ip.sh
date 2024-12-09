@@ -58,7 +58,6 @@ prompt_token() {
     echo "API_TOKEN=\"$API_TOKEN\"" > "$TOKENS_FILE"
     echo -e "${GREEN}API token saved to $TOKENS_FILE.${RESET}"
 }
-# Function to prompt for subdomains if not found
 prompt_subdomains() {
     echo -e "${YELLOW}Subdomains are missing. Please enter subdomains (one per line). Press Enter with no input when done:${RESET}"
     
@@ -71,10 +70,14 @@ prompt_subdomains() {
         if [[ -z "$SUBDOMAIN" ]]; then
             break
         fi
-        # Append subdomain to the list
-        SUBDOMAINS_LIST+="$SUBDOMAIN"$'\n'
+        # Append subdomain to the list (without extra newline)
+        SUBDOMAINS_LIST+="$SUBDOMAIN"
+        SUBDOMAINS_LIST+=$'\n'
     done
     
+    # Remove any trailing newline (to prevent extra empty lines at the end)
+    SUBDOMAINS_LIST=$(echo -e "$SUBDOMAINS_LIST" | sed '/^$/d')
+
     # Save subdomains to file
     echo -e "${GREEN}Saving subdomains to $SUBDOMAINS_FILE...${RESET}"
     echo -e "$SUBDOMAINS_LIST" > "$SUBDOMAINS_FILE"
