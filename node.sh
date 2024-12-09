@@ -3628,11 +3628,12 @@ show_usage() {
     echo -e "\nReturning to the menu..."
 }
 cf-auto-ip {
-    echo -e "\033[1;34mSelect an option:\033[0m"
-    echo -e "\033[1;32m1.\033[0m Set listed IP on a subdomain with cloudflare api "
-    echo -e "\033[1;32m2.\033[0m Set server public IP on a subdomain with cloudflare api"
-    echo -e "\033[1;31m0.\033[0m Return"
-    read -p "Enter your choice): " choice
+    	echo -e "\033[1;34mSelect an option:\033[0m"
+	echo -e "\033[1;32m1.\033[0m Set a listed IP on a subdomain using the Cloudflare API"
+	echo -e "\033[1;32m2.\033[0m Set the server's public IP on a subdomain using the Cloudflare API"
+	echo -e "\033[1;32m3.\033[0m Set a random IP on a subdomain using the Cloudflare API"
+	echo -e "\033[1;31m0.\033[0m Return"
+	read -p "Enter your choice): " choice
 
     case $choice in
         1)
@@ -3641,7 +3642,10 @@ cf-auto-ip {
         2)
             download_and_start_ip
             ;;
-        3)
+	3)
+            download_and_start_random_ip
+            ;;
+        0)
             echo "Return..."
             main_menu
             ;;
@@ -3650,6 +3654,88 @@ cf-auto-ip {
             select_function
             ;;
     esac
+}
+download_and_start_random_ip() {
+    while true; do
+        echo -e "\033[1;34mSelect an option:\033[0m"
+        echo "1. Download script"
+        echo "2. Rename folder"
+        echo "3. Start script"
+        echo "4. Set cron jobs"
+        echo "5. Edit cron jobs"
+        echo "0. Exit"
+
+        read -p "Enter your choice: " choice
+
+        case $choice in
+            1)
+                echo "Downloading api-random.sh to /root..."
+                if curl -o /root/api-random.sh https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/api-random.sh; then
+                    chmod +x /root/api-random.sh
+                    echo -e "\033[1;32mDownload complete and permissions set.\033[0m"
+                else
+                    echo -e "\033[1;31mDownload failed. Please try again.\033[0m"
+                fi
+                ;;
+            2)
+                existing_folder=$(grep -oP '(?<=CONFIG_FILE="/root/)[^/]*' /root/api-random.sh | head -n 1)
+
+                if [ -z "$existing_folder" ]; then
+                    echo -e "\033[1;31mNo folder name found in api-random.sh.\033[0m"
+                    continue
+                fi
+                
+                echo "Current folder name is: '$existing_folder'"
+                read -p "Enter the new name to replace '$existing_folder' in api-random.sh: " user_name
+                
+                sed -i "s|/root/${existing_folder}/|/root/${user_name}/|g" /root/api-random.sh
+                echo -e "\033[1;32mReplacement complete: '$existing_folder' replaced with '${user_name}' in api-random.sh.\033[0m"
+                ;;
+            3)
+                echo "Starting api-random.sh..."
+                if /root/api-random.sh; then
+                    echo -e "\033[1;32mapi-random.sh started successfully.\033[0m"
+                else
+                    echo -e "\033[1;31mFailed to start api-random.sh. Please check for errors.\033[0m"
+                fi
+                ;;
+            4) 
+    echo "Setting up cron jobs..."
+    
+    # Ask for hours to run api-random.sh, default is 3
+    read -p "Enter the hours to run api-random.sh (default is 3): " hours
+    hours=${hours:-3}  # Default to 3 if no input is provided
+    
+    # Create or update the cron job
+    cron_expression="0 */$hours * * * /root/api-random.sh"
+    echo "Adding/overwriting cron job: $cron_expression"
+    
+    # Overwrite the existing cron job
+    (crontab -l 2>/dev/null | grep -v '/root/api-random.sh'; echo "$cron_expression") | crontab -
+    echo -e "\033[1;32mCron job added/overwritten: $cron_expression\033[0m"
+    ;;
+
+
+            5)
+                echo "Editing cron jobs..."
+                # Open the crontab file in nano for editing
+                EDITOR=nano crontab -e
+                
+                # Reload cron service (optional)
+                sudo service cron reload
+                echo -e "\033[1;32mCron jobs updated and service reloaded.\033[0m"
+                ;;
+            0)
+                echo "Returning to main menu..."
+                main_menu
+                ;;
+            *)
+                echo -e "\033[1;31mInvalid choice. Please try again.\033[0m"
+                ;;
+        esac
+        
+        read -p "Press Enter to return..."
+    done
 }
 download_and_start_api() {
     while true; do
