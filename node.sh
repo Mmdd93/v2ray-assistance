@@ -3627,7 +3627,7 @@ show_usage() {
     done
     echo -e "\nReturning to the menu..."
 }
-cf-auto-ip {
+cf-auto-ip() {
     	echo -e "\033[1;34mSelect an option:\033[0m"
 	echo -e "\033[1;32m1.\033[0m Set a listed IP on a subdomain using the Cloudflare API"
 	echo -e "\033[1;32m2.\033[0m Set the server's public IP on a subdomain using the Cloudflare API"
