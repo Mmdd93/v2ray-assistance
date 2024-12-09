@@ -566,24 +566,24 @@ manage_lightsail_instances() {
         region=$(select_lightsail_region)
     fi
 
-echo -e "\n\033[1;34m====================================\033[0m"
-echo -e "\033[1;34m   Lightsail Instance Management    \033[0m"
-echo -e "\033[1;34m====================================\033[0m"
-echo -e "\033[1;34mSelect a Lightsail Management Task:\033[0m"
-echo -e "\033[1;32m1.\033[0m  List Lightsail Instances"
-echo -e "\033[1;32m2.\033[0m  Start Lightsail Instance"
-echo -e "\033[1;32m3.\033[0m  Stop Lightsail Instance"
-echo -e "\033[1;32m4.\033[0m  Delete Lightsail Instance"
-echo -e "\033[1;32m5.\033[0m  Describe Lightsail Instance"
-echo -e "\033[1;32m6.\033[0m  Create Lightsail Instance"
-echo -e "\033[1;32m7.\033[0m  Manage SSH Key Pair"
-echo -e "\033[1;32m8.\033[0m  Get Lightsail Instances"
-echo -e "\033[1;32m9.\033[0m  Get Lightsail Bundles"
-echo -e "\033[1;32m10.\033[0m Return to AWS CLI Management Menu"
-echo -e "\033[1;34m====================================\033[0m"
+    echo -e "\n\033[1;34m====================================\033[0m"
+    echo -e "\033[1;34m   Lightsail Instance Management    \033[0m"
+    echo -e "\033[1;34m====================================\033[0m"
+    echo -e "\033[1;34mSelect a Lightsail Management Task:\033[0m"
+    echo -e "\033[1;32m1.\033[0m  List Lightsail Instances"
+    echo -e "\033[1;32m2.\033[0m  Start Lightsail Instance"
+    echo -e "\033[1;32m3.\033[0m  Stop Lightsail Instance"
+    echo -e "\033[1;32m4.\033[0m  Delete Lightsail Instance"
+    echo -e "\033[1;32m5.\033[0m  Describe Lightsail Instance"
+    echo -e "\033[1;32m6.\033[0m  Create Lightsail Instance"
+    echo -e "\033[1;32m7.\033[0m  Manage SSH Key Pair"
+    echo -e "\033[1;32m8.\033[0m  Get Lightsail Instances"
+    echo -e "\033[1;32m9.\033[0m  Get Lightsail Bundles"
+    echo -e "\033[1;32m10.\033[0m Restart Lightsail Instance"  # Added Restart option
+    echo -e "\033[1;32m11.\033[0m Return to AWS CLI Management Menu"
+    echo -e "\033[1;34m====================================\033[0m"
 
-
-    read -p "Select an option (1-10): " lightsail_choice
+    read -p "Select an option (1-11): " lightsail_choice
 
     case $lightsail_choice in
         1)
@@ -657,6 +657,16 @@ echo -e "\033[1;34m====================================\033[0m"
             manage_lightsail_instances
             ;;
         10)
+            echo "Enter the Instance Name to restart:"
+            read instance_name
+            echo "Restarting Lightsail Instance $instance_name in region '$region' using profile '$AWS_PROFILE'..."
+            output_file="/root/aws/restart-lightsail-instance-$instance_name-$region.txt"
+            aws lightsail reboot-instance --region "$region" --profile "$AWS_PROFILE" --instance-name "$instance_name" > "$output_file"
+            cat "$output_file"
+            read -p "Press Enter to continue..." 
+            manage_lightsail_instances
+            ;;
+        11)
             manage_aws_cli
             ;;
         *)
@@ -664,7 +674,6 @@ echo -e "\033[1;34m====================================\033[0m"
             read -p "Press Enter to continue..." 
             ;;
     esac
-    
 }
 
 
