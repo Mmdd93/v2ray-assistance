@@ -24,13 +24,6 @@ get_public_ip() {
 # Function to prompt for configuration if not found
 prompt_configuration() {
     echo -e "${YELLOW}Configuration file is missing or incomplete. Please enter the required configuration:${RESET}"
-    
-    # Prompt for multiple subdomains
-    echo -e "${YELLOW}Enter subdomains (one per line). Press Ctrl+D when done:${RESET}"
-    while read -r SUBDOMAIN; do
-        echo "$SUBDOMAIN" >> "$SUBDOMAINS_FILE"
-    done
-
     read -p "Zone ID: " ZONE_ID
     echo -e "${YELLOW}Select Record Type:${RESET}"
     echo -e "${BLUE}1) A${RESET}"
@@ -65,7 +58,28 @@ prompt_token() {
     echo "API_TOKEN=\"$API_TOKEN\"" > "$TOKENS_FILE"
     echo -e "${GREEN}API token saved to $TOKENS_FILE.${RESET}"
 }
-
+# Function to prompt for subdomains if not found
+prompt_subdomains() {
+    echo -e "${YELLOW}Subdomains are missing. Please enter subdomains (one per line). Press Enter with no input when done:${RESET}"
+    
+    # Start with an empty subdomains list
+    SUBDOMAINS_LIST=""
+    
+    while true; do
+        read -r SUBDOMAIN
+        # Break if the input is empty (blank line)
+        if [[ -z "$SUBDOMAIN" ]]; then
+            break
+        fi
+        # Append subdomain to the list
+        SUBDOMAINS_LIST+="$SUBDOMAIN"$'\n'
+    done
+    
+    # Save subdomains to file
+    echo -e "${GREEN}Saving subdomains to $SUBDOMAINS_FILE...${RESET}"
+    echo -e "$SUBDOMAINS_LIST" > "$SUBDOMAINS_FILE"
+    echo -e "${GREEN}Subdomains saved to $SUBDOMAINS_FILE.${RESET}"
+}
 # Function to randomly select a subdomain from the list
 select_random_subdomain() {
     if [[ ! -f "$SUBDOMAINS_FILE" ]]; then
@@ -115,13 +129,6 @@ check_or_create_dns_record() {
     fi
 }
 
-# Load configuration if available
-if [ -f "$CONFIG_FILE" ]; then
-    source "$CONFIG_FILE"
-else
-    echo -e "${RED}Error: Configuration file not found.${RESET}"
-    prompt_configuration
-fi
 
 # Load API token if available
 if [ -f "$TOKENS_FILE" ]; then
@@ -131,6 +138,21 @@ else
     prompt_token
 fi
 
+# Load configuration if available
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+else
+    echo -e "${RED}Error: Configuration file not found.${RESET}"
+    prompt_configuration
+fi
+
+# Load subdomains if available
+if [ -f "$SUBDOMAINS_FILE" ]; then
+    mapfile -t SUBDOMAINS < "$SUBDOMAINS_FILE"
+else
+    echo -e "${RED}Error: Subdomains file not found.${RESET}"
+    prompt_subdomains
+fi
 # Select a random subdomain
 SUBDOMAIN=$(select_random_subdomain)
 
