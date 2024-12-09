@@ -4,6 +4,7 @@
 CONFIG_FILE="/root/random/api_config.txt"
 TOKENS_FILE="/root/random/api_tokens.txt"
 SUBDOMAINS_FILE="/root/random/subdomains.txt"
+DOMAINS_FILE="/root/random/random_domains.txt"
 
 # Color codes
 GREEN="\033[1;32m"
@@ -16,34 +17,10 @@ RESET="\033[0m"
 DIR_PATH=$(dirname "$CONFIG_FILE")
 mkdir -p "$DIR_PATH"
 
-generate_random_ip() {
-    # Generate a random number to select the range (1, 2, or more)
-    range=$((RANDOM % 2 + 1))
-
-    case $range in
-        1)
-            third_octet=$((RANDOM % 13 + 210))  # Random number between 210 and 222
-            fourth_octet=$((RANDOM % 256))      # Random number between 0 and 255
-            echo "18.165.$third_octet.$fourth_octet"
-            ;;
-        2)
-            third_octet=$((RANDOM % 14 + 70))   # Random number between 70 and 83
-            fourth_octet=$((RANDOM % 256))      # Random number between 0 and 255
-            echo "108.158.$third_octet.$fourth_octet"
-            ;;
-    esac
-}
-
 # Function to prompt for configuration if not found
 prompt_configuration() {
     echo -e "${YELLOW}Configuration file is missing or incomplete. Please enter the required configuration:${RESET}"
     
-    # Prompt for multiple subdomains
-    echo -e "${YELLOW}Enter subdomains (one per line). Press Ctrl+D when done:${RESET}"
-    while read -r SUBDOMAIN; do
-        echo "$SUBDOMAIN" >> "$SUBDOMAINS_FILE"
-    done
-
     read -p "Zone ID: " ZONE_ID
     read -p "Port to check: " PORT  # Ask for the port number
     echo -e "${YELLOW}Select Record Type:${RESET}"
@@ -81,6 +58,42 @@ prompt_token() {
     echo -e "${GREEN}API token saved to $TOKENS_FILE.${RESET}"
 }
 
+# Function to prompt for subdomains if not found
+prompt_subdomains() {
+    echo -e "${YELLOW}Subdomains are missing. Please enter subdomains (one per line). Press Enter with no input when done:${RESET}"
+    
+    while true; do
+        read -r SUBDOMAIN
+        # Break if the input is empty (blank line)
+        if [[ -z "$SUBDOMAIN" ]]; then
+            break
+        fi
+        # Save the subdomain to the file
+        echo "$SUBDOMAIN" >> "$SUBDOMAINS_FILE"
+    done
+    
+    echo -e "${GREEN}Subdomains saved to $SUBDOMAINS_FILE.${RESET}"
+}
+
+
+# Function to prompt for domains if not found
+prompt_domains() {
+    echo -e "${YELLOW}Domains are missing or incomplete. Please enter domains (one per line). Press Enter with no input when done:${RESET}"
+    
+    while true; do
+        read -r DOMAIN
+        # Break if the input is empty (blank line)
+        if [[ -z "$DOMAIN" ]]; then
+            break
+        fi
+        # Save the domain to the file
+        echo "$DOMAIN" >> "$DOMAINS_FILE"
+    done
+    
+    echo -e "${GREEN}Domains saved to $DOMAINS_FILE.${RESET}"
+}
+
+
 # Function to randomly select a subdomain from the list
 select_random_subdomain() {
     if [[ ! -f "$SUBDOMAINS_FILE" ]]; then
@@ -90,13 +103,59 @@ select_random_subdomain() {
     shuf -n 1 "$SUBDOMAINS_FILE"
 }
 
+generate_random_ip() {
+    # Check if the domains file exists
+    if [[ ! -f "$DOMAINS_FILE" ]]; then
+        echo -e "${RED}Error: Domain file $DOMAINS_FILE not found.${RESET}"
+        exit 1
+    fi
+
+    # Read all domains from the file into an array
+    mapfile -t domains < "$DOMAINS_FILE"
+
+    # Ensure there are domains in the file
+    if [[ ${#domains[@]} -eq 0 ]]; then
+        echo -e "${RED}Error: No domains available in the file. Please add domains and try again.${RESET}"
+        exit 1
+    fi
+
+    # Select a random domain from the array
+    random_domain=${domains[RANDOM % ${#domains[@]}]}
+    echo "$random_domain"
+
+    # Get the IP address of the selected domain using dig
+    ip=$(dig +short "$random_domain" | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -n 1)
+
+    # Check if an IP address was found, and print it or an error message
+    if [[ -n $ip ]]; then
+        echo "$ip"
+    else
+        echo "No IP found for $random_domain"
+    fi
+}
+
+
 
 
 # Function to check if the IP is reachable on the specified port
 is_port_open() {
     local ip="$1"
     local port="$2"
-    timeout 2 bash -c "echo '' > /dev/tcp/$ip/$port" 2>/dev/null
+
+    # Check if the IP is reachable using ping
+    if ! ping -c 1 -W 2 "$ip" &>/dev/null; then
+        echo "IP $ip is not reachable."
+        return 1
+    fi
+
+    # Check if the specified port is open
+    if timeout 2 bash -c "echo '' > /dev/tcp/$ip/$port" 2>/dev/null; then
+        echo "Port $port on IP $ip is open."
+        return 0
+    else
+        echo "Port $port on IP $ip is closed."
+        return 2
+    fi
 }
 
 # Function to check or create DNS records
@@ -149,6 +208,14 @@ check_or_create_dns_record() {
     done
 }
 
+# Load API token if available
+if [ -f "$TOKENS_FILE" ]; then
+    source "$TOKENS_FILE"
+else
+    echo -e "${RED}Error: Token file not found.${RESET}"
+    prompt_token
+fi
+
 # Load configuration if available
 if [ -f "$CONFIG_FILE" ]; then
     source "$CONFIG_FILE"
@@ -157,12 +224,21 @@ else
     prompt_configuration
 fi
 
-# Load API token if available
-if [ -f "$TOKENS_FILE" ]; then
-    source "$TOKENS_FILE"
+
+# Load subdomains if available
+if [ -f "$SUBDOMAINS_FILE" ]; then
+    source "$SUBDOMAINS_FILE"
 else
-    echo -e "${RED}Error: Token file not found.${RESET}"
-    prompt_token
+    echo -e "${RED}Error: Subdomains file not found.${RESET}"
+    prompt_subdomains
+fi
+
+# Load domains if available
+if [ -f "$DOMAINS_FILE" ]; then
+    source "$DOMAINS_FILE"
+else
+    echo -e "${RED}Error: Domains file not found.${RESET}"
+    prompt_domains
 fi
 
 # Select a random subdomain
