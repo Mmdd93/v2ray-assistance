@@ -32,3 +32,10 @@
 - ارسال فایل به ریموت سرور و فروارد ان به تلگرام (مناسب سرور ایران)
 - چک کردن لیست IP (مناسب سرور ایران برای تشخیص فیلتر شدن IP)
 - راه اندازی HAPROXY BASIC
+## How to Use
+
+Clone the repository and run the script:
+
+```bash
+curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/node.sh -o node.sh
+sudo bash node.sh
