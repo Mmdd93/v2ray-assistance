@@ -5390,14 +5390,14 @@ main_menu() {
 	    40)
             echo "Running AWS cli..."
             sleep 1
-            curl -fsSL https://github.com/Mmdd93/v2ray-assistance/raw/main/aws-cli.sh -o /root/aws-cli.sh
-            sudo bash /root/aws-cli.sh
+            curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/main/aws-cli.sh -o aws-cli.sh
+            sudo bash aws-cli.sh
             ;;
 	    41)
             echo "Running cron..."
             sleep 1
-            curl -fsSL https://github.com/Mmdd93/v2ray-assistance/heads/main/cron.sh -o /root/cron.sh
-            sudo bash /root/cron.sh
+            curl -Ls https://github.com/Mmdd93/v2ray-assistance/heads/main/cron.sh -o cron.sh
+            sudo bash cron.sh
             ;;
             0) exit 1
             echo "Exiting..." exit 0 ;;
