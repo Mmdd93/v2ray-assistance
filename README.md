@@ -32,8 +32,6 @@
 - راه اندازی HAPROXY BASIC
 ## How to Use
 
-Clone the repository and run the script:
-
 ```bash
 curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/node.sh -o node.sh
 sudo bash node.sh
