@@ -5396,7 +5396,7 @@ main_menu() {
 	    41)
             echo "Running cron..."
             sleep 1
-            curl -Ls https://github.com/Mmdd93/v2ray-assistance/heads/main/cron.sh -o cron.sh
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/cron.sh -o cron.sh
             sudo bash cron.sh
             ;;
             0) exit 1
