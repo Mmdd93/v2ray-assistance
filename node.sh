@@ -4695,7 +4695,7 @@ Optimizer() {
 	echo -e "\033[1;32m9.\033[0m Apply changes"
  	echo -e "\033[1;32m10.\033[0m Disable log"
         echo -e "\033[1;32m0.\033[0m Main menu"
-        echo -e "\nSelect an option (1-8): "
+        echo -e "\nSelect an option: "
         read choice
 
         case $choice in
