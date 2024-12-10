@@ -1,10 +1,4 @@
-## Installation
 
--To download and run the script, use the following commands:
-
-```bash
-curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/node.sh -o node.sh
-sudo bash node.sh
 
 # ALL IN ONE Script
 
