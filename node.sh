@@ -5271,6 +5271,129 @@ isp_blocker() {
     esac
 }
 
+
+# Function to check if netstat is installed, and install if not
+check_and_install_netstat() {
+    if ! command -v netstat &> /dev/null; then
+        echo -e "\033[1;31mNetstat is not installed. Installing...\033[0m"
+        # Check for the package manager and install net-tools (which includes netstat)
+        if [ -f /etc/debian_version ]; then
+            sudo apt update && sudo apt install -y net-tools
+        elif [ -f /etc/redhat-release ]; then
+            sudo yum install -y net-tools
+        else
+            echo -e "\033[1;31mUnsupported system. Please install netstat manually.\033[0m"
+            exit 1
+        fi
+        echo -e "\033[1;32mNetstat installed successfully.\033[0m"
+    else
+        echo -e "\033[1;32mNetstat is already installed.\033[0m"
+    fi
+}
+
+# Function to kill the process associated with a selected port
+kill_process() {
+    read -p "Enter the port number to kill the process: " PORT
+    PID=$(sudo lsof -i :$PORT -t)
+    if [ -n "$PID" ]; then
+        sudo kill -9 $PID
+        echo -e "\033[1;32mProcess using port $PORT has been killed.\033[0m"
+    else
+        echo -e "\033[1;31mNo process found using port $PORT.\033[0m"
+    fi
+}
+
+# Function to list in-use ports in a detailed format and allow selection
+used_ports_and_select() {
+    while true; do
+        echo -e "\033[1;34mScanning for in-use ports...\033[0m"
+        PORTS=$(sudo ss -tunlp | awk '/LISTEN/ {split($5, a, ":"); print a[length(a)]}' | sort -n | uniq)
+        
+        if [ -z "$PORTS" ]; then
+            echo -e "\033[1;31mNo active ports found.\033[0m"
+            exit 1
+        fi
+
+        echo -e "\033[1;32mPlease enter a port from the list:\033[0m"
+        echo "$PORTS"  # Display the list of available ports
+        read -p "Enter port: " PORT
+
+        # Validate the selected port
+        if [[ ! "$PORT" =~ ^[0-9]+$ ]] || ! echo "$PORTS" | grep -q "^$PORT$"; then
+            echo -e "\033[1;31mInvalid port selection. Please try again.\033[0m"
+            continue
+        fi
+
+        echo -e "\033[1;32mYou selected port $PORT.\033[0m"
+        echo "$PORT" > /tmp/selected_port.txt  # Save selected port to a temporary file
+
+        # Display established connections to the selected port
+        echo -e "\033[1;32mEstablished IP Connections to Port $PORT:\033[0m"
+        sudo netstat -tan | grep ":$PORT " | grep ESTABLISHED | awk '{print $5}' | cut -d: -f1 | sort | uniq | nl
+
+        read -p "Press Enter to return or 'q' to quit: " user_input
+        if [ "$user_input" == "q" ]; then
+            echo -e "\033[1;32mReturning...\033[0m"
+            return
+        fi
+    done
+}
+
+# Function to show initial menu options with improved echo formatting
+initial_menu() {
+    while true; do
+        # Check if netstat is installed and install if necessary
+        check_and_install_netstat
+
+        echo -e "\n\033[1;33mListening Ports:\033[0m"
+        echo -e ""
+
+        sudo lsof -i -P -n | grep LISTEN | awk '
+        BEGIN {
+            printf "\033[1;32m%-15s %-10s %-10s %-10s %-20s\033[0m\n", "COMMAND", "PID", "USER", "PORT", "IP"
+            printf "\033[1;36m---------------------------------------------------------------\033[0m\n"
+        }
+        {
+            split($9, address, ":");
+            ip = address[1];
+            port = address[2];
+            
+            # Alternate colors for each row
+            if (NR % 2 == 0)
+                printf "\033[1;37m%-15s %-10s %-10s %-10s %-20s\033[0m\n", $1, $2, $3, port, ip;
+            else
+                printf "\033[1;34m%-15s %-10s %-10s %-10s %-20s\033[0m\n", $1, $2, $3, port, ip;
+        }'
+
+        echo -e "\033[1;36m===========================\033[0m"
+        echo -e "\033[1;32mSelect an option from the menu below:\033[0m"
+        echo -e "\033[1;36m===========================\033[0m"
+        echo -e "\033[1;34m1)\033[0m \033[1;33mKill process\033[0m"
+        echo -e "\033[1;34m2)\033[0m \033[1;33mView established IP connections\033[0m"
+        echo -e "\033[1;34m3)\033[0m \033[1;33mReturn\033[0m"
+        echo -e "\033[1;36m===========================\033[0m"
+        read -p "Your choice: " choice
+
+        case $choice in
+            1)
+                echo -e "\n\033[1;32mYou selected to kill a process using a port.\033[0m"
+                kill_process
+                ;;
+            2)
+                echo -e "\n\033[1;32mYou selected to view established IP connections.\033[0m"
+                used_ports_and_select
+                ;;
+            3)
+                echo -e "\n\033[1;32mReturningu...\033[0m"
+                return  # Exit the menu and return to port selection
+                ;;
+            *)
+                echo -e "\n\033[1;31mInvalid choice. Please try again.\033[0m"
+                ;;
+        esac
+    done
+}
+
 # Main menu function
 main_menu() {
     while true; do
@@ -5336,7 +5459,7 @@ main_menu() {
 	    28)change_sources_list ;;
             4) Optimizer ;;
             5) run_system_benchmark ;;
-            6) used_ports ;;
+            6) initial_menu ;;
             7) setup_cache_and_reboot ;;
             8) manage_ping ;;
             9) change_dns ;;
