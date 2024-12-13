@@ -5413,7 +5413,7 @@ main_menu() {
         echo -e "\033[1;32m 3.\033[0m ISP defender (allow/block)"
         echo -e "\033[1;32m 4.\033[0m Network Optimizer + BBR"
         echo -e "\033[1;32m 5.\033[0m Speed test + system benchmark"
-        echo -e "\033[1;32m 6.\033[0m Port (Check used ports by services)"
+        echo -e "\033[1;32m 6.\033[0m Port (in-use ports/connected IPs/kill process)"
         echo -e "\033[1;32m 7.\033[0m Auto Clear cache + server reboot"
         echo -e "\033[1;32m 8.\033[0m Ping (Disable/enable) "
         echo -e "\033[1;32m 9.\033[0m DNS (Change server DNS)"
