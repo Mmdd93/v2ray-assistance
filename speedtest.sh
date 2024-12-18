@@ -126,7 +126,7 @@ while true; do
             else
                 echo -e "\033[1;31mSpeedtest CLI is not installed. Please install it first.\033[0m"
             fi
-	    read -p "press enter to continue"
+	   
             ;;
         3)
             remove_speedtest
