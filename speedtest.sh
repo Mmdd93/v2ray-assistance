@@ -88,6 +88,7 @@ clear
     else
         "$SPEEDTEST_DIR/$SPEEDTEST_BIN" -s "$SERVER_ID"
     fi
+    read -p "press enter to continue"
 }
 
 
@@ -116,16 +117,20 @@ while true; do
     case $MAIN_OPTION in
         1)
             install_speedtest
+	    read -p "press enter to continue"
             ;;
         2)
             if [ -f "$SPEEDTEST_DIR/$SPEEDTEST_BIN" ]; then
                 run_speedtest
+		
             else
                 echo -e "\033[1;31mSpeedtest CLI is not installed. Please install it first.\033[0m"
             fi
+	    read -p "press enter to continue"
             ;;
         3)
             remove_speedtest
+	    read -p "press enter to continue"
             ;;
         4)
             echo -e "\033[1;32mExiting. Goodbye!\033[0m"
@@ -133,6 +138,7 @@ while true; do
             ;;
         *)
             echo -e "\033[1;31mInvalid option. Please choose again.\033[0m"
+	    read -p "press enter to continue"
             ;;
     esac
 done
