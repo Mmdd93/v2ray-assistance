@@ -580,7 +580,8 @@ manage_lightsail_instances() {
     echo -e "\033[1;32m8.\033[0m  Get Lightsail Instances"
     echo -e "\033[1;32m9.\033[0m  Get Lightsail Bundles"
     echo -e "\033[1;32m10.\033[0m Restart Lightsail Instance"  # Added Restart option
-    echo -e "\033[1;32m11.\033[0m Return to AWS CLI Management Menu"
+    echo -e "\033[1;32m11.\033[0m  Force Stop Lightsail Instance"
+    echo -e "\033[1;32m0.\033[0m Return to AWS CLI Management Menu"
     echo -e "\033[1;34m====================================\033[0m"
 
     read -p "Select an option (1-11): " lightsail_choice
@@ -666,8 +667,19 @@ manage_lightsail_instances() {
             read -p "Press Enter to continue..." 
             manage_lightsail_instances
             ;;
-        11)
+        0)
             manage_aws_cli
+            ;;
+
+            11)
+            echo "Enter the Instance Name to force stop:"
+            read instance_name
+            echo "Stopping Lightsail Instance $instance_name in region '$region' using profile '$AWS_PROFILE'..."
+            output_file="/root/aws/stop-lightsail-instance-$instance_name-$region.txt"
+            aws lightsail stop-instance --region "$region" --profile "$AWS_PROFILE" --instance-name "$instance_name" --force > "$output_file"
+            cat "$output_file"
+            read -p "Press Enter to continue..." 
+            manage_lightsail_instances
             ;;
         *)
             echo -e "\033[1;31mInvalid choice, please try again.\033[0m"
