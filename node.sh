@@ -5014,7 +5014,7 @@ manage_zram() {
                 sudo bash -c 'cat << EOF > /etc/default/zramswap
 ENABLED=true
 ALGO=zstd
-PERCENTAGE=50
+PERCENTAGE=100
 PRIORITY=100
 EOF'
                 echo -e "\033[1;32mZRAM configuration updated.\033[0m"
