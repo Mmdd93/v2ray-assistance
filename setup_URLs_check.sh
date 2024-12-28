@@ -210,6 +210,7 @@ menu() {
             1)
                 install_if_missing
                 check_config
+                save_urls_to_file
                 download_check_url_script  # Download the script as part of option 1
                 set_url_test_cron
                 sudo chmod +x /root/check_url.sh
