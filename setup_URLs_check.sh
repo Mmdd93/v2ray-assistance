@@ -73,15 +73,16 @@ install_if_missing() {
 
 # Function to save URLs to a file
 save_urls_to_file() {
-  local URL_FILE="$1"  # The file to save URLs
+  local URL_FILE="/root/urls.txt"  # File path in the /root directory
 
   # Check if the URL file exists
   if [ ! -f "$URL_FILE" ]; then
-    echo "URL file not found. Please enter the URLs you want to check."
+    echo -e "\033[1;33mURL file not found. Creating a new file: $URL_FILE\033[0m"
+    echo "Please enter the URLs you want to save."
     echo "Enter each URL on a new line. Type 'done' when finished."
 
     # Clear or create the file
-    > "$URL_FILE"
+    sudo bash -c "> \"$URL_FILE\""
 
     # Loop to read and validate URLs
     while true; do
@@ -89,15 +90,16 @@ save_urls_to_file() {
       if [ "$URL" == "done" ]; then
         break
       elif [[ "$URL" =~ ^https?:// ]]; then
-        echo "$URL" >> "$URL_FILE"
+        echo "$URL" | sudo tee -a "$URL_FILE" >/dev/null
+        echo -e "\033[1;32mURL added: $URL\033[0m"
       else
-        echo "Invalid URL format. Please start with http:// or https://"
+        echo -e "\033[1;31mInvalid URL format. Please start with http:// or https://\033[0m"
       fi
     done
 
-    echo "URLs saved to $URL_FILE."
+    echo -e "\033[1;34mURLs saved to $URL_FILE.\033[0m"
   else
-    echo "URL file already exists at $URL_FILE."
+    echo -e "\033[1;32mURL file already exists at $URL_FILE.\033[0m"
   fi
 }
 
@@ -215,6 +217,7 @@ menu() {
                 set_url_test_cron
                 sudo chmod +x /root/check_url.sh
                 /bin/bash /root/check_url.sh
+                read -p "press enter to continue "
                 ;;
             2)
                 edit_cron_job
