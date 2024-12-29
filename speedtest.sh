@@ -42,7 +42,7 @@ clear
     echo -e "\033[1;32m3. Istanbul \033[0m"
     echo -e "\033[1;32m4. Bahrain \033[0m"
     echo -e "\033[1;32m5. Frankfurt \033[0m"
-    echo -e "\033[1;32m6. enter Custom server ID\033[0m"
+    echo -e "\033[1;32m6. More regions (Custom server ID)\033[0m"
     echo -e "\033[1;32m7. Run Automatic server selection\033[0m"
     echo -e "\033[1;32m07. Return\033[0m"
     read -p $'\033[1;36mChoose an option (1-5): \033[0m' OPTION
