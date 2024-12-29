@@ -44,7 +44,7 @@ clear
     echo -e "\033[1;32m5. Frankfurt \033[0m"
     echo -e "\033[1;32m6. enter Custom server ID\033[0m"
     echo -e "\033[1;32m7. Run Automatic server selection\033[0m"
-
+    echo -e "\033[1;32m07. Return\033[0m"
     read -p $'\033[1;36mChoose an option (1-5): \033[0m' OPTION
 
     case $OPTION in
@@ -64,6 +64,18 @@ clear
             SERVER_ID=40094
             ;;
         6)
+	    echo -e "\033[1;32mExample:
+21541 Los Angeles, US
+43860 Dallas, US
+40879 Montreal, CA
+61933 Paris, FR
+28922 Amsterdam, NL
+25858 Beijing, CN
+24447 Shanghai, CN
+60572 Guangzhou, CN
+32155 Hong Kong, CN
+13623 Singapore, SG
+48463 Tokyo, JP \033[0m"
             read -p $'\033[1;36mEnter server ID: \033[0m' SERVER_ID
             if ! [[ "$SERVER_ID" =~ ^[0-9]+$ ]]; then
                 echo -e "\033[1;31mInvalid server ID. Please enter a numeric value.\033[0m"
