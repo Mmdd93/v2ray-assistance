@@ -1,3 +1,4 @@
+#!/bin/bash
 manage_nginx() {
     while true; do
         echo -e "\033[1;34mNginx Management Menu:\033[0m"
@@ -501,3 +502,5 @@ fi
         esac
     done
 }
+
+manage_nginx
