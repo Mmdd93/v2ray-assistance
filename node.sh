@@ -5393,6 +5393,46 @@ initial_menu() {
         esac
     done
 }
+run_backhaul_script() {
+    while true; do
+        echo -e "\033[1;36m==========================\033[0m"
+        echo -e "\033[1;32m    Backhaul tunnel Menu   \033[0m"
+        echo -e "\033[1;36m==========================\033[0m"
+        echo -e "\033[1;33m1. Backhaul Free\033[0m"
+        echo -e "\033[1;33m2. Backhaul Premium\033[0m"
+        echo -e "\033[1;31m3. Exit\033[0m"
+        echo -e "\033[1;36m--------------------------\033[0m"
+        echo -ne "\033[1;34mEnter your choice
+	: \033[0m"
+
+        read -r choice
+
+        case $choice in
+            1)
+                echo -e "\033[1;32mDownloading and running Backhaul Free script...\033[0m"
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/backhaul-free.sh -o backhaul-free.sh
+                sudo bash backhaul-free.sh
+                echo -e "\033[1;32mBackhaul Free script executed successfully.\033[0m"
+                ;;
+            2)
+                echo -e "\033[1;32mDownloading and running Backhaul Premium script...\033[0m"
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/backhaul_premium.sh -o backhaul_premium.sh
+                sudo bash backhaul_premium.sh
+                echo -e "\033[1;32mBackhaul Premium script executed successfully.\033[0m"
+                ;;
+            3)
+                echo -e "\033[1;31mExiting the Backhaul Script Menu. Goodbye!\033[0m"
+                break
+                ;;
+            *)
+                echo -e "\033[1;31mInvalid choice! Please enter a valid option (1-3).\033[0m"
+                ;;
+        esac
+
+        echo -e "\033[1;36m--------------------------\033[0m"
+    done
+}
+
 
 # Main menu function
 main_menu() {
@@ -5438,6 +5478,7 @@ main_menu() {
    	echo -e "\033[1;32m39.\033[0m Block torrent "
     	echo -e "\033[1;32m40.\033[0m AWS cli "
      	echo -e "\033[1;32m41.\033[0m Cron job "
+        echo -e "\033[1;32m42.\033[0m Backhaul tunnel "
 
   
         echo -e "\n\033[1;31mXray panel:\033[0m"
@@ -5522,6 +5563,10 @@ main_menu() {
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/cron.sh -o cron.sh
             sudo bash cron.sh
             ;;
+	    41) echo "Running..."
+            run_backhaul_script
+            ;;
+     
             0) exit 1
             echo "Exiting..." exit 0 ;;
             
