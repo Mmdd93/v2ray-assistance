@@ -1,5 +1,6 @@
 #!/bin/bash
 manage_nginx() {
+clear
     while true; do
         echo -e "\033[1;34mNginx Management Menu:\033[0m"
         echo -e "\033[1;32m1. Install Nginx\033[0m"
