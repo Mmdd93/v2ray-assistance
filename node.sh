@@ -5563,7 +5563,7 @@ main_menu() {
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/cron.sh -o cron.sh
             sudo bash cron.sh
             ;;
-	    41) echo "Running..."
+	    42) echo "Running..."
             run_backhaul_script
             ;;
      
