@@ -104,7 +104,7 @@ add_cron_job() {
             schedule="$minute $hour * * $day_of_week"
         fi
 
-        read -p "Enter the command to schedule (e.g., /root/cron.sh): " cron_command
+        read -p "Enter the command (e.g., sudo /root/cron.sh): " cron_command
         cron_command=$(echo "$cron_command" | xargs) # Strip quotes and spaces
 
         echo -e "${GREEN}Scheduled Cron Job: ${RESET}$schedule $cron_command"
