@@ -1083,7 +1083,8 @@ tunnel_management() {
 	colorize red "1) Remove this tunnel"
 	colorize yellow "2) Restart this tunnel"
 	colorize reset "3) View service logs"
-    colorize reset "4) View service status"
+  colorize reset "4) View service status"
+  colorize reset "5) cron Restart tunnel"
 	echo 
 	read -p "Enter your choice (0 to return): " choice
 	
@@ -1092,6 +1093,7 @@ tunnel_management() {
         2) restart_service "$service_name" ;;
         3) view_service_logs "$service_name" ;;
         4) view_service_status "$service_name" ;;
+        5) cron_restart_service "$service_name" ;;
         0) return 1 ;;
         *) echo -e "${RED}Invalid option!${NC}" && sleep 1 && return 1;;
     esac
@@ -1154,6 +1156,48 @@ restart_service() {
     echo
     press_key
 }
+
+cron_restart_service() {
+    echo
+    service_name="$1"
+    colorize yellow "Searching for the service: $service_name" bold
+    echo
+
+    # Check if the service exists
+    if systemctl list-units --type=service | grep -q "$service_name"; then
+        colorize green "Service '$service_name' found."
+        
+        # Check if the restart command is available
+        if systemctl --all | grep -q "$service_name"; then
+            colorize green "Restart command for '$service_name' is available."
+
+            # Construct and display the combined command
+            combined_command="systemctl restart $service_name"
+            colorize red "Copy the command below before running the cron script.\n"
+            colorize cyan "$combined_command \n" bold
+            
+            # Ask the user if they want to run the cron script
+            echo -n "Do you Copy the restart command? (yes/no): "
+            read -r response
+            if [[ "$response" == "yes" ]]; then
+                echo "Running the cron script..."
+                sleep 1
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/cron.sh -o cron.sh
+                sudo bash cron.sh
+            else
+                colorize yellow "Cron script execution was skipped."
+            fi
+        else
+            colorize red "The restart command for '$service_name' is not available."
+        fi
+    else
+        colorize red "Service '$service_name' was not found."
+    fi
+
+    echo
+    press_key
+}
+
 
 view_service_logs (){
 	clear
