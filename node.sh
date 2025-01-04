@@ -910,7 +910,7 @@ setup_cache_and_reboot() {
 
     # Default settings
     default_cache_clear_hours="2"
-    default_reboot_hour="4"
+    default_reboot_hour="1"
     default_reboot_days="2"
 
     while true; do
