@@ -909,9 +909,9 @@ setup_cache_and_reboot() {
     reboot_command="sudo /sbin/shutdown -r +5"
 
     # Default settings
-    default_cache_clear_hours="2"
+    default_cache_clear_hours="6"
     default_reboot_hour="1"
-    default_reboot_days="2"
+    default_reboot_days="3"
 
     while true; do
         echo -e "\033[1;33mSelect an option:\033[0m"
