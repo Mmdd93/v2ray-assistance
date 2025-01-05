@@ -4805,10 +4805,11 @@ show_tcp_udp_count() {
     # Count the number of UDP connections
     udp_count=$(sudo netstat -anu | wc -l)
     
-    # Display the counts
-    echo -e "\033[1;32mTCP Connections:\033[0m $((tcp_count - 2))"  # Subtracting 2 for the header lines
-    echo -e "\033[1;32mUDP Connections:\033[0m $((udp_count - 2))"  # Subtracting 2 for the header lines
+    # Display the counts, subtracting 2 to exclude the header lines
+    echo -e "\033[1;32mTCP Connections:\033[0m $((tcp_count - 2))"
+    echo -e "\033[1;32mUDP Connections:\033[0m $((udp_count - 2))"
 }
+
 
 # Function to list in-use ports in a detailed format and allow selection
 used_ports_and_select() {
