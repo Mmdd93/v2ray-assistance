@@ -4767,21 +4767,24 @@ isp_blocker() {
 
 # Function to check if netstat is installed, and install if not
 check_and_install_netstat() {
-    if ! command -v netstat &> /dev/null; then
-        echo -e "\033[1;31mNetstat is not installed. Installing...\033[0m"
-        # Check for the package manager and install net-tools (which includes netstat)
-        if [ -f /etc/debian_version ]; then
-            sudo apt update && sudo apt install -y net-tools
-        elif [ -f /etc/redhat-release ]; then
-            sudo yum install -y net-tools
+    # Function to check and install required tools: netstat and lsof
+    for tool in netstat lsof; do
+        if ! command -v $tool &> /dev/null; then
+            echo -e "\033[1;31m$tool is not installed. Installing...\033[0m"
+            # Check for the package manager and install the tool
+            if [ -f /etc/debian_version ]; then
+                sudo apt update && sudo apt install -y net-tools lsof
+            elif [ -f /etc/redhat-release ]; then
+                sudo yum install -y net-tools lsof
+            else
+                echo -e "\033[1;31mUnsupported system. Please install $tool manually.\033[0m"
+                exit 1
+            fi
+            echo -e "\033[1;32m$tool installed successfully.\033[0m"
         else
-            echo -e "\033[1;31mUnsupported system. Please install netstat manually.\033[0m"
-            exit 1
+            echo -e "\033[1;32m$tool is already installed.\033[0m"
         fi
-        echo -e "\033[1;32mNetstat installed successfully.\033[0m"
-    else
-        echo -e "\033[1;32mNetstat is already installed.\033[0m"
-    fi
+    done
 }
 
 # Function to kill the process associated with a selected port
