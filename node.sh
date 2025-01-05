@@ -4798,10 +4798,23 @@ kill_process() {
         echo -e "\033[1;31mNo process found using port $PORT.\033[0m"
     fi
 }
+show_tcp_udp_count() {
+    # Count the number of TCP connections
+    tcp_count=$(sudo netstat -ant | wc -l)
+    
+    # Count the number of UDP connections
+    udp_count=$(sudo netstat -anu | wc -l)
+    
+    # Display the counts
+    echo -e "\033[1;32mTCP Connections: $((tcp_count - 2))\033[0m"  # Subtracting 2 for the header lines
+    echo -e "\033[1;32mUDP Connections: $((udp_count - 2))\033[0m"  # Subtracting 2 for the header lines
+}
 
 # Function to list in-use ports in a detailed format and allow selection
 used_ports_and_select() {
+
     while true; do
+    show_tcp_udp_count
         echo -e "\033[1;34mScanning for in-use ports...\033[0m"
         PORTS=$(sudo ss -tunlp | awk '/LISTEN/ {split($5, a, ":"); print a[length(a)]}' | sort -n | uniq)
         
