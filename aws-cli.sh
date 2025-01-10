@@ -13,7 +13,8 @@ echo -e "\033[1;32m6.\033[0m Manage AWS CLI Profiles"
 echo -e "\033[1;32m7.\033[0m Manage EC2 Instances"
 echo -e "\033[1;32m8.\033[0m Manage Lightsail Instances"
 echo -e "\033[1;32m9.\033[0m Install AWS CLI"
-echo -e "\033[1;32m10.\033[0m Return to Main Menu"
+echo -e "\033[1;32m10.\033[0mBill summary"
+echo -e "\033[1;32m0.\033[0m Return to Main Menu"
 echo -e "\033[1;34m=============================\033[0m"
 
     
@@ -104,7 +105,13 @@ echo -e "\033[1;34m=============================\033[0m"
             read -p "Press Enter to continue..." 
             manage_aws_cli
             ;;
-        10)
+      10)
+            select_and_show_aws_bill_summary
+            read -p "Press Enter to continue..." 
+            manage_aws_cli
+            ;;
+
+        0)
             return
             ;;
         *)
@@ -114,6 +121,76 @@ echo -e "\033[1;34m=============================\033[0m"
     esac
 }
 
+
+
+
+select_and_show_aws_bill_summary() {
+    echo -e "\033[1;34mSelect an AWS CLI Profile and Fetch Billing Summary\033[0m"
+
+    # Get the list of AWS profiles
+    profiles=$(aws configure list-profiles)
+
+    # Check if there are any profiles
+    if [[ -z "$profiles" ]]; then
+        echo -e "\033[1;31mNo AWS CLI profiles found.\033[0m"
+        return
+    fi
+
+    # Display the available profiles
+    echo -e "\033[1;36mAvailable AWS Profiles:\033[0m"
+    select profile_name in $profiles; do
+        if [[ -n "$profile_name" ]]; then
+            echo -e "\033[1;32mYou selected profile '$profile_name'.\033[0m"
+            export AWS_PROFILE="$profile_name"
+            break
+        else
+            echo -e "\033[1;31mInvalid selection. Please choose a valid profile.\033[0m"
+        fi
+    done
+
+    # Fetch billing data
+    echo -e "\033[1;34mFetching AWS Estimated Bill Summary for profile '$profile_name'...\033[0m"
+    billing_output=$(aws ce get-cost-and-usage \
+        --time-period Start=$(date -u +%Y-%m-01),End=$(date -u +%Y-%m-%d) \
+        --granularity MONTHLY \
+        --metrics "BlendedCost" \
+        --group-by Type=DIMENSION,Key=SERVICE \
+        --output json 2>/dev/null)
+
+    # Check if the command succeeded
+    if [[ $? -ne 0 ]]; then
+        echo -e "\033[1;31mFailed to fetch billing data. Ensure Cost Explorer is enabled and permissions are set.\033[0m"
+        return
+    fi
+
+    # Validate and parse the JSON output
+    if ! echo "$billing_output" | jq empty &>/dev/null; then
+        echo -e "\033[1;31mError: Received invalid JSON data.\033[0m"
+        echo "$billing_output"
+        return
+    fi
+
+    # Extract and format data into a table
+    echo -e "\033[1;36mEstimated AWS Costs by Service:\033[0m"
+    table_data=$(echo "$billing_output" | jq -r '
+        ["Service", "Amount (USD)"],
+        (.ResultsByTime[0].Groups[]? | [(.Keys[0]), (.Metrics.BlendedCost.Amount | tonumber | tostring)]) 
+        | @tsv
+    ' | column -t -s $'\t')
+
+    if [[ -z "$table_data" ]]; then
+        echo -e "\033[1;31mNo billing data available for the selected profile.\033[0m"
+        return
+    fi
+
+    echo -e "\033[1;32m$table_data\033[0m"
+
+    # Calculate total cost manually
+    total_cost=$(echo "$billing_output" | jq -r '
+        [.ResultsByTime[0].Groups[]?.Metrics.BlendedCost.Amount | tonumber] | add // "N/A"
+    ')
+    echo -e "\n\033[1;33mTotal Estimated Cost: $total_cost USD\033[0m"
+}
 
 
 
@@ -238,6 +315,8 @@ select_aws_profile() {
         fi
     done
 }
+
+
 
 edit_aws_profile() {
     echo -e "\033[1;34mEdit AWS CLI Profile\033[0m"
@@ -486,44 +565,50 @@ echo -e "\033[1;34m===============================\033[0m"
 
 select_lightsail_region() {
     echo -e "\033[1;34mSelect AWS Lightsail Region by City:\033[0m"
-    
+
     # List of all available AWS Lightsail regions
     regions=(
         "us-east-1"
-        "us-west-1"
+        "us-east-2"
         "us-west-2"
         "eu-central-1"
         "eu-west-1"
-        "eu-west-2"  # Added UK region
+        "eu-west-2"
+        "eu-west-3"
+        "eu-north-1"
         "ap-southeast-1"
+        "ap-southeast-2"
         "ap-northeast-1"
+        "ap-northeast-2"
         "ap-south-1"
-        "sa-east-1"
         "ca-central-1"
     )
-    
+
     # Map regions to cities
     declare -A region_city_map
     region_city_map=(
-        ["us-east-1"]="North Virginia, United States"
-        ["us-west-1"]="Northern California, United States"
+        ["us-east-1"]="N. Virginia, United States"
+        ["us-east-2"]="Ohio, United States"
         ["us-west-2"]="Oregon, United States"
         ["eu-central-1"]="Frankfurt, Germany"
         ["eu-west-1"]="Ireland"
-        ["eu-west-2"]="London, United Kingdom"  # Added UK region
+        ["eu-west-2"]="London, United Kingdom"
+        ["eu-west-3"]="Paris, France"
+        ["eu-north-1"]="Stockholm, Sweden"
         ["ap-southeast-1"]="Singapore"
+        ["ap-southeast-2"]="Sydney, Australia"
         ["ap-northeast-1"]="Tokyo, Japan"
+        ["ap-northeast-2"]="Seoul, South Korea"
         ["ap-south-1"]="Mumbai, India"
-        ["sa-east-1"]="São Paulo, Brazil"
         ["ca-central-1"]="Central Canada (Montreal)"
     )
-    
+
     # Display cities to the user with a numbered list
     cities=()
     for region in "${regions[@]}"; do
         cities+=("${region_city_map[$region]} ($region)")
     done
-    
+
     PS3="Select a city: "
     selected_region=""
     select city in "${cities[@]}"; do
@@ -543,13 +628,14 @@ select_lightsail_region() {
             break
         fi
     done
-    
+
     # Save the selected region to a text file
     if [[ -n "$selected_region" ]]; then
+        mkdir -p /root/aws
         echo "$selected_region" > /root/aws/lightsail_region.txt
-        echo -e "\033[1;33mThe selected region has been saved to 'selected_region.txt'.\033[0m"
+        echo -e "\033[1;33mThe selected region has been saved to '/root/aws/lightsail_region.txt'.\033[0m"
     fi
-    
+
     # Return the selected region
     echo "$selected_region"
 }
