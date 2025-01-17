@@ -277,3 +277,4 @@ file_management() {
         clear
     done
 }
+file_management
