@@ -1,7 +1,5 @@
 #!/bin/bash
-
 set -euo pipefail
-
 # Constants
 MARZBAN_NODE_DIR=~/Marzban-node
 MARZBAN_NODE_DATA_DIR="/var/lib/marzban-node"
@@ -39,9 +37,6 @@ prompt_input() {
 }
 #update_marzban_node
 update_marzban_node() {
-    echo -e "\033[1;36m============================================\033[0m"
-    echo -e "\033[1;33m        Updating Marzban Node\033[0m"
-    echo -e "\033[1;36m============================================\033[0m"
 
     cd $MARZBAN_NODE_DIR || { echo -e "\033[1;31mFailed to change directory to Marzban-node.\033[0m"; return; }
 
@@ -55,7 +50,6 @@ update_marzban_node() {
     docker compose up -d
 
     echo -e "\033[1;32mMarzban node update completed successfully.\033[0m"
-    echo -e "\033[1;36m============================================\033[0m"
     echo -e "\nPress Enter to return to the main menu."
     read
 }
@@ -254,11 +248,6 @@ list_and_download_xray_core() {
     sleep 3
 }
 
-
-
-
-
-
 # Function to check if Docker is installed and running
 install_docker() {
     # Check if Docker is installed
@@ -377,9 +366,6 @@ check_docker_compose() {
     fi
 }
 
-
-
-
 # Function to validate port numbers
 validate_port() {
     local port="$1"
@@ -394,8 +380,6 @@ validate_port() {
         exit 1
     fi
 }
-
-
 
 # Function to update and upgrade the system
 update_system() {
@@ -523,7 +507,9 @@ setup_marzban_node() {
       XRAY_API_PORT: $XRAY_API_PORT
       SERVICE_PROTOCOL: "rest"
     volumes:
-      - $MARZBAN_NODE_DATA_DIR:/var/lib/marzban-node
+      - /var/lib/marzban-node:/var/lib/marzban-node
+    logging:
+      driver: "none"  # Disable logging for this container
 EOF
     done
 	for ((i = 1; i <= NUM_NODES; i++)); do
