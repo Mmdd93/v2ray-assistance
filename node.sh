@@ -2774,6 +2774,7 @@ fi
         -p 80:8080 \
         -p 53:5300/udp \
         $custom_domains \
+	--log-driver=none \
         ghcr.io/seji64/snidust:1.0.15"
 
     # Run Docker container with snidust image
