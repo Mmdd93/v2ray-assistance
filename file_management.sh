@@ -2,9 +2,9 @@
 
 file_management() {
     clear
-    echo -e "\033[1;34m###########################\033[0m"
+    
     echo -e "\033[1;32mFile Management Menu\033[0m"
-    echo -e "\033[1;34m###########################\033[0m"
+    
 
     while true; do
         echo -e "\n\033[1;33mChoose an action:\033[0m"
