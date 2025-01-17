@@ -4970,6 +4970,7 @@ main_menu() {
     	echo -e "\033[1;32m40.\033[0m AWS cli "
      	echo -e "\033[1;32m41.\033[0m Cron job "
         echo -e "\033[1;32m42.\033[0m Backhaul tunnel "
+	echo -e "\033[1;32m43.\033[0m File management(Copy/Remove/Move/Rename etc.) "
 
   
         echo -e "\n\033[1;31mXray panel:\033[0m"
@@ -5051,14 +5052,17 @@ main_menu() {
             ;;
 	    41)
             echo "Running cron..."
-            sleep 1
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/cron.sh -o cron.sh
             sudo bash cron.sh
             ;;
 	    42) echo "Running..."
             run_backhaul_script
             ;;
-     
+	    43)
+            echo "Running file management..."
+            curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/file_management.sh -o file_management.sh
+            sudo bash file_management.sh
+		;;
             0) exit 1
             echo "Exiting..." exit 0 ;;
             
