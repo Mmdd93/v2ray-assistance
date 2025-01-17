@@ -2725,7 +2725,7 @@ create_custom_dns() {
     # Prompt for external IP, with a method to find public IP
     echo -e "\033[1;33mEnter your server IP: [$(curl -4 -s https://icanhazip.com)]:\033[0m"
     read -p " > " external_ip
-    external_ip=${external_ip:-$(curl -4 -s https://icanhazip.come)} # Use public IP as default
+    external_ip=${external_ip:-$(curl -4 -s https://icanhazip.com)} # Use public IP as default
 
     # Prompt for using custom domains with default set to 'yes'
 echo -e "\033[1;33mDo you have custom domains? (yes/no) [yes]:\033[0m"
