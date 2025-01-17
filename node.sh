@@ -2766,16 +2766,17 @@ fi
 
     # Prepare the Docker command
     docker_command="docker run -d \
-        --name \"$container_name\" \
-        -e ALLOWED_CLIENTS=\"$ALLOWED_CLIENTS\" \
-        -e EXTERNAL_IP=\"$external_ip\" \
-        -e SPOOF_ALL_DOMAINS=\"$spoof_domains\" \
-        -p 443:8443 \
-        -p 80:8080 \
-        -p 53:5300/udp \
-        $custom_domains \
-	--log-driver=none \
-        ghcr.io/seji64/snidust:1.0.15"
+    --name \"$container_name\" \
+    -e ALLOWED_CLIENTS=\"$ALLOWED_CLIENTS\" \
+    -e EXTERNAL_IP=\"$external_ip\" \
+    -e SPOOF_ALL_DOMAINS=\"$spoof_domains\" \
+    -p 443:8443 \
+    -p 80:8080 \
+    -p 53:5300/udp \
+    $custom_domains \
+    --log-driver=none \
+    ghcr.io/seji64/snidust:1.0.15"
+
 
     # Run Docker container with snidust image
     echo -e "\033[1;32mRunning the Docker container with snidust configuration...\033[0m"
