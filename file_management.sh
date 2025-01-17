@@ -25,7 +25,7 @@ file_management() {
 		echo -e "15. \033[1;35mFind big files\033[0m"
         echo -e "0. \033[1;33mReturn to Main Menu\033[0m"
 
-        read -p "Enter your choice (0-13): " action
+        read -p "Enter your choice: " action
 
         case $action in
             1)
