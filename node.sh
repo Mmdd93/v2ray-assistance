@@ -3987,8 +3987,8 @@ apply_optimizations() {
 ["net.ipv4.tcp_fastopen"]="3"               # Enable fast open for lower connection setup latency.
 ["net.ipv4.tcp_ecn"]="0"                    # Disable ECN for better compatibility with older routers.
 ["net.ipv4.tcp_retries2"]="5"               # Lower retries for faster recovery of failed connections.
-["net.ipv6.conf.all.forwarding"]="0"        # Disable forwarding unless IPv6 routing is needed.
-["net.ipv4.conf.all.forwarding"]="0"        # Disable IPv4 forwarding for most gaming setups.
+["net.ipv6.conf.all.forwarding"]="1"        # enable forwarding unless IPv6 routing is needed.
+["net.ipv4.conf.all.forwarding"]="1"        # enable IPv4 forwarding for most gaming setups.
 ["net.ipv4.tcp_low_latency"]="1"            # Prioritize low latency over throughput.
 ["net.ipv4.tcp_window_scaling"]="1"         # Enable TCP window scaling for better performance.
 ["net.core.default_qdisc"]="fq_codel"       # Use FQ-CoDel to reduce bufferbloat.
