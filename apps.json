@@ -27,9 +27,9 @@
   },
   {
     "name": "Hiddify",
-    "urlScheme": "sing-box://import-remote-profile",
+    "urlScheme": "hiddify://import/",
     "image": "https://play-lh.googleusercontent.com/Dm_6ugf7Wwib_A3AFFdtkktufYGGOamhb072Ii46zYyb__qZHSocnJGErEUWxp7UWaGG=w240-h480-rw",
-    "link": "sing-box://import-remote-profile?url={url}",
+    "link": "hiddify://import/?url={url}",
     "os": ["Windows", "Android", "Linux", "iOS"],
     "downloadLinks": {
       "Android": "https://github.com/hiddify/hiddify-next/releases/latest/download/Hiddify-Android-universal.apk",
