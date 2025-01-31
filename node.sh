@@ -3964,9 +3964,9 @@ apply_optimizations() {
 ["net.core.netdev_max_backlog"]="4096"      # Reduced to minimize bufferbloat in high-packet-rate scenarios.
 ["net.ipv4.ip_local_port_range"]="1024 65535"  # Keep full port range for outbound connections.
 ["net.ipv4.ip_nonlocal_bind"]="1"           # Useful for some advanced gaming setups (e.g., hosting).
-["net.ipv4.tcp_keepalive_time"]="120"        # Shorter keepalive time to detect stale connections faster.
-["net.ipv4.tcp_keepalive_intvl"]="15"       # Reduced interval to ensure faster keepalive probes.
-["net.ipv4.tcp_keepalive_probes"]="3"       # Fewer probes to kill stale connections more quickly.
+["net.ipv4.tcp_keepalive_time"]="300"        # Shorter keepalive time to detect stale connections faster.
+["net.ipv4.tcp_keepalive_intvl"]="30"       # Reduced interval to ensure faster keepalive probes.
+["net.ipv4.tcp_keepalive_probes"]="5"       # Fewer probes to kill stale connections more quickly.
 ["net.ipv4.tcp_syncookies"]="1"             # Enable SYN cookies to protect against SYN flood attacks.
 ["net.ipv4.tcp_max_orphans"]="65536"        # Lower to prevent excessive resource use from orphaned connections.
 ["net.ipv4.tcp_max_syn_backlog"]="2048"     # Lower backlog size for a gaming environment.
@@ -3984,12 +3984,12 @@ apply_optimizations() {
 ["net.ipv4.conf.default.rp_filter"]="1"     # Same as above for new interfaces.
 ["net.ipv4.ip_no_pmtu_disc"]="0"            # Enable Path MTU Discovery for optimal packet sizes.
 ["vm.vfs_cache_pressure"]="50"              # Increase inode cache retention for smoother gameplay.
-["net.ipv4.tcp_fastopen"]="3"               # Enable fast open for lower connection setup latency.
+["net.ipv4.tcp_fastopen"]="0"               # Enable fast open for lower connection setup latency.
 ["net.ipv4.tcp_ecn"]="0"                    # Disable ECN for better compatibility with older routers.
 ["net.ipv4.tcp_retries2"]="5"               # Lower retries for faster recovery of failed connections.
 ["net.ipv6.conf.all.forwarding"]="1"        # enable forwarding unless IPv6 routing is needed.
 ["net.ipv4.conf.all.forwarding"]="1"        # enable IPv4 forwarding for most gaming setups.
-["net.ipv4.tcp_low_latency"]="1"            # Prioritize low latency over throughput.
+["net.ipv4.tcp_low_latency"]="0"            # Prioritize low latency over throughput.
 ["net.ipv4.tcp_window_scaling"]="1"         # Enable TCP window scaling for better performance.
 ["net.core.default_qdisc"]="fq_codel"       # Use FQ-CoDel to reduce bufferbloat.
 ["net.netfilter.nf_conntrack_max"]="65536"  # No change; sufficient for gaming.
