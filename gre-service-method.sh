@@ -27,7 +27,7 @@ generate_random_ipv4() {
     
 
     # Prompt the user to select a template
-    echo -e "\n\033[1;34mSelect an IPv4 template number (1-100) [Press Enter for a random selection]:\033[0m"
+    echo -e "\n\033[1;34mSelect an IPv4 template number between (1-100) or Press Enter for a random template:\033[0m"
     local template_number
     read -p " > " template_number
     
