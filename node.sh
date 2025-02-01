@@ -4963,7 +4963,9 @@ main_menu() {
  	echo -e "\033[1;32m27.\033[0m Nginx "
         echo -e "\033[1;32m29.\033[0m IPV6 (Enable/Disable) "
 	echo -e "\033[1;32m30.\033[0m ZRAM (Optimize RAM) "
-        echo -e "\033[1;32m31.\033[0m Tunnel 6to4 SIT "
+        echo -e "\033[1;32m31.\033[0m 6to4 SIT tunnel  "
+	echo -e "\033[1;32m42.\033[0m Backhaul tunnel "
+ 	echo -e "\033[1;32m44.\033[0m gre tunnel "
 	echo -e "\033[1;32m32.\033[0m Send File to Remote Server & Forward to Telegram "
  	echo -e "\033[1;32m33.\033[0m Check URLs "
 	echo -e "\033[1;32m35.\033[0m HAProxy "
@@ -4972,7 +4974,6 @@ main_menu() {
    	echo -e "\033[1;32m39.\033[0m Block torrent "
     	echo -e "\033[1;32m40.\033[0m AWS cli "
      	echo -e "\033[1;32m41.\033[0m Cron job "
-        echo -e "\033[1;32m42.\033[0m Backhaul tunnel "
 	echo -e "\033[1;32m43.\033[0m File management(Copy/Remove/Move/Rename etc.) "
 
   
@@ -5065,6 +5066,11 @@ main_menu() {
             echo "Running file management..."
             curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/file_management.sh -o file_management.sh
             sudo bash file_management.sh
+		;;
+  	44)
+            echo "Running gre tunnel..."
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/gre-service-method.sh -o gre-service-method.sh
+            sudo bash gre-service-method.sh
 		;;
             0) exit 1
             echo "Exiting..." exit 0 ;;
