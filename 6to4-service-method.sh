@@ -13,11 +13,10 @@ RESET='\033[0m'
     fi
 
 # Function to generate a random name for the service between 1 and 100
-generate_random_name() {
-    echo "$(shuf -i 1-100 -n 1)"
+# Function to generate a random name
+ generate_random_name() {
+    tr -dc 'a-z0-9' </dev/urandom | fold -w 5 | head -n 1
 }
-
-
 
 generate_random_ipv6() {
      # Define 100 IPv6 address templates (hidden from display)
@@ -29,7 +28,16 @@ generate_random_ipv6() {
     echo -e "\n\033[1;34mSelect an IPv6 template number (1-100):\033[0m"
     local template_number
     read -p " > " template_number
-    echo -e "\n\033[1;31mUse template number [$template_number] on the remote server as well.\033[0m"
+    
+    # If the user input is empty, generate a random number between 1 and 100
+    if [[ -z "$template_number" ]]; then
+        template_number=$(shuf -i 1-100 -n 1)
+        echo -e "\033[1;33mRandomly selected template number: [$template_number]\033[0m"
+    else
+        echo -e "\033[1;32mYou selected template number: [$template_number]\033[0m"
+    fi
+    
+    echo -e "\033[1;31m!! Now! Use template number [$template_number] on the remote server!!\033[0m"
 
     # If the user doesn't provide any input, default to template number 1
     template_number=${template_number:-1}
