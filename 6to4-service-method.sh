@@ -25,7 +25,7 @@ generate_random_ipv6() {
         templates+=("2001:db8:$i::%x/64")
     done
     # Prompt the user to select a template
-    echo -e "\n\033[1;34mSelect an IPv6 template number (1-100):\033[0m"
+    echo -e "\n\033[1;34mSelect an IPv6 template number between (1-100) or Press Enter for a random template:\033[0m"
     local template_number
     read -p " > " template_number
     
