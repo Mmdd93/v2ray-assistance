@@ -18,6 +18,7 @@
       { "RoyalServiceir": "tg://resolve?domain=Suproyall" },
       { "iNET": "tg://resolve?domain=I_net7" },
       { "VPN": "tg://resolve?domain=Hakh001" },
+      { "MD_VPN": "tg://resolve?domain=x6_ir" },
       { "default": "tg://resolve?domain=tlgrmv2" }
     ],
     "downloadLinks": {
