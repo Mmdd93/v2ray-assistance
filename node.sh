@@ -4963,9 +4963,6 @@ main_menu() {
     echo -e "\033[1;32m23.\033[0m Nginx"
     echo -e "\033[1;32m24.\033[0m IPV6 (Enable/Disable)"
     echo -e "\033[1;32m25.\033[0m ZRAM (Optimize RAM)"
-    echo -e "\033[1;32m26.\033[0m 6to4 SIT tunnel"
-    echo -e "\033[1;32m27.\033[0m Backhaul tunnel"
-    echo -e "\033[1;32m28.\033[0m gre tunnel"
     echo -e "\033[1;32m29.\033[0m Send File to Remote Server & Forward to Telegram"
     echo -e "\033[1;32m30.\033[0m Check URLs"
     echo -e "\033[1;32m31.\033[0m HAProxy"
@@ -4975,6 +4972,11 @@ main_menu() {
     echo -e "\033[1;32m35.\033[0m AWS cli"
     echo -e "\033[1;32m36.\033[0m Cron job"
     echo -e "\033[1;32m37.\033[0m File management (Copy/Remove/Move/Rename etc.)"
+    
+    echo -e "\n\033[1;31mTunnel:\033[0m"
+    echo -e "\033[1;32m26.\033[0m SIT tunnel 6to4 IPV6 local"
+    echo -e "\033[1;32m27.\033[0m Backhaul reverse tunnel"
+    echo -e "\033[1;32m28.\033[0m GRE tunnel IPV4 local"
 
     echo -e "\n\033[1;31mXray panel:\033[0m"
     echo -e "\033[1;32m38.\033[0m XUI panel"
