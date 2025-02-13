@@ -5019,7 +5019,8 @@ main_menu() {
             sudo bash nginx.sh ;;
         24) manage_ipv6 ;;
         25) manage_zram ;;
-        26) run_6to4_scripts ;;
+        26) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/6to4-service-method.sh -o 6to4-service-method.sh
+		sudo bash 6to4-service-method.sh ;;
         27) run_backhaul_script ;;
         28) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/gre-service-method.sh -o gre-service-method.sh
             sudo bash gre-service-method.sh ;;
