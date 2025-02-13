@@ -4932,152 +4932,137 @@ run_backhaul_script() {
 main_menu() {
     while true; do
     clear
-	echo -e "\033[1;31m+-----------------------------------------+\033[0m"
- 	echo -e "\033[1;32m   v2ray-assistant | Telegram: @tlgrmv2   |\033[0m"
-	echo -e "\033[1;31m+-----------------------------------------+\033[0m"
-        echo -e "\n\033[1;31mUpdate and upgrade:\033[0m"
-        echo -e "\033[1;32m 1.\033[0m Update and upgrade system and install necessary packages"
-	echo -e "\033[1;32m34.\033[0m Fix update issues (broken apt or dependencies)"
-	 echo -e "\033[1;32m36.\033[0m System info"
-	echo -e "\033[1;32m28.\033[0m Change Update sources to Iran"
-        echo -e "\033[1;32m 2.\033[0m Install Docker and Docker Compose"
-        echo -e "\033[1;32m20.\033[0m Install Docker on Iran servers"
-	
-        echo -e "\n\033[1;31mTools:\033[0m"
-        echo -e "\033[1;32m 3.\033[0m ISP defender (allow/block)"
-        echo -e "\033[1;32m 4.\033[0m Network Optimizer + BBR"
-        echo -e "\033[1;32m 5.\033[0m Speed test + system benchmark"
-        echo -e "\033[1;32m 6.\033[0m Port (in-use ports/connected IPs/kill process)"
-        echo -e "\033[1;32m 7.\033[0m Auto Clear cache + server reboot"
-        echo -e "\033[1;32m 8.\033[0m Ping (Disable/enable) "
-        echo -e "\033[1;32m 9.\033[0m DNS (Change server DNS)"
-        echo -e "\033[1;32m18.\033[0m DNS (Create your DNS)"
-        echo -e "\033[1;32m10.\033[0m Get SSL"
-        echo -e "\033[1;32m15.\033[0m SWAP"
-        echo -e "\033[1;32m16.\033[0m Desktop + firefox on ubuntu server"
-        echo -e "\033[1;32m21.\033[0m Server monthly traffic limit"
-        echo -e "\033[1;32m22.\033[0m CPU/RAM MONITORING"
-        echo -e "\033[1;32m23.\033[0m UFW "
-        echo -e "\033[1;32m24.\033[0m Cloudflare auto ip changer "
-	echo -e "\033[1;32m26.\033[0m IP quality checks "
- 	echo -e "\033[1;32m27.\033[0m Nginx "
-        echo -e "\033[1;32m29.\033[0m IPV6 (Enable/Disable) "
-	echo -e "\033[1;32m30.\033[0m ZRAM (Optimize RAM) "
-        echo -e "\033[1;32m31.\033[0m 6to4 SIT tunnel  "
-	echo -e "\033[1;32m42.\033[0m Backhaul tunnel "
- 	echo -e "\033[1;32m44.\033[0m gre tunnel "
-	echo -e "\033[1;32m32.\033[0m Send File to Remote Server & Forward to Telegram "
- 	echo -e "\033[1;32m33.\033[0m Check URLs "
-	echo -e "\033[1;32m35.\033[0m HAProxy "
- 	echo -e "\033[1;32m37.\033[0m Fix WhatsApp Time (set timezone to TEHRAN) "
-  	echo -e "\033[1;32m38.\033[0m Secure SSH (fail2ban) "
-   	echo -e "\033[1;32m39.\033[0m Block torrent "
-    	echo -e "\033[1;32m40.\033[0m AWS cli "
-     	echo -e "\033[1;32m41.\033[0m Cron job "
-	echo -e "\033[1;32m43.\033[0m File management(Copy/Remove/Move/Rename etc.) "
+    echo -e "\033[1;31m+-----------------------------------------+\033[0m"
+    echo -e "\033[1;32m   v2ray-assistant | Telegram: @tlgrmv2   |\033[0m"
+    echo -e "\033[1;31m+-----------------------------------------+\033[0m"
+    echo -e "\n\033[1;31mUpdate and upgrade:\033[0m"
+    echo -e "\033[1;32m1.\033[0m Update and upgrade system and install necessary packages"
+    echo -e "\033[1;32m2.\033[0m Fix update issues (broken apt or dependencies)"
+    echo -e "\033[1;32m3.\033[0m Change Update sources to Iran"
+    echo -e "\033[1;32m4.\033[0m System info"
+    echo -e "\033[1;32m5.\033[0m Install Docker and Docker Compose"
+    echo -e "\033[1;32m6.\033[0m Install Docker on Iran servers"
+    
+    echo -e "\n\033[1;31mTools:\033[0m"
+    echo -e "\033[1;32m7.\033[0m ISP defender (allow/block)"
+    echo -e "\033[1;32m8.\033[0m Network Optimizer + BBR"
+    echo -e "\033[1;32m9.\033[0m Speed test + system benchmark"
+    echo -e "\033[1;32m10.\033[0m Port (in-use ports/connected IPs/kill process)"
+    echo -e "\033[1;32m11.\033[0m Auto Clear cache + server reboot"
+    echo -e "\033[1;32m12.\033[0m Ping (Disable/enable)"
+    echo -e "\033[1;32m13.\033[0m DNS (Change server DNS)"
+    echo -e "\033[1;32m14.\033[0m DNS (Create your DNS)"
+    echo -e "\033[1;32m15.\033[0m Get SSL"
+    echo -e "\033[1;32m16.\033[0m SWAP"
+    echo -e "\033[1;32m17.\033[0m Desktop + firefox on ubuntu server"
+    echo -e "\033[1;32m18.\033[0m Server monthly traffic limit"
+    echo -e "\033[1;32m19.\033[0m CPU/RAM MONITORING"
+    echo -e "\033[1;32m20.\033[0m UFW"
+    echo -e "\033[1;32m21.\033[0m Cloudflare auto ip changer"
+    echo -e "\033[1;32m22.\033[0m IP quality checks"
+    echo -e "\033[1;32m23.\033[0m Nginx"
+    echo -e "\033[1;32m24.\033[0m IPV6 (Enable/Disable)"
+    echo -e "\033[1;32m25.\033[0m ZRAM (Optimize RAM)"
+    echo -e "\033[1;32m26.\033[0m 6to4 SIT tunnel"
+    echo -e "\033[1;32m27.\033[0m Backhaul tunnel"
+    echo -e "\033[1;32m28.\033[0m gre tunnel"
+    echo -e "\033[1;32m29.\033[0m Send File to Remote Server & Forward to Telegram"
+    echo -e "\033[1;32m30.\033[0m Check URLs"
+    echo -e "\033[1;32m31.\033[0m HAProxy"
+    echo -e "\033[1;32m32.\033[0m Fix WhatsApp Time (set timezone to TEHRAN)"
+    echo -e "\033[1;32m33.\033[0m Secure SSH (fail2ban)"
+    echo -e "\033[1;32m34.\033[0m Block torrent"
+    echo -e "\033[1;32m35.\033[0m AWS cli"
+    echo -e "\033[1;32m36.\033[0m Cron job"
+    echo -e "\033[1;32m37.\033[0m File management (Copy/Remove/Move/Rename etc.)"
 
-  
-        echo -e "\n\033[1;31mXray panel:\033[0m"
-        echo -e "\033[1;32m11.\033[0m XUI panel"
-        echo -e "\033[1;32m12.\033[0m Marzban panel"
-        echo -e "\033[1;32m13.\033[0m Marzban node"
-        echo -e "\033[1;32m17.\033[0m Backup + transfer"
-        echo -e "\033[1;32m19.\033[0m Auto panel restart "
-        echo -e "\033[1;31m0.\033[0m Exit"
-	echo -e "\033[1;31m+-----------------------------------------+\033[0m"
-        choice=$(prompt_input "Enter your choice" "")
-        
-        case $choice in
-            1) update_system
-               install_packages ;;
-            2) install_docker
-		check_docker_compose ;;
-            3) isp_blocker ;;
-	    28)change_sources_list ;;
-            4) Optimizer ;;
-            5) run_system_benchmark ;;
-            6) initial_menu ;;
-            7) setup_cache_and_reboot ;;
-            8) manage_ping ;;
-            9) change_dns ;;
-            15) swap ;;
-            16) webtop ;;
-            11) xui ;;
-            10) ssl;;
-            12) marzban_commands;;
-            13) manage_marzban_node ;;
-            17) backup_menu ;;
-            18) create_dns ;;
-            19) panels_restart_cron ;;
-            20) setup_docker ;;
-            21) traffic ;;
-            22) usage ;;
-            23) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/ufw.sh -o ufw.sh
-		sudo bash ufw.sh ;;
-            24) cf-auto-ip ;;
-            26) ip_quality_check ;;
-            27) curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/nginx.sh -o nginx.sh
-		sudo bash nginx.sh ;;
-	    29) manage_ipv6 ;;
-            30) manage_zram ;;
-	    31) run_6to4_scripts  ;;
-	    32) download_and_run_ssh_assistance ;;
-            33) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup_URLs_check.sh -o setup_URLs_check.sh
-		sudo bash setup_URLs_check.sh ;;
-	    34) fix_update_issues ;;
-	    35) run_haproxy_script ;;
-	    36) display_system_info ;; 
-            37) echo "Running WhatsApp Data and Time fixer..."
+    echo -e "\n\033[1;31mXray panel:\033[0m"
+    echo -e "\033[1;32m38.\033[0m XUI panel"
+    echo -e "\033[1;32m39.\033[0m Marzban panel"
+    echo -e "\033[1;32m40.\033[0m Marzban node"
+    echo -e "\033[1;32m41.\033[0m Backup + transfer"
+    echo -e "\033[1;32m42.\033[0m Auto panel restart"
+    echo -e "\033[1;31m0.\033[0m Exit"
+    echo -e "\033[1;31m+-----------------------------------------+\033[0m"
+
+    choice=$(prompt_input "Enter your choice" "")
+    
+    case $choice in
+        1) update_system
+           install_packages ;;
+        2) fix_update_issues ;;
+        3) change_sources_list ;;
+        4) display_system_info ;;
+        5) install_docker
+           check_docker_compose ;;
+        6) install_docker_iran ;;
+        7) isp_blocker ;;
+        8) Optimizer ;;
+        9) run_system_benchmark ;;
+        10) initial_menu ;;
+        11) setup_cache_and_reboot ;;
+        12) manage_ping ;;
+        13) change_dns ;;
+        14) create_dns ;;
+        15) ssl ;;
+        16) swap ;;
+        17) webtop ;;
+        18) traffic ;;
+        19) usage ;;
+        20) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/ufw.sh -o ufw.sh
+            sudo bash ufw.sh ;;
+        21) cf-auto-ip ;;
+        22) ip_quality_check ;;
+        23) curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/nginx.sh -o nginx.sh
+            sudo bash nginx.sh ;;
+        24) manage_ipv6 ;;
+        25) manage_zram ;;
+        26) run_6to4_scripts ;;
+        27) run_backhaul_script ;;
+        28) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/gre-service-method.sh -o gre-service-method.sh
+            sudo bash gre-service-method.sh ;;
+        29) download_and_run_ssh_assistance ;;
+        30) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup_URLs_check.sh -o setup_URLs_check.sh
+            sudo bash setup_URLs_check.sh ;;
+        31) run_haproxy_script ;;
+        32) echo "Running WhatsApp Data and Time fixer..."
             sleep 2
             sudo timedatectl set-timezone Asia/Tehran
             sleep 2
             echo "Done, WhatsApp Data and Time fixed..."
-            sleep 2
-            ;;
-	    38)
-            echo "Running installer fail2ban script for ssh security..."
+            sleep 2 ;;
+        33) echo "Running installer fail2ban script for ssh security..."
             sleep 2
             curl -fsSL https://raw.githubusercontent.com/MrAminiDev/NetOptix/main/scripts/fail2ban.sh -o /tmp/fail2ban.sh
             bash /tmp/fail2ban.sh
-            rm /tmp/fail2ban.sh
-            ;;
-	    39)
-            echo "Running Block torrent list..."
+            rm /tmp/fail2ban.sh ;;
+        34) echo "Running Block torrent list..."
             sleep 2
             curl -fsSL https://raw.githubusercontent.com/MrAminiDev/NetOptix/main/scripts/blocktorrent/blocktorrent.sh -o /tmp/blocktorrent.sh
             bash /tmp/blocktorrent.sh
-            rm /tmp/blocktorrent.sh
-            ;;
-	    40)
-            echo "Running AWS cli..."
+            rm /tmp/blocktorrent.sh ;;
+        35) echo "Running AWS cli..."
             sleep 1
             curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/main/aws-cli.sh -o aws-cli.sh
-            sudo bash aws-cli.sh
-            ;;
-	    41)
-            echo "Running cron..."
+            sudo bash aws-cli.sh ;;
+        36) echo "Running cron..."
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/cron.sh -o cron.sh
-            sudo bash cron.sh
-            ;;
-	    42) echo "Running..."
-            run_backhaul_script
-            ;;
-	    43)
-            echo "Running file management..."
+            sudo bash cron.sh ;;
+        37) echo "Running file management..."
             curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/file_management.sh -o file_management.sh
-            sudo bash file_management.sh
-		;;
-  	44)
-            echo "Running gre tunnel..."
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/gre-service-method.sh -o gre-service-method.sh
-            sudo bash gre-service-method.sh
-		;;
-            0) exit 1
-            echo "Exiting..." exit 0 ;;
-            
-            *) echo "Invalid choice. Please try again." ;;
-        esac
+            sudo bash file_management.sh ;;
+        38) xui ;;
+        39) marzban_commands ;;
+        40) manage_marzban_node ;;
+        41) backup_menu ;;
+        42) panels_restart_cron ;;
+        43) setup_docker ;;
+        44) exit 1 ;;
+        0) echo "Exiting..."; exit 0 ;;
+        *) echo "Invalid choice. Please try again." ;;
+    esac
     done
 }
 # Start the main menu
 main_menu
+
