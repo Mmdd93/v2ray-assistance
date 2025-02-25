@@ -19,6 +19,7 @@
       { "iNET": "tg://resolve?domain=I_net7" },
       { "VPN": "tg://resolve?domain=Hakh001" },
       { "MD": "tg://resolve?domain=x6_ir" },
+      { "iox": "tg://resolve?domain=Mr_gpt4" },
       { "default": "tg://resolve?domain=tlgrmv2" }
     ],
     "downloadLinks": {
