@@ -4978,9 +4978,10 @@ main_menu() {
     echo -e "\033[1;32m37.\033[0m File management (Copy/Remove/Move/Rename etc.)"
     
     echo -e "\n\033[1;31mTunnel:\033[0m"
-    echo -e "\033[1;32m26.\033[0m SIT tunnel 6to4 IPV6 local"
+    echo -e "\033[1;32m26.\033[0m SIT tunnel 6to4 (IPV6 local)"
     echo -e "\033[1;32m27.\033[0m Backhaul reverse tunnel"
-    echo -e "\033[1;32m28.\033[0m GRE tunnel IPV4 local"
+    echo -e "\033[1;32m28.\033[0m GRE tunnel (IPV4 local)"
+    echo -e "\033[1;32m45.\033[0m GENEVE tunnel (IPV4 local)"
     echo -e "\033[1;32m44.\033[0m GOST tunnel"
 
     echo -e "\n\033[1;31mXray panel:\033[0m"
@@ -5068,6 +5069,9 @@ main_menu() {
 	44) echo "Running gost..."
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/gost.sh -o gost.sh
             sudo bash gost.sh ;;
+	45) echo "Running geneve..."
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/geneve-service-method.sh -o geneve-service-method.sh
+            sudo bash geneve-service-method.sh ;;
         0) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
