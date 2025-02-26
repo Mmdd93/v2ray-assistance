@@ -1540,10 +1540,9 @@ handle_port_80() {
 ssl() {
 while true; do
     echo -e "\033[1;32mSSL Installation Options\033[0m"
-    echo -e "1. Use \033[1;34Easy mode (recommend)\033[0m "
-    echo -e "2. Use \033[1;34macme New single domain (sub.domain.com)\033[0m "
-    echo -e "3. Use \033[1;34mCertbot New Multi-Domain ssl (sub.domain1.com, sub2.domain2.com ...)
-\033[0m "
+    echo -e "1.\033[1;34Easy mode (recommend)\033[0m "
+    echo -e "2.\033[1;34macme New single domain (sub.domain.com)\033[0m "
+    echo -e "3.\033[1;34mCertbot New Multi-Domain ssl (sub.domain1.com, sub2.domain2.com ...)\033[0m "
     echo -e "4. Use \033[1;34mCertbot New wildcard ssl (*.domain.com)\033[0m "
     
     echo -e "0. Return"
