@@ -292,8 +292,9 @@ manage_tunnels() {
     echo -e "\033[1;34m7.\033[0m \033[1;36mRemove tunnel\033[0m"
     echo -e "\033[1;34m8.\033[0m \033[1;36mEdit with nano\033[0m"
     echo -e "\033[1;34m9.\033[0m \033[1;36mChange remote IP\033[0m"
-    echo -e "\033[1;34m10.\033[0m \033[1;36mChange local IP\033[0m"
-    echo -e "\033[1;34m11.\033[0m \033[1;36mAuto gre tunnel update (check local/remote)\033[0m"
+    echo -e "\033[1;34m10.\033[0m \033[1;36mPing remote server local/public IP\033[0m"
+    echo -e "\033[1;34m11.\033[0m \033[1;36mChange local IP\033[0m"
+    echo -e "\033[1;34m12.\033[0m \033[1;36mAuto gre tunnel update (check local/remote)\033[0m"
     echo -e "\033[1;31m0.\033[0m \033[1;37mReturn to main menu\033[0m"
     echo -e "\033[1;32m================================================\033[0m"
 
@@ -427,8 +428,54 @@ manage_tunnels() {
             read -p "Press Enter to continue..."
         return
         ;;
-        
-      10)
+    10)
+    # Edit the service file with nano
+    local service_file
+    if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+    elif [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+    else
+        echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    # Extract the route IP from the ExecStart line in the service file
+    route_ip=$(grep -oP '(?<=route\sadd\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+    remote_ip=$(grep -oP '(?<=remote\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+
+    if [[ -z "$route_ip" ]] && [[ -z "$remote_ip" ]]; then
+        echo -e "\033[1;31mNo route or remote IP found in the service file.\033[0m"
+        read -p "Press Enter to continue..."
+        return  # Exit if no route or remote found
+    fi
+
+    # Print the extracted route and remote IPs
+    echo -e "\033[1;32mFound route IP: $route_ip\033[0m"
+    echo -e "\033[1;32mFound remote IP: $remote_ip\033[0m"
+
+    # Try to ping the route IP with 3-second timeout
+    echo -e "\033[1;32mPinging route IP: $route_ip...\033[0m"
+    if ping -c 4 -W 3 "$route_ip"; then
+        echo -e "\033[1;32mPing to route IP successful.\033[0m"
+    else
+        echo -e "\033[1;31mPing to route IP timed out or failed.\033[0m"
+    fi
+
+    # Try to ping the remote IP with 3-second timeout
+    echo -e "\033[1;32mPinging remote IP: $remote_ip...\033[0m"
+    if ping -c 4 -W 3 "$remote_ip"; then
+        echo -e "\033[1;32mPing to remote IP successful.\033[0m"
+    else
+        echo -e "\033[1;31mPing to remote IP timed out or failed.\033[0m"
+    fi
+
+    # Prompt to continue
+    read -p "Press Enter to continue..."
+    return
+    ;;
+      11)
       local service_file
       local new_local_ip
       local current_local_ip
@@ -489,7 +536,7 @@ manage_tunnels() {
       ;;
 
 
-    11)# Function to ask for service file, local domain, and remote domain
+    12)# Function to ask for service file, local domain, and remote domain
 local service_file
 local local_domain
 local remote_domain
