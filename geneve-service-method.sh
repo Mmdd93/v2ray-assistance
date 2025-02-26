@@ -292,6 +292,7 @@ manage_tunnels() {
     echo -e "\033[1;34m7.\033[0m \033[1;36mRemove tunnel\033[0m"
     echo -e "\033[1;34m8.\033[0m \033[1;36mEdit with nano\033[0m"
     echo -e "\033[1;34m9.\033[0m \033[1;36mChange remote IP\033[0m"
+    echo -e "\033[1;34m10.\033[0m \033[1;36mPing remote local IP\033[0m"
     echo -e "\033[1;31m0.\033[0m \033[1;37mReturn to main menu\033[0m"
     echo -e "\033[1;32m================================================\033[0m"
 
@@ -425,205 +426,41 @@ manage_tunnels() {
             read -p "Press Enter to continue..."
         return
         ;;
-        
-      10)
-      local service_file
-      local new_local_ip
-      local current_local_ip
-      
-      # Check if the service file exists in the first path
-      if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
-          service_file="/usr/lib/systemd/system/$selected_tunnel.service"
-      # Add an alternative path if needed (e.g., /etc/systemd/system/)
-      elif [[ -f "/etc/systemd/system/$selected_tunnel.service" ]]; then
-          service_file="/etc/systemd/system/$selected_tunnel.service"
-      else
-          echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
-          read -p "Press Enter to continue..."
-          return
-      fi
-      
-      # Extract the current local IP from the service file
-      current_local_ip=$(grep -oP 'local \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' "$service_file")
-      
-      if [[ -n "$current_local_ip" ]]; then
-          echo -e "${CYAN}Current saved local IP: ${RED}$current_local_ip${RESET}"
-      else
-          echo -e "${YELLOW}No local IP found in the service file.${RESET}"
-      fi
-      
-      # Get the current local IP
-        real_local_ip=$(get_local_ip)
-        
-        # Display the current local IP address
-        if [[ -n "$real_local_ip" ]]; then
-            echo -e "${CYAN}True local IP: ${GREEN}$real_local_ip${RESET}"
-        else
-            echo -e "${YELLOW}Unable to retrieve the local IP address.${RESET}"
-        fi
+        10)
+    # Edit the service file with nano
+    local service_file
+    if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+    elif [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+    else
+        echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
+        return
+    fi
+    # Extract the route from the service file (search for an IP or route)
+    route_ip=$(grep -oP '(?<=route\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
 
-      # Ask for the new local IP address
-      echo -e "${GREEN}Enter the new local IP address or press Enter to cancel:${RESET}"
-      read -p "> " new_local_ip
-      
-      # Check if the input is blank
-      if [[ -z "$new_local_ip" ]]; then
-          echo -e "${YELLOW}No changes made. Returning to the menu.${RESET}"
-          read -p "Press Enter to continue..."
-          return
-      fi
-      
-      # Use sed to replace the old local IP with the new one
-      sed -i "s/local [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*/local $new_local_ip/" "$service_file"
-      
-      # Reload systemd to apply the changes
-      sudo systemctl daemon-reload
-      
-      # Restart the service to apply the new local IP
-      sudo systemctl restart "$selected_tunnel"
-      
-      echo -e "${GREEN}Local IP has been updated to $new_local_ip in $selected_tunnel.service.${RESET}"
-      read -p "Press Enter to continue..."
-      ;;
+    if [[ -z "$route_ip" ]]; then
+        echo -e "\033[1;31mNo route found in the service file.\033[0m"
+        return
+    fi
 
+    # Print the extracted route IP
+    echo -e "\033[1;32mFound route IP: $route_ip\033[0m"
 
-    11)# Function to ask for service file, local domain, and remote domain
-local service_file
-local local_domain
-local remote_domain
-local current_local_domain
-local current_remote_domain
+    # Try to ping the extracted IP
+    echo -e "\033[1;32mPinging $route_ip...\033[0m"
+    if ping -c 4 "$route_ip" &>/dev/null; then
+        echo -e "\033[1;32mPing to $route_ip successful.\033[0m"
+    else
+        echo -e "\033[1;31mPing to $route_ip failed.\033[0m"
+    fi
 
-# Check if the service file exists in the first path
-if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
-    service_file="/usr/lib/systemd/system/$selected_tunnel.service"
-# Add an alternative path if needed (e.g., /etc/systemd/system/)
-elif [[ -f "/etc/systemd/system/$selected_tunnel.service" ]]; then
-    service_file="/etc/systemd/system/$selected_tunnel.service"
-else
-    echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
+    # Prompt to continue
     read -p "Press Enter to continue..."
     return
-fi
-
-# Validate service file path
-if [[ ! -f "$service_file" ]]; then
-    echo -e "${RED}Error: Service file does not exist at $service_file.${RESET}"
-    return 1
-fi
-
-# Read current local and remote domains from the dynamically named file
-config_dir="/root/geneve"
-config_file="$config_dir/$selected_tunnel.txt"
-
-# Check if the directory exists, and create it if it does not
-if [[ ! -d "$config_dir" ]]; then
-    echo -e "${CYAN}Creating directory $config_dir...${RESET}"
-    mkdir -p "$config_dir"
-fi
-
-# If the file exists, read current values, otherwise use default values
-if [[ -f "$config_file" ]]; then
-    current_local_domain=$(grep '^local' "$config_file" | awk '{print $2}')
-    current_remote_domain=$(grep '^remote' "$config_file" | awk '{print $2}')
-fi
-
-# Show current domains (if any) and ask the user to confirm or enter new values
-echo -e "${CYAN}Current local domain: ${GREEN}${current_local_domain:-Not set}${RESET}"
-echo -e "${CYAN}Current remote domain: ${GREEN}${current_remote_domain:-Not set}${RESET}"
-
-# Ask user for the local domain, defaulting to the current value
-echo -e "${CYAN}Please enter the local domain (default: ${GREEN}${current_local_domain:-None}${RESET}):${RESET}"
-read -r local_domain
-local_domain="${local_domain:-$current_local_domain}"  # Use default if empty
-
-# Ask user for the remote domain, defaulting to the current value
-echo -e "${CYAN}Please enter the remote domain (default: ${GREEN}${current_remote_domain:-None}${RESET}):${RESET}"
-read -r remote_domain
-remote_domain="${remote_domain:-$current_remote_domain}"  # Use default if empty
-
-# Validate domains using dig to resolve IPs
-local local_ip
-local remote_ip
-
-# Resolve IPs using dig
-local_ip=$(dig +short "$local_domain" | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}')
-remote_ip=$(dig +short "$remote_domain" | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}')
-
-
-# Check if IPs are resolved
-if [[ -z "$local_ip" || -z "$remote_ip" ]]; then
-    echo -e "${RED}Error: Could not resolve IPs for the domains. Please ensure they are valid domains.${RESET}"
-    return 1
-fi
-
-# Save the configuration to /root/geneve/$selected_tunnel.txt
-echo -e "${CYAN}Saving configuration to $config_file...${RESET}"
-echo "service_file $service_file" > "$config_file"
-echo "local $local_domain" >> "$config_file"
-echo "remote $remote_domain" >> "$config_file"
-
-echo -e "${GREEN}Configuration saved successfully!${RESET}"
-
-# Download the auto_geneve_update.sh script to /root
-echo -e "${CYAN}Downloading the auto_geneve_update.sh script...${RESET}"
-curl -sL https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/auto_geneve_update.sh -o /root/auto_geneve_update.sh
-
-# Make the downloaded script executable
-chmod +x /root/auto_geneve_update.sh
-
-echo -e "${GREEN}auto_geneve_update.sh downloaded and made executable!${RESET}"
-
-# Default interval for auto_geneve_update.sh in minutes
-default_update_interval_min=5
-
-# Prompt user for auto_geneve_update.sh run interval in minutes
-echo -e "\033[1;33mEnter the minutes to check the $selected_tunnel tunnel (default $default_update_interval_min minutes):\033[0m"
-read -p "Enter minutes: " update_minutes
-
-# Use default if no input is provided
-update_minutes=${update_minutes:-$default_update_interval_min}
-
-# Convert minutes to hours if needed
-if [[ "$update_minutes" -lt 60 ]]; then
-    cron_schedule="*/$update_minutes * * * *"
-else
-    # Convert minutes to hours for display and rounding for cron job
-    cron_schedule="0 */$((update_minutes / 60)) * * *"
-fi
-
-# Define the path to the script
-auto_geneve_update_script="/root/auto_geneve_update.sh"
-
-# Validate the existence of the script
-if [[ ! -f "$auto_geneve_update_script" ]]; then
-    echo -e "\033[1;31mError: The script $auto_geneve_update_script does not exist.\033[0m"
-    return 1
-fi
-
-# Overwrite the existing cron job for auto_geneve_update.sh
-(crontab -l 2>/dev/null | grep -v "$auto_geneve_update_script"; echo "$cron_schedule $auto_geneve_update_script") | crontab - || {
-    echo -e "\033[1;31mFailed to set cron job for auto_geneve_update.sh.\033[0m"
-    return 1
-}
-
-# Reload cron service
-if ! sudo service cron reload; then
-    echo -e "\033[1;31mFailed to reload cron service.\033[0m"
-    return 1
-fi
-
-sleep 1
-echo -e "\033[1;32mauto_geneve_update.sh will now run every $update_minutes minute(s).\033[0m"
-
-read -p "Press Enter to continue..."
-
-
     ;;
 
-
-    
-    
         *)
             echo -e "${RED}Invalid option...${RESET}"
             read -p "Press Enter to continue..."
