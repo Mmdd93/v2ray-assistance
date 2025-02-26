@@ -146,10 +146,19 @@ read -p " > " vni_input
 
 # Use the provided VNI or default if none is entered
 vni_input=${vni_input:-$default_vni}
+
+# Validate that the VNI is a valid number (positive integer) and between 1 and 16777215
+if [[ ! "$vni_input" =~ ^[0-9]+$ ]] || [ "$vni_input" -lt 1 ] || [ "$vni_input" -gt 16777215 ]; then
+    echo -e "\033[1;31mInvalid VNI input. VNI must be a valid number between 1 and 16777215.\033[0m"
+    exit 1
+fi
+
+# Set local_ip to the valid VNI input
 local_ip=$vni_input
-echo -e "\033[1;36mUsing VNI as local IP: $local_ip\033[0m"
+echo -e "\033[1;36mUsing VNI: $local_ip\033[0m"
 
 # Now, you can use $local_ip (which is the VNI) for your tunnel setup
+
 
 
 
