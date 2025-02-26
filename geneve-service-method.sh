@@ -435,25 +435,38 @@ manage_tunnels() {
         service_file="/usr/lib/systemd/system/$selected_tunnel.service"
     else
         echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
-        return
-    fi
-    # Extract the route from the service file (search for an IP or route)
-    route_ip=$(grep -oP '(?<=route\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
-
-    if [[ -z "$route_ip" ]]; then
-        echo -e "\033[1;31mNo route found in the service file.\033[0m"
+        read -p "Press Enter to continue..."
         return
     fi
 
-    # Print the extracted route IP
+    # Extract the route IP from the ExecStart line in the service file
+    route_ip=$(grep -oP '(?<=route\sadd\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+    remote_ip=$(grep -oP '(?<=remote\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+
+    if [[ -z "$route_ip" ]] && [[ -z "$remote_ip" ]]; then
+        echo -e "\033[1;31mNo route or remote IP found in the service file.\033[0m"
+        read -p "Press Enter to continue..."
+        return  # Exit if no route or remote found
+    fi
+
+    # Print the extracted route and remote IPs
     echo -e "\033[1;32mFound route IP: $route_ip\033[0m"
+    echo -e "\033[1;32mFound remote IP: $remote_ip\033[0m"
 
-    # Try to ping the extracted IP
-    echo -e "\033[1;32mPinging $route_ip...\033[0m"
-    if ping -c 4 "$route_ip" &>/dev/null; then
-        echo -e "\033[1;32mPing to $route_ip successful.\033[0m"
+    # Try to ping the route IP with 3-second timeout
+    echo -e "\033[1;32mPinging route IP: $route_ip...\033[0m"
+    if ping -c 4 -W 3 "$route_ip"; then
+        echo -e "\033[1;32mPing to route IP successful.\033[0m"
     else
-        echo -e "\033[1;31mPing to $route_ip failed.\033[0m"
+        echo -e "\033[1;31mPing to route IP timed out or failed.\033[0m"
+    fi
+
+    # Try to ping the remote IP with 3-second timeout
+    echo -e "\033[1;32mPinging remote IP: $remote_ip...\033[0m"
+    if ping -c 4 -W 3 "$remote_ip"; then
+        echo -e "\033[1;32mPing to remote IP successful.\033[0m"
+    else
+        echo -e "\033[1;31mPing to remote IP timed out or failed.\033[0m"
     fi
 
     # Prompt to continue
