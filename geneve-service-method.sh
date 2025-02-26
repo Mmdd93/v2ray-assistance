@@ -148,6 +148,7 @@ echo -e "\033[1;33m!For next tunnel: Use different VNI to separate this tunnel f
 
 # Prompt user for VNI input
 echo -e "\n\033[1;32mEnter the VNI for the tunnel \033[1;33m(Default: $default_vni)\033[0m:"
+echo -e "\n\033[1;32mEnter blank for useing\033[1;33m $default_vni\033[0m:"
 read -p " > " vni_input
 
 # Use the provided VNI or default if none is entered
