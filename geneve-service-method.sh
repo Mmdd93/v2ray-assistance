@@ -143,8 +143,8 @@ source /root/ipv4.txt
 default_vni=100
 
 # Display the messages
-echo -e "\033[1;33mFor this tunnel: Use equal VNI to communicate servers with each other\033[0m:"
-echo -e "\033[1;33mFor next tunnel: Use different VNI to separate this tunnel from other tunnels \033[0m:"
+echo -e "\033[1;33m!For this tunnel: Use equal VNI to communicate servers with each other!\033[0m"
+echo -e "\033[1;33m!For next tunnel: Use different VNI to separate this tunnel from other tunnels!\033[0m"
 
 # Prompt user for VNI input
 echo -e "\n\033[1;32mEnter the VNI for the tunnel \033[1;33m(Default: $default_vni)\033[0m:"
