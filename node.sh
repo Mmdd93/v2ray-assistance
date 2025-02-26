@@ -1540,26 +1540,31 @@ handle_port_80() {
 ssl() {
 while true; do
     echo -e "\033[1;32mSSL Installation Options\033[0m"
-    echo -e "1. Use \033[1;34macme single domain\033[0m "
-    echo -e "2. Use \033[1;34mCertbot multi domain\033[0m "
-    echo -e "3. Use \033[1;34mCertbot wildcard single domain\033[0m "
+    echo -e "1. Use \033[1;34Easy mode (recommend)\033[0m "
+    echo -e "2. Use \033[1;34macme New single domain (sub.domain.com)\033[0m "
+    echo -e "3. Use \033[1;34mCertbot New Multi-Domain ssl (sub.domain1.com, sub2.domain2.com ...)
+\033[0m "
+    echo -e "4. Use \033[1;34mCertbot New wildcard ssl (*.domain.com)\033[0m "
+    
     echo -e "0. Return"
     echo -e "\033[1;32mEnter your choice:\033[0m"
     
     read -r ssl_choice
 
     case "$ssl_choice" in
-        1)
+        2)
             echo -e "\033[1;32mYou selected acme.\033[0m"
             handle_port_80
             ssl1
             ;;
-        2)
+        3)
             echo -e "\033[1;32mYou selected certbot method.\033[0m"
             get_ssl_with_certbot
             ;;
             
-        3) get_wildcard_ssl_with_certbot ;;
+        4) get_wildcard_ssl_with_certbot ;;
+	1) curl -Ls https://github.com/azavaxhuman/ESSL/raw/main/essl.sh -o essl.sh.sh
+            sudo bash essl.sh  ;;
         0)
             echo -e "\033[1;32mReturning to the previous menu.\033[0m"
             return
