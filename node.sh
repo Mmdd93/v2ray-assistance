@@ -4998,7 +4998,7 @@ main_menu() {
         4) display_system_info ;;
         5) install_docker
            check_docker_compose ;;
-        6) install_docker_iran ;;
+        6) setup_docker ;;
         7) isp_blocker ;;
         8) Optimizer ;;
         9) run_system_benchmark ;;
