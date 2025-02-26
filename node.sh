@@ -4984,6 +4984,7 @@ main_menu() {
     echo -e "\033[1;32m45.\033[0m GENEVE tunnel (IPV4 local)"
     echo -e "\033[1;32m46.\033[0m VXLAN tunnel (IPV4 local)"
     echo -e "\033[1;32m44.\033[0m GOST tunnel"
+    echo -e "\033[1;32m47.\033[0m WS tunnel (CDN support)"
 
     echo -e "\n\033[1;31mXray panel:\033[0m"
     echo -e "\033[1;32m38.\033[0m XUI panel"
@@ -5076,6 +5077,9 @@ main_menu() {
 	46) echo "Running geneve..."
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/vxlan-service-method.sh -o vxlan-service-method.sh
             sudo bash vxlan-service-method.sh ;;
+	47) echo "Running wstunnel.sh..."
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/wstunnel.sh -o wstunnel.sh
+            sudo bash wstunnel.sh ;;
         0) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
