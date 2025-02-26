@@ -3180,8 +3180,8 @@ panels_restart_cron() {
 setup_docker() {
     while true; do
         echo -e "\033[1;34mSelect an option:\033[0m"
-        echo "1. Set DNS"
-        echo "2. Setup Docker"
+        echo "1. Set DNS to Electro or Shecan etc..."
+        echo "2. Auto-install Docker step-by-step"
         echo "0. Main menu"
 
         read -p "Enter your choice: " choice
