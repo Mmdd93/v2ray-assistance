@@ -4983,8 +4983,8 @@ main_menu() {
     echo -e "\033[1;32m28.\033[0m GRE tunnel (IPV4 local)"
     echo -e "\033[1;32m45.\033[0m GENEVE tunnel (IPV4 local)"
     echo -e "\033[1;32m46.\033[0m VXLAN tunnel (IPV4 local)"
-    echo -e "\033[1;32m44.\033[0m GOST tunnel"
-    echo -e "\033[1;32m47.\033[0m WS tunnel (CDN support)"
+    echo -e "\033[1;32m44.\033[0m GOST tunnel (SSH,h2,gRPC,WSS,WS,QUIC,KCP)"
+    echo -e "\033[1;32m47.\033[0m WSS,WS tunnel (CDN support)"
 
     echo -e "\n\033[1;31mXray panel:\033[0m"
     echo -e "\033[1;32m38.\033[0m XUI panel"
