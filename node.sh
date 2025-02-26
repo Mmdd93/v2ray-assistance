@@ -4982,6 +4982,7 @@ main_menu() {
     echo -e "\033[1;32m27.\033[0m Backhaul reverse tunnel"
     echo -e "\033[1;32m28.\033[0m GRE tunnel (IPV4 local)"
     echo -e "\033[1;32m45.\033[0m GENEVE tunnel (IPV4 local)"
+    echo -e "\033[1;32m46.\033[0m VXLAN tunnel (IPV4 local)"
     echo -e "\033[1;32m44.\033[0m GOST tunnel"
 
     echo -e "\n\033[1;31mXray panel:\033[0m"
@@ -5072,6 +5073,9 @@ main_menu() {
 	45) echo "Running geneve..."
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/geneve-service-method.sh -o geneve-service-method.sh
             sudo bash geneve-service-method.sh ;;
+	46) echo "Running geneve..."
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/vxlan-service-method.sh -o vxlan-service-method.sh
+            sudo bash vxlan-service-method.sh ;;
         0) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
