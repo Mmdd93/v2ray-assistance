@@ -4905,7 +4905,7 @@ initial_menu() {
 run_backhaul_script() {
     while true; do
         echo -e "\033[1;36m====Backhaul tunnel Menu====\033[0m"
-	echo -e "\033[1;36mTips:! use Backhaul Premium in kharej and Backhaul free in Iran !\033[0m"
+	echo -e "\033[1;32mTips:! use Backhaul Premium in kharej and Backhaul free in Iran !\033[0m"
         echo -e "\033[1;33m1. Backhaul Free\033[0m"
         echo -e "\033[1;33m2. Backhaul Premium (just free use in kharej server)\033[0m"
         echo -e "\033[1;31m3. Exit\033[0m"
