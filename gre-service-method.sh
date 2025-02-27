@@ -286,10 +286,10 @@ manage_tunnels() {
     fi
 
     # Extract the route IP from the ExecStart line in the service file
-    route_ip1=$(grep -oP '(?<=route\sadd\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
-    remote_ip1=$(grep -oP '(?<=remote\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
-    local_public_ip1=$(grep -oP '(?<=local\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
-    local_ip1=$(grep -oP '(?<=ip addr add\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+    route_ip1=$(grep -oP '(?<=route\sadd\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
+    remote_ip1=$(grep -oP '(?<=remote\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
+    local_public_ip1=$(grep -oP '(?<=local\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
+    local_ip1=$(grep -oP '(?<=ip addr add\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
 
     # Prompt for the next action on the selected tunnel
     echo -e "\033[1;32m================================================\033[0m"
