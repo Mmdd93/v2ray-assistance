@@ -1769,10 +1769,7 @@ check_core_version() {
     # Get the version from the backhaul binary using the -v flag
     local backhaul_version=$($config_dir/backhaul -v)
 
-    # Compare the file version with the version from backhaul
-    if [ "$file_version" != "$backhaul_version" ]; then
-        colorize cyan "New Core version available: $backhaul_version => $file_version" bold
-    fi
+    
 
     # Clean up the temporary file
     rm "$tmp_file"
