@@ -4999,7 +4999,7 @@ main_menu() {
     echo -e "\033[1;32m47.\033[0m WSS,WS tunnel (CDN support)"
 
     echo -e "\n\033[1;31mXray panel:\033[0m"
-    echo -e "\033[1;32m38.\033[0m XUI panel"
+    echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
     echo -e "\033[1;32m39.\033[0m Marzban panel"
     echo -e "\033[1;32m40.\033[0m Marzban node"
     echo -e "\033[1;32m41.\033[0m Backup + transfer"
