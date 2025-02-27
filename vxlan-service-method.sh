@@ -342,11 +342,32 @@ manage_tunnels() {
     selected_tunnel="${tunnels[choice - 1]}"
 
     echo -e "${GREEN}You selected tunnel: $selected_tunnel${RESET}"
+     local service_file
+    if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+    elif [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+    else
+        echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    # Extract the route IP from the ExecStart line in the service file
+    route_ip1=$(grep -oP '(?<=route\sadd\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
+    remote_ip1=$(grep -oP '(?<=remote\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
+    local_public_ip1=$(grep -oP '(?<=local\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
+    local_ip1=$(grep -oP '(?<=ip addr add\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
     
-    # Prompt for the next action on the selected tunnel
     # Prompt for the next action on the selected tunnel
     echo -e "\033[1;32m================================================\033[0m"
     echo -e "\033[1;33mSelect an action to perform on tunnel $selected_tunnel:\033[0m"
+    echo -e "\033[1;34m======================local=====================\033[0m"
+    echo -e "\033[1;32mPublic IP: $local_public_ip1\033[0m"
+    echo -e "\033[1;32mLocal IP: $local_ip1\033[0m"
+    echo -e "\033[1;34m======================remote====================\033[0m"
+    echo -e "\033[1;32mPublic IP: $remote_ip1\033[0m"
+    echo -e "\033[1;32mLocal IP: $route_ip1\033[0m"
     echo -e "\033[1;32m================================================\033[0m"
     echo -e "\033[1;34m1.\033[0m \033[1;36mStart tunnel\033[0m"
     echo -e "\033[1;34m2.\033[0m \033[1;36mStop tunnel\033[0m"
