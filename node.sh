@@ -1320,7 +1320,8 @@ bypass() {
     read -p "Press Enter to continue..."
     
     # Call manage_nginx function
-    manage_nginx
+    curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/nginx.sh -o nginx.sh
+            sudo bash nginx.sh 
 }
 
 install_marzban() {
