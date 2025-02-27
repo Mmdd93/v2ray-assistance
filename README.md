@@ -37,8 +37,10 @@
 - ارسال فایل به ریموت سرور و فروارد ان به تلگرام (مناسب سرور ایران)
 - چک کردن لیست IP (مناسب سرور ایران برای تشخیص فیلتر شدن IP)
 - راه اندازی HAPROXY BASIC
-# Download and set permissions
+# How to use
+# دانلود و اجرای اسکریپت
 ```bash
 curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/node.sh -o /usr/bin/v2 && sudo chmod +x /usr/bin/v2 && v2
 ```
 **Just type v2 to run the script next time**
+**برای اجرای اسکریپت در سری های بعدی کافیه کله v2 رو تایپ کنید**
