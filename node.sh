@@ -1209,7 +1209,6 @@ fi
 }
 
 
-#xui panel
 xui() {
     echo -e "\033[1;36m============================================\033[0m"
     echo -e "\033[1;33m         Select panel\033[0m"
@@ -1218,31 +1217,74 @@ xui() {
     echo -e "\033[1;32m1.\033[0m Alireza x-ui"
     echo -e "\033[1;32m2.\033[0m Sanaei 3x-ui"
     echo -e "\033[1;32m3.\033[0m AghayeCoder tx-ui"
-    echo -e "\033[1;32m4.\033[0m X-UI comand"
-    echo -e "\033[1;32m0.\033[0m return to the main menu"
+    echo -e "\033[1;32m4.\033[0m X-UI command"
+    echo -e "\033[1;32m0.\033[0m Return to the main menu"
     
     read -p "Select an option: " option
 
     case "$option" in
-        1)
-            script="bash <(curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/master/install.sh)"
-            ;;
-        2)
-            script="bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)"
-            ;;
-	3)
-            script="bash <(curl -Ls https://raw.githubusercontent.com/AghayeCoder/tx-ui/master/install.sh)"
-            ;;
-        4) x-ui ;;
-        0) return ;;  
+        1) repo="alireza0/x-ui" ;;
+        2) repo="mhsanaei/3x-ui" ;;
+        3) repo="AghayeCoder/tx-ui" ;;
+        4) x-ui; return ;;
+        0) return ;;
         *)
-            echo -e "\033[1;31mInvalid option. Please choose 1 or 2.\033[0m"
+            echo -e "\033[1;31mInvalid option. Please choose 1-4.\033[0m"
             return
             ;;
     esac
 
+    echo -e "\033[1;33mSelect installation type:\033[0m"
+    echo -e "\033[1;32m1.\033[0m Latest version"
+    echo -e "\033[1;32m2.\033[0m Select a specific version"
+    
+    read -p "Select an option: " install_option
+
+    if [[ "$install_option" == "2" ]]; then
+        echo -e "\033[1;33mFetching the list of available versions...\033[0m"
+
+        # Fetch latest 15 versions from GitHub API
+        versions_file=$(mktemp)
+        curl -s "https://api.github.com/repos/$repo/releases?per_page=30" | grep -oP '"tag_name": "\K(.*?)(?=")' > "$versions_file"
+
+        if [ ! -s "$versions_file" ]; then
+            echo -e "\033[1;31mFailed to fetch available versions.\033[0m"
+            return 1
+        fi
+
+        # Display the list of versions
+        echo -e "\n\033[1;36mAvailable Versions:\033[0m"
+        echo -e "\033[1;34m========================\033[0m"
+
+        cat -n "$versions_file" | while read -r line_number line_content; do
+            if (( line_number % 2 == 0 )); then
+                echo -e "\033[1;32m$line_number: $line_content\033[0m"
+            else
+                echo -e "$line_number: $line_content"
+            fi
+        done
+
+        echo -e "\033[1;34m========================\033[0m\n"
+
+        local version_choice
+        version_choice=$(prompt_input "Enter the number of the version you want to install" "")
+
+        local selected_version
+        selected_version=$(sed -n "${version_choice}p" "$versions_file")
+
+        if [ -z "$selected_version" ]; then
+            echo -e "\033[1;31mInvalid selection.\033[0m"
+            return 1
+        fi
+
+        script="VERSION=$selected_version && bash <(curl -Ls \"https://raw.githubusercontent.com/$repo/\$VERSION/install.sh\") \$VERSION"
+    else
+        script="bash <(curl -Ls https://raw.githubusercontent.com/$repo/master/install.sh)"
+    fi
+
     echo -e "\033[1;32mRunning command: $script...\033[0m"
     eval "$script"
+    
     if [[ $? -eq 0 ]]; then
         echo -e "\033[1;32mCommand completed successfully.\033[0m"
     else
