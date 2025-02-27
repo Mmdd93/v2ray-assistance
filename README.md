@@ -1,4 +1,4 @@
-## ALL IN ONE Script
+## v2ray-assistant | Telegram: @tlgrmv2 
 
 - مشاهده مشخصات سیستم
 - آپدیت و آپگرید سیستم و نصب پکیج های ضروری
