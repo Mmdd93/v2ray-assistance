@@ -460,30 +460,31 @@ manage_tunnels() {
     fi
 
     # Extract the route IP from the ExecStart line in the service file
-    route_ip=$(grep -oP '(?<=route\sadd\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
-    remote_ip=$(grep -oP '(?<=remote\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+    route_ip1=$(grep -oP '(?<=route\sadd\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
+    remote_ip1=$(grep -oP '(?<=remote\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
+    
 
-    if [[ -z "$route_ip" ]] && [[ -z "$remote_ip" ]]; then
+    if [[ -z "$route_ip1" ]] && [[ -z "$remote_ip1" ]]; then
         echo -e "\033[1;31mNo route or remote IP found in the service file.\033[0m"
         read -p "Press Enter to continue..."
         return  # Exit if no route or remote found
     fi
 
     # Print the extracted route and remote IPs
-    echo -e "\033[1;32mroute IP: $route_ip\033[0m"
-    echo -e "\033[1;32mremote IP: $remote_ip\033[0m"
+    echo -e "\033[1;32mroute IP: $route_ip1\033[0m"
+    echo -e "\033[1;32mremote IP: $remote_ip1\033[0m"
 
     # Try to ping the route IP with 3-second timeout
-    echo -e "\033[1;32mPinging route IP: $route_ip...\033[0m"
-    if ping -c 4 -W 3 "$route_ip"; then
+    echo -e "\033[1;32mPinging route IP: $route_ip1...\033[0m"
+    if ping -c 4 -W 3 "$route_ip1"; then
         echo -e "\033[1;32mPing to route IP successful.\033[0m"
     else
         echo -e "\033[1;31mPing to route IP timed out or failed.\033[0m"
     fi
 
     # Try to ping the remote IP with 3-second timeout
-    echo -e "\033[1;32mPinging remote IP: $remote_ip...\033[0m"
-    if ping -c 4 -W 3 "$remote_ip"; then
+    echo -e "\033[1;32mPinging remote IP: $remote_ip1...\033[0m"
+    if ping -c 4 -W 3 "$remote_ip1"; then
         echo -e "\033[1;32mPing to remote IP successful.\033[0m"
     else
         echo -e "\033[1;31mPing to remote IP timed out or failed.\033[0m"
