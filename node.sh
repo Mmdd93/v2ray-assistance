@@ -4906,7 +4906,7 @@ run_backhaul_script() {
     while true; do
         echo -e "\033[1;36m====Backhaul tunnel Menu====\033[0m"
         echo -e "\033[1;33m1. Backhaul Free\033[0m"
-        echo -e "\033[1;33m2. Backhaul Premium\033[0m"
+        echo -e "\033[1;33m2. Backhaul Premium (just free use in kharej server)\033[0m"
         echo -e "\033[1;31m3. Exit\033[0m"
         echo -e "\033[1;36m--------------------------\033[0m"
         read -p "Enter your choice: " choice
