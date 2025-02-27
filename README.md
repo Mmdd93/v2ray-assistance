@@ -6,9 +6,9 @@
 - تغییر سورس لیست آپدیت به ایران
 - نصب داکر بر روی سرور ایران
 - تانل 6TO4 SIT لوکال
-- تانل GRE IPV4-IPV6 LOCAL
-- تانل GENEVE IPV4 LOCAL
-- تانل VXLAN IPV4 LOCAL
+- تانل GRE IPV4-IPV6 لوکال
+- تانل GENEVE IPV4 لوکال
+- تانل VXLAN IPV4 لوکال
 - تانل Backhaul
 - تانل GOST
 - مدیریت کردن ISP های ایران (بلاک کردن یا اجازه دان)
