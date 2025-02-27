@@ -1273,6 +1273,8 @@ marzban_commands() {
         echo -e "\033[1;32m14.\033[0m Edit docker-compose.yml"
         echo -e "\033[1;32m15.\033[0m Change database to MySql"
 	echo -e "\033[1;32m16.\033[0m bypass ssl"
+ 	echo -e "\033[1;32m17.\033[0m Manual backup launchl"
+  	echo -e "\033[1;32m18.\033[0m Marzban Backupservice to backup to TG, and a new job in crontab"
         echo -e "\033[1;32m0.\033[0m Return to the main menu"
 
         echo -e "\033[1;36m============================================\033[0m"
@@ -1295,7 +1297,10 @@ marzban_commands() {
             13) sudo nano /opt/marzban/.env || echo -e "\033[1;31mcheck [marzban status]\033[0m" ;;
             14) sudo nano /opt/marzban/docker-compose.yml || echo -e "\033[1;31mcheck [marzban status]\033[0m" ;;
             15) mysql || echo -e "\033[1;31mcheck [marzban status]\033[0m" ;;
-	    16) bypass ;;
+	    16) bypass ;;   
+		17) sudo marzban backup ;;
+		18) sudo marzban backup-service ;;
+
             0) return ;;  
             *)
                 echo -e "\033[1;31mInvalid choice. Please enter a number between 0 and 15.\033[0m" ;;
