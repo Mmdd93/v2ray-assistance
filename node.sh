@@ -4985,7 +4985,7 @@ main_menu() {
     echo -e "\033[1;32m37.\033[0m File management (Copy/Remove/Move/Rename etc.)"
     
     echo -e "\n\033[1;31mTunnel:\033[0m"
-     echo -e "\n\033[1;31mCombine local tunnels (IPv4-IPv6) with Backhaul, GOST, WSS, etc., for enhanced stealth and obfuscation.\033[0m"
+    echo -e "\e[1;31mCombine local tunnels (IPv4-IPv6) with Backhaul, GOST, WSS, etc., for enhanced stealth and obfuscation.\e[0m"
     echo -e "\033[1;32m26.\033[0m SIT tunnel 6to4 (IPV6 local)"
     echo -e "\033[1;32m28.\033[0m GRE tunnel (IPV4/IPV6 local)"
     echo -e "\033[1;32m45.\033[0m GENEVE tunnel (IPV4 local)"
