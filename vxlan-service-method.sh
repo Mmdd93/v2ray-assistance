@@ -39,17 +39,13 @@ generate_random_ipv4() {
         echo -e "\n\033[1;32mYou selected template number: [$template_number]\033[0m"
     fi
     
-    echo -e "\n\033[1;31m!! Now! Use template number [$template_number] on the remote server!!\033[0m"
-     
-    
-    # If the user doesn't provide any input, default to template number 1
-    template_number=${template_number:-1}
-    
     # Validate the user's selection
     if [[ ! "$template_number" =~ ^[1-9]$|^[1-9][0-9]$|^100$ ]]; then
         echo -e "\n\033[1;31mInvalid input. Please select a number between 1 and 100.\033[0m"
         return
     fi
+    
+    echo -e "\n\033[1;31m!! Now! Use template number [$template_number] on the remote server!!\033[0m"
 
     read -p "Press Enter to continue..."
 
@@ -84,7 +80,7 @@ generate_random_ipv4() {
     ipv4_address=${user_ipv4_address:-$ipv4_address}
 
     # Display the final IPv4 address
-    echo -e "\033[1;31m!! Save and copy $ipv4_address (use it for routing in remote server)!!\033[0m"
+    echo -e "\033[1;31m!! Save and copy > $ipv4_address < (use it for routing in remote server)!!\033[0m"
     echo -e "\n\033[1;32mLocal IPv4 address:\033[0m $ipv4_address"
 
     # Save the generated or custom IPv4 address to a text file
