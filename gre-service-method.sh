@@ -39,17 +39,13 @@ generate_random_ipv4() {
         echo -e "\n\033[1;32mYou selected template number: [$template_number]\033[0m"
     fi
     
-    echo -e "\n\033[1;31m!! Now! Use template number [$template_number] on the remote server!!\033[0m"
-     
-    
-    # If the user doesn't provide any input, default to template number 1
-    template_number=${template_number:-1}
-    
     # Validate the user's selection
     if [[ ! "$template_number" =~ ^[1-9]$|^[1-9][0-9]$|^100$ ]]; then
         echo -e "\n\033[1;31mInvalid input. Please select a number between 1 and 100.\033[0m"
         return
     fi
+    
+    echo -e "\n\033[1;31m!! Now! Use template number [$template_number] on the remote server!!\033[0m"
 
     read -p "Press Enter to continue..."
 
@@ -84,7 +80,7 @@ generate_random_ipv4() {
     ipv4_address=${user_ipv4_address:-$ipv4_address}
 
     # Display the final IPv4 address
-    echo -e "\033[1;31m!! Save and copy $ipv4_address (use it for routing in remote server)!!\033[0m"
+    echo -e "\033[1;31m!! Save and copy > $ipv4_address < (use it for routing in remote server)!!\033[0m"
     echo -e "\n\033[1;32mLocal IPv4 address:\033[0m $ipv4_address"
 
     # Save the generated or custom IPv4 address to a text file
@@ -147,7 +143,7 @@ if [[ -z "$local_ip" ]]; then
 fi
 
 # Ask for the local IP or domain for the tunnel
-echo -e "\n\033[1;32mEnter the local IP or domain for the tunnel \033[1;33m(Default: $local_ip)\033[0m:"
+echo -e "\n\033[1;32mEnter the local IP or domain for current server or enter blank to use \033[1;33m(Default: $local_ip)\033[0m:"
 read -p " > " user_input
 
 # Use the provided input or default if none is entered
@@ -186,7 +182,7 @@ fi
     echo -e "${CYAN}Using route: $route_network via $service_name${RESET}"
     
     # Ask for the remote IP or domain for the tunnel
-    echo -e "\n${greEN}Enter the remote IP or domain for the tunnel:${RESET}"
+    echo -e "\n${greEN}Enter the remote IP or domain:${RESET}"
     read -p " > " remote_input
     
     # Validate if the input is a valid IP address format
@@ -278,10 +274,32 @@ manage_tunnels() {
 
     echo -e "${greEN}You selected tunnel: $selected_tunnel${RESET}"
     
-    # Prompt for the next action on the selected tunnel
+    local service_file
+    if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+    elif [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+    else
+        echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    # Extract the route IP from the ExecStart line in the service file
+    route_ip1=$(grep -oP '(?<=route\sadd\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+    remote_ip1=$(grep -oP '(?<=remote\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+    local_public_ip1=$(grep -oP '(?<=local\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+    local_ip1=$(grep -oP '(?<=ip addr add\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+
     # Prompt for the next action on the selected tunnel
     echo -e "\033[1;32m================================================\033[0m"
     echo -e "\033[1;33mSelect an action to perform on tunnel $selected_tunnel:\033[0m"
+    echo -e "\033[1;34m======================local=====================\033[0m"
+    echo -e "\033[1;32mPublic IP: $local_public_ip1\033[0m"
+    echo -e "\033[1;32mLocal IP: $local_ip1\033[0m"
+    echo -e "\033[1;34m======================remote====================\033[0m"
+    echo -e "\033[1;32mPublic IP: $remote_ip1\033[0m"
+    echo -e "\033[1;32mLocal IP: $route_ip1\033[0m"
     echo -e "\033[1;32m================================================\033[0m"
     echo -e "\033[1;34m1.\033[0m \033[1;36mStart tunnel\033[0m"
     echo -e "\033[1;34m2.\033[0m \033[1;36mStop tunnel\033[0m"
@@ -452,8 +470,8 @@ manage_tunnels() {
     fi
 
     # Print the extracted route and remote IPs
-    echo -e "\033[1;32mFound route IP: $route_ip\033[0m"
-    echo -e "\033[1;32mFound remote IP: $remote_ip\033[0m"
+    echo -e "\033[1;32mroute IP: $route_ip\033[0m"
+    echo -e "\033[1;32mremote IP: $remote_ip\033[0m"
 
     # Try to ping the route IP with 3-second timeout
     echo -e "\033[1;32mPinging route IP: $route_ip...\033[0m"
