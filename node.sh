@@ -1217,10 +1217,11 @@ xui() {
 
     echo -e "\033[1;32m1.\033[0m Alireza x-ui"
     echo -e "\033[1;32m2.\033[0m Sanaei 3x-ui"
-    echo -e "\033[1;32m3.\033[0m X-UI comand"
+    echo -e "\033[1;32m3.\033[0m AghayeCoder tx-ui"
+    echo -e "\033[1;32m4.\033[0m X-UI comand"
     echo -e "\033[1;32m0.\033[0m return to the main menu"
     
-    read -p "Select an option (1-2): " option
+    read -p "Select an option: " option
 
     case "$option" in
         1)
@@ -1229,7 +1230,10 @@ xui() {
         2)
             script="bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)"
             ;;
-        3) x-ui ;;
+	3)
+            script="bash <(curl -Ls https://raw.githubusercontent.com/AghayeCoder/tx-ui/master/install.sh)"
+            ;;
+        4) x-ui ;;
         0) return ;;  
         *)
             echo -e "\033[1;31mInvalid option. Please choose 1 or 2.\033[0m"
