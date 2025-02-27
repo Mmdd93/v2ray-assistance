@@ -261,17 +261,29 @@ echo -e "${CYAN}🔹 Available network interfaces:${NC}"
         fi
     done
 
-    # User selection
-    while true; do
-        read -p "$(echo -e "${BLUE}➡ Select an interface (1-${#interfaces[@]}): ${NC}")" choice
-        if [[ $choice =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= ${#interfaces[@]} )); then
-            eth="${interfaces[$((choice-1))]}"
-            echo -e "${GREEN}Selected interface: $eth${NC}"
-            break
-        else
-            echo -e "${RED}Invalid selection. Please enter a number between 1 and ${#interfaces[@]}.${NC}"
-        fi
-    done
+    # User selection with default to interface 1 (main interface)
+while true; do
+    echo -e "Select an interface (1-${#interfaces[@]}) or press Enter to use the default interface (1):"
+    read -p "> " choice
+
+    # If the user presses Enter (empty input), default to the main interface (interface 1)
+    if [[ -z "$choice" ]]; then
+        choice=1
+        echo -e "${GREEN}Using default interface: ${interfaces[0]}${NC}"
+        eth="${interfaces[$((choice-1))]}"
+        break
+    fi
+
+    # Validate if the choice is a valid number within the interface array
+    if [[ $choice =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= ${#interfaces[@]} )); then
+        eth="${interfaces[$((choice-1))]}"
+        echo -e "${GREEN}Selected interface: $eth${NC}"
+        break
+    else
+        echo -e "${RED}Invalid selection. Please enter a number between 1 and ${#interfaces[@]}.${NC}"
+    fi
+done
+
 
     # Generate the systemd service file
 echo -e "\n${GREEN}Creating systemd service file for $service_name...${RESET}"
