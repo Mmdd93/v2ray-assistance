@@ -233,7 +233,7 @@ fi
     fi
     
 
-echo -e "${CYAN}🔹 Available network interfaces:${NC}"
+echo -e "\n${RED}Available network interfaces:${NC}"
     
     # Get all interfaces except loopback (lo)
     interfaces=($(ip -o link show | awk -F': ' '{print $2}' | grep -v "lo"))
