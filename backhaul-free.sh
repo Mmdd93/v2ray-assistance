@@ -209,7 +209,7 @@ display_server_info() {
 
 # Function to display Backhaul Core installation status
 display_backhaul_core_status() {
-    if [[ -f "${config_dir}/backhaul_premium" ]]; then
+    if [[ -f "${config_dir}/backhaul" ]]; then
         echo -e "${CYAN}Backhaul Core:${NC} ${GREEN}Installed${NC}"
     else
         echo -e "${CYAN}Backhaul Core:${NC} ${RED}Not installed${NC}"
