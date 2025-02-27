@@ -33,5 +33,8 @@
 ## How to Use
 
 ```bash
-curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/node.sh -o node.sh
-sudo bash node.sh
+curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/node.sh -o /usr/bin/v2 && sudo chmod +x /usr/bin/v2 && v2
+
+## Run next time, but just with
+```bash
+v2
