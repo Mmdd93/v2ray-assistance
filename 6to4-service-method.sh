@@ -12,42 +12,37 @@ RESET='\033[0m'
         echo -e "\033[1;33mExisting /root/ipv6.txt file removed.\033[0m"
     fi
 
-# Function to generate a random name for the service between 1 and 100
 # Function to generate a random name
  generate_random_name() {
     tr -dc 'a-z0-9' </dev/urandom | fold -w 5 | head -n 1
 }
 
+
+
 generate_random_ipv6() {
-     # Define 100 IPv6 address templates (hidden from display)
+    # Define 100 IPv6 address templates (hidden from display)
     local templates=()
     for i in {1..100}; do
         templates+=("2001:db8:$i::%x/64")
     done
+
     # Prompt the user to select a template
-    echo -e "\n\033[1;34mSelect an IPv6 template number between (1-100) or Press Enter for a random template:\033[0m"
+    echo -e "\n\033[1;34mSelect an IPv6 template number (1-100) or Press Enter for a random template:\033[0m"
     local template_number
     read -p " > " template_number
-    
-    # If the user input is empty, generate a random number between 1 and 100
+
     if [[ -z "$template_number" ]]; then
         template_number=$(shuf -i 1-100 -n 1)
-        echo -e "\033[1;33mRandomly selected template number: [$template_number]\033[0m"
+        echo -e "\n\033[1;33mRandomly selected template number: [$template_number]\033[0m"
     else
-        echo -e "\033[1;32mYou selected template number: [$template_number]\033[0m"
+        # Validate user input for template selection
+        if [[ ! "$template_number" =~ ^[1-9]$|^[1-9][0-9]$|^100$ ]]; then
+            echo -e "\n\033[1;31mInvalid input. Please select a number between 1 and 100.\033[0m"
+            return
+        fi
+        echo -e "\n\033[1;32m!! Now! Use template number [$template_number] on the remote server as well.\033[0m"
+        read -p "Press Enter to continue..."
     fi
-    
-    echo -e "\033[1;31m!! Now! Use template number [$template_number] on the remote server!!\033[0m"
-
-    # If the user doesn't provide any input, default to template number 1
-    template_number=${template_number:-1}
-    # Validate the user's selection
-    if [[ ! "$template_number" =~ ^[1-9]$|^[1-9][0-9]$|^100$ ]]; then
-        echo -e "\n\033[1;31mInvalid input. Please select a number between 1 and 100.\033[0m"
-        return
-    fi
-    
-    read -p  "Press Enter to continue..."
 
     # Adjust template number to zero-based index
     local selected_template="${templates[$((template_number - 1))]}"
@@ -80,17 +75,18 @@ generate_random_ipv6() {
     # Use the custom IPv6 address if provided, otherwise use the generated one
     ipv6_address=${user_ipv6_address:-$ipv6_address}
 
-    # Display the final IPv6 address
-    echo -e "\n\033[1;32mUsing IPv6 address:\033[0m $ipv6_address"
+   # Display the final IPv4 address
+    echo -e "\033[1;31m!! Save and copy > $ipv6_address < (use it for routing in remote server)!!\033[0m"
+    echo -e "\n\033[1;32mLocal IPv6 address:\033[0m $ipv64_address"
 
     # Save the generated or custom IPv6 address to a text file
     echo "ipv6=$ipv6_address" > /root/ipv6.txt
     echo -e "\n\033[1;33mIPv6 address saved to ipv6.txt\033[0m"
-    sleep 2
-    
+    sleep 1
+
     source /root/ipv6.txt
-    
 }
+
 
 # Function to get the local machine's IP address (IPv4)
 get_local_ip() {
@@ -143,7 +139,7 @@ if [[ -z "$local_ip" ]]; then
 fi
 
 # Ask for the local IP or domain for the tunnel
-echo -e "\n\033[1;32mEnter the local IP or domain for the tunnel \033[1;33m(Default: $local_ip)\033[0m:"
+echo -e "\n\033[1;32mEnter the local IP or domain for current server or enter blank to use \033[1;33m(Default: $local_ip)\033[0m:"
 read -p " > " user_input
 
 # Use the provided input or default if none is entered
@@ -170,9 +166,20 @@ fi
     echo -e "\n${GREEN}Configuring the IPv6 address for the tunnel.${RESET}"
     generate_random_ipv6  # This function handles template selection and custom input
     local ipv6_address=$ipv6_address  # Generated or chosen IPv6 address is set globally in the function
+    
+    
+    # Ask for the route network
+    echo -e "\n${greEN}Enter generated local ipv4 from the remote server for routing (e.g., $ipv4_address):${RESET}"
+    read -p " > " route_network
+
+    if [[ -z "$route_network" ]]; then
+        echo -e "\n${RED}No route entered. Exiting...${RESET}"
+        return
+    fi
+    echo -e "${CYAN}Using route: $route_network via $service_name${RESET}"
 
     # Ask for the remote IP or domain for the tunnel
-    echo -e "\n${GREEN}Enter the remote IP or domain for the tunnel:${RESET}"
+    echo -e "\n${GREEN}Enter the remote IP or domain:${RESET}"
     read -p " > " remote_input
     
     # Validate if the input is a valid IP address format
@@ -206,7 +213,8 @@ Type=oneshot
 ExecStart=/usr/bin/env sh -c '\
     /sbin/ip tunnel add $service_name mode sit local $local_ip remote $remote_ip && \
     /sbin/ip link set $service_name up && \
-    /sbin/ip addr add $ipv6 dev $service_name'
+    /sbin/ip addr add $ipv6 dev $service_name && \
+    /sbin/ip route add $route_network dev $service_name'
 ExecStop=/sbin/ip tunnel del $service_name
 RemainAfterExit=true
 
@@ -263,10 +271,33 @@ manage_tunnels() {
 
     echo -e "${GREEN}You selected tunnel: $selected_tunnel${RESET}"
     
-    # Prompt for the next action on the selected tunnel
+    local service_file
+    if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+    elif [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+    else
+        echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    # Extract the route IP from the ExecStart line in the service file
+    route_ip1=$(grep -oP '(?<=route\sadd\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+    remote_ip1=$(grep -oP '(?<=remote\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+    local_public_ip1=$(grep -oP '(?<=local\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+    local_ip1=$(grep -oP '(?<=ip addr add\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+    
+    
     # Prompt for the next action on the selected tunnel
     echo -e "\033[1;32m================================================\033[0m"
     echo -e "\033[1;33mSelect an action to perform on tunnel $selected_tunnel:\033[0m"
+    echo -e "\033[1;34m======================local=====================\033[0m"
+    echo -e "\033[1;32mPublic IP: $local_public_ip1\033[0m"
+    echo -e "\033[1;32mLocal IP: $local_ip1\033[0m"
+    echo -e "\033[1;34m======================remote====================\033[0m"
+    echo -e "\033[1;32mPublic IP: $remote_ip1\033[0m"
+    echo -e "\033[1;32mLocal IP: $route_ip1\033[0m"
     echo -e "\033[1;32m================================================\033[0m"
     echo -e "\033[1;34m1.\033[0m \033[1;36mStart tunnel\033[0m"
     echo -e "\033[1;34m2.\033[0m \033[1;36mStop tunnel\033[0m"
@@ -279,6 +310,7 @@ manage_tunnels() {
     echo -e "\033[1;34m9.\033[0m \033[1;36mChange remote IP\033[0m"
     echo -e "\033[1;34m10.\033[0m \033[1;36mChange local IP\033[0m"
     echo -e "\033[1;34m11.\033[0m \033[1;36mAuto sit tunnel update (check local/remote)\033[0m"
+    echo -e "\033[1;34m12.\033[0m \033[1;36mPing remote server local/public IP\033[0m"
     echo -e "\033[1;31m0.\033[0m \033[1;37mReturn to main menu\033[0m"
     echo -e "\033[1;32m================================================\033[0m"
 
@@ -608,7 +640,53 @@ read -p "Press Enter to continue..."
 
     ;;
 
+12)
+    # Edit the service file with nano
+    local service_file
+    if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+    elif [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
+        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
+    else
+        echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
+        read -p "Press Enter to continue..."
+        return
+    fi
 
+    # Extract the route IP from the ExecStart line in the service file
+    route_ip=$(grep -oP '(?<=route\sadd\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+    remote_ip=$(grep -oP '(?<=remote\s)(\d+\.\d+\.\d+\.\d+)' "$service_file" | head -n 1)
+
+    if [[ -z "$route_ip" ]] && [[ -z "$remote_ip" ]]; then
+        echo -e "\033[1;31mNo route or remote IP found in the service file.\033[0m"
+        read -p "Press Enter to continue..."
+        return  # Exit if no route or remote found
+    fi
+
+    # Print the extracted route and remote IPs
+    echo -e "\033[1;32mroute IP: $route_ip\033[0m"
+    echo -e "\033[1;32mremote IP: $remote_ip\033[0m"
+
+    # Try to ping the route IP with 3-second timeout
+    echo -e "\033[1;32mPinging route IP: $route_ip...\033[0m"
+    if ping -c 4 -W 3 "$route_ip"; then
+        echo -e "\033[1;32mPing to route IP successful.\033[0m"
+    else
+        echo -e "\033[1;31mPing to route IP timed out or failed.\033[0m"
+    fi
+
+    # Try to ping the remote IP with 3-second timeout
+    echo -e "\033[1;32mPinging remote IP: $remote_ip...\033[0m"
+    if ping -c 4 -W 3 "$remote_ip"; then
+        echo -e "\033[1;32mPing to remote IP successful.\033[0m"
+    else
+        echo -e "\033[1;31mPing to remote IP timed out or failed.\033[0m"
+    fi
+
+    # Prompt to continue
+    read -p "Press Enter to continue..."
+    return
+    ;;
     
     
         *)
