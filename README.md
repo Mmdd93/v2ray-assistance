@@ -38,9 +38,9 @@
 - چک کردن لیست IP (مناسب سرور ایران برای تشخیص فیلتر شدن IP)
 - راه اندازی HAPROXY BASIC
 
-# دانلود و اجرای اسکریپت
+# دانلود و اجرای اسکریپت برای اولین بار
 ```bash
 curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/node.sh -o /usr/bin/v2 && sudo chmod +x /usr/bin/v2 && v2
 ```
 
-**برای اجرای اسکریپت در سری های بعدی کافیه کله v2 رو تایپ کنید**
+**برای اجرای اسکریپت در سری های بعدی کافیه کلمه v2 رو تایپ کنید.**
