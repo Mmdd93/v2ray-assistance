@@ -4944,7 +4944,8 @@ main_menu() {
             sudo bash marzban-node.sh ;;
 	53) echo "Running ..."
             curl -Ls https://github.com/Gozargah/Marzban-scripts/raw/master/marzban-node.sh -o marzban-node-o.sh
-            sudo bash marzban-node-o.sh ;;
+            sudo bash marzban-node-o.sh
+	   read -p "Press Enter to continue..." ;;
         0) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
