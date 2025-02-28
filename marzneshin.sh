@@ -1,5 +1,6 @@
 #!/bin/bash
 #marzneshin
+SERVER_IP=$(curl -4 -s https://icanhazip.com)
 marzneshin_commands() {
     while true; do
         echo -e "\033[1;36m============================================\033[0m"
@@ -77,7 +78,7 @@ install_marzneshin() {
         echo -e "\033[1;36m============================================\033[0m"
         echo -e "\033[1;31m1. Press ctrl+c anytime to stop viewing the logs after installation.\033[0m"
         echo -e "\033[1;31m2. You need to create a sudo admin after installing to access the panel.\033[0m"
-        echo -e "\033[1;31m3. Access the panel at: http://YOUR_SERVER_IP:8000/dashboard/\033[0m"
+        echo -e "\033[1;31m3. Access the panel at: http://$SERVER_IP:8000/dashboard/\033[0m"
         
         echo -e "\033[1;36mChoose installation version:\033[0m"
         echo -e "\033[1;32m1. Latest version (SQLite)\033[0m"
