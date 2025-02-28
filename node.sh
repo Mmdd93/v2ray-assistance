@@ -4788,23 +4788,25 @@ manage_marzban_node() {
         read -rp "Select an option: " choice
 
         case "$choice" in
-            1) sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban-node.sh)" @ install ;;
-            2) marzban-node up ;;
-            3) marzban-node down ;;
-            4) marzban-node restart ;;
-            5) marzban-node status ;;
-            6) marzban-node logs ;;
-            7) marzban-node update ;;
-            8) marzban-node uninstall ;;
-            9) marzban-node install-script ;;
-            10) marzban-node uninstall-script ;;
-            11) marzban-node edit ;;
-            12) marzban-node core-update ;;
+            1) sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban-node.sh)" @ install || { echo "Error: Command failed"; continue; } ;;
+            2) marzban-node up || { echo "Error: Command failed"; continue; } ;;
+            3) marzban-node down || { echo "Error: Command failed"; continue; } ;;
+            4) marzban-node restart || { echo "Error: Command failed"; continue; } ;;
+            5) marzban-node status || { echo "Error: Command failed"; continue; } ;;
+            6) marzban-node logs || { echo "Error: Command failed"; continue; } ;;
+            7) marzban-node update || { echo "Error: Command failed"; continue; } ;;
+            8) marzban-node uninstall || { echo "Error: Command failed"; continue; } ;;
+            9) marzban-node install-script || { echo "Error: Command failed"; continue; } ;;
+            10) marzban-node uninstall-script || { echo "Error: Command failed"; continue; } ;;
+            11) marzban-node edit || { echo "Error: Command failed"; continue; } ;;
+            12) marzban-node core-update || { echo "Error: Command failed"; continue; } ;;
             0) echo "Exiting..."; break ;;
-            *) echo -e "\033[1;31mInvalid option!\033[0m" ;;
+            *) echo -e "\033[1;31mInvalid option!\033[0m"; continue ;;
         esac
+        read -rp "Press Enter to continue..."
     done
 }
+
 
 
 
