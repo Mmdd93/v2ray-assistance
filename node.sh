@@ -4223,7 +4223,7 @@ main_menu() {
     echo -e "\033[1;31m+-----------------------------------------+\033[0m"
     echo -e "\033[1;32m   v2ray-assistant | Telegram: @tlgrmv2   |\033[0m"
     echo -e "\033[1;31m+-----------------------------------------+\033[0m"
-    echo -e "\n\033[1;31mUpdate and upgrade:\033[0m"
+    echo -e "\033[1;31m+----------Update and upgrade----------+\033[0m"
     echo -e "\033[1;32m1.\033[0m Update and upgrade system and install necessary packages"
     echo -e "\033[1;32m2.\033[0m Fix update issues (broken apt or dependencies)"
     echo -e "\033[1;32m3.\033[0m Change Update sources to Iran"
