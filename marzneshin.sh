@@ -257,38 +257,41 @@ update_docker_compose() {
         cat <<EOL > "$compose_file"
 services:
   marzneshin:
-    image: gozargah/marzneshin:latest
+    image: dawsh/marzneshin:latest
     restart: always
     env_file: .env
+    environment:
+      SQLALCHEMY_DATABASE_URL: "mysql+pymysql://root:12341234@127.0.0.1/marzneshin"
     network_mode: host
     volumes:
       - /var/lib/marzneshin:/var/lib/marzneshin
-
     depends_on:
-      - mysql
-      
-  mysql:
+      - db
+  marznode:
+    image: dawsh/marznode:latest
+    restart: always
+    network_mode: host
+    environment:
+      SERVICE_ADDRESS: "127.0.0.1"
+      INSECURE: "True"
+      XRAY_EXECUTABLE_PATH: "/usr/local/bin/xray"
+      XRAY_ASSETS_PATH: "/usr/local/lib/xray"
+      XRAY_CONFIG_PATH: "/var/lib/marznode/xray_config.json"
+      SSL_KEY_FILE: "./server.key"
+      SSL_CERT_FILE: "./server.cert"
+    volumes:
+      - /var/lib/marznode:/var/lib/marznode
+  db:
     image: mysql:latest
     restart: always
-    env_file: .env
-    network_mode: host
-    command: --bind-address=127.0.0.1 --mysqlx-bind-address=127.0.0.1 --disable-log-bin
     environment:
+      MYSQL_ROOT_PASSWORD: 12341234
       MYSQL_DATABASE: marzneshin
+    ports:
+      - "127.0.0.1:3306:3306"
     volumes:
       - /var/lib/marzneshin/mysql:/var/lib/mysql
-      
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin:latest
-    restart: always
-    env_file: .env
-    network_mode: host
-    environment:
-      PMA_HOST: 127.0.0.1
-      APACHE_PORT: 8010
-      UPLOAD_LIMIT: 1024M
-    depends_on:
-      - mysql
+
 EOL
         echo -e "\033[1;32mDocker Compose updated successfully.\033[0m"
     else
