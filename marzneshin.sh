@@ -465,7 +465,7 @@ mysql() {
     while true; do
         echo -e "\033[1;34mChange database to MySql:\033[0m"
         echo -e "\033[1;32m1.\033[0m Update Docker Compose for mysql"
-        echo -e "\033[1;32m2.\033[0m Update env for mysql"
+        #echo -e "\033[1;32m2.\033[0m Update env for mysql"
         echo -e "\033[1;32m3.\033[0m Create Backup"
         echo -e "\033[1;32m4.\033[0m Restore backup"
         echo -e "\033[1;32m5.\033[0m Transfer data from SQLite to MySQL"
