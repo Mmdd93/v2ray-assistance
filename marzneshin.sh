@@ -22,6 +22,7 @@ marzneshin_commands() {
         echo -e "\033[1;32m12.\033[0m Update/Change Xray core"
         echo -e "\033[1;32m13.\033[0m Edit .env"
         echo -e "\033[1;32m14.\033[0m Edit docker-compose.yml"
+	echo -e "\033[1;32m15.\033[0m Change database to MYSQL"
         echo -e "\033[1;32m0.\033[0m Return to the main menu"
 
         echo -e "\033[1;36m============================================\033[0m"
