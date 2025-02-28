@@ -458,7 +458,7 @@ mysql() {
 
         case $choice in
             1) update_docker_compose ;;
-            2) update_env_variables ;;
+            #2) update_env_variables ;;
             3) backup_essential_folders ;;
             4) restore_from_backup ;;
             5) transfer_data ;;
