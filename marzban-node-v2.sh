@@ -18,8 +18,9 @@ fi
 
 # Confirm directory detection
 if [ -n "$MARZBAN_NODE_DIR" ]; then
-    echo -e "\033[1;32mFound Marzban node directory:\033[0m $MARZBAN_NODE_DIR"
+    echo -e "\033[1;32mFound Marzban node directory:\033[0m \033[1;34m$MARZBAN_NODE_DIR\033[0m"
 fi
+
 
 
 
