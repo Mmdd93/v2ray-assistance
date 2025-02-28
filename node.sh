@@ -5075,6 +5075,7 @@ main_menu() {
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
     echo -e "\033[1;32m39.\033[0m Marzban panel"
     echo -e "\033[1;32m40.\033[0m Marzban node"
+    echo -e "\033[1;32m48.\033[0m Remnawave"
     echo -e "\033[1;32m41.\033[0m Panel Backup (Marzban,X-UI,Hiddify,Marzneshin)+transfer panel data"
     echo -e "\033[1;32m42.\033[0m Auto panel restart"
     echo -e "\033[1;31m0.\033[0m Exit"
@@ -5165,6 +5166,9 @@ main_menu() {
 	47) echo "Running wstunnel.sh..."
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/wstunnel.sh -o wstunnel.sh
             sudo bash wstunnel.sh ;;
+	48) echo "Running Remnawave..."
+            curl -Ls https://raw.githubusercontent.com/AsanFillter/Remnawave-AutoSetup/main/start.sh -o Remnawave.sh
+            sudo bash Remnawave.sh ;;
         0) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
