@@ -4770,39 +4770,42 @@ run_backhaul_script() {
 }
 
 manage_marzban_node() {
-    echo -e "\033[1;34mMarzban Node Management\033[0m"
-    echo -e "\033[1;32m1. Install/Reinstall Marzban-node\033[0m"
-    echo -e "\033[1;32m2. Start services\033[0m"
-    echo -e "\033[1;32m3. Stop services\033[0m"
-    echo -e "\033[1;32m4. Restart services\033[0m"
-    echo -e "\033[1;32m5. Show status\033[0m"
-    echo -e "\033[1;32m6. Show logs\033[0m"
-    echo -e "\033[1;32m7. Update to latest version\033[0m"
-    echo -e "\033[1;32m8. Uninstall Marzban-node\033[0m"
-    echo -e "\033[1;32m9. Install Marzban-node script\033[0m"
-    echo -e "\033[1;32m10. Uninstall Marzban-node script\033[0m"
-    echo -e "\033[1;32m11. Edit docker-compose.yml\033[0m"
-    echo -e "\033[1;32m12. Update/Change Xray core\033[0m"
-    echo -e "\033[1;32m0. Exit\033[0m"
-    read -rp "Select an option: " choice
+    while true; do
+        echo -e "\033[1;34mMarzban Node Management\033[0m"
+        echo -e "\033[1;32m1. Install/Reinstall Marzban-node\033[0m"
+        echo -e "\033[1;32m2. Start services\033[0m"
+        echo -e "\033[1;32m3. Stop services\033[0m"
+        echo -e "\033[1;32m4. Restart services\033[0m"
+        echo -e "\033[1;32m5. Show status\033[0m"
+        echo -e "\033[1;32m6. Show logs\033[0m"
+        echo -e "\033[1;32m7. Update to latest version\033[0m"
+        echo -e "\033[1;32m8. Uninstall Marzban-node\033[0m"
+        echo -e "\033[1;32m9. Install Marzban-node script\033[0m"
+        echo -e "\033[1;32m10. Uninstall Marzban-node script\033[0m"
+        echo -e "\033[1;32m11. Edit docker-compose.yml\033[0m"
+        echo -e "\033[1;32m12. Update/Change Xray core\033[0m"
+        echo -e "\033[1;32m0. Exit\033[0m"
+        read -rp "Select an option: " choice
 
-    case "$choice" in
-        1) sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban-node.sh)" @ install ;;
-        2) marzban-node up ;;
-        3) marzban-node down ;;
-        4) marzban-node restart ;;
-        5) marzban-node status ;;
-        6) marzban-node logs ;;
-        7) marzban-node update ;;
-        8) marzban-node uninstall ;;
-        9) marzban-node install-script ;;
-        10) marzban-node uninstall-script ;;
-        11) marzban-node edit ;;
-        12) marzban-node core-update ;;
-        0) echo "Exiting..." ;;
-        *) echo -e "\033[1;31mInvalid option!\033[0m" ;;
-    esac
+        case "$choice" in
+            1) sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban-node.sh)" @ install ;;
+            2) marzban-node up ;;
+            3) marzban-node down ;;
+            4) marzban-node restart ;;
+            5) marzban-node status ;;
+            6) marzban-node logs ;;
+            7) marzban-node update ;;
+            8) marzban-node uninstall ;;
+            9) marzban-node install-script ;;
+            10) marzban-node uninstall-script ;;
+            11) marzban-node edit ;;
+            12) marzban-node core-update ;;
+            0) echo "Exiting..."; break ;;
+            *) echo -e "\033[1;31mInvalid option!\033[0m" ;;
+        esac
+    done
 }
+
 
 
 # Main menu function
