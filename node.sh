@@ -4769,6 +4769,41 @@ run_backhaul_script() {
     done
 }
 
+manage_marzban_node() {
+    echo -e "\033[1;34mMarzban Node Management\033[0m"
+    echo -e "\033[1;32m1. Install/Reinstall Marzban-node\033[0m"
+    echo -e "\033[1;32m2. Start services\033[0m"
+    echo -e "\033[1;32m3. Stop services\033[0m"
+    echo -e "\033[1;32m4. Restart services\033[0m"
+    echo -e "\033[1;32m5. Show status\033[0m"
+    echo -e "\033[1;32m6. Show logs\033[0m"
+    echo -e "\033[1;32m7. Update to latest version\033[0m"
+    echo -e "\033[1;32m8. Uninstall Marzban-node\033[0m"
+    echo -e "\033[1;32m9. Install Marzban-node script\033[0m"
+    echo -e "\033[1;32m10. Uninstall Marzban-node script\033[0m"
+    echo -e "\033[1;32m11. Edit docker-compose.yml\033[0m"
+    echo -e "\033[1;32m12. Update/Change Xray core\033[0m"
+    echo -e "\033[1;32m0. Exit\033[0m"
+    read -rp "Select an option: " choice
+
+    case "$choice" in
+        1) sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban-node.sh)" @ install ;;
+        2) marzban-node up ;;
+        3) marzban-node down ;;
+        4) marzban-node restart ;;
+        5) marzban-node status ;;
+        6) marzban-node logs ;;
+        7) marzban-node update ;;
+        8) marzban-node uninstall ;;
+        9) marzban-node install-script ;;
+        10) marzban-node uninstall-script ;;
+        11) marzban-node edit ;;
+        12) marzban-node core-update ;;
+        0) echo "Exiting..." ;;
+        *) echo -e "\033[1;31mInvalid option!\033[0m" ;;
+    esac
+}
+
 
 # Main menu function
 main_menu() {
@@ -4829,6 +4864,7 @@ main_menu() {
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
     echo -e "\033[1;32m39.\033[0m Marzban panel"
     echo -e "\033[1;32m40.\033[0m Marzban node by v2"
+    echo -e "\033[1;32m53.\033[0m Marzban node official script"
     echo -e "\033[1;32m52.\033[0m Marzban node by Mehrdad"
     echo -e "\033[1;32m48.\033[0m Remnawave"
     echo -e "\033[1;32m49.\033[0m Marzneshin"
@@ -4942,9 +4978,7 @@ main_menu() {
             curl -Ls https://raw.githubusercontent.com/mikeesierrah/ez-node/main/marzban-node.sh -o marzban-node.sh
             sudo bash marzban-node.sh ;;
 	53) echo "Running ..."
-            curl -Ls https://github.com/Gozargah/Marzban-scripts/raw/master/marzban-node.sh -o marzban-node-o.sh
-            sudo bash marzban-node-o.sh
-	   read -p "Press Enter to continue..." ;;
+            manage_marzban_node ;;
         0) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
