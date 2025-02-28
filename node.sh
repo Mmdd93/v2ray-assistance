@@ -251,7 +251,8 @@ list_and_download_xray_core() {
 # Function to check if Docker is installed and running
 install_docker() {
     # Check if Docker is installed
-    if ! command -v docker &> /dev/null; then
+    echo "Checking if Docker is installed..."
+    if ! sudo command -v docker &> /dev/stdout; then
         echo_yellow "Docker is not installed. Installing Docker..."
        
         curl -fsSL https://get.docker.com -o get-docker.sh
@@ -259,38 +260,43 @@ install_docker() {
 
         if [ $? -eq 0 ]; then
             echo_green "Docker installed successfully."
-           
-            sudo usermod -aG docker $USER
-            echo "Please log out and log back in to finalize Docker installation and permissions."
-           
+
+            # Add user to Docker group (only if not root)
+            if [ "$EUID" -ne 0 ]; then
+                sudo usermod -aG docker $USER
+                echo_yellow "Please log out and log back in to apply Docker group permissions."
+            fi
+
         else
             echo_red "Installation of Docker failed."
-           
             return 1
         fi
-        sudo rm get-docker.sh
+
+        # Clean up installer file if it exists
+        [ -f get-docker.sh ] && sudo rm get-docker.sh
     else
         echo_green "Docker is already installed."
-       
     fi
 
     # Check if Docker is running
-    if ! docker info &> /dev/null; then
+    if ! sudo systemctl is-active --quiet docker; then
         echo_yellow "Docker is not running. Attempting to start Docker..."
       
-
-        # Attempt to start Docker if not running
         sudo systemctl start docker
-        if ! docker info &> /dev/null; then
+        if ! sudo systemctl is-active --quiet docker; then
             echo_red "Failed to start Docker. Please manually start Docker."
-          
             return 1
         fi
     fi
 
-    echo_green "Docker is running."
-  
+    # Ensure Docker starts on boot
+    sudo systemctl enable docker
+
+    # Display the current Docker status
+    echo_green "Docker is running and enabled at startup."
+    sudo systemctl status docker
 }
+
 
 
 # Function to check if Docker Compose is installed and install it if not
