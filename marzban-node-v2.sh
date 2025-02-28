@@ -40,7 +40,7 @@ manage_marzban_node() {
         echo -e "\033[1;33m        Manage Marzban Node\033[0m"
         echo -e "\033[1;36m============================================\033[0m"
         echo -e "\033[1;32m1.\033[0m Setup Marzban-node"
-	echo -e "\033[1;32m2.\033[0m Change node ports"
+	echo -e "\033[1;32m2.\033[0m Edit node ports"
 	echo -e "\033[1;32m3.\033[0m Edit node certificates"
 	echo -e "\033[1;32m4.\033[0m Edit docker-compose.yml with nano"
 	echo -e "\033[1;32m5.\033[0m Restart Docker Compose services"
