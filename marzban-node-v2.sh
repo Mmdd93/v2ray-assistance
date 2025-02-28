@@ -12,13 +12,13 @@ elif [ -d "$HOME/Marzban-node" ]; then
 elif [ -d "/root/marzban-node" ]; then
     MARZBAN_NODE_DIR="/root/marzban-node"
 else
-    echo "No Marzban-node directory found. Skipping..."
+    echo -e "\033[1;32mNo Marzban-node directory found. Skipping...\033[0m"
     MARZBAN_NODE_DIR=""
 fi
 
 # Confirm directory detection
 if [ -n "$MARZBAN_NODE_DIR" ]; then
-    echo "Found Marzban node directory: $MARZBAN_NODE_DIR"
+    echo -e "\033[1;32mFound Marzban node directory:\033[0m $MARZBAN_NODE_DIR"
 fi
 
 
