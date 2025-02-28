@@ -4829,7 +4829,6 @@ main_menu() {
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
     echo -e "\033[1;32m39.\033[0m Marzban panel"
     echo -e "\033[1;32m40.\033[0m Marzban node by v2"
-    echo -e "\033[1;32m53.\033[0m Marzban node official"
     echo -e "\033[1;32m52.\033[0m Marzban node by Mehrdad"
     echo -e "\033[1;32m48.\033[0m Remnawave"
     echo -e "\033[1;32m49.\033[0m Marzneshin"
