@@ -4223,8 +4223,8 @@ main_menu() {
     echo -e "\033[1;31m+-----------------------------------------+\033[0m"
     echo -e "\033[1;32m   v2ray-assistant | Telegram: @tlgrmv2   |\033[0m"
     echo -e "\033[1;31m+-----------------------------------------+\033[0m"
-    echo -e "\033[1;31m+----------Update and upgrade----------+\033[0m"
-    echo -e "\033[1;32m1.\033[0m Update and upgrade system and install necessary packages"
+    echo -e "\n\033[1;31m+----------Update and upgrade----------+\033[0m"
+    echo -e "\033[1;32m1.\033[0m Update and upgrade + install necessary packages"
     echo -e "\033[1;32m2.\033[0m Fix update issues (broken apt or dependencies)"
     echo -e "\033[1;32m3.\033[0m Change Update sources to Iran"
     echo -e "\033[1;32m4.\033[0m System info"
@@ -4232,7 +4232,7 @@ main_menu() {
     echo -e "\033[1;32m6.\033[0m Install Docker on Iran servers"
     
   
-    echo -e "\033[1;31m+-----------------Tools------------------+\033[0m"
+    echo -e "\n\033[1;31m+-----------------Tools------------------+\033[0m"
     echo -e "\033[1;32m7.\033[0m ISP defender (allow/block)"
     echo -e "\033[1;32m8.\033[0m Network Optimizer + BBR"
     echo -e "\033[1;32m9.\033[0m Speed test + system benchmark"
@@ -4263,7 +4263,7 @@ main_menu() {
     echo -e "\033[1;32m37.\033[0m File management (Copy/Remove/Move/Rename etc.)"
     
 
-    echo -e "\033[1;31m+-----------------Tunnel-----------------+\033[0m"
+    echo -e "\n\033[1;31m+-----------------Tunnel-----------------+\033[0m"
     echo -e "\e[1;34mCombine local tunnels (IPv4-IPv6) with Backhaul, GOST, WSS, etc., for enhanced stealth and obfuscation.\e[0m"
     echo -e "\033[1;32m26.\033[0m SIT tunnel 6to4 (IPV6 local)"
     echo -e "\033[1;32m28.\033[0m GRE tunnel (IPV4/IPV6 local)"
@@ -4274,7 +4274,7 @@ main_menu() {
     echo -e "\033[1;32m47.\033[0m WSS,WS tunnel (CDN support)"
 
    
-    echo -e "\033[1;31m+---------------Xray panel-----------------+\033[0m"
+    echo -e "\n\033[1;31m+---------------Xray panel-----------------+\033[0m"
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
     echo -e "\033[1;34m+-----------------------------------------+\033[0m"
     echo -e "\033[1;32m39.\033[0m Marzban panel"
