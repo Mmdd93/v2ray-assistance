@@ -13,7 +13,7 @@ elif [ -d "/root/marzban-node" ]; then
 else
     echo -e "\033[1;34mNo Marzban-node directory found. Skipping...\033[0m"
     # Set Marzban-node directory to default
-    echo -e "\033[1;32mSetting Marzban-node directory to default: /root/marzban-node\033[0m"
+    echo -e "\033[1;32mSetting Marzban-node directory to default: /root/Marzban-node\033[0m"
     MARZBAN_NODE_DIR="/root/Marzban-node"
 fi
 
