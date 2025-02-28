@@ -4292,7 +4292,7 @@ main_menu() {
     echo -e "\033[1;32m42.\033[0m Auto panel restart"
     echo -e "\033[1;31m+-----------------------------------------+\033[0m"
     echo -e "\033[1;31m0.\033[0m Exit"
- echo -e "\n "
+
     read -p "Enter your choice: " choice
     
     case $choice in
