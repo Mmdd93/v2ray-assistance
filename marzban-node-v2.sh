@@ -1,7 +1,7 @@
 #!/bin/bash
 clear
 set -euo pipefail
-
+MARZBAN_NODE_DATA_DIR="/var/lib/marzban-node"
 # Detect Marzban node directory
 if [ -d "/opt/marzban-node" ]; then
     MARZBAN_NODE_DIR="/opt/marzban-node"
@@ -18,13 +18,14 @@ fi
 
 # Confirm directory detection
 if [ -n "$MARZBAN_NODE_DIR" ]; then
-    echo -e "\033[1;32mFound Marzban node directory:\033[0m \033[1;34m$MARZBAN_NODE_DIR\033[0m"
+    echo -e "\033[1;32mFound Marzban node core directory:\033[0m \033[1;34m$MARZBAN_NODE_DIR\033[0m"
+    echo -e "\033[1;32mFound Marzban node data directory:\033[0m \033[1;34m$MARZBAN_NODE_DATA_DIR\033[0m"
 fi
 
 
 
 
-MARZBAN_NODE_DATA_DIR="/var/lib/marzban-node"
+
 
 # Color definitions
 RED='\033[0;31m'
