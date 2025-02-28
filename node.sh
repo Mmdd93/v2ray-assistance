@@ -4771,6 +4771,7 @@ run_backhaul_script() {
 
 manage_marzban_node() {
     while true; do
+    clear
         echo -e "\033[1;34mMarzban Node Management\033[0m"
         echo -e "\033[1;32m1. Install/Reinstall Marzban-node\033[0m"
         echo -e "\033[1;32m2. Start services\033[0m"
