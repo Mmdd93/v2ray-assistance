@@ -252,8 +252,27 @@ timestamp=$(date +%Y%m%d_%H%M%S)
 
 # Function to update Docker Compose configuration
 update_docker_compose() {
+
     if [[ -f "$compose_file" ]]; then
         echo -e "\033[1;34mUpdating Docker Compose configuration...\033[0m"
+	# Ask for the MySQL root password twice
+    read -p "Enter the MySQL root password: " db_password_1
+    echo
+    read -p "Confirm the MySQL root password: " db_password_2
+    echo
+
+    # Check if both passwords match
+    if [[ "$db_password_1" != "$db_password_2" ]]; then
+        echo -e "\033[1;31mError: Passwords do not match. Please try again.\033[0m"
+        return 1
+    fi
+
+    # Ensure the password is not empty
+    if [[ -z "$db_password_1" ]]; then
+        echo -e "\033[1;31mError: Password cannot be empty.\033[0m"
+        return 1
+    fi
+
         cat <<EOL > "$compose_file"
 services:
   marzneshin:
@@ -261,7 +280,7 @@ services:
     restart: always
     env_file: .env
     environment:
-      SQLALCHEMY_DATABASE_URL: "mysql+pymysql://root:12341234@127.0.0.1/marzneshin"
+      SQLALCHEMY_DATABASE_URL: "mysql+pymysql://root:$db_password_1@127.0.0.1/marzneshin"
     network_mode: host
     volumes:
       - /var/lib/marzneshin:/var/lib/marzneshin
@@ -285,7 +304,7 @@ services:
     image: mysql:latest
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 12341234
+      MYSQL_ROOT_PASSWORD: $db_password_1
       MYSQL_DATABASE: marzneshin
     ports:
       - "127.0.0.1:3306:3306"
