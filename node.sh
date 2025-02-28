@@ -3260,20 +3260,23 @@ setup_docker() {
 	2)
                 echo -e "\033[1;34mCurrent sources.list:\033[0m"
 if grep -q '^deb ' /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null; then
-    cat /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null
+    cat /etc/apt/sources.list 2>/dev/null
+    if [ -d /etc/apt/sources.list.d/ ] && ls /etc/apt/sources.list.d/*.list &>/dev/null; then
+        cat /etc/apt/sources.list.d/*.list 2>/dev/null
+    fi
     echo -e "\033[1;32m✔ Sources list found.\033[0m"
 else
     echo -e "\033[1;31m✘ No sources found!\033[0m"
 fi
 
-                
-                # Ask if they want to change DNS
-                read -p "Do you want to Change Update sources to Iran? (yes/no): " change_dns_answer
-                if [[ "$change_dns_answer" == "yes" ]]; then
-                    change_sources_list  # Call the function to change DNS
-                else
-                    echo -e "\033[1;34mNo DNS change requested.\033[0m"
-                fi
+# Ask if they want to change update sources
+read -p "Do you want to change update sources to Iran? (yes/no): " change_sources_answer
+if [[ "$change_sources_answer" == "yes" ]]; then
+    change_sources_list  # Call the function to change sources
+else
+    echo -e "\033[1;34mNo update sources change requested.\033[0m"
+fi
+
                 ;;
 
             3)
