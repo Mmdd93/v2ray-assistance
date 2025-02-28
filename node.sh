@@ -252,7 +252,7 @@ list_and_download_xray_core() {
 install_docker() {
     # Check if Docker is installed
     echo "Checking if Docker is installed..."
-    if ! sudo command -v docker &> /dev/stdout; then
+    if ! command -v docker &> /dev/stdout; then
         echo_yellow "Docker is not installed. Installing Docker..."
        
         curl -fsSL https://get.docker.com -o get-docker.sh
