@@ -4276,22 +4276,21 @@ main_menu() {
    
     echo -e "\033[1;31m+---------------Xray panel-----------------+\033[0m"
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
-    echo -e "\033[1;31m+-----------------------------------------+\033[0m"
+    echo -e "\033[1;34m+-----------------------------------------+\033[0m"
     echo -e "\033[1;32m39.\033[0m Marzban panel"
     echo -e "\033[1;32m40.\033[0m Marzban node by v2"
     echo -e "\033[1;32m53.\033[0m Marzban node official script"
     echo -e "\033[1;32m52.\033[0m Marzban node by Mehrdad"
-    echo -e "\033[1;31m+-----------------------------------------+\033[0m"
+    echo -e "\033[1;34m+-----------------------------------------+\033[0m"
     echo -e "\033[1;32m48.\033[0m Remnawave"
-    echo -e "\033[1;31m+-----------------------------------------+\033[0m"
+    echo -e "\033[1;34m+-----------------------------------------+\033[0m"
     echo -e "\033[1;32m49.\033[0m Marzneshin"
     echo -e "\033[1;32m50.\033[0m Marzneshin node by ErfJab"
     echo -e "\033[1;32m51.\033[0m Marzneshin node by Mehrdad"
-    echo -e "\033[1;31m+-----------------------------------------+\033[0m"
+    echo -e "\033[1;34m+-----------------------------------------+\033[0m"
     echo -e "\033[1;32m41.\033[0m Panel Backup (Marzban,X-UI,Hiddify,Marzneshin)+transfer panel data"
     echo -e "\033[1;32m42.\033[0m Auto panel restart"
     echo -e "\033[1;31m0.\033[0m Exit"
-    echo -e "\033[1;31m+-----------------------------------------+\033[0m"
 
     read -p "Enter your choice: " choice
     
