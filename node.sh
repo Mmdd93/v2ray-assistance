@@ -3233,7 +3233,8 @@ setup_docker() {
     while true; do
         echo -e "\033[1;34mSelect an option:\033[0m"
         echo "1. Set DNS to Electro or Shecan etc..."
-        echo "2. Auto-install Docker step-by-step"
+	echo "2. Change Update sources to Iran"
+        echo "3. Auto-install Docker step-by-step"
         echo "0. Main menu"
 
         read -p "Enter your choice: " choice
@@ -3256,8 +3257,26 @@ setup_docker() {
                     echo -e "\033[1;34mNo DNS change requested.\033[0m"
                 fi
                 ;;
+	2)
+                echo -e "\033[1;34mCurrent sources.list:\033[0m"
+if grep -q '^deb ' /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null; then
+    cat /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null
+    echo -e "\033[1;32m✔ Sources list found.\033[0m"
+else
+    echo -e "\033[1;31m✘ No sources found!\033[0m"
+fi
 
-            2)
+                
+                # Ask if they want to change DNS
+                read -p "Do you want to Change Update sources to Iran? (yes/no): " change_dns_answer
+                if [[ "$change_dns_answer" == "yes" ]]; then
+                    change_sources_list  # Call the function to change DNS
+                else
+                    echo -e "\033[1;34mNo DNS change requested.\033[0m"
+                fi
+                ;;
+
+            3)
                 echo -e "\033[1;34mStarting Docker setup...\033[0m"
 
                 # Step 1: Check if Docker is already installed
