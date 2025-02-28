@@ -4286,7 +4286,7 @@ main_menu() {
     echo -e "\033[1;31m0.\033[0m Exit"
     echo -e "\033[1;31m+-----------------------------------------+\033[0m"
 
-    choice=$(prompt_input "Enter your choice" "")
+    read -p "Enter your choice: " choice
     
     case $choice in
         1) update_system
