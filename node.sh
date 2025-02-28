@@ -2394,10 +2394,11 @@ webtop() {
 # Backup Menu Function
 backup_menu() {
     echo -e "\033[1;34mBackup Menu:\033[0m"
-    echo -e "\033[1;32m1.\033[0m Transfer panel to another server"
-    echo -e "\033[1;32m2.\033[0m Backup by Erfan (Marzban X-ui Hiddify Custom)"
-    echo -e "\033[1;32m3.\033[0m Backup by AC-Lover (Marzban X-ui Hiddify)"
-    echo -e "\033[1;32m5.\033[0m Return to Main Menu"
+    
+    echo -e "\033[1;32m1.\033[0m Backup by Erfan (Marzban, X-ui, Hiddify, Marzneshin, Custom data)"
+    echo -e "\033[1;32m2.\033[0m Backup by AC-Lover (Marzban, X-ui, Hiddify)"
+    echo -e "\033[1;32m3.\033[0m Transfer panel data (Marzban, X-UI, Hiddify) to another server"
+    echo -e "\033[1;32m0.\033[0m Return to Main Menu"
 
     read -p "Choose an option [1-5]: " choice
 
@@ -2411,19 +2412,20 @@ backup_menu() {
     script_3="sudo bash -c \"\$(curl -sL https://github.com/AC-Lover/backup/raw/main/backup.sh)\""
 
     case $choice in
+       
         1)
-            echo -e "\033[1;32mRunning Backup Script 1 (Transfer-me)...\033[0m"
-            eval $script_1 || { echo -e "\033[1;31mError running Backup Script 1.\033[0m"; return 1; }
+            echo -e "\033[1;32mRunning Backup Script 1 (Backuper)...\033[0m"
+            eval $script_2 || { echo -e "\033[1;31mError running Backup Script 1.\033[0m"; return 1; }
             ;;
         2)
-            echo -e "\033[1;32mRunning Backup Script 2 (Backuper)...\033[0m"
-            eval $script_2 || { echo -e "\033[1;31mError running Backup Script 2.\033[0m"; return 1; }
+            echo -e "\033[1;32mRunning Backup Script 2 (AC-Lover)...\033[0m"
+            eval $script_3 || { echo -e "\033[1;31mError running Backup Script 2.\033[0m"; return 1; }
             ;;
-        3)
-            echo -e "\033[1;32mRunning Backup Script 3 (AC-Lover)...\033[0m"
-            eval $script_3 || { echo -e "\033[1;31mError running Backup Script 3.\033[0m"; return 1; }
+	 3)
+            echo -e "\033[1;32mRunning Script 3 (Transfer-me)...\033[0m"
+            eval $script_1 || { echo -e "\033[1;31mError running Script 3.\033[0m"; return 1; }
             ;;
-        5)
+        0)
             echo -e "\033[1;32mReturning to the Main Menu...\033[0m"
             main_menu  # Assuming this is defined elsewhere in your script
             ;;
