@@ -4343,7 +4343,9 @@ main_menu() {
         39) echo "Running marzban.sh..."
             curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/marzban.sh -o marzban.sh
             sudo bash marzban.sh ;;
-        40) manage_marzban_node ;;
+        40) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/marzban-node-v2.sh -o marzban-node-v2.sh
+            sudo bash marzban-node-v2.sh ;;
         41) backup_menu ;;
         42) panels_restart_cron ;;
         43) setup_docker ;;
