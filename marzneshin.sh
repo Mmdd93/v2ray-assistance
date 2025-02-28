@@ -314,10 +314,24 @@ services:
       - /var/lib/marzneshin/mysql:/var/lib/mysql
 
 EOL
-        echo -e "\033[1;32mDocker Compose updated successfully.\033[0m"
+       
+    
+    echo -e "\033[1;32mDocker Compose updated successfully.\033[0m"
     else
         echo -e "\033[1;31mError: $compose_file not found.\033[0m"
     fi
+echo -e "\033[1;33mDo you want to restart Marzneshin? (yes/no)\033[0m"
+read restart_choice
+if [[ "$restart_choice" == "yes" ]]; then
+    # Restart Marzban
+    echo -e "\033[1;34mRestarting Marzban...\033[0m"
+    # Add your command to restart Marzban here, for example:
+    sudo marzneshin restart 
+else
+    echo -e "\033[1;34m Marzneshin restart skipped.\033[0m"
+fi
+
+    
 }
 
 update_env_variables() {
