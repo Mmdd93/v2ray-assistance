@@ -31,11 +31,11 @@ fi
 
 # Confirm directory detection
 if [ -n "$MARZBAN_NODE_DIR" ]; then
-    echo -e "\033[1;32mMarzban node core directory:\033[0m \033[1;34m$MARZBAN_NODE_DIR\033[0m"
+    echo -e "\033[1;33mMarzban node core directory:\033[0m \033[1;34m$MARZBAN_NODE_DIR\033[0m"
 fi
 
 if [ -n "$MARZBAN_NODE_DATA_DIR" ]; then
-    echo -e "\033[1;32mMarzban node data directory:\033[0m \033[1;34m$MARZBAN_NODE_DATA_DIR\033[0m"
+    echo -e "\033[1;33mMarzban node data directory:\033[0m \033[1;34m$MARZBAN_NODE_DATA_DIR\033[0m"
 fi
 
 
