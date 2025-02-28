@@ -76,6 +76,18 @@
     "ShowInMenu": true
   },
   {
+    "name": "Npv Tunnel V2ray/SSH",
+    "urlScheme": "v2box://install-sub",
+    "image": "https://play-lh.googleusercontent.com/s564-TVX-LhZ9qD-H6BG-VEPxXyEM_Z3x5hdJbQ_AbzKvqsngn8fCjezow49wg8jsRg",
+    "link": "v2box://install-sub?url={url}&name=SUBnew",
+    "os": ["iOS", "Android"],
+    "downloadLinks": {
+      "iOS": "https://apps.apple.com/us/app/npv-tunnel/id1629465476",
+      "Android": "https://play.google.com/store/apps/details?id=com.napsternetlabs.napsternetv"
+    },
+    "ShowInMenu": false
+  },
+  {
     "name": "V2rayN",
     "urlScheme": "v2rayng://install-config",
     "image": "https://fa.v2rayn.org/wp-content/uploads/2024/01/favicon.png",
