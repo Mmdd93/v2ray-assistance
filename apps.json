@@ -34,10 +34,10 @@
     "link": "hiddify://import/{url}",
     "os": ["Windows", "Android", "Linux", "iOS"],
     "downloadLinks": {
-      "Android": "https://github.com/hiddify/hiddify-next/releases/latest/download/Hiddify-Android-universal.apk",
+      "Android": "https://github.com/hiddify/hiddify-next/releases/download/v2.5.7/Hiddify-Android-universal.apk",
       "iOS": "https://apps.apple.com/us/app/hiddify-proxy-vpn/id6596777532",
       "Linux": "https://github.com/hiddify/hiddify-next#-direct-download",
-      "Windows": "https://github.com/hiddify/hiddify-next/releases/latest/download/Hiddify-Windows-Portable-x64.zip"
+      "Windows": "https://github.com/hiddify/hiddify-next/releases/download/v2.5.7/Hiddify-Windows-Portable-x64.zip"
     },
     "ShowInMenu": true
   },
@@ -59,7 +59,7 @@
     "link": "v2rayng://install-config?url={url}",
     "os": ["Android"],
     "downloadLinks": {
-      "Android": "https://github.com/2dust/v2rayNG/releases/download/1.9.8/v2rayNG_1.9.8_universal.apk"
+      "Android": "https://play.google.com/store/apps/details?id=com.v2ray.ang"
     },
     "ShowInMenu": true
   },
@@ -71,7 +71,7 @@
     "os": ["iOS", "Android"],
     "downloadLinks": {
       "iOS": "https://apps.apple.com/us/app/v2box-v2ray-client/id6446814690",
-      "Android": "https://play.google.com/store/apps/details?id=dev.hexasoftware.v2box&hl=en_GB"
+      "Android": "https://play.google.com/store/apps/details?id=dev.hexasoftware.v2box"
     },
     "ShowInMenu": true
   },
@@ -81,7 +81,7 @@
     "image": "https://fa.v2rayn.org/wp-content/uploads/2024/01/favicon.png",
     "os": ["Windows"],
     "downloadLinks": {
-      "Windows": "https://github.com/2dust/v2rayN/releases/download/6.60/v2rayN-With-Core.zip"
+      "Windows": "https://github.com/2dust/v2rayN/releases/download/7.9.3/v2rayN-windows-64-desktop.zip"
     },
     "ShowInMenu": false
   },
@@ -97,10 +97,11 @@
   {
     "name": "Nekoray",
     "image": "https://avatars.githubusercontent.com/u/95122236?v=4",
-    "os": ["Windows", "Linux"],
+    "os": ["Windows", "Android", "Linux"],
     "downloadLinks": {
-      "Windows": "https://github.com/MatsuriDayo/nekoray/releases/download/3.26/nekoray-3.26-2023-12-09-windows64.zip",
-      "Linux": "https://github.com/MatsuriDayo/nekoray/releases/download/3.26/nekoray-3.26-2023-12-09-linux64.zip"
+      "Windows": "https://github.com/MatsuriDayo/nekoray/releases/download/4.0.1/nekoray-4.0.1-2024-12-12-windows64.zip",
+      "Android": "https://play.google.com/store/apps/details?id=moe.nb4a",
+      "Linux": "https://github.com/MatsuriDayo/nekoray/releases/download/4.0.1/nekoray-4.0.1-2024-12-12-linux64.zip"
     },
     "ShowInMenu": false
   },
@@ -109,11 +110,10 @@
     "urlScheme": "sing-box://import-remote-profile",
     "image": "https://play-lh.googleusercontent.com/9hC1t0lYNRlFHt2N2NJCWYMe_M6vJh580XHdC0JeEW14AJJFZGDbgj_meooXAXHbWJ1_",
     "link": "sing-box://import-remote-profile?url={url}",
-    "os": ["iOS", "Android", "Linux"],
+    "os": ["iOS", "Android"],
     "downloadLinks": {
       "iOS": "https://apps.apple.com/us/app/sing-box-vt/id6673731168",
-      "Android": "https://github.com/SagerNet/sing-box/releases/download/v1.10.1/SFA-1.10.1-universal.apk",
-      "Linux": "https://github.com/SagerNet/sing-box/releases/download/v1.10.1/sing-box_1.10.1_linux_386.deb"
+      "Android": "https://play.google.com/store/apps/details?id=io.nekohasekai.sfa"
     },
     "ShowInMenu": true
   }
