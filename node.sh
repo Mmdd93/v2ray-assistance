@@ -2393,7 +2393,7 @@ webtop() {
 }
 # Backup Menu Function
 backup_menu() {
-    echo -e "\033[1;34mBackup Menu:\033[0m"
+    echo -e "\033[1;34mXray panel backup Menu:\033[0m"
     
     echo -e "\033[1;32m1.\033[0m Backup by Erfan (Marzban, X-ui, Hiddify, Marzneshin, Custom data)"
     echo -e "\033[1;32m2.\033[0m Backup by AC-Lover (Marzban, X-ui, Hiddify)"
@@ -5075,7 +5075,7 @@ main_menu() {
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
     echo -e "\033[1;32m39.\033[0m Marzban panel"
     echo -e "\033[1;32m40.\033[0m Marzban node"
-    echo -e "\033[1;32m41.\033[0m Backup + transfer"
+    echo -e "\033[1;32m41.\033[0m Panel Backup (Marzban,X-UI,Hiddify,Marzneshin)+transfer panel data"
     echo -e "\033[1;32m42.\033[0m Auto panel restart"
     echo -e "\033[1;31m0.\033[0m Exit"
     echo -e "\033[1;31m+-----------------------------------------+\033[0m"
