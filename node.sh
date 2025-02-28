@@ -248,7 +248,6 @@ list_and_download_xray_core() {
     sleep 3
 }
 
-# Function to check if Docker is installed and running
 install_docker() {
     # Check if Docker is installed
     echo "Checking if Docker is installed..."
@@ -279,6 +278,7 @@ install_docker() {
     fi
 
     # Check if Docker is running
+    echo "Checking if Docker is running..."
     if ! sudo systemctl is-active --quiet docker; then
         echo_yellow "Docker is not running. Attempting to start Docker..."
       
@@ -294,8 +294,9 @@ install_docker() {
 
     # Display the current Docker status
     echo_green "Docker is running and enabled at startup."
-    sudo systemctl status docker
+    sudo systemctl status docker | grep "Active:"  # Display only the 'Active' status line
 }
+
 
 
 
