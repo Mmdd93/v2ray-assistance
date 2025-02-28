@@ -1,4 +1,5 @@
 #!/bin/bash
+clear
 set -euo pipefail
 
 # Detect Marzban node directory
