@@ -4231,7 +4231,8 @@ main_menu() {
     echo -e "\033[1;32m5.\033[0m Install Docker and Docker Compose"
     echo -e "\033[1;32m6.\033[0m Install Docker on Iran servers"
     
-    echo -e "\n\033[1;31mTools:\033[0m"
+  
+    echo -e "\033[1;31m+-----------------Tools------------------+\033[0m"
     echo -e "\033[1;32m7.\033[0m ISP defender (allow/block)"
     echo -e "\033[1;32m8.\033[0m Network Optimizer + BBR"
     echo -e "\033[1;32m9.\033[0m Speed test + system benchmark"
@@ -4261,7 +4262,8 @@ main_menu() {
     echo -e "\033[1;32m36.\033[0m Cron job"
     echo -e "\033[1;32m37.\033[0m File management (Copy/Remove/Move/Rename etc.)"
     
-    echo -e "\n\033[1;31mTunnel:\033[0m"
+
+    echo -e "\033[1;31m+-----------------Tunnel-----------------+\033[0m"
     echo -e "\e[1;34mCombine local tunnels (IPv4-IPv6) with Backhaul, GOST, WSS, etc., for enhanced stealth and obfuscation.\e[0m"
     echo -e "\033[1;32m26.\033[0m SIT tunnel 6to4 (IPV6 local)"
     echo -e "\033[1;32m28.\033[0m GRE tunnel (IPV4/IPV6 local)"
@@ -4271,16 +4273,21 @@ main_menu() {
     echo -e "\033[1;32m44.\033[0m GOST tunnel (SSH,h2,gRPC,WSS,WS,QUIC,KCP)"
     echo -e "\033[1;32m47.\033[0m WSS,WS tunnel (CDN support)"
 
-    echo -e "\n\033[1;31mXray panel:\033[0m"
+   
+    echo -e "\033[1;31m+---------------Xray panel-----------------+\033[0m"
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
+    echo -e "\033[1;31m+-----------------------------------------+\033[0m"
     echo -e "\033[1;32m39.\033[0m Marzban panel"
     echo -e "\033[1;32m40.\033[0m Marzban node by v2"
     echo -e "\033[1;32m53.\033[0m Marzban node official script"
     echo -e "\033[1;32m52.\033[0m Marzban node by Mehrdad"
+    echo -e "\033[1;31m+-----------------------------------------+\033[0m"
     echo -e "\033[1;32m48.\033[0m Remnawave"
+    echo -e "\033[1;31m+-----------------------------------------+\033[0m"
     echo -e "\033[1;32m49.\033[0m Marzneshin"
     echo -e "\033[1;32m50.\033[0m Marzneshin node by ErfJab"
     echo -e "\033[1;32m51.\033[0m Marzneshin node by Mehrdad"
+    echo -e "\033[1;31m+-----------------------------------------+\033[0m"
     echo -e "\033[1;32m41.\033[0m Panel Backup (Marzban,X-UI,Hiddify,Marzneshin)+transfer panel data"
     echo -e "\033[1;32m42.\033[0m Auto panel restart"
     echo -e "\033[1;31m0.\033[0m Exit"
