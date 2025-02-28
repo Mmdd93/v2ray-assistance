@@ -8,6 +8,8 @@ elif [ -d "/root/Marzban-node" ]; then
     MARZBAN_NODE_DIR="/root/Marzban-node"
 elif [ -d "$HOME/Marzban-node" ]; then
     MARZBAN_NODE_DIR="$HOME/Marzban-node"
+elif [ -d "/root/marzban-node" ]; then
+    MARZBAN_NODE_DIR="/root/marzban-node"
 else
     echo "No Marzban-node directory found. Skipping..."
     MARZBAN_NODE_DIR=""
@@ -17,6 +19,7 @@ fi
 if [ -n "$MARZBAN_NODE_DIR" ]; then
     echo "Found Marzban node directory: $MARZBAN_NODE_DIR"
 fi
+
 
 
 MARZBAN_NODE_DATA_DIR="/var/lib/marzban-node"
