@@ -25,6 +25,7 @@ fi
 
 
 MARZBAN_NODE_DATA_DIR="/var/lib/marzban-node"
+
 # Color definitions
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -40,14 +41,16 @@ manage_marzban_node() {
         echo -e "\033[1;33m        Manage Marzban Node\033[0m"
         echo -e "\033[1;36m============================================\033[0m"
         echo -e "\033[1;32m1.\033[0m Setup Marzban-node"
-	echo -e "\033[1;32m2.\033[0m Edit node ports"
+	echo -e "\033[1;32m2.\033[0m Change node ports"
 	echo -e "\033[1;32m3.\033[0m Edit node certificates"
 	echo -e "\033[1;32m4.\033[0m Edit docker-compose.yml with nano"
 	echo -e "\033[1;32m5.\033[0m Restart Docker Compose services"
 	echo -e "\033[1;32m6.\033[0m Download custom Xray version"
 	echo -e "\033[1;32m7.\033[0m Enable/disable custom Xray version"
 	echo -e "\033[1;32m8.\033[0m Update Marzban Node"
- 	echo -e "\033[1;32m9.\033[0m setup Marzban Node traffic limit"
+ 	echo -e "\033[1;32m9.\033[0m Setup Marzban Node traffic limit"
+  echo -e "\033[1;32m10.\033[0m Stop Marzban Node"
+  echo -e "\033[1;32m11.\033[0m Uninstall Marzban Node"
 	echo -e "\033[1;32m0.\033[0m Return"
         read -p "Enter your choice: " choice
 
@@ -66,6 +69,8 @@ manage_marzban_node() {
             8) update_marzban_node ;;
 	    9) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/setup_node_traffic.sh -o setup_node_traffic.sh
 		sudo bash setup_node_traffic.sh ;;
+            10) down_docker_compose ;;
+            11) uninstall_docker_compose ;;
             0) return ;;
             *) echo -e "\033[1;31mInvalid choice. Please enter a number between 1 and 10.\033[0m" ;;
         esac
@@ -74,6 +79,67 @@ manage_marzban_node() {
         read
     done
 }
+
+down_docker_compose() {
+    local current_dir
+    current_dir=$(pwd)
+    
+    cd "$MARZBAN_NODE_DIR"
+    
+    if [ ! -f docker-compose.yml ]; then
+        echo_red "Error: docker-compose.yml not found in $MARZBAN_NODE_DIR"
+        cd "$current_dir"
+        return
+    fi
+    
+    echo_yellow "Stopping Docker Compose services..."
+    docker-compose down
+    echo_green "Docker Compose services have been stopped successfully."
+    
+    cd "$current_dir"
+}
+
+uninstall_docker_compose() {
+    local current_dir
+    current_dir=$(pwd)
+    
+    cd "$MARZBAN_NODE_DIR"
+    
+    if [ ! -f docker-compose.yml ]; then
+        echo_red "Error: docker-compose.yml not found in $MARZBAN_NODE_DIR"
+        cd "$current_dir"
+        return
+    fi
+    
+    echo_yellow "Stopping and uninstalling Docker Compose services..."
+    docker-compose down --volumes --remove-orphans
+    echo_green "Docker Compose services and volumes have been uninstalled successfully."
+    
+    # Prompt to remove Marzban node directory
+    read -p "Do you want to remove the Marzban node directory ($MARZBAN_NODE_DIR)? (yes/no): " remove_node_dir_choice
+    
+    if [[ "$remove_node_dir_choice" == "yes" ]]; then
+        echo_yellow "Removing Marzban node directory..."
+        rm -rf "$MARZBAN_NODE_DIR"
+        echo_green "Marzban node directory has been removed successfully."
+    else
+        echo_blue "Skipping the removal of Marzban node directory."
+    fi
+    
+    # Prompt to remove Marzban data directory
+    read -p "Do you want to remove the Marzban data directory ($MARZBAN_NODE_DATA_DIR)? (yes/no): " remove_data_dir_choice
+    
+    if [[ "$remove_data_dir_choice" == "yes" ]]; then
+        echo_yellow "Removing Marzban data directory..."
+        rm -rf "$MARZBAN_NODE_DATA_DIR"
+        echo_green "Marzban data directory has been removed successfully."
+    else
+        echo_blue "Skipping the removal of Marzban data directory."
+    fi
+    
+    cd "$current_dir"
+}
+
 install_docker() {
     # Check if Docker is installed
     echo "Checking if Docker is installed..."
