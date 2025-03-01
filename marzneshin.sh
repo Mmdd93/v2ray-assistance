@@ -19,7 +19,7 @@ marzneshin_commands() {
         echo -e "\033[1;32m9.\033[0m Update marzneshin"
         echo -e "\033[1;32m10.\033[0m Uninstall marzneshin"
         echo -e "\033[1;32m11.\033[0m Install marzneshin script"
-        echo -e "\033[1;32m12.\033[0m Update/Change Xray core"
+        #echo -e "\033[1;32m12.\033[0m Update/Change Xray core"
         echo -e "\033[1;32m13.\033[0m Edit .env"
         echo -e "\033[1;32m14.\033[0m Edit docker-compose.yml"
 	echo -e "\033[1;32m15.\033[0m Change database to MYSQL or change MYSQL password "
