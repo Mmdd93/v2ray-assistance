@@ -357,9 +357,9 @@ change_db_password() {
         done
 
         # Ask for the MySQL root password twice
-        read -p "Enter the MySQL root password: " db_password_1
+        read -p "Enter the MySQL new root password: " db_password_1
         echo
-        read -p "Confirm the MySQL root password: " db_password_2
+        read -p "Confirm the MySQL new root password: " db_password_2
         echo
 
         # Check if both passwords match
