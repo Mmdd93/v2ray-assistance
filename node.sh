@@ -1561,28 +1561,25 @@ backup_menu() {
 
     read -p "Choose an option [1-5]: " choice
 
-    # Script 1: Transfer-me backup script
-    script_1="sudo bash -c \"\$(curl -sL https://github.com/iamtheted/transfer-me/raw/main/install.sh)\""
-
-    # Script 2: Backuper backup script
-    script_2="sudo bash -c \"\$(curl -sL https://github.com/erfjab/Backuper/raw/master/install.sh)\""
-
-    # Script 3: AC-Lover backup script
-    script_3="sudo bash -c \"\$(curl -sL https://github.com/AC-Lover/backup/raw/main/backup.sh)\""
 
     case $choice in
        
         1)
             echo -e "\033[1;32mRunning Backup Script 1 (Backuper)...\033[0m"
-            eval $script_2 || { echo -e "\033[1;31mError running Backup Script 1.\033[0m"; return 1; }
+            curl -Ls https://github.com/erfjab/Backuper/raw/refs/heads/master/backuper.sh -o backuperErfan.sh
+            sudo bash backuperErfan.sh ;;
             ;;
         2)
             echo -e "\033[1;32mRunning Backup Script 2 (AC-Lover)...\033[0m"
-            eval $script_3 || { echo -e "\033[1;31mError running Backup Script 2.\033[0m"; return 1; }
+	    
+            curl -Ls https://github.com/AC-Lover/backup/raw/main/backup.sh -o AcLoverBackup.sh
+            sudo bash AcLoverBackup.sh ;;
             ;;
 	 3)
             echo -e "\033[1;32mRunning Script 3 (Transfer-me)...\033[0m"
-            eval $script_1 || { echo -e "\033[1;31mError running Script 3.\033[0m"; return 1; }
+	    
+            curl -Ls https://github.com/iamtheted/transfer-me/raw/main/install.sh -o Transfer-me.sh
+            sudo bash Transfer-me.sh ;;
             ;;
         0)
             echo -e "\033[1;32mReturning to the Main Menu...\033[0m"
