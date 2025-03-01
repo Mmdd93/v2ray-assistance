@@ -333,12 +333,29 @@ else
 fi    
 }
 change_db_password() {
-    echo -e "\033[1;33mEnter the new password for the MySQL root user:\033[0m"
-    read -s new_db_password
+    if [[ -f "$compose_file" ]]; then
+        echo -e "\033[1;34mUpdating Docker Compose configuration...\033[0m"
+	# Ask for the MySQL root password twice
+    read -p "Enter the MySQL root password: " db_password_1
+    echo
+    read -p "Confirm the MySQL root password: " db_password_2
+    echo
+
+    # Check if both passwords match
+    if [[ "$db_password_1" != "$db_password_2" ]]; then
+        echo -e "\033[1;31mError: Passwords do not match. Please try again.\033[0m"
+        return 1
+    fi
+
+    # Ensure the password is not empty
+    if [[ -z "$db_password_1" ]]; then
+        echo -e "\033[1;31mError: Password cannot be empty.\033[0m"
+        return 1
+    fi
     echo -e "\033[1;34mChanging MySQL root password...\033[0m"
     
     # Run the docker exec command to change the MySQL password
-    docker exec -it marzneshin-db-1 mysql -u root -p -e "ALTER USER 'root'@'%' IDENTIFIED BY '$new_db_password'; FLUSH PRIVILEGES;"
+    docker exec -it marzneshin-db-1 mysql -u root -p -e "ALTER USER 'root'@'%' IDENTIFIED BY '$db_password_1'; FLUSH PRIVILEGES;"
     
     # Notify the user that the password has been changed
     echo -e "\033[1;32mMySQL root password has been updated successfully.\033[0m"
@@ -347,11 +364,21 @@ change_db_password() {
     echo -e "\033[1;34mUpdating the Docker Compose file with the new password...\033[0m"
     
     # Use sed to replace the password in the compose file
-    sed -i "s|MYSQL_ROOT_PASSWORD: .*|MYSQL_ROOT_PASSWORD: $new_db_password|" "$compose_file"
-    sed -i "s|SQLALCHEMY_DATABASE_URL: \"mysql+pymysql://root:.*@127.0.0.1/marzneshin\"|SQLALCHEMY_DATABASE_URL: \"mysql+pymysql://root:$new_db_password@127.0.0.1/marzneshin\"|" "$compose_file"
+    sed -i "s|MYSQL_ROOT_PASSWORD: .*|MYSQL_ROOT_PASSWORD: $db_password_1|" "$compose_file"
+    sed -i "s|SQLALCHEMY_DATABASE_URL: \"mysql+pymysql://root:.*@127.0.0.1/marzneshin\"|SQLALCHEMY_DATABASE_URL: \"mysql+pymysql://root:$db_password_1@127.0.0.1/marzneshin\"|" "$compose_file"
 
     # Notify the user that the compose file has been updated
     echo -e "\033[1;32mDocker Compose file has been updated with the new password.\033[0m"
+    echo -e "\033[1;33mDo you want to restart Marzneshin? (yes/no)\033[0m"
+read restart_choice
+if [[ "$restart_choice" == "yes" ]]; then
+    # Restart Marzban
+    echo -e "\033[1;34mRestarting Marzban...\033[0m"
+    # Add your command to restart Marzban here, for example:
+    sudo marzneshin restart 
+else
+    echo -e "\033[1;34m Marzneshin restart skipped.\033[0m"
+fi 
 }
 
 
