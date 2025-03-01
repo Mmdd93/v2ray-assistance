@@ -22,7 +22,7 @@ marzneshin_commands() {
         echo -e "\033[1;32m12.\033[0m Update/Change Xray core"
         echo -e "\033[1;32m13.\033[0m Edit .env"
         echo -e "\033[1;32m14.\033[0m Edit docker-compose.yml"
-	echo -e "\033[1;32m15.\033[0m Change database to MYSQL"
+	echo -e "\033[1;32m15.\033[0m Change database to MYSQL or change MYSQL password "
         echo -e "\033[1;32m0.\033[0m Return to the main menu"
 
         echo -e "\033[1;36m============================================\033[0m"
@@ -336,6 +336,26 @@ change_db_password() {
     if [[ -f "$compose_file" ]]; then
         echo -e "\033[1;34mUpdating Docker Compose configuration...\033[0m"
         
+        # Find all MySQL containers
+        containers=$(docker ps -a --filter "ancestor=mysql" --format "{{.ID}}: {{.Names}}")
+        
+        # If no containers found, notify and exit
+        if [[ -z "$containers" ]]; then
+            echo -e "\033[1;31mError: No MySQL containers found.\033[0m"
+            return 1
+        fi
+
+        # Display the containers for selection
+        echo -e "\033[1;34mSelect a MySQL container:\033[0m"
+        select container in $containers; do
+            if [[ -n "$container" ]]; then
+                selected_container=$(echo "$container" | cut -d: -f1)  # Extract container ID
+                break
+            else
+                echo -e "\033[1;31mInvalid selection, please choose a valid container.\033[0m"
+            fi
+        done
+
         # Ask for the MySQL root password twice
         read -p "Enter the MySQL root password: " db_password_1
         echo
@@ -357,7 +377,7 @@ change_db_password() {
         echo -e "\033[1;34mChanging MySQL root password...\033[0m"
         
         # Run the docker exec command to change the MySQL password
-        docker exec -it marzneshin-db-1 mysql -u root -p -e "ALTER USER 'root'@'%' IDENTIFIED BY '$db_password_1'; FLUSH PRIVILEGES;"
+        docker exec -it "$selected_container" mysql -u root -p -e "ALTER USER 'root'@'%' IDENTIFIED BY '$db_password_1'; FLUSH PRIVILEGES;"
         
         # Notify the user that the password has been changed
         echo -e "\033[1;32mMySQL root password has been updated successfully.\033[0m"
@@ -389,6 +409,7 @@ change_db_password() {
         return 1
     fi
 }
+
 
 
 update_env_variables() {
