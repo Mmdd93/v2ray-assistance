@@ -274,11 +274,23 @@ update_docker_compose() {
         echo -e "\033[1;31mError: Password cannot be empty.\033[0m"
         return 1
     fi
-
+ # Ask for image version (latest or nightly)
+        echo -e "\033[1;33mWhich version of Marzneshin do you want to use?\033[0m"
+        select version in "latest" "nightly"; do
+            case $version in
+                latest|nightly)
+                    image_version=$version
+                    break
+                    ;;
+                *)
+                    echo -e "\033[1;31mInvalid selection. Please choose latest or nightly.\033[0m"
+                    ;;
+            esac
+        done
         cat <<EOL > "$compose_file"
 services:
   marzneshin:
-    image: dawsh/marzneshin:latest
+    image: dawsh/marzneshin:$image_version
     restart: always
     env_file: .env
     environment:
