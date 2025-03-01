@@ -1550,47 +1550,43 @@ webtop() {
         esac
     done
 }
-# Backup Menu Function
 backup_menu() {
-    echo -e "\033[1;34mXray panel backup Menu:\033[0m"
+    echo -e "\033[1;34mXray Panel Backup Menu:\033[0m"
     
     echo -e "\033[1;32m1.\033[0m Backup by Erfan (Marzban, X-ui, Hiddify, Marzneshin, Custom data)"
     echo -e "\033[1;32m2.\033[0m Backup by AC-Lover (Marzban, X-ui, Hiddify)"
     echo -e "\033[1;32m3.\033[0m Transfer panel data (Marzban, X-UI, Hiddify) to another server"
     echo -e "\033[1;32m0.\033[0m Return to Main Menu"
 
-    read -p "Choose an option [1-5]: " choice
-
+    read -p "Choose an option [0-3]: " choice
 
     case $choice in
-       
         1)
             echo -e "\033[1;32mRunning Backup Script 1 (Backuper)...\033[0m"
             curl -Ls https://github.com/erfjab/Backuper/raw/refs/heads/master/backuper.sh -o backuperErfan.sh
-            sudo bash backuperErfan.sh ;;
+            sudo bash backuperErfan.sh
             ;;
         2)
             echo -e "\033[1;32mRunning Backup Script 2 (AC-Lover)...\033[0m"
-	    
             curl -Ls https://github.com/AC-Lover/backup/raw/main/backup.sh -o AcLoverBackup.sh
-            sudo bash AcLoverBackup.sh ;;
+            sudo bash AcLoverBackup.sh
             ;;
-	 3)
+        3)
             echo -e "\033[1;32mRunning Script 3 (Transfer-me)...\033[0m"
-	    
             curl -Ls https://github.com/iamtheted/transfer-me/raw/main/install.sh -o Transfer-me.sh
-            sudo bash Transfer-me.sh ;;
+            sudo bash Transfer-me.sh
             ;;
         0)
             echo -e "\033[1;32mReturning to the Main Menu...\033[0m"
-            main_menu  # Assuming this is defined elsewhere in your script
+            main_menu  # Ensure `main_menu` is defined elsewhere in your script
             ;;
         *)
-            echo -e "\033[1;31mInvalid option, please choose a valid option [1-5].\033[0m"
+            echo -e "\033[1;31mInvalid option, please choose a valid option [0-3].\033[0m"
             backup_menu  # Recursively call the menu if an invalid option is selected
             ;;
     esac
 }
+
 #mysql
 # Define file paths
 env_file="/opt/marzban/.env"
