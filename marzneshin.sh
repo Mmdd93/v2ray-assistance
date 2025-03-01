@@ -331,6 +331,7 @@ EOL
     echo -e "\033[1;32mDocker Compose updated successfully.\033[0m"
     else
         echo -e "\033[1;31mError: $compose_file not found.\033[0m"
+	return
     fi
     
 echo -e "\033[1;33mDo you want to restart Marzneshin? (yes/no)\033[0m"
