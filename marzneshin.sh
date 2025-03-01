@@ -320,6 +320,11 @@ EOL
     else
         echo -e "\033[1;31mError: $compose_file not found.\033[0m"
     fi
+    docker exec -it marzneshin-db-1 mysql -u root -p
+    ALTER USER 'root'@'%' IDENTIFIED BY '$db_password_1';
+FLUSH PRIVILEGES;
+exit
+exit
 echo -e "\033[1;33mDo you want to restart Marzneshin? (yes/no)\033[0m"
 read restart_choice
 if [[ "$restart_choice" == "yes" ]]; then
