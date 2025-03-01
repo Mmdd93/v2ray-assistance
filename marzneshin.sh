@@ -330,10 +330,30 @@ if [[ "$restart_choice" == "yes" ]]; then
     sudo marzneshin restart 
 else
     echo -e "\033[1;34m Marzneshin restart skipped.\033[0m"
-fi
-
-    
+fi    
 }
+change_db_password() {
+    echo -e "\033[1;33mEnter the new password for the MySQL root user:\033[0m"
+    read -s new_db_password
+    echo -e "\033[1;34mChanging MySQL root password...\033[0m"
+    
+    # Run the docker exec command to change the MySQL password
+    docker exec -it marzneshin-db-1 mysql -u root -p -e "ALTER USER 'root'@'%' IDENTIFIED BY '$new_db_password'; FLUSH PRIVILEGES;"
+    
+    # Notify the user that the password has been changed
+    echo -e "\033[1;32mMySQL root password has been updated successfully.\033[0m"
+    
+    # Update only the password-related parts in the compose file
+    echo -e "\033[1;34mUpdating the Docker Compose file with the new password...\033[0m"
+    
+    # Use sed to replace the password in the compose file
+    sed -i "s|MYSQL_ROOT_PASSWORD: .*|MYSQL_ROOT_PASSWORD: $new_db_password|" "$compose_file"
+    sed -i "s|SQLALCHEMY_DATABASE_URL: \"mysql+pymysql://root:.*@127.0.0.1/marzneshin\"|SQLALCHEMY_DATABASE_URL: \"mysql+pymysql://root:$new_db_password@127.0.0.1/marzneshin\"|" "$compose_file"
+
+    # Notify the user that the compose file has been updated
+    echo -e "\033[1;32mDocker Compose file has been updated with the new password.\033[0m"
+}
+
 
 update_env_variables() {
     # Ask for the MySQL root password twice
@@ -480,8 +500,8 @@ transfer_data() {
 mysql() {
     while true; do
         echo -e "\033[1;34mChange database to MySql:\033[0m"
-        echo -e "\033[1;32m1.\033[0m Update Docker Compose for mysql"
-        #echo -e "\033[1;32m2.\033[0m Update env for mysql"
+        echo -e "\033[1;32m1.\033[0m change database to MySQL (edit Docker Compose)"
+        echo -e "\033[1;32m2.\033[0m change MySQL database password (edit Docker Compose)"
         echo -e "\033[1;32m3.\033[0m Create Backup"
         echo -e "\033[1;32m4.\033[0m Restore backup"
         echo -e "\033[1;32m5.\033[0m Transfer data from SQLite to MySQL"
@@ -494,7 +514,7 @@ mysql() {
 
         case $choice in
             1) update_docker_compose ;;
-            #2) update_env_variables ;;
+            2) change_db_password ;;
             3) backup_essential_folders ;;
             4) restore_from_backup ;;
             5) transfer_data ;;
