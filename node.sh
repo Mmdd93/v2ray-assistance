@@ -161,9 +161,26 @@ docker_install_menu() {
     done
 }
 set -euo pipefail
+# Define color functions
+echo_green() {
+    echo -e "\033[1;32m$1\033[0m"
+}
+
+echo_yellow() {
+    echo -e "\033[1;33m$1\033[0m"
+}
+
+echo_red() {
+    echo -e "\033[1;31m$1\033[0m"
+}
+
+echo_blue() {
+    echo -e "\033[1;34m$1\033[0m"
+}
+
 install_docker() {
     # Check if Docker is installed
-    echo "Checking if Docker is installed..."
+    echo_yellow "Checking if Docker is installed..."
     if ! command -v docker &> /dev/stdout; then
         echo_yellow "Docker is not installed. Installing Docker..."
 
@@ -197,7 +214,7 @@ install_docker() {
 
         if [[ "$update_choice" == "yes" ]]; then
             # Ask the user for how they want to update Docker (selectable options)
-            echo "Choose an option to update Docker:"
+            echo_yellow "Choose an option to update Docker:"
             echo "1. Update Docker using the Docker installation script"
             echo "2. Update Docker via normal apt upgrade"
             echo "3. Skip Docker update"
@@ -239,7 +256,7 @@ install_docker() {
     fi
 
     # Check if Docker is running
-    echo "Checking if Docker is running..."
+    echo_yellow "Checking if Docker is running..."
     if ! sudo systemctl is-active --quiet docker; then
         echo_yellow "Docker is not running. Attempting to start Docker..."
 
@@ -257,6 +274,7 @@ install_docker() {
     echo_green "Docker is running and enabled at startup."
     sudo systemctl status docker | grep "Active:"  # Display only the 'Active' status line
 }
+
 
 
 
