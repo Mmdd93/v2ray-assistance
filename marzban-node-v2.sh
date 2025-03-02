@@ -341,7 +341,7 @@ check_docker_compose() {
 setup_marzban_node() {
     if [ -d "$MARZBAN_NODE_DIR" ]; then
         echo_red "! marzban node directory already exists !"
-        read -p "Do you want to remove the Marzban node directory ($MARZBAN_NODE_DIR)? (Yes/no): " remove_node_dir_choice
+        read -p "Do you want to remove the Marzban node directory ($MARZBAN_NODE_DIR)? (Yes/no) [defualt yes]: " remove_node_dir_choice
         remove_node_dir_choice=${remove_node_dir_choice:-yes}  # Default to "yes" if empty
 
         if [[ "$remove_node_dir_choice" =~ ^[Yy]([Ee][Ss])?$ ]]; then
@@ -355,7 +355,7 @@ setup_marzban_node() {
 
     if [ -d "$MARZBAN_NODE_DATA_DIR" ]; then
     echo_red "! marzban node data directory already exists !"
-        read -p "Do you want to remove the Marzban data directory ($MARZBAN_NODE_DATA_DIR)? (Yes/no): " remove_data_dir_choice
+        read -p "Do you want to remove the Marzban data directory ($MARZBAN_NODE_DATA_DIR)? (Yes/no) [defualt yes]: " remove_data_dir_choice
         remove_data_dir_choice=${remove_data_dir_choice:-yes}  # Default to "yes" if empty
 
         if [[ "$remove_data_dir_choice" =~ ^[Yy]([Ee][Ss])?$ ]]; then
