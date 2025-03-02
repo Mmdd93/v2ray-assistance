@@ -2707,7 +2707,11 @@ fi
 
                     # Add Docker's repository to Apt sources
                     echo -e "\033[1;32m6. Adding Docker repository to apt sources...\033[0m"
-                    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+                    echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
 
                     # Update apt package index again
                     echo -e "\033[1;32m7. Updating apt package index...\033[0m"
@@ -2715,7 +2719,7 @@ fi
 
                     # Install Docker and related components
                     echo -e "\033[1;32m8. Installing Docker CE, CLI, and related plugins...\033[0m"
-                    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin
+                    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
                     # Verify Docker installation by running the hello-world image
                     echo -e "\033[1;32m9. Verifying Docker installation by running hello-world...\033[0m"
