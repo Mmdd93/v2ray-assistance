@@ -43,6 +43,121 @@ prompt_input() {
     read -p "$prompt_text: " user_input
     echo "${user_input:-$default_value}"
 }
+docker_install_menu() {
+    while true; do
+        echo -e "\033[1;33mSelect an option:\033[0m"
+        echo "1) Install Docker (Docker official script)"
+        echo "2) Install Docker Compose"
+	echo "3) install Docker step-by-step"
+        read -p "Choose an option: " option
+        
+        case $option in
+            1)
+                install_docker
+                break
+                ;;
+            2)
+                check_docker_compose
+                break
+                ;;
+	3)
+                echo -e "\033[1;34mStarting Docker setup...\033[0m"
+
+                # Step 1: Check if Docker is already installed
+                if command -v docker &> /dev/null; then
+                    echo -e "\033[1;33m update Docker? (yes/no):\033[0m"
+                    read -p "" docker_update_response
+                    if [[ "$docker_update_response" != "yes" ]]; then
+                        echo -e "\033[1;34mDocker setup aborted.\033[0m"
+                        continue
+                    fi
+                fi
+
+                # Docker installation process
+                {
+                    # Update the apt package index
+                    echo -e "\033[1;32m1. Updating apt package index...\033[0m"
+                    sudo apt-get update
+
+                    # Install required packages
+                    echo -e "\033[1;32m2. Installing ca-certificates and curl...\033[0m"
+                    sudo apt-get install -y ca-certificates curl
+
+                    # Create keyrings directory
+                    echo -e "\033[1;32m3. Creating /etc/apt/keyrings directory...\033[0m"
+                    sudo install -m 0755 -d /etc/apt/keyrings
+
+                    # Download Docker's GPG key
+                    echo -e "\033[1;32m4. Downloading Docker's GPG key...\033[0m"
+                    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+
+                    # Set appropriate permissions on the GPG key
+                    echo -e "\033[1;32m5. Setting permissions for the GPG key...\033[0m"
+                    sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+                    # Add Docker's repository to Apt sources
+                    echo -e "\033[1;32m6. Adding Docker repository to apt sources...\033[0m"
+                    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+                    # Update apt package index again
+                    echo -e "\033[1;32m7. Updating apt package index...\033[0m"
+                    sudo apt-get update
+
+                    # Install Docker and related components
+                    echo -e "\033[1;32m8. Installing Docker CE, CLI, and related plugins...\033[0m"
+                    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin
+
+                    # Verify Docker installation by running the hello-world image
+                    echo -e "\033[1;32m9. Verifying Docker installation by running hello-world...\033[0m"
+                    sudo docker run hello-world
+                } || {
+                    echo -e "\033[1;31mAn error occurred during the installation. Please check the logs.\033[0m"
+                    continue
+                }
+
+                # Check if Docker was installed successfully
+                if command -v docker &> /dev/null; then
+                    echo -e "\033[1;32mDocker setup and verification complete.\033[0m"
+                else
+                    echo -e "\033[1;31mDocker installation failed. Please check the logs and try again.\033[0m"
+                fi
+
+                # Check for Docker Compose
+                if ! command -v docker-compose &> /dev/null; then
+                    echo -e "\033[1;33mDocker Compose is not installed. Do you want to install it? (yes/no):\033[0m"
+                    read -p "" compose_install_response
+                    if [[ "$compose_install_response" == "yes" ]]; then
+                        echo -e "\033[1;32mInstalling Docker Compose...\033[0m"
+                        {
+                            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                            sudo chmod +x /usr/local/bin/docker-compose
+                            echo -e "\033[1;32mDocker Compose installed successfully.\033[0m"
+                        } || {
+                            echo -e "\033[1;31mAn error occurred during Docker Compose installation. Please check the logs.\033[0m"
+                        }
+                    else
+                        echo -e "\033[1;34mDocker Compose installation skipped.\033[0m"
+                    fi
+                else
+                    echo -e "\033[1;32mDocker Compose is already installed.\033[0m"
+                fi
+		break
+                ;;
+            *)
+                echo -e "\033[1;31mInvalid option, please choose 1 or 2.\033[0m"
+                continue
+                ;;
+        esac
+        
+        read -p "Do you want to retry? (yes/no): " retry_choice
+        retry_choice=${retry_choice:-yes}  # Default to "yes" if empty
+        
+        if [[ "$retry_choice" == "no" ]]; then
+            echo "Exiting..."
+            break
+        fi
+    done
+}
 set -euo pipefail
 install_docker() {
     # Check if Docker is installed
@@ -4323,8 +4438,7 @@ main_menu() {
         2) fix_update_issues ;;
         3) change_sources_list ;;
         4) display_system_info ;;
-        5) install_docker
-           check_docker_compose ;;
+        5) docker_install_menu ;;
         6) setup_docker ;;
         7) isp_blocker ;;
         8) Optimizer ;;
