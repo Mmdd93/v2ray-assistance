@@ -167,7 +167,7 @@ install_docker() {
     if ! command -v docker &> /dev/stdout; then
         echo_yellow "Docker is not installed. Installing Docker..."
        
-        curl -fsSL https://get.docker.com -o get-docker.sh
+        curl -fsSL https://get.docker.com | sh
         sudo sh get-docker.sh
 
         if [ $? -eq 0 ]; then
