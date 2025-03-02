@@ -137,7 +137,8 @@ fi
 
 down_docker_compose() {
 
-    
+        local current_dir
+    current_dir=$(pwd)
     cd "$MARZBAN_NODE_DIR"
     
     if [ ! -f docker-compose.yml ]; then
@@ -150,12 +151,13 @@ down_docker_compose() {
     docker-compose down
     echo_green "Docker Compose services have been stopped successfully."
     
-    cd 
+    cd "$current_dir" || return
 }
 
 uninstall_docker_compose() {
 
-    
+        local current_dir
+    current_dir=$(pwd)
     # Check if Marzban node directory exists
     if [ ! -d "$MARZBAN_NODE_DIR" ]; then
         echo_red "Error: Marzban node directory ($MARZBAN_NODE_DIR) does not exist."
@@ -215,7 +217,7 @@ else
 fi
 
     
-    cd 
+    cd "$current_dir" || return
 }
 
 
