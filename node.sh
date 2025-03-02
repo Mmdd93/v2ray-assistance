@@ -168,7 +168,6 @@ install_docker() {
         echo_yellow "Docker is not installed. Installing Docker..."
        
         sudo curl -fsSL https://get.docker.com | sh
-        
 
         if [ $? -eq 0 ]; then
             echo_green "Docker installed successfully."
@@ -178,7 +177,6 @@ install_docker() {
                 sudo usermod -aG docker $USER
                 echo_yellow "Please log out and log back in to apply Docker group permissions."
             fi
-
         else
             echo_red "Installation of Docker failed."
             return 1
@@ -188,7 +186,57 @@ install_docker() {
         [ -f get-docker.sh ] && sudo rm get-docker.sh
     else
         echo_green "Docker is already installed."
-    fi
+
+        # Display Docker version
+        echo_yellow "Docker version:"
+        docker --version
+
+        # Ask if the user wants to update Docker
+read -p "Do you want to update Docker? (yes/no) [default: no]: " update_choice
+update_choice=${update_choice:-no}  # Default to "no" if empty
+
+if [[ "$update_choice" == "yes" ]]; then
+    # Ask the user for how they want to update Docker (selectable options)
+    echo "Choose an option to update Docker:"
+    echo "1. Update Docker using the Docker installation script"
+    echo "2. Update Docker via normal apt upgrade"
+    echo "3. Skip Docker update"
+    read -p "Enter the number corresponding to your choice (1/2/3): " update_method
+    update_method=${update_method:-3}  # Default to "3" (skip) if empty
+
+    case $update_method in
+        1)
+            echo_yellow "Updating Docker using the Docker installation script..."
+            sudo curl -fsSL https://get.docker.com | sh
+
+            if [ $? -eq 0 ]; then
+                echo_green "Docker updated successfully using the script."
+            else
+                echo_red "Error updating Docker using the script."
+            fi
+            ;;
+        2)
+            echo_yellow "Updating Docker via normal apt upgrade..."
+            sudo apt-get update
+            sudo apt-get upgrade -y docker-ce docker-ce-cli containerd.io
+
+            if [ $? -eq 0 ]; then
+                echo_green "Docker updated successfully using apt."
+            else
+                echo_red "Error updating Docker using apt."
+            fi
+            ;;
+        3)
+            echo_blue "Skipping Docker update."
+            ;;
+        *)
+            echo_red "Invalid choice. Skipping Docker update."
+            ;;
+    esac
+else
+    echo_blue "Skipping Docker update."
+fi
+
 
     # Check if Docker is running
     echo "Checking if Docker is running..."
@@ -209,8 +257,6 @@ install_docker() {
     echo_green "Docker is running and enabled at startup."
     sudo systemctl status docker | grep "Active:"  # Display only the 'Active' status line
 }
-
-
 
 
 # Function to check if Docker Compose is installed and install it if not
