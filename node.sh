@@ -161,22 +161,6 @@ docker_install_menu() {
     done
 }
 set -euo pipefail
-# Define color functions
-echo_green() {
-    echo -e "\033[1;32m$1\033[0m"
-}
-
-echo_yellow() {
-    echo -e "\033[1;33m$1\033[0m"
-}
-
-echo_red() {
-    echo -e "\033[1;31m$1\033[0m"
-}
-
-echo_blue() {
-    echo -e "\033[1;34m$1\033[0m"
-}
 
 install_docker() {
     # Check if Docker is installed
@@ -217,7 +201,7 @@ install_docker() {
             echo_yellow "Choose an option to update Docker:"
             echo "1. Update Docker using the Docker installation script"
             echo "2. Update Docker via normal apt upgrade"
-            echo "3. Skip Docker update"
+            echo "3. return"
             read -p "Enter your choice: " update_method
             update_method=${update_method:-3}  # Default to "3" (skip) if empty
 
