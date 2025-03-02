@@ -476,6 +476,10 @@ done
 
 # Function to manage Docker Compose
 manage_docker_compose() {
+local current_dir
+    current_dir=$(pwd)
+    echo_green "Changing directory to $MARZBAN_NODE_DIR..."
+    cd "$MARZBAN_NODE_DIR"
     if docker-compose ps &> /dev/null; then
         echo_red "Docker Compose is already running. Bringing it down..."
         docker-compose down --remove-orphans
@@ -486,6 +490,7 @@ manage_docker_compose() {
     echo_green "Docker containers have been started successfully!"
     # Add a delay to allow services to start up
     sleep 1
+    cd "$current_dir" || return
 }
 
 # Function to change node ports
