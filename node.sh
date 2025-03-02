@@ -218,7 +218,7 @@ install_docker() {
             echo "1. Update Docker using the Docker installation script"
             echo "2. Update Docker via normal apt upgrade"
             echo "3. Skip Docker update"
-            read -p "Enter the number corresponding to your choice (1/2/3): " update_method
+            read -p "Enter your choice: " update_method
             update_method=${update_method:-3}  # Default to "3" (skip) if empty
 
             case $update_method in
