@@ -136,8 +136,7 @@ fi
 }
 
 down_docker_compose() {
-    local current_dir
-    current_dir=$(pwd)
+
     
     cd "$MARZBAN_NODE_DIR"
     
@@ -151,12 +150,11 @@ down_docker_compose() {
     docker-compose down
     echo_green "Docker Compose services have been stopped successfully."
     
-    cd "$current_dir"
+    cd 
 }
 
 uninstall_docker_compose() {
-    local current_dir
-    current_dir=$(pwd)
+
     
     # Check if Marzban node directory exists
     if [ ! -d "$MARZBAN_NODE_DIR" ]; then
@@ -709,6 +707,8 @@ prompt_input() {
 }
 #update_marzban_node
 update_marzban_node() {
+    local current_dir
+    current_dir=$(pwd)
 
     cd $MARZBAN_NODE_DIR || { echo -e "\033[1;31mFailed to change directory to Marzban-node.\033[0m"; return; }
 
@@ -722,8 +722,10 @@ update_marzban_node() {
     docker compose up -d
 
     echo -e "\033[1;32mMarzban node update completed successfully.\033[0m"
+    cd "$current_dir"
     echo -e "\nPress Enter to return to the main menu."
     read
+
 }
 
 # Function to set or disable custom Xray version and display the installed version
