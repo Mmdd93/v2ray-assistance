@@ -275,9 +275,6 @@ install_docker() {
     sudo systemctl status docker | grep "Active:"  # Display only the 'Active' status line
 }
 
-
-
-
 check_docker_compose() {
     # Check if jq is installed
     if ! command -v jq &> /dev/null; then
@@ -337,7 +334,7 @@ check_docker_compose() {
         echo_green "Docker Compose installed successfully."
     else
         # Docker Compose is already installed
-        installed_version=$(docker-compose --version | awk '{print $3}' | sed 's/,//')
+        installed_version=$(docker-compose --version)
         echo_green "Docker Compose is already installed. Current version: $installed_version"
 
         # Fetch the latest version of Docker Compose
@@ -351,15 +348,15 @@ check_docker_compose() {
 
         # Compare the installed version with the latest version
         if [ "$installed_version" != "$latest_version" ]; then
-            echo_yellow "A new version of Docker Compose is available: $latest_version"
+            echo_yellow "last version of Docker Compose is: $latest_version"
 
             # Ask if the user wants to update
-            read -p "Do you want to update Docker Compose to version $latest_version? (yes/no) [default: no]: " update_choice
-            update_choice=${update_choice:-no}  # Default to "no" if empty
+            read -p "Do you want to update Docker Compose to $latest_version? (yes/no) [default: yes]: " update_choice
+            update_choice=${update_choice:-yes}  # Default to "no" if empty
 
             if [[ "$update_choice" == "yes" ]]; then
                 echo_yellow "Updating Docker Compose to version $latest_version..."
-                
+
                 # Download the latest Docker Compose binary to /usr/local/bin
                 sudo curl -L "https://github.com/docker/compose/releases/download/$latest_version/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 
@@ -383,11 +380,11 @@ check_docker_compose() {
                 echo_blue "Skipping Docker Compose update."
             fi
         else
+            # No update available, no need to ask
             echo_green "You are already using the latest version of Docker Compose ($installed_version)."
         fi
     fi
 }
-
 
 # Function to validate port numbers
 validate_port() {
