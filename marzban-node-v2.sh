@@ -177,39 +177,45 @@ uninstall_docker_compose() {
     docker-compose down --volumes --remove-orphans
     echo_green "Docker Compose services and volumes have been uninstalled successfully."
     
-    # Check and remove Marzban node directory
-    if [ -d "$MARZBAN_NODE_DIR" ]; then
-        read -p "Do you want to remove the Marzban node directory ($MARZBAN_NODE_DIR)? (yes/no): " remove_node_dir_choice
-        if [[ "$remove_node_dir_choice" == "yes" ]]; then
-            echo_yellow "Removing Marzban node directory..."
-            rm -rf "$MARZBAN_NODE_DIR"
-            echo_green "Marzban node directory has been removed successfully."
-        else
-            echo_blue "Skipping the removal of Marzban node directory."
-        fi
-    else
-        echo_blue "Marzban node directory does not exist, skipping removal."
-    fi
-    
-    # Check if Marzban data directory exists before prompting
-    if [ -z "$MARZBAN_NODE_DATA_DIR" ]; then
-        echo_red "Error: MARZBAN_NODE_DATA_DIR is not set."
-        cd "$current_dir"
-        return
-    fi
+   # Check and remove Marzban node directory
+if [ -n "$MARZBAN_NODE_DIR" ] && [ -d "$MARZBAN_NODE_DIR" ]; then
+    read -p "Do you want to remove the Marzban node directory ($MARZBAN_NODE_DIR)? (yes/no) [default: yes]: " remove_node_dir_choice
+    remove_node_dir_choice=${remove_node_dir_choice:-yes}  # Default to "yes" if empty
 
-    if [ -d "$MARZBAN_NODE_DATA_DIR" ]; then
-        read -p "Do you want to remove the Marzban data directory ($MARZBAN_NODE_DATA_DIR)? (yes/no): " remove_data_dir_choice
-        if [[ "$remove_data_dir_choice" == "yes" ]]; then
-            echo_yellow "Removing Marzban data directory..."
-            rm -rf "$MARZBAN_NODE_DATA_DIR"
-            echo_green "Marzban data directory has been removed successfully."
-        else
-            echo_blue "Skipping the removal of Marzban data directory."
-        fi
+    if [[ "$remove_node_dir_choice" == "yes" ]]; then
+        echo_yellow "Removing Marzban node directory..."
+        rm -rf "$MARZBAN_NODE_DIR"
+        echo_green "Marzban node directory has been removed successfully."
     else
-        echo_blue "Marzban data directory does not exist, skipping removal."
+        echo_blue "Skipping the removal of Marzban node directory."
     fi
+else
+    echo_blue "Marzban node directory does not exist, skipping removal."
+fi
+
+# Check if MARZBAN_NODE_DATA_DIR is set
+if [ -z "$MARZBAN_NODE_DATA_DIR" ]; then
+    echo_red "Error: MARZBAN_NODE_DATA_DIR is not set."
+    cd "$current_dir"
+    return
+fi
+
+# Check and remove Marzban data directory
+if [ -d "$MARZBAN_NODE_DATA_DIR" ]; then
+    read -p "Do you want to remove the Marzban data directory ($MARZBAN_NODE_DATA_DIR)? (yes/no) [default: yes]: " remove_data_dir_choice
+    remove_data_dir_choice=${remove_data_dir_choice:-yes}  # Default to "yes" if empty
+
+    if [[ "$remove_data_dir_choice" == "yes" ]]; then
+        echo_yellow "Removing Marzban data directory..."
+        rm -rf "$MARZBAN_NODE_DATA_DIR"
+        echo_green "Marzban data directory has been removed successfully."
+    else
+        echo_blue "Skipping the removal of Marzban data directory."
+    fi
+else
+    echo_blue "Marzban data directory does not exist, skipping removal."
+fi
+
     
     cd "$current_dir"
 }
@@ -438,8 +444,18 @@ EOF
 	for ((i = 1; i <= NUM_NODES; i++)); do
     CERT_FILE="$MARZBAN_NODE_DATA_DIR/ssl_client_cert_$i.pem"
 
-    # Prompt the user to press Enter to continue
-    read -p "Press Enter to edit the  marzban-node-$i certificate with nano .."
+    echo -ne "\rPress Enter to edit the marzban-node-$i certificate with nano "
+
+# Animated blinking effect while waiting for Enter key
+while true; do
+    for s in " " "."; do
+        echo -ne "\rPress Enter to edit the marzban-node-$i certificate with nano $s"
+        read -t 0.5 -n 1 key && break 2
+    done
+done
+
+echo_green "\rEditing the marzban-node-$i certificate with nano...  "  # Clear blinking text
+sleep 1
 
     # Open the certificate file with nano
     sudo nano "$CERT_FILE"
