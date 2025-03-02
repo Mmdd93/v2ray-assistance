@@ -269,6 +269,8 @@ install_docker() {
     # Display the current Docker status
     echo_green "Docker is running and enabled at startup."
     sudo systemctl status docker | grep "Active:"  # Display only the 'Active' status line
+    echo_yellow "Docker version:"
+        docker --version
 }
 check_docker_compose() {
     # Check if jq is installed
