@@ -271,12 +271,10 @@ install_docker() {
     sudo systemctl status docker | grep "Active:"  # Display only the 'Active' status line
 }
 
-# Function to check if Docker Compose is installed and install it if not
 check_docker_compose() {
     # Check if jq is installed
     if ! command -v jq &> /dev/null; then
         echo_yellow "jq is not installed. Installing now..."
-     
 
         # Install jq based on the package manager available
         if command -v apt-get &> /dev/null; then
@@ -287,13 +285,11 @@ check_docker_compose() {
             brew install jq
         else
             echo_red "Could not determine package manager. Please install jq manually."
-          
             return 1
         fi
 
         if ! command -v jq &> /dev/null; then
             echo_red "Failed to install jq."
-          
             return 1
         fi
     fi
@@ -302,47 +298,89 @@ check_docker_compose() {
     if ! command -v docker-compose &> /dev/null; then
         # Docker Compose is not installed
         echo_yellow "Docker Compose is not installed. Installing now..."
-     
 
         # Fetch the latest version of Docker Compose using GitHub API and jq to parse JSON
         latest_version=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r '.tag_name')
-        
+
         # Check if fetching the latest version was successful
         if [ -z "$latest_version" ]; then
             echo_red "Failed to fetch the latest Docker Compose version."
-          
             return 1
         fi
 
         # Download the latest Docker Compose binary to /usr/local/bin
         sudo curl -L "https://github.com/docker/compose/releases/download/$latest_version/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-        
+
         # Check if the download was successful
         if [ $? -ne 0 ]; then
             echo_red "Failed to download Docker Compose."
-           
             return 1
         fi
 
         # Make the Docker Compose binary executable
         sudo chmod +x /usr/local/bin/docker-compose
-        
+
         # Verify that Docker Compose was installed correctly
         if ! docker-compose --version &> /dev/null; then
             echo_red "Failed to install Docker Compose."
-         
             return 1
         fi
 
         # Installation successful
         echo_green "Docker Compose installed successfully."
-       
     else
         # Docker Compose is already installed
-        echo_green "Docker Compose is already installed."
-     
+        installed_version=$(docker-compose --version | awk '{print $3}' | sed 's/,//')
+        echo_green "Docker Compose is already installed. Current version: $installed_version"
+
+        # Fetch the latest version of Docker Compose
+        latest_version=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r '.tag_name')
+
+        # Check if fetching the latest version was successful
+        if [ -z "$latest_version" ]; then
+            echo_red "Failed to fetch the latest Docker Compose version."
+            return 1
+        fi
+
+        # Compare the installed version with the latest version
+        if [ "$installed_version" != "$latest_version" ]; then
+            echo_yellow "A new version of Docker Compose is available: $latest_version"
+
+            # Ask if the user wants to update
+            read -p "Do you want to update Docker Compose to version $latest_version? (yes/no) [default: no]: " update_choice
+            update_choice=${update_choice:-no}  # Default to "no" if empty
+
+            if [[ "$update_choice" == "yes" ]]; then
+                echo_yellow "Updating Docker Compose to version $latest_version..."
+                
+                # Download the latest Docker Compose binary to /usr/local/bin
+                sudo curl -L "https://github.com/docker/compose/releases/download/$latest_version/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+                # Check if the download was successful
+                if [ $? -ne 0 ]; then
+                    echo_red "Failed to download Docker Compose."
+                    return 1
+                fi
+
+                # Make the Docker Compose binary executable
+                sudo chmod +x /usr/local/bin/docker-compose
+
+                # Verify the update
+                if ! docker-compose --version &> /dev/null; then
+                    echo_red "Failed to update Docker Compose."
+                    return 1
+                fi
+
+                echo_green "Docker Compose updated successfully to version $latest_version."
+            else
+                echo_blue "Skipping Docker Compose update."
+            fi
+        else
+            echo_green "You are already using the latest version of Docker Compose ($installed_version)."
+        fi
     fi
 }
+
 # Function to install marzban node
 setup_marzban_node() {
 local current_dir
