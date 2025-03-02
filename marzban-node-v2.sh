@@ -340,14 +340,33 @@ check_docker_compose() {
 # Function to install marzban node
 setup_marzban_node() {
     if [ -d "$MARZBAN_NODE_DIR" ]; then
-        echo_red "Removing existing directory $MARZBAN_NODE_DIR..."
-        rm -rf "$MARZBAN_NODE_DIR"
+        echo_red "! $MARZBAN_NODE_DIR directory already exists !"
+        read -p "Do you want to remove the Marzban node directory ($MARZBAN_NODE_DIR)? (Yes/no): " remove_node_dir_choice
+        remove_node_dir_choice=${remove_node_dir_choice:-yes}  # Default to "yes" if empty
+
+        if [[ "$remove_node_dir_choice" =~ ^[Yy]([Ee][Ss])?$ ]]; then
+            echo_red "Removing existing directory $MARZBAN_NODE_DIR..."
+            rm -rf "$MARZBAN_NODE_DIR"
+            echo_green "Marzban node directory has been removed."
+        else
+            echo_blue "Skipping the removal of Marzban node directory."
+        fi
     fi
 
     if [ -d "$MARZBAN_NODE_DATA_DIR" ]; then
-        echo_red "Removing existing directory $MARZBAN_NODE_DATA_DIR..."
-        sudo rm -rf "$MARZBAN_NODE_DATA_DIR"
+    echo_red "! $MARZBAN_NODE_DATA_DIR directory already exists !"
+        read -p "Do you want to remove the Marzban data directory ($MARZBAN_NODE_DATA_DIR)? (Yes/no): " remove_data_dir_choice
+        remove_data_dir_choice=${remove_data_dir_choice:-yes}  # Default to "yes" if empty
+
+        if [[ "$remove_data_dir_choice" =~ ^[Yy]([Ee][Ss])?$ ]]; then
+            echo_red "Removing existing directory $MARZBAN_NODE_DATA_DIR..."
+            sudo rm -rf "$MARZBAN_NODE_DATA_DIR"
+            echo_green "Marzban data directory has been removed."
+        else
+            echo_blue "Skipping the removal of Marzban data directory."
+        fi
     fi
+
 
     echo_green "Cloning the Marzban-node repository..."
     git clone https://github.com/Gozargah/Marzban-node "$MARZBAN_NODE_DIR"
