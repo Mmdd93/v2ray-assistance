@@ -217,7 +217,7 @@ else
 fi
 
     
-    cd "$current_dir"
+    cd 
 }
 
 
