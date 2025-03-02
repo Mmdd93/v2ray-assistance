@@ -345,6 +345,8 @@ check_docker_compose() {
 }
 # Function to install marzban node
 setup_marzban_node() {
+local current_dir
+    current_dir=$(pwd)
     if [ -d "$MARZBAN_NODE_DIR" ]; then
         echo_red "! marzban node directory already exists !"
         read -p "Do you want to remove the Marzban node directory ($MARZBAN_NODE_DIR)? (Yes/no) [defualt yes]: " remove_node_dir_choice
@@ -467,6 +469,7 @@ done
 
 	# Restart Docker Compose after setup
     restart_docker_compose
+    cd "$current_dir" || return
 }
 
 
