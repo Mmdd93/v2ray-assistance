@@ -4544,6 +4544,7 @@ main_menu() {
     echo -e "\033[1;32m50.\033[0m Marzneshin node by ErfJab"
     echo -e "\033[1;32m51.\033[0m Marzneshin node by Mehrdad"
     echo -e "\033[1;34m+-----------------------------------------+\033[0m"
+    echo -e "\033[1;32m54.\033[0m SoftEther by RTX-VPN v2 (L2TP, OpenVPN, SSTP)"
     echo -e "\033[1;32m41.\033[0m Panel Backup (Marzban,X-UI,Hiddify,Marzneshin)+transfer panel data"
     echo -e "\033[1;32m42.\033[0m Auto panel restart"
     echo -e "\033[1;31m+-----------------------------------------+\033[0m"
@@ -4654,6 +4655,9 @@ main_menu() {
             sudo bash marzban-node.sh ;;
 	53) echo "Running ..."
             manage_marzban_node ;;
+	54) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/Sir-MmD/RTX-VPN/v2/rtxvpn_v2.sh -o rtxvpn_v2.sh
+            sudo bash rtxvpn_v2.sh ;;
         0) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
