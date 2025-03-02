@@ -158,8 +158,15 @@ uninstall_docker_compose() {
     local current_dir
     current_dir=$(pwd)
     
-    cd "$MARZBAN_NODE_DIR"
+    # Check if Marzban node directory exists
+    if [ ! -d "$MARZBAN_NODE_DIR" ]; then
+        echo_red "Error: Marzban node directory ($MARZBAN_NODE_DIR) does not exist."
+        return
+    fi
+
+    cd "$MARZBAN_NODE_DIR" || return
     
+    # Check if docker-compose.yml exists before proceeding
     if [ ! -f docker-compose.yml ]; then
         echo_red "Error: docker-compose.yml not found in $MARZBAN_NODE_DIR"
         cd "$current_dir"
@@ -170,30 +177,44 @@ uninstall_docker_compose() {
     docker-compose down --volumes --remove-orphans
     echo_green "Docker Compose services and volumes have been uninstalled successfully."
     
-    # Prompt to remove Marzban node directory
-    read -p "Do you want to remove the Marzban node directory ($MARZBAN_NODE_DIR)? (yes/no): " remove_node_dir_choice
-    
-    if [[ "$remove_node_dir_choice" == "yes" ]]; then
-        echo_yellow "Removing Marzban node directory..."
-        rm -rf "$MARZBAN_NODE_DIR"
-        echo_green "Marzban node directory has been removed successfully."
+    # Check and remove Marzban node directory
+    if [ -d "$MARZBAN_NODE_DIR" ]; then
+        read -p "Do you want to remove the Marzban node directory ($MARZBAN_NODE_DIR)? (yes/no): " remove_node_dir_choice
+        if [[ "$remove_node_dir_choice" == "yes" ]]; then
+            echo_yellow "Removing Marzban node directory..."
+            rm -rf "$MARZBAN_NODE_DIR"
+            echo_green "Marzban node directory has been removed successfully."
+        else
+            echo_blue "Skipping the removal of Marzban node directory."
+        fi
     else
-        echo_blue "Skipping the removal of Marzban node directory."
+        echo_blue "Marzban node directory does not exist, skipping removal."
     fi
     
-    # Prompt to remove Marzban data directory
-    read -p "Do you want to remove the Marzban data directory ($MARZBAN_NODE_DATA_DIR)? (yes/no): " remove_data_dir_choice
-    
-    if [[ "$remove_data_dir_choice" == "yes" ]]; then
-        echo_yellow "Removing Marzban data directory..."
-        rm -rf "$MARZBAN_NODE_DATA_DIR"
-        echo_green "Marzban data directory has been removed successfully."
+    # Check if Marzban data directory exists before prompting
+    if [ -z "$MARZBAN_NODE_DATA_DIR" ]; then
+        echo_red "Error: MARZBAN_NODE_DATA_DIR is not set."
+        cd "$current_dir"
+        return
+    fi
+
+    if [ -d "$MARZBAN_NODE_DATA_DIR" ]; then
+        read -p "Do you want to remove the Marzban data directory ($MARZBAN_NODE_DATA_DIR)? (yes/no): " remove_data_dir_choice
+        if [[ "$remove_data_dir_choice" == "yes" ]]; then
+            echo_yellow "Removing Marzban data directory..."
+            rm -rf "$MARZBAN_NODE_DATA_DIR"
+            echo_green "Marzban data directory has been removed successfully."
+        else
+            echo_blue "Skipping the removal of Marzban data directory."
+        fi
     else
-        echo_blue "Skipping the removal of Marzban data directory."
+        echo_blue "Marzban data directory does not exist, skipping removal."
     fi
     
     cd "$current_dir"
 }
+
+
 
 install_docker() {
     # Check if Docker is installed
