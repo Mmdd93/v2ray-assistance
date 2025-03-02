@@ -67,6 +67,9 @@ docker_install_menu() {
 
                 # Step 1: Check if Docker is already installed
                 if command -v docker &> /dev/null; then
+		# Display Docker version
+        echo_yellow "Docker version:"
+        docker --version
                     echo -e "\033[1;33m update Docker? (yes/no):\033[0m"
                     read -p "" docker_update_response
                     if [[ "$docker_update_response" != "yes" ]]; then
