@@ -27,17 +27,7 @@ echo_cyan() {
 echo_white() {
     echo -e "\033[1;37m$1\033[0m"
 }
-validate_port() {
-    local port="$1"
 
-    # Check if port is a number between 1 and 65535
-    if [[ ! "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
-        echo -e "\033[1;31mInvalid port: $port. Please enter a number between 1 and 65535.\033[0m"
-        return 1
-    fi
-    
-    return 0
-}
 
 prompt_input() {
     local prompt="$1"
