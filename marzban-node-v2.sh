@@ -439,7 +439,7 @@ EOF
     CERT_FILE="$MARZBAN_NODE_DATA_DIR/ssl_client_cert_$i.pem"
 
     # Prompt the user to press Enter to continue
-    read -p "Press Enter to edit the  marzban-node-$i certificate with nano"
+    read -p "Press Enter to edit the  marzban-node-$i certificate with nano .."
 
     # Open the certificate file with nano
     sudo nano "$CERT_FILE"
