@@ -1,42 +1,4 @@
 #!/bin/bash
-clear
-set -euo pipefail
-# Detect Marzban node core directory
-if [ -d "/opt/marzban-node" ]; then
-    MARZBAN_NODE_DIR="/opt/marzban-node"
-elif [ -d "/root/Marzban-node" ]; then
-    MARZBAN_NODE_DIR="/root/Marzban-node"
-elif [ -d "$HOME/Marzban-node" ]; then
-    MARZBAN_NODE_DIR="$HOME/Marzban-node"
-elif [ -d "/root/marzban-node" ]; then
-    MARZBAN_NODE_DIR="/root/marzban-node"
-else
-    echo -e "\033[1;34mNo Marzban-node directory found. Skipping...\033[0m"
-    # Set Marzban-node directory to default
-    echo -e "\033[1;32mSetting Marzban-node directory to default: /root/Marzban-node\033[0m"
-    MARZBAN_NODE_DIR="/root/Marzban-node"
-fi
-
-# Detect Marzban node data directory
-if [ -d "/var/lib/marzban-node" ]; then
-    MARZBAN_NODE_DATA_DIR="/var/lib/marzban-node"
-elif [ -d "/var/lib/Marzban-node" ]; then
-    MARZBAN_NODE_DATA_DIR="/var/lib/Marzban-node"
-else
-    echo -e "\033[1;34mNo Marzban-node data directory found. Skipping...\033[0m"
-    # Set Marzban-node data directory to default
-    echo -e "\033[1;32mSetting Marzban-node data directory to default: /var/lib/marzban-node\033[0m"
-    MARZBAN_NODE_DATA_DIR="/var/lib/marzban-node"
-fi
-
-# Confirm directory detection
-if [ -n "$MARZBAN_NODE_DIR" ]; then
-    echo -e "\033[1;33mMarzban node core directory:\033[0m \033[1;34m$MARZBAN_NODE_DIR\033[0m"
-fi
-
-if [ -n "$MARZBAN_NODE_DATA_DIR" ]; then
-    echo -e "\033[1;33mMarzban node data directory:\033[0m \033[1;34m$MARZBAN_NODE_DATA_DIR\033[0m"
-fi
 
 echo_red() {
     echo -e "\033[1;31m$1\033[0m"
@@ -89,6 +51,44 @@ validate_port() {
 }
 #manage_marzban_node
 manage_marzban_node() {
+clear
+set -euo pipefail
+# Detect Marzban node core directory
+if [ -d "/opt/marzban-node" ]; then
+    MARZBAN_NODE_DIR="/opt/marzban-node"
+elif [ -d "/root/Marzban-node" ]; then
+    MARZBAN_NODE_DIR="/root/Marzban-node"
+elif [ -d "$HOME/Marzban-node" ]; then
+    MARZBAN_NODE_DIR="$HOME/Marzban-node"
+elif [ -d "/root/marzban-node" ]; then
+    MARZBAN_NODE_DIR="/root/marzban-node"
+else
+    echo -e "\033[1;34mNo Marzban-node directory found. Skipping...\033[0m"
+    # Set Marzban-node directory to default
+    echo -e "\033[1;32mSetting Marzban-node directory to default: /root/Marzban-node\033[0m"
+    MARZBAN_NODE_DIR="/root/Marzban-node"
+fi
+
+# Detect Marzban node data directory
+if [ -d "/var/lib/marzban-node" ]; then
+    MARZBAN_NODE_DATA_DIR="/var/lib/marzban-node"
+elif [ -d "/var/lib/Marzban-node" ]; then
+    MARZBAN_NODE_DATA_DIR="/var/lib/Marzban-node"
+else
+    echo -e "\033[1;34mNo Marzban-node data directory found. Skipping...\033[0m"
+    # Set Marzban-node data directory to default
+    echo -e "\033[1;32mSetting Marzban-node data directory to default: /var/lib/marzban-node\033[0m"
+    MARZBAN_NODE_DATA_DIR="/var/lib/marzban-node"
+fi
+
+# Confirm directory detection
+if [ -n "$MARZBAN_NODE_DIR" ]; then
+    echo -e "\033[1;33mMarzban node core directory:\033[0m \033[1;34m$MARZBAN_NODE_DIR\033[0m"
+fi
+
+if [ -n "$MARZBAN_NODE_DATA_DIR" ]; then
+    echo -e "\033[1;33mMarzban node data directory:\033[0m \033[1;34m$MARZBAN_NODE_DATA_DIR\033[0m"
+fi
     while true; do
         echo -e "\033[1;36m============================================\033[0m"
         echo -e "\033[1;33m        Manage Marzban Node\033[0m"
