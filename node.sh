@@ -70,7 +70,7 @@ docker_install_menu() {
 		# Display Docker version
         echo_yellow "Docker version:"
         docker --version
-                    echo -e "\033[1;33m update Docker? (yes/no):\033[0m"
+                    echo -e "\033[1;33mUpdate Docker? (yes/no):\033[0m"
                     read -p "" docker_update_response
                     if [[ "$docker_update_response" != "yes" ]]; then
                         echo -e "\033[1;34mDocker setup aborted.\033[0m"
