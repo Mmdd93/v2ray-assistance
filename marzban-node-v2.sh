@@ -47,6 +47,20 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 RESET='\033[0m'  # Reset color
 NC="\033[0m" # No Color
+# Function to validate port numbers
+validate_port() {
+    local port="$1"
+    if ! [[ "$port" =~ ^[0-9]+$ ]]; then
+        echo_red "Error: Port must be a number."
+     
+        exit 1
+    fi
+    if (( port < 1 || port > 65535 )); then
+        echo_red "Error: Port number out of range (1-65535)."
+   
+        exit 1
+    fi
+}
 #manage_marzban_node
 manage_marzban_node() {
     while true; do
