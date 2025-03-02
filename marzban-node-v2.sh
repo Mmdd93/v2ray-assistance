@@ -439,7 +439,7 @@ EOF
     CERT_FILE="$MARZBAN_NODE_DATA_DIR/ssl_client_cert_$i.pem"
 
     # Prompt the user to press Enter to continue
-    read -p "Press Enter to edit the certificate for marzban-node-$i"
+    read -p "Press Enter to edit the  marzban-node-$i certificate with nano"
 
     # Open the certificate file with nano
     sudo nano "$CERT_FILE"
@@ -603,7 +603,7 @@ edit_node_certificates() {
     CERT_FILE="$MARZBAN_NODE_DATA_DIR/ssl_client_cert_$selected_node.pem"
     if [ -f "$CERT_FILE" ]; then
         # Prompt the user to press Enter to continue
-        read -p "Press Enter to edit the certificate for marzban-node-$selected_node..."
+        read -p "Press Enter to edit the marzban-node-$selected_node certificate with nano..."
 
         sudo nano "$CERT_FILE"
         echo_green "Certificate for marzban-node-$selected_node edited successfully."
