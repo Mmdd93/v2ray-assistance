@@ -49,6 +49,7 @@ docker_install_menu() {
         echo "1) Install Docker (Docker official script)"
         echo "2) Install Docker Compose"
 	echo "3) install Docker step-by-step"
+	echo "4) Uninstall Docker"
         read -p "Choose an option: " option
         
         case $option in
@@ -149,6 +150,10 @@ docker_install_menu() {
 		read -p "Press Enter to continue..."
 		break
                 ;;
+  4) uninstall_docker
+  read -p "Press Enter to continue..."
+  break
+  ;;
             *)
                 echo -e "\033[1;31mInvalid option, please choose 1 or 2.\033[0m"
                 continue
@@ -261,6 +266,26 @@ install_docker() {
     # Display the current Docker status
     echo_green "Docker is running and enabled at startup."
     sudo systemctl status docker | grep "Active:"  # Display only the 'Active' status line
+}
+uninstall_docker() {
+    echo -e "\033[1;33mAre you sure you want to uninstall Docker and remove all related files? (y/n)\033[0m"
+    read -r response
+    if [[ "$response" == "y" || "$response" == "yes" ]]; then
+        echo -e "\033[1;31mUninstalling Docker Engine and related packages...\033[0m"
+        sudo apt-get purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
+        
+        echo -e "\033[1;31mRemoving Docker data directories...\033[0m"
+        sudo rm -rf /var/lib/docker
+        sudo rm -rf /var/lib/containerd
+
+        echo -e "\033[1;31mRemoving Docker source list and keyrings...\033[0m"
+        sudo rm -f /etc/apt/sources.list.d/docker.list
+        sudo rm -f /etc/apt/keyrings/docker.asc
+
+        echo -e "\033[1;32mDocker has been completely removed from the system.\033[0m"
+    else
+        echo -e "\033[1;33mUninstallation canceled.\033[0m"
+    fi
 }
 
 check_docker_compose() {
