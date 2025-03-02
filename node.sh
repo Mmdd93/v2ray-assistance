@@ -54,10 +54,12 @@ docker_install_menu() {
         case $option in
             1)
                 install_docker
+		read -rp "Press Enter to continue..."
                 break
                 ;;
             2)
                 check_docker_compose
+		read -rp "Press Enter to continue..."
                 break
                 ;;
 	3)
