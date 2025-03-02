@@ -98,8 +98,8 @@ manage_marzban_node() {
 	echo -e "\033[1;32m3.\033[0m Edit node certificates"
 	echo -e "\033[1;32m4.\033[0m Edit docker-compose.yml with nano"
 	echo -e "\033[1;32m5.\033[0m Restart Docker Compose services"
-	echo -e "\033[1;32m6.\033[0m Download custom Xray version"
-	echo -e "\033[1;32m7.\033[0m Enable/disable custom Xray version"
+	echo -e "\033[1;32m6.\033[0m Change Xray core version"
+	echo -e "\033[1;32m7.\033[0m Enable/disable custom Xray core version"
 	echo -e "\033[1;32m8.\033[0m Update Marzban Node"
  	echo -e "\033[1;32m9.\033[0m Setup Marzban Node traffic limit"
   echo -e "\033[1;32m10.\033[0m Stop Marzban Node"
@@ -117,7 +117,9 @@ manage_marzban_node() {
             3) edit_node_certificates ;;
             4) edit_docker_compose ;;
             5) restart_docker_compose ;;
-            6) list_and_download_xray_core ;;
+            6) list_and_download_xray_core
+	    set_custom_xray_version
+     		;;
             7) set_custom_xray_version ;;
             8) update_marzban_node ;;
 	    9) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/setup_node_traffic.sh -o setup_node_traffic.sh
@@ -404,7 +406,7 @@ EOF
 
     # Confirm successful editing
     echo_green "Certificate marzban-node-$i file edited successfully."
-    sleep 2
+    sleep 1
 done
 
 	# Restart Docker Compose after setup
@@ -634,16 +636,6 @@ restart_docker_compose() {
     cd "$current_dir"
 }
 
-
-echo_green() {
-    echo -e "\033[1;32m$1\033[0m" # Prints text in green
-}
-echo_red() {
-    echo -e "\033[1;31m$1\033[0m" # Prints text in red
-}
-echo_yellow() {
-    echo -e "\033[1;33m$1\033[0m" # Prints text in yellow
-}
 # Function to prompt for input with default value
 prompt_input() {
     local prompt="$1"
