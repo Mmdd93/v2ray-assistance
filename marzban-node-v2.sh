@@ -111,7 +111,6 @@ fi
             1)  install_docker
                 check_docker_compose
                 setup_marzban_node
-                manage_docker_compose
                 ;;
             2) change_node_ports ;;
             3) edit_node_certificates ;;
@@ -546,6 +545,7 @@ done
 
 	# Restart Docker Compose after setup
     restart_docker_compose
+    manage_docker_compose
     cd "$current_dir" || return
 }
 # Function to install marzban node
@@ -704,6 +704,7 @@ done
 
 	# Restart Docker Compose after setup
     restart_docker_compose
+    manage_docker_compose
     cd "$current_dir" || return
 }
 
