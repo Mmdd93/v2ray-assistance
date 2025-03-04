@@ -222,7 +222,8 @@ configure_port_forwarding() {
             echo -e "\033[1;32m5.\033[0m gRPC"
             echo -e "\033[1;32m6.\033[0m h2 (HTTP/2)"
             echo -e "\033[1;32m7.\033[0m SSH"
-            read -p "Enter your choice [1-7]: " proto_choice
+            echo -e "\033[1;32m8.\033[0m tls"
+            read -p "Enter your choice: " proto_choice
 
             # Ask for required inputs
             read -p "Enter remote server IP (kharej): " raddr_ip
@@ -244,6 +245,7 @@ configure_port_forwarding() {
                 5) proto="grpc" ;;
                 6) proto="h2" ;;
                 7) proto="ssh" ;;
+                8) proto="tls" ;;
                 *) echo -e "\033[1;31mInvalid protocol choice! Exiting...\033[0m"; return ;;
             esac
 
@@ -260,9 +262,8 @@ configure_port_forwarding() {
             echo -e "\033[1;32m5.\033[0m WS (WebSocket)"
             echo -e "\033[1;32m6.\033[0m WSS (WebSocket Secure)"
             echo -e "\033[1;32m7.\033[0m h2 (HTTP/2)"
-            echo -e "\033[1;32m8.\033[0m TCP"
-            echo -e "\033[1;32m9.\033[0m UDP"
-            read -p "Enter your choice [1-7]: " proto_choice
+            echo -e "\033[1;32m8.\033[0m tls"
+            read -p "Enter your choice: " proto_choice
 
             read -p "Enter servers communicate port: " sport
 
@@ -274,8 +275,8 @@ configure_port_forwarding() {
                 5) GOST_OPTIONS="-L ws://:${sport}" ;;
                 6) GOST_OPTIONS="-L wss://:${sport}" ;;
                 7) GOST_OPTIONS="-L h2://:${sport}" ;;
-                8) GOST_OPTIONS="-L tcp://:${sport}" ;;
-                9) GOST_OPTIONS="-L udp://:${sport}" ;;
+                8) GOST_OPTIONS="-L tls://:${sport}" ;;
+                
                 *) echo -e "\033[1;31mInvalid protocol choice!\033[0m"; return ;;
             esac
             ;;
@@ -327,8 +328,8 @@ configure_relay() {
             echo -e "\033[1;32m[5]\033[0m \033[1;36mgRPC\033[0m"
             echo -e "\033[1;32m[6]\033[0m \033[1;36mh2 (HTTP/2)\033[0m"
             echo -e "\033[1;32m[7]\033[0m \033[1;36mSSH\033[0m"
-            
-            read -p $'\033[1;33m? Enter your choice [1-7]: \033[0m' trans_choice
+            echo -e "\033[1;32m[8]\033[0m \033[1;36mtls\033[0m"
+            read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
 
 
             case $trans_choice in
@@ -339,6 +340,7 @@ configure_relay() {
                 5) TRANSMISSION="grpc" ;;
                 6) TRANSMISSION="h2" ;;
                 7) TRANSMISSION="ssh" ;;
+                8) TRANSMISSION="tls" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
 
@@ -383,8 +385,8 @@ configure_relay() {
             echo -e "\033[1;32m[5]\033[0m \033[1;36mgRPC\033[0m"
             echo -e "\033[1;32m[6]\033[0m \033[1;36mh2 (HTTP/2)\033[0m"
             echo -e "\033[1;32m[7]\033[0m \033[1;36mSSH\033[0m"
-            
-            read -p $'\033[1;33m?? Enter your choice for relay transmission type [1-7]: \033[0m' trans_choice
+            echo -e "\033[1;32m[8]\033[0m \033[1;36mtls\033[0m"
+            read -p $'\033[1;33m?? Enter your choice for relay transmission type: \033[0m' trans_choice
 
             
             case $trans_choice in
@@ -395,6 +397,7 @@ configure_relay() {
                 5) TRANSMISSION="grpc" ;;
                 6) TRANSMISSION="h2" ;;
                 7) TRANSMISSION="ssh" ;;
+                8) TRANSMISSION="tls" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
 
