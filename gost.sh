@@ -291,7 +291,7 @@ configure_port_forwarding() {
                 11) proto="obfs4" ;;
                 12) proto="ohttp" ;;
                 13) proto="otls" ;;
-                14 proto="mtls" ;;
+                14) proto="mtls" ;;
                 *) echo -e "\033[1;31mInvalid protocol choice! Exiting...\033[0m"; return ;;
             esac
 
@@ -480,7 +480,7 @@ configure_relay() {
                 11) TRANSMISSION="obfs4" ;;
                 12) TRANSMISSION="ohttp" ;;
                 13) TRANSMISSION="otls" ;;
-                13) TRANSMISSION="mtls" ;;
+                14) TRANSMISSION="mtls" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
 
