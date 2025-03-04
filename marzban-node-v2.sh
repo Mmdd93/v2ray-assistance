@@ -155,10 +155,12 @@ setup_marzban_node() {
             1)
                 echo -e "${GREEN}Running Normal Mode...${NC}"
                 setup_marzban_node1
+		manage_marzban_node
                 ;;
             2)
                 echo -e "${GREEN}Running Port Mapping Mode...${NC}"
                 setup_marzban_node2
+		manage_marzban_node
                 ;;
             3)
                 echo -e "${YELLOW}Returning to the main menu...${NC}"
