@@ -627,6 +627,13 @@ User=root
 WorkingDirectory=/root
 LimitNOFILE=1000000
 LimitNPROC=10000
+Nice=-20
+CPUQuota=90%
+MemoryMax=2G
+LimitFSIZE=infinity
+LimitCPU=infinity
+LimitRSS=infinity
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target
