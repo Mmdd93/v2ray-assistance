@@ -126,17 +126,22 @@ fetch_gost_versions3() {
 install_gost() {
     check_root
 
-    echo -e "\033[1;34mSelect which version of GOST to install:\033[0m"
-    echo -e "1) GOST 2"
-    echo -e "2) GOST 3"
-    read -p "Enter your choice: " choice
+    while true; do
+        echo -e "\033[1;34mSelect which version of GOST to install:\033[0m"
+        echo -e "1) GOST 2"
+        echo -e "2) GOST 3"
+        echo -e "0) Return to the main menu"
+        read -p "Enter your choice: " choice
 
-    case "$choice" in
-        1) install_gost2 ;;
-        2) install_gost3 ;;
-        *) echo -e "\033[1;31mInvalid choice! Exiting...\033[0m"; exit 1 ;;
-    esac
+        case "$choice" in
+            1) install_gost2; break ;;
+            2) install_gost3; break ;;
+            0) return ;;
+            *) echo -e "\033[1;31mInvalid choice! Please select a valid option.\033[0m" ;;
+        esac
+    done
 }
+
 
 install_gost2() {
     check_root
