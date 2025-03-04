@@ -128,18 +128,20 @@ install_gost() {
 }
 
 install_gost2() {
-    echo -e "\033[1;34mInstalling GOST 2...\033[0m"
+    check_root
 
     # Install dependencies
+    echo "Installing wget and nano..."
     sudo apt install wget nano -y
 
-    # Fetch and display available versions
+    # Fetch and display versions
     versions=$(fetch_gost_versions)
     if [[ -z "$versions" ]]; then
         echo -e "\033[1;31m? No releases found! Exiting...\033[0m"
         exit 1
     fi
 
+    # Display available versions
     echo -e "\n\033[1;34mAvailable GOST versions:\033[0m"
     select version in $versions; do
         if [[ -n "$version" ]]; then
@@ -153,27 +155,43 @@ install_gost2() {
     # Define the correct GOST binary URL format
     download_url="https://github.com/ginuerzh/gost/releases/download/$version/gost_${version//v/}_linux_amd64.tar.gz"
 
-    # Validate URL
+    # Check if the URL is valid by testing with curl
+    echo "Checking URL: $download_url"
     if ! curl --head --silent --fail "$download_url" > /dev/null; then
         echo -e "\033[1;31m? The release URL does not exist! Please check the release version.\033[0m"
         exit 1
     fi
 
-    # Download and install
-    wget -q "$download_url"
-    tar -xvzf "gost_${version//v/}_linux_amd64.tar.gz"
+    # Download and install the selected GOST version
+    echo "Downloading GOST $version..."
+    if ! sudo wget -q "$download_url"; then
+        echo -e "\033[1;31m? Failed to download GOST! Exiting...\033[0m"
+        exit 1
+    fi
+
+    # Extract the downloaded file
+    echo "Extracting GOST..."
+    if ! sudo tar -xvzf "gost_${version//v/}_linux_amd64.tar.gz"; then
+        echo -e "\033[1;31m? Failed to extract GOST! Exiting...\033[0m"
+        exit 1
+    fi
+
+    # Move the binary to /usr/local/bin and make it executable
+    echo "Installing GOST..."
     sudo mv gost /usr/local/bin/gost
     sudo chmod +x /usr/local/bin/gost
 
-    # Verify installation
-    if command -v gost &>/dev/null; then
-        echo -e "\033[1;32mGOST 2 installed successfully!\033[0m"
-        gost -V
+    # Verify the installation
+    if [[ -f /usr/local/bin/gost ]]; then
+        echo -e "\033[1;32mGOST $version installed successfully!\033[0m"
     else
-        echo -e "\033[1;31mGOST 2 installation failed!\033[0m"
+        echo -e "\033[1;31mError: GOST installation failed!\033[0m"
         exit 1
     fi
+
+    read -p "Press Enter to continue..."
 }
+
 
 install_gost3() {
     echo -e "\033[1;34mInstalling GOST 3...\033[0m"
