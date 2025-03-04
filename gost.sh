@@ -22,8 +22,8 @@ main_menu() {
         echo -e "\033[1;32m===================================\033[0m"
 
         echo -e " \033[1;34m1.\033[0m Install GOST"
-        echo -e " \033[1;34m2.\033[0m forwarding mode (SSH,h2,gRPC,WSS,WS,QUIC,KCP)"
-        echo -e " \033[1;34m3.\033[0m rely mode (SSH,h2,gRPC,WSS,WS,QUIC,KCP)"
+        echo -e " \033[1;34m2.\033[0m forwarding mode (SSH,h2,gRPC,WSS,WS,QUIC,KCP,TLS,MWSS,H2C,OBFS4,OHTTP,OTLS,MTLS)"
+        echo -e " \033[1;34m3.\033[0m rely mode (SSH,h2,gRPC,WSS,WS,QUIC,KCP,TLS,MWSS,H2C,OBFS4,OHTTP,OTLS,MTLS)"
         echo -e " \033[1;34m4.\033[0m simple port forwarding (TCP/UDP)"
         echo -e " \033[1;34m5.\033[0m Manage Tunnels Services"
         echo -e " \033[1;34m6.\033[0m Remove GOST"
