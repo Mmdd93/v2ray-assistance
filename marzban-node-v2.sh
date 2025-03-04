@@ -97,13 +97,13 @@ fi
 	echo -e "\033[1;32m2.\033[0m Change node ports"
 	echo -e "\033[1;32m3.\033[0m Edit node certificates"
 	echo -e "\033[1;32m4.\033[0m Edit docker-compose.yml with nano"
-	echo -e "\033[1;32m5.\033[0m Restart Docker Compose services"
+	echo -e "\033[1;32m5.\033[0m Restart"
 	echo -e "\033[1;32m6.\033[0m Change Xray core version"
 	echo -e "\033[1;32m7.\033[0m Enable/disable custom Xray core version"
-	echo -e "\033[1;32m8.\033[0m Update Marzban Node"
- 	echo -e "\033[1;32m9.\033[0m Setup Marzban Node traffic limit"
-  echo -e "\033[1;32m10.\033[0m Stop Marzban Node"
-  echo -e "\033[1;32m11.\033[0m Uninstall Marzban Node"
+	echo -e "\033[1;32m8.\033[0m Update"
+ 	echo -e "\033[1;32m9.\033[0m Setup Node traffic limit"
+  echo -e "\033[1;32m10.\033[0m Stop"
+  echo -e "\033[1;32m11.\033[0m Uninstall"
 	echo -e "\033[1;32m0.\033[0m Return"
         read -p "Enter your choice: " choice
 
