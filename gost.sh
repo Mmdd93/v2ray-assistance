@@ -624,7 +624,6 @@ StandardError=null
 Restart=on-failure
 RestartPreventExitStatus=23
 RestartSec=5
-StartLimitIntervalSec=60
 StartLimitBurst=10
 User=root
 WorkingDirectory=/root
