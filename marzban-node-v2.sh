@@ -134,6 +134,36 @@ fi
         read
     done
 }
+# Function to run two selectable functions with a return option
+setup_marzban_node() {
+    while true; do
+        echo "Select a mode to run or choose to return:"
+        echo "1) Normal Mode (Host Network: Use all inbound ports)"
+        echo "2) Port Mapping Mode (Use only specific inbound ports)"
+        echo "3) Return to the main menu"
+        
+        # Default choice is 1 if no input or invalid input
+        read -p "Please choose an option or press enter for Normal Mode [defualt]: " choice
+        choice=${choice:-1}  # Default to 1 if no input is provided
+
+        case "$choice" in
+            1)
+                setup_marzban_node1
+                ;;
+            2)
+                setup_marzban_node2
+                ;;
+            3)
+                echo "Returning to the main menu..."
+                break  # Break out of the loop to return to the main menu
+                ;;
+            *)
+                echo "Invalid option. Please choose 1, 2, or 3."
+                ;;
+        esac
+    done
+}
+
 
 down_docker_compose() {
 
@@ -348,8 +378,8 @@ check_docker_compose() {
             echo_yellow "last version of Docker Compose is: $latest_version"
 
             # Ask if the user wants to update
-            read -p "Do you want to update Docker Compose to $latest_version? (yes/no) [default: yes]: " update_choice
-            update_choice=${update_choice:-yes}  # Default to "no" if empty
+            read -p "Do you want to update Docker Compose to $latest_version? (yes/no) [default: no]: " update_choice
+            update_choice=${update_choice:-no}  # Default to "no" if empty
 
             if [[ "$update_choice" == "yes" ]]; then
                 echo_yellow "Updating Docker Compose to version $latest_version..."
@@ -383,12 +413,8 @@ check_docker_compose() {
     fi
 }
 
-
-
-
-
 # Function to install marzban node
-setup_marzban_node() {
+setup_marzban_node1() {
 local current_dir
     current_dir=$(pwd)
     if [ -d "$MARZBAN_NODE_DIR" ]; then
@@ -515,7 +541,164 @@ done
     restart_docker_compose
     cd "$current_dir" || return
 }
+# Function to install marzban node
+setup_marzban_node2() {
+local current_dir
+    current_dir=$(pwd)
+    if [ -d "$MARZBAN_NODE_DIR" ]; then
+        echo_red "! marzban node directory already exists !"
+        read -p "Do you want to remove the Marzban node directory ($MARZBAN_NODE_DIR)? (Yes/no) [defualt yes]: " remove_node_dir_choice
+        remove_node_dir_choice=${remove_node_dir_choice:-yes}  # Default to "yes" if empty
 
+        if [[ "$remove_node_dir_choice" =~ ^[Yy]([Ee][Ss])?$ ]]; then
+            echo_red "Removing existing directory $MARZBAN_NODE_DIR..."
+            rm -rf "$MARZBAN_NODE_DIR"
+            echo_green "Marzban node directory has been removed."
+        else
+            echo_blue "Skipping the removal of Marzban node directory."
+        fi
+    fi
+
+    if [ -d "$MARZBAN_NODE_DATA_DIR" ]; then
+    echo_red "! marzban node data directory already exists !"
+        read -p "Do you want to remove the Marzban data directory ($MARZBAN_NODE_DATA_DIR)? (Yes/no) [defualt yes]: " remove_data_dir_choice
+        remove_data_dir_choice=${remove_data_dir_choice:-yes}  # Default to "yes" if empty
+
+        if [[ "$remove_data_dir_choice" =~ ^[Yy]([Ee][Ss])?$ ]]; then
+            echo_red "Removing existing directory $MARZBAN_NODE_DATA_DIR..."
+            sudo rm -rf "$MARZBAN_NODE_DATA_DIR"
+            echo_green "Marzban data directory has been removed."
+        else
+            echo_blue "Skipping the removal of Marzban data directory."
+        fi
+    fi
+
+
+    echo_green "Cloning the Marzban-node repository..."
+    git clone https://github.com/Gozargah/Marzban-node "$MARZBAN_NODE_DIR"
+
+    echo_green "Changing directory to $MARZBAN_NODE_DIR..."
+    cd "$MARZBAN_NODE_DIR"
+
+    if [ -f docker-compose.yml ]; then
+        echo_red "Removing existing docker-compose.yml..."
+        rm docker-compose.yml
+    fi
+
+    echo_green "Creating the directory $MARZBAN_NODE_DATA_DIR..."
+    sudo mkdir -p "$MARZBAN_NODE_DATA_DIR"
+
+    while true; do
+    NUM_NODES=$(prompt_input "How many nodes do you need? [1-2-3]" 1)
+    if [[ "$NUM_NODES" =~ ^[1-3]$ ]]; then
+        break
+    else
+        echo_red "Error: Invalid number of nodes. Please enter a number between 1 and 3."
+    fi
+done
+
+echo "services:" >> docker-compose.yml
+for ((i = 1; i <= NUM_NODES; i++)); do
+    # Default ports
+    DEFAULT_SERVICE_PORT=5000
+    DEFAULT_XRAY_API_PORT=5001
+
+    # Set default ports based on node number
+    case $i in
+        2)
+            DEFAULT_SERVICE_PORT=3000
+            DEFAULT_XRAY_API_PORT=3001
+            ;;
+        3)
+            DEFAULT_SERVICE_PORT=4000
+            DEFAULT_XRAY_API_PORT=4001
+            ;;
+    esac
+
+    # Prompt user for ports and use defaults if input is empty
+    SERVICE_PORT=$(prompt_input "Enter service port for marzban-node-$i " $DEFAULT_SERVICE_PORT)
+    XRAY_API_PORT=$(prompt_input "Enter XRAY API port for marzban-node-$i " $DEFAULT_XRAY_API_PORT)
+
+    # Validate ports
+    validate_port "$SERVICE_PORT"
+    validate_port "$XRAY_API_PORT"
+
+    echo_green "Using ports for node $i: SERVICE_PORT=$SERVICE_PORT, XRAY_API_PORT=$XRAY_API_PORT"
+
+    # Ask how many XRAY input ports the user wants to map
+    NUM_XRAY_IN_PORTS=$(prompt_input "How many XRAY input ports for marzban-node-$i would you like to map?" 1)
+
+    # Validate the input
+    if [[ "$NUM_XRAY_IN_PORTS" =~ ^[0-9]+$ ]] && [ "$NUM_XRAY_IN_PORTS" -gt 0 ]; then
+        XRAY_IN_PORTS=""  # Initialize XRAY_IN_PORTS as an empty string
+        for ((j = 1; j <= NUM_XRAY_IN_PORTS; j++)); do
+            XRAY_IN_PORT=$(prompt_input "Enter XRAY input port $j for marzban-node-$i" "620${i}${j}")
+            validate_port "$XRAY_IN_PORT"
+            XRAY_IN_PORTS="$XRAY_IN_PORTS $XRAY_IN_PORT"  # Append ports to the variable
+        done
+    else
+        echo_red "Error: Invalid number of XRAY input ports. Please enter a number greater than 0."
+        continue
+    fi
+
+    echo_green "Using XRAY input ports for node $i: $XRAY_IN_PORTS"
+
+    cat <<EOF >> docker-compose.yml
+  marzban-node-$i:
+    image: gozargah/marzban-node:latest
+    restart: always
+    environment:
+      SSL_CLIENT_CERT_FILE: "$MARZBAN_NODE_DATA_DIR/ssl_client_cert_$i.pem"
+      SERVICE_PROTOCOL: "rest"
+    volumes:
+      - /var/lib/marzban-node:/var/lib/marzban-node
+    ports:
+      - $SERVICE_PORT:62050
+      - $XRAY_API_PORT:62051
+EOF
+
+    # Add XRAY input ports mapping
+    for XRAY_IN_PORT in $XRAY_IN_PORTS; do
+        echo "      - $XRAY_IN_PORT:$XRAY_IN_PORT" >> docker-compose.yml
+    done
+
+    logging="
+    logging:
+      driver: \"none\"  # Disable logging for this container
+    "
+    echo "$logging" >> docker-compose.yml
+
+done
+
+
+for ((i = 1; i <= NUM_NODES; i++)); do
+    CERT_FILE="$MARZBAN_NODE_DATA_DIR/ssl_client_cert_$i.pem"
+
+    echo -ne "\rPress Enter to edit the marzban-node-$i certificate with nano "
+
+    # Animated blinking effect while waiting for Enter key
+    while true; do
+        for s in " " "."; do
+            echo -ne "\rPress Enter to edit the marzban-node-$i certificate with nano $s"
+            read -t 0.5 -n 1 key && break 2
+        done
+    done
+
+    echo_green "\rEditing the marzban-node-$i certificate with nano...  "  # Clear blinking text
+    sleep 1
+
+    # Open the certificate file with nano
+    sudo nano "$CERT_FILE"
+
+    # Confirm successful editing
+    echo_green "Certificate marzban-node-$i file edited successfully."
+    sleep 1
+done
+
+	# Restart Docker Compose after setup
+    restart_docker_compose
+    cd "$current_dir" || return
+}
 
 
 # Function to manage Docker Compose
