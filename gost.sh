@@ -216,60 +216,95 @@ install_gost3() {
     echo "Installing wget and nano..."
     sudo apt install wget unzip nano -y
 
-    # Fetch and display versions
-    versions=$(fetch_gost_versions3)
-    if [[ -z "$versions" ]]; then
-        echo -e "\033[1;31m? No releases found! Exiting...\033[0m"
+   repo="go-gost/gost"
+base_url="https://api.github.com/repos/$repo/releases"
+
+# Function to download and install gost
+install_gost() {
+    version=$1
+    # Detect the operating system
+    if [[ "$(uname)" == "Linux" ]]; then
+        os="linux"
+    elif [[ "$(uname)" == "Darwin" ]]; then
+        os="darwin"
+    elif [[ "$(uname)" == "MINGW"* ]]; then
+        os="windows"
+    else
+        echo "Unsupported operating system."
         exit 1
     fi
 
-    # Display available versions
-    echo -e "\n\033[1;34mAvailable GOST versions:\033[0m"
+    # Detect the CPU architecture
+    arch=$(uname -m)
+    case $arch in
+    x86_64)
+        cpu_arch="amd64"
+        ;;
+    armv5*)
+        cpu_arch="armv5"
+        ;;
+    armv6*)
+        cpu_arch="armv6"
+        ;;
+    armv7*)
+        cpu_arch="armv7"
+        ;;
+    aarch64)
+        cpu_arch="arm64"
+        ;;
+    i686)
+        cpu_arch="386"
+        ;;
+    mips64*)
+        cpu_arch="mips64"
+        ;;
+    mips*)
+        cpu_arch="mips"
+        ;;
+    mipsel*)
+        cpu_arch="mipsle"
+        ;;
+    *)
+        echo "Unsupported CPU architecture."
+        exit 1
+        ;;
+    esac
+    get_download_url="$base_url/tags/$version"
+    download_url=$(curl -s "$get_download_url" | grep -Eo "\"browser_download_url\": \".*${os}.*${cpu_arch}.*\"" | awk -F'["]' '{print $4}')
+
+    # Download the binary
+    echo "Downloading gost version $version..."
+    curl -fsSL -o gost.tar.gz $download_url
+
+    # Extract and install the binary
+    echo "Installing gost..."
+    tar -xzf gost.tar.gz
+    chmod +x gost
+    mv gost /usr/local/bin/gost
+
+    echo "gost installation completed!"
+}
+
+# Retrieve available versions from GitHub API
+versions=$(curl -s "$base_url" | grep -oP 'tag_name": "\K[^"]+')
+
+# Check if --install option provided
+if [[ "$1" == "--install" ]]; then
+    # Install the latest version automatically
+    latest_version=$(echo "$versions" | head -n 1)
+    install_gost $latest_version
+else
+    # Display available versions to the user
+    echo "Available gost versions:"
     select version in $versions; do
-        if [[ -n "$version" ]]; then
-            echo -e "\033[1;32mYou selected: $version\033[0m"
+        if [[ -n $version ]]; then
+            install_gost $version
             break
         else
-            echo -e "\033[1;31m? Invalid selection! Please select a valid version.\033[0m"
+            echo "Invalid choice! Please select a valid option."
         fi
     done
-
-    # Define the correct GOST binary URL format
-    download_url="https://github.com/go-gost/gost/releases/download/$version/gost_${version//v/}_linux_amd64.tar.gz"
-
-    # Check if the URL is valid by testing with curl
-    echo "Checking URL: $download_url"
-    if ! curl --head --silent --fail "$download_url" > /dev/null; then
-        echo -e "\033[1;31m? The release URL does not exist! Please check the release version.\033[0m"
-        exit 1
-    fi
-
-    # Download and install the selected GOST version
-    echo "Downloading GOST $version..."
-    if ! sudo wget -q "$download_url"; then
-        echo -e "\033[1;31m? Failed to download GOST! Exiting...\033[0m"
-        exit 1
-    fi
-
-    # Extract the downloaded file
-    echo "Extracting GOST..."
-    if ! sudo tar -xvzf "gost_${version//v/}_linux_amd64.tar.gz"; then
-        echo -e "\033[1;31m? Failed to extract GOST! Exiting...\033[0m"
-        exit 1
-    fi
-
-    # Move the binary to /usr/local/bin and make it executable
-    echo "Installing GOST..."
-    sudo mv gost /usr/local/bin/gost
-    sudo chmod +x /usr/local/bin/gost
-
-    # Verify the installation
-    if [[ -f /usr/local/bin/gost ]]; then
-        echo -e "\033[1;32mGOST $version installed successfully!\033[0m"
-    else
-        echo -e "\033[1;31mError: GOST installation failed!\033[0m"
-        exit 1
-    fi
+fi
 
     read -p "Press Enter to continue..."
 }
