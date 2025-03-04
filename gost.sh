@@ -434,7 +434,7 @@ configure_port_forwarding() {
                 12) GOST_OPTIONS="-L ohttp://:${sport}" ;;
                 13) GOST_OPTIONS="-L otls://:${sport}" ;;
                 14) GOST_OPTIONS="-L mtls://:${sport}" ;;
-                14) GOST_OPTIONS="-L mws://:${sport}" ;;
+                15) GOST_OPTIONS="-L mws://:${sport}" ;;
                 *) echo -e "\033[1;31mInvalid protocol choice!\033[0m"; return ;;
             esac
             ;;
