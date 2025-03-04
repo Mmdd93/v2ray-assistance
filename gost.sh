@@ -3,9 +3,11 @@
 
 # Function to check and install GOST if missing
 check_and_install_gost() {
-    if ! command -v gost &> /dev/null; then
+    if [[ ! -f /usr/local/bin/gost ]]; then
         echo -e "\033[1;31m? GOST is not installed!\033[0m"
         install_gost
+    else
+        echo -e "\033[1;32m✓ GOST is already installed.\033[0m"
     fi
 }
 # Show GOST version
