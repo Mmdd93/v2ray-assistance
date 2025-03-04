@@ -212,6 +212,7 @@ Description=wstunnel ${service_name} Service
 After=network.target
 
 [Service]
+Type=simple
 ExecStart=/usr/local/bin/wstunnel ${wstunnel_OPTIONS}
 StandardOutput=null
 StandardError=null
