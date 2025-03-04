@@ -111,6 +111,15 @@ fetch_gost_versions() {
     fi
     echo "$releases"
 }
+# Fetch the latest GOST releases from GitHub
+fetch_gost_versions3() {
+    releases=$(curl -s https://api.github.com/repos/go-gost/gost/releases | jq -r '.[].tag_name' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$')
+    if [[ -z "$releases" ]]; then
+        echo -e "\033[1;31m? Error: Unable to fetch releases from GitHub!\033[0m"
+        exit 1
+    fi
+    echo "$releases"
+}
 
 install_gost() {
     check_root
@@ -132,7 +141,7 @@ install_gost2() {
 
     # Install dependencies
     echo "Installing wget and nano..."
-    sudo apt install wget nano -y
+    sudo apt install wget unzip nano -y
 
     # Fetch and display versions
     versions=$(fetch_gost_versions)
@@ -194,40 +203,68 @@ install_gost2() {
 
 
 install_gost3() {
-    echo -e "\033[1;34mInstalling GOST 3...\033[0m"
-
-    # Detect system architecture
-    ARCH=$(uname -m)
-    case "$ARCH" in
-        x86_64) ARCH="amd64" ;;
-        aarch64) ARCH="arm64" ;;
-        armv7l) ARCH="armv7" ;;
-        *) echo -e "\033[1;31mUnsupported architecture: $ARCH\033[0m"; exit 1 ;;
-    esac
+    check_root
 
     # Install dependencies
-    sudo apt install wget unzip -y
+    echo "Installing wget and nano..."
+    sudo apt install wget unzip nano -y
 
-    # Get latest GOST 3 version
-    GOST_VERSION=$(curl -s https://api.github.com/repos/ginuerzh/gost/releases/latest | grep -oP '"tag_name": "\K(.*?)(?=")')
-    GOST_URL="https://github.com/ginuerzh/gost/releases/download/${GOST_VERSION}/gost-linux-${ARCH}-${GOST_VERSION}.gz"
-
-    echo -e "\033[1;34mDownloading GOST 3: $GOST_URL\033[0m"
-    wget -O gost.gz "$GOST_URL" || { echo -e "\033[1;31mDownload failed!\033[0m"; exit 1; }
-
-    # Extract and install
-    gunzip gost.gz
-    chmod +x gost
-    sudo mv gost /usr/local/bin/gost
-
-    # Verify installation
-    if command -v gost &>/dev/null; then
-        echo -e "\033[1;32mGOST 3 installed successfully!\033[0m"
-        gost -V
-    else
-        echo -e "\033[1;31mGOST 3 installation failed!\033[0m"
+    # Fetch and display versions
+    versions=$(fetch_gost_versions3)
+    if [[ -z "$versions" ]]; then
+        echo -e "\033[1;31m? No releases found! Exiting...\033[0m"
         exit 1
     fi
+
+    # Display available versions
+    echo -e "\n\033[1;34mAvailable GOST versions:\033[0m"
+    select version in $versions; do
+        if [[ -n "$version" ]]; then
+            echo -e "\033[1;32mYou selected: $version\033[0m"
+            break
+        else
+            echo -e "\033[1;31m? Invalid selection! Please select a valid version.\033[0m"
+        fi
+    done
+
+    # Define the correct GOST binary URL format
+    download_url="https://github.com/go-gost/gost/releases/download/$version/gost_${version//v/}_linux_amd64.tar.gz"
+
+    # Check if the URL is valid by testing with curl
+    echo "Checking URL: $download_url"
+    if ! curl --head --silent --fail "$download_url" > /dev/null; then
+        echo -e "\033[1;31m? The release URL does not exist! Please check the release version.\033[0m"
+        exit 1
+    fi
+
+    # Download and install the selected GOST version
+    echo "Downloading GOST $version..."
+    if ! sudo wget -q "$download_url"; then
+        echo -e "\033[1;31m? Failed to download GOST! Exiting...\033[0m"
+        exit 1
+    fi
+
+    # Extract the downloaded file
+    echo "Extracting GOST..."
+    if ! sudo tar -xvzf "gost_${version//v/}_linux_amd64.tar.gz"; then
+        echo -e "\033[1;31m? Failed to extract GOST! Exiting...\033[0m"
+        exit 1
+    fi
+
+    # Move the binary to /usr/local/bin and make it executable
+    echo "Installing GOST..."
+    sudo mv gost /usr/local/bin/gost
+    sudo chmod +x /usr/local/bin/gost
+
+    # Verify the installation
+    if [[ -f /usr/local/bin/gost ]]; then
+        echo -e "\033[1;32mGOST $version installed successfully!\033[0m"
+    else
+        echo -e "\033[1;31mError: GOST installation failed!\033[0m"
+        exit 1
+    fi
+
+    read -p "Press Enter to continue..."
 }
 
 
