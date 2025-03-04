@@ -633,7 +633,7 @@ for ((i = 1; i <= NUM_NODES; i++)); do
     echo_green "Using ports for node $i: SERVICE_PORT=$SERVICE_PORT, XRAY_API_PORT=$XRAY_API_PORT"
 
     # Ask how many XRAY input ports the user wants to map
-    NUM_XRAY_IN_PORTS=$(prompt_input "How many XRAY input ports for marzban-node-$i would you like to map?" 1)
+    NUM_XRAY_IN_PORTS=$(prompt_input "How many inbounds ports for marzban-node-$i?" 1)
 
     # Validate the input
     if [[ "$NUM_XRAY_IN_PORTS" =~ ^[0-9]+$ ]] && [ "$NUM_XRAY_IN_PORTS" -gt 0 ]; then
@@ -644,11 +644,11 @@ for ((i = 1; i <= NUM_NODES; i++)); do
             XRAY_IN_PORTS="$XRAY_IN_PORTS $XRAY_IN_PORT"  # Append ports to the variable
         done
     else
-        echo_red "Error: Invalid number of XRAY input ports. Please enter a number greater than 0."
+        echo_red "Error: Invalid number of inbounds ports. Please enter a number greater than 0."
         continue
     fi
 
-    echo_green "Using XRAY input ports for node $i: $XRAY_IN_PORTS"
+    echo_green "Using inbounds ports for node $i: $XRAY_IN_PORTS"
 
     cat <<EOF >> docker-compose.yml
   marzban-node-$i:
