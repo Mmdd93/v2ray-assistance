@@ -622,16 +622,13 @@ Environment="GOST_LOGGER_LEVEL=fatal"
 StandardOutput=null
 StandardError=null
 Restart=on-failure
-RestartPreventExitStatus=23
 RestartSec=5
-StartLimitBurst=10
 User=root
 WorkingDirectory=/root
 LimitNOFILE=1000000
 LimitNPROC=10000
 Nice=-20
 CPUQuota=90%
-MemoryMax=2G
 LimitFSIZE=infinity
 LimitCPU=infinity
 LimitRSS=infinity
