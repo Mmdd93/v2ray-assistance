@@ -360,6 +360,7 @@ configure_port_forwarding() {
             echo -e "\033[1;32m12.\033[0m ohttp (HTTP Obfuscation)"
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
+            echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
             read -p "Enter your choice: " proto_choice
 
             # Ask for required inputs
@@ -389,6 +390,7 @@ configure_port_forwarding() {
                 12) proto="ohttp" ;;
                 13) proto="otls" ;;
                 14) proto="mtls" ;;
+                15) proto="mws" ;;
                 *) echo -e "\033[1;31mInvalid protocol choice! Exiting...\033[0m"; return ;;
             esac
 
@@ -412,6 +414,7 @@ configure_port_forwarding() {
             echo -e "\033[1;32m12.\033[0m ohttp (HTTP Obfuscation)"
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
+            echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
             read -p "Enter your choice: " proto_choice
 
             read -p "Enter servers communicate port: " sport
@@ -431,6 +434,7 @@ configure_port_forwarding() {
                 12) GOST_OPTIONS="-L ohttp://:${sport}" ;;
                 13) GOST_OPTIONS="-L otls://:${sport}" ;;
                 14) GOST_OPTIONS="-L mtls://:${sport}" ;;
+                14) GOST_OPTIONS="-L mws://:${sport}" ;;
                 *) echo -e "\033[1;31mInvalid protocol choice!\033[0m"; return ;;
             esac
             ;;
@@ -455,10 +459,6 @@ configure_port_forwarding() {
 
     read -p "Press Enter to continue..."
 }
-
-
-
-
 
 configure_relay() {
       echo -e "\033[1;33mIs this the client or server side?\033[0m"
@@ -489,6 +489,7 @@ configure_relay() {
             echo -e "\033[1;32m12.\033[0m ohttp (HTTP Obfuscation)"
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
+            echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
             read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
 
 
@@ -507,6 +508,7 @@ configure_relay() {
                 12) proto="ohttp" ;;
                 13) proto="otls" ;;
                 14) proto="mtls" ;;
+                15) proto="mws" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
 
@@ -557,7 +559,8 @@ configure_relay() {
             echo -e "\033[1;32m11.\033[0m obfs4 (OBFS4)"
             echo -e "\033[1;32m12.\033[0m ohttp (HTTP Obfuscation)"
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
-             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
+            echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
+            echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
             
             
             read -p $'\033[1;33m?? Enter your choice for relay transmission type: \033[0m' trans_choice
@@ -578,6 +581,7 @@ configure_relay() {
                 12) TRANSMISSION="ohttp" ;;
                 13) TRANSMISSION="otls" ;;
                 14) TRANSMISSION="mtls" ;;
+                15) TRANSMISSION="mws" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
 
