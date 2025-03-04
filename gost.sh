@@ -617,6 +617,7 @@ Description=GOST ${service_name} Service
 After=network.target
 
 [Service]
+Type=simple
 ExecStart=/usr/local/bin/gost ${GOST_OPTIONS}
 Environment="GOST_LOGGER_LEVEL=fatal"
 StandardOutput=null
