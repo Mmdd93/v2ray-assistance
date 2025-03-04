@@ -115,18 +115,31 @@ fetch_gost_versions() {
 install_gost() {
     check_root
 
+    echo -e "\033[1;34mSelect which version of GOST to install:\033[0m"
+    echo -e "1) GOST 2"
+    echo -e "2) GOST 3"
+    read -p "Enter your choice: " choice
+
+    case "$choice" in
+        1) install_gost2 ;;
+        2) install_gost3 ;;
+        *) echo -e "\033[1;31mInvalid choice! Exiting...\033[0m"; exit 1 ;;
+    esac
+}
+
+install_gost2() {
+    echo -e "\033[1;34mInstalling GOST 2...\033[0m"
+
     # Install dependencies
-    echo "Installing wget and nano..."
     sudo apt install wget nano -y
 
-    # Fetch and display versions
+    # Fetch and display available versions
     versions=$(fetch_gost_versions)
     if [[ -z "$versions" ]]; then
         echo -e "\033[1;31m? No releases found! Exiting...\033[0m"
         exit 1
     fi
 
-    # Display available versions
     echo -e "\n\033[1;34mAvailable GOST versions:\033[0m"
     select version in $versions; do
         if [[ -n "$version" ]]; then
@@ -140,43 +153,64 @@ install_gost() {
     # Define the correct GOST binary URL format
     download_url="https://github.com/ginuerzh/gost/releases/download/$version/gost_${version//v/}_linux_amd64.tar.gz"
 
-    # Check if the URL is valid by testing with curl
-    echo "Checking URL: $download_url"
+    # Validate URL
     if ! curl --head --silent --fail "$download_url" > /dev/null; then
         echo -e "\033[1;31m? The release URL does not exist! Please check the release version.\033[0m"
         exit 1
     fi
 
-    # Download and install the selected GOST version
-    echo "Downloading GOST $version..."
-    if ! sudo wget -q "$download_url"; then
-        echo -e "\033[1;31m? Failed to download GOST! Exiting...\033[0m"
-        exit 1
-    fi
-
-    # Extract the downloaded file
-    echo "Extracting GOST..."
-    if ! sudo tar -xvzf "gost_${version//v/}_linux_amd64.tar.gz"; then
-        echo -e "\033[1;31m? Failed to extract GOST! Exiting...\033[0m"
-        exit 1
-    fi
-
-    # Move the binary to /usr/local/bin and make it executable
-    echo "Installing GOST..."
+    # Download and install
+    wget -q "$download_url"
+    tar -xvzf "gost_${version//v/}_linux_amd64.tar.gz"
     sudo mv gost /usr/local/bin/gost
     sudo chmod +x /usr/local/bin/gost
 
-    # Verify the installation
-    if [[ -f /usr/local/bin/gost ]]; then
-        echo -e "\033[1;32mGOST $version installed successfully!\033[0m"
+    # Verify installation
+    if command -v gost &>/dev/null; then
+        echo -e "\033[1;32mGOST 2 installed successfully!\033[0m"
+        gost -V
     else
-        echo -e "\033[1;31mError: GOST installation failed!\033[0m"
+        echo -e "\033[1;31mGOST 2 installation failed!\033[0m"
         exit 1
     fi
-
-    read -p "Press Enter to continue..."
 }
 
+install_gost3() {
+    echo -e "\033[1;34mInstalling GOST 3...\033[0m"
+
+    # Detect system architecture
+    ARCH=$(uname -m)
+    case "$ARCH" in
+        x86_64) ARCH="amd64" ;;
+        aarch64) ARCH="arm64" ;;
+        armv7l) ARCH="armv7" ;;
+        *) echo -e "\033[1;31mUnsupported architecture: $ARCH\033[0m"; exit 1 ;;
+    esac
+
+    # Install dependencies
+    sudo apt install wget unzip -y
+
+    # Get latest GOST 3 version
+    GOST_VERSION=$(curl -s https://api.github.com/repos/ginuerzh/gost/releases/latest | grep -oP '"tag_name": "\K(.*?)(?=")')
+    GOST_URL="https://github.com/ginuerzh/gost/releases/download/${GOST_VERSION}/gost-linux-${ARCH}-${GOST_VERSION}.gz"
+
+    echo -e "\033[1;34mDownloading GOST 3: $GOST_URL\033[0m"
+    wget -O gost.gz "$GOST_URL" || { echo -e "\033[1;31mDownload failed!\033[0m"; exit 1; }
+
+    # Extract and install
+    gunzip gost.gz
+    chmod +x gost
+    sudo mv gost /usr/local/bin/gost
+
+    # Verify installation
+    if command -v gost &>/dev/null; then
+        echo -e "\033[1;32mGOST 3 installed successfully!\033[0m"
+        gost -V
+    else
+        echo -e "\033[1;31mGOST 3 installation failed!\033[0m"
+        exit 1
+    fi
+}
 
 
 # Remove GOST
@@ -222,7 +256,13 @@ configure_port_forwarding() {
             echo -e "\033[1;32m5.\033[0m gRPC"
             echo -e "\033[1;32m6.\033[0m h2 (HTTP/2)"
             echo -e "\033[1;32m7.\033[0m SSH"
-            echo -e "\033[1;32m8.\033[0m tls"
+            echo -e "\033[1;32m8.\033[0m tls (TLS)"
+            echo -e "\033[1;32m9.\033[0m mwss (Multiplex Websocket)"
+            echo -e "\033[1;32m10.\033[0m h2c (HTTP2 Cleartext)"
+            echo -e "\033[1;32m11.\033[0m obfs4 (OBFS4)"
+            echo -e "\033[1;32m12.\033[0m ohttp (HTTP Obfuscation)"
+            echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
+            echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             read -p "Enter your choice: " proto_choice
 
             # Ask for required inputs
@@ -246,6 +286,12 @@ configure_port_forwarding() {
                 6) proto="h2" ;;
                 7) proto="ssh" ;;
                 8) proto="tls" ;;
+                9) proto="mwss" ;;
+                10) proto="h2c" ;;
+                11) proto="obfs4" ;;
+                12) proto="ohttp" ;;
+                13) proto="otls" ;;
+                14 proto="mtls" ;;
                 *) echo -e "\033[1;31mInvalid protocol choice! Exiting...\033[0m"; return ;;
             esac
 
@@ -262,7 +308,13 @@ configure_port_forwarding() {
             echo -e "\033[1;32m5.\033[0m WS (WebSocket)"
             echo -e "\033[1;32m6.\033[0m WSS (WebSocket Secure)"
             echo -e "\033[1;32m7.\033[0m h2 (HTTP/2)"
-            echo -e "\033[1;32m8.\033[0m tls"
+            echo -e "\033[1;32m8.\033[0m tls (TLS)"
+            echo -e "\033[1;32m9.\033[0m mwss (Multiplex Websocket)"
+            echo -e "\033[1;32m10.\033[0m h2c (HTTP2 Cleartext)"
+            echo -e "\033[1;32m11.\033[0m obfs4 (OBFS4)"
+            echo -e "\033[1;32m12.\033[0m ohttp (HTTP Obfuscation)"
+            echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
+            echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             read -p "Enter your choice: " proto_choice
 
             read -p "Enter servers communicate port: " sport
@@ -276,7 +328,12 @@ configure_port_forwarding() {
                 6) GOST_OPTIONS="-L wss://:${sport}" ;;
                 7) GOST_OPTIONS="-L h2://:${sport}" ;;
                 8) GOST_OPTIONS="-L tls://:${sport}" ;;
-                
+                9) GOST_OPTIONS="-L mwss://:${sport}" ;;
+                10) GOST_OPTIONS="-L h2c://:${sport}" ;;
+                11) GOST_OPTIONS="-L obfs4://:${sport}" ;;
+                12) GOST_OPTIONS="-L ohttp://:${sport}" ;;
+                13) GOST_OPTIONS="-L otls://:${sport}" ;;
+                14) GOST_OPTIONS="-L mtls://:${sport}" ;;
                 *) echo -e "\033[1;31mInvalid protocol choice!\033[0m"; return ;;
             esac
             ;;
@@ -321,26 +378,38 @@ configure_relay() {
             
             # Ask for the transmission type
             echo -e "\n\033[1;34mSelect Transmission Type for Communication:\033[0m"
-            echo -e "\033[1;32m[1]\033[0m \033[1;36mKCP\033[0m"
-            echo -e "\033[1;32m[2]\033[0m \033[1;36mQUIC\033[0m"
-            echo -e "\033[1;32m[3]\033[0m \033[1;36mWS (WebSocket)\033[0m"
-            echo -e "\033[1;32m[4]\033[0m \033[1;36mWSS (WebSocket Secure)\033[0m"
-            echo -e "\033[1;32m[5]\033[0m \033[1;36mgRPC\033[0m"
-            echo -e "\033[1;32m[6]\033[0m \033[1;36mh2 (HTTP/2)\033[0m"
-            echo -e "\033[1;32m[7]\033[0m \033[1;36mSSH\033[0m"
-            echo -e "\033[1;32m[8]\033[0m \033[1;36mtls\033[0m"
+            echo -e "\033[1;32m1.\033[0m KCP"
+            echo -e "\033[1;32m2.\033[0m QUIC"
+            echo -e "\033[1;32m3.\033[0m WS (WebSocket)"
+            echo -e "\033[1;32m4.\033[0m WSS (WebSocket Secure)"
+            echo -e "\033[1;32m5.\033[0m gRPC"
+            echo -e "\033[1;32m6.\033[0m h2 (HTTP/2)"
+            echo -e "\033[1;32m7.\033[0m SSH"
+            echo -e "\033[1;32m8.\033[0m tls (TLS)"
+            echo -e "\033[1;32m9.\033[0m mwss (Multiplex Websocket)"
+            echo -e "\033[1;32m10.\033[0m h2c (HTTP2 Cleartext)"
+            echo -e "\033[1;32m11.\033[0m obfs4 (OBFS4)"
+            echo -e "\033[1;32m12.\033[0m ohttp (HTTP Obfuscation)"
+            echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
+            echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
 
 
             case $trans_choice in
-                1) TRANSMISSION="kcp" ;;
-                2) TRANSMISSION="quic" ;;
-                3) TRANSMISSION="ws" ;;
-                4) TRANSMISSION="wss" ;;
-                5) TRANSMISSION="grpc" ;;
-                6) TRANSMISSION="h2" ;;
-                7) TRANSMISSION="ssh" ;;
-                8) TRANSMISSION="tls" ;;
+                1) proto="kcp" ;;
+                2) proto="quic" ;;
+                3) proto="ws" ;;
+                4) proto="wss" ;;
+                5) proto="grpc" ;;
+                6) proto="h2" ;;
+                7) proto="ssh" ;;
+                8) proto="tls" ;;
+                9) proto="mwss" ;;
+                10) proto="h2c" ;;
+                11) proto="obfs4" ;;
+                12) proto="ohttp" ;;
+                13) proto="otls" ;;
+                14) proto="mtls" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
 
@@ -378,14 +447,22 @@ configure_relay() {
 
             # Select relay transmission type
             echo -e "\n\033[1;34mSelect Relay Transmission Type:\033[0m"
-            echo -e "\033[1;32m[1]\033[0m \033[1;36mKCP\033[0m"
-            echo -e "\033[1;32m[2]\033[0m \033[1;36mQUIC\033[0m"
-            echo -e "\033[1;32m[3]\033[0m \033[1;36mWS (WebSocket)\033[0m"
-            echo -e "\033[1;32m[4]\033[0m \033[1;36mWSS (WebSocket Secure)\033[0m"
-            echo -e "\033[1;32m[5]\033[0m \033[1;36mgRPC\033[0m"
-            echo -e "\033[1;32m[6]\033[0m \033[1;36mh2 (HTTP/2)\033[0m"
-            echo -e "\033[1;32m[7]\033[0m \033[1;36mSSH\033[0m"
-            echo -e "\033[1;32m[8]\033[0m \033[1;36mtls\033[0m"
+            echo -e "\033[1;32m1.\033[0m KCP"
+            echo -e "\033[1;32m2.\033[0m QUIC"
+            echo -e "\033[1;32m3.\033[0m WS (WebSocket)"
+            echo -e "\033[1;32m4.\033[0m WSS (WebSocket Secure)"
+            echo -e "\033[1;32m5.\033[0m gRPC"
+            echo -e "\033[1;32m6.\033[0m h2 (HTTP/2)"
+            echo -e "\033[1;32m7.\033[0m SSH"
+            echo -e "\033[1;32m8.\033[0m tls (TLS)"
+            echo -e "\033[1;32m9.\033[0m mwss (Multiplex Websocket)"
+            echo -e "\033[1;32m10.\033[0m h2c (HTTP2 Cleartext)"
+            echo -e "\033[1;32m11.\033[0m obfs4 (OBFS4)"
+            echo -e "\033[1;32m12.\033[0m ohttp (HTTP Obfuscation)"
+            echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
+             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
+            
+            
             read -p $'\033[1;33m?? Enter your choice for relay transmission type: \033[0m' trans_choice
 
             
@@ -398,6 +475,12 @@ configure_relay() {
                 6) TRANSMISSION="h2" ;;
                 7) TRANSMISSION="ssh" ;;
                 8) TRANSMISSION="tls" ;;
+                9) TRANSMISSION="mwss" ;;
+                10) TRANSMISSION="h2c" ;;
+                11) TRANSMISSION="obfs4" ;;
+                12) TRANSMISSION="ohttp" ;;
+                13) TRANSMISSION="otls" ;;
+                13) TRANSMISSION="mtls" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
 
