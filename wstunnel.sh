@@ -213,13 +213,23 @@ After=network.target
 
 [Service]
 ExecStart=/usr/local/bin/wstunnel ${wstunnel_OPTIONS}
-Environment="wstunnel_LOGGER_LEVEL=fatal"
 StandardOutput=null
 StandardError=null
-Restart=always
+Restart=on-failure
+RestartPreventExitStatus=23
+RestartSec=5
+StartLimitBurst=10
 User=root
 WorkingDirectory=/root
-LimitNOFILE=4096
+LimitNOFILE=1000000
+LimitNPROC=10000
+Nice=-20
+CPUQuota=90%
+MemoryMax=2G
+LimitFSIZE=infinity
+LimitCPU=infinity
+LimitRSS=infinity
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target
