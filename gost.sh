@@ -1,6 +1,6 @@
 
 #!/bin/bash
-
+clear
 # Function to check and install GOST if missing
 check_and_install_gost() {
     if [[ ! -f /usr/local/bin/gost ]]; then
