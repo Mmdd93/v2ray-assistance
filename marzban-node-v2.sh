@@ -134,36 +134,43 @@ fi
         read
     done
 }
+# Color definitions
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
 # Function to run two selectable functions with a return option
 setup_marzban_node() {
     while true; do
-        echo "Select a mode to run or choose to return:"
-        echo "1) Normal Mode (Host Network: Use all inbound ports)"
-        echo "2) Port Mapping Mode (Use only specific inbound ports)"
-        echo "3) Return to the main menu"
+        echo -e "${YELLOW}Select a mode to run or choose to return:${NC}"
+        echo -e "${GREEN}1.${NC} Normal Mode (Host Network: Use all inbound ports)"
+        echo -e "${GREEN}2.${NC} Port Mapping Mode (Use only specific inbound ports)"
+        echo -e "${GREEN}3.${NC} Return "
         
         # Default choice is 1 if no input or invalid input
-        read -p "Please choose an option or press enter for Normal Mode [defualt]: " choice
+        read -p "$(echo -e ${YELLOW}Please choose an option or press enter for Normal Mode [default]:${NC} )" choice
         choice=${choice:-1}  # Default to 1 if no input is provided
 
         case "$choice" in
             1)
+                echo -e "${GREEN}Running Normal Mode...${NC}"
                 setup_marzban_node1
                 ;;
             2)
+                echo -e "${GREEN}Running Port Mapping Mode...${NC}"
                 setup_marzban_node2
                 ;;
             3)
-                echo "Returning to the main menu..."
-                break  # Break out of the loop to return to the main menu
+                echo -e "${YELLOW}Returning to the main menu...${NC}"
+                return  # Break out of the loop to return to the main menu
                 ;;
             *)
-                echo "Invalid option. Please choose 1, 2, or 3."
+                echo -e "${RED}Invalid option. Please choose 1, 2, or 3.${NC}"
                 ;;
         esac
     done
 }
-
 
 down_docker_compose() {
 
