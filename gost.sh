@@ -334,17 +334,19 @@ configure_port_forwarding() {
 
     case $side_choice in
         1)  # Client-side configuration
+            # Select inbound transport protocol
             echo -e "\033[1;33mSelect inbound (config) protocol type:\033[0m"
             echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode (grpc, xhttp, ws, tcp, etc.)\033[0m"
             echo -e "\033[1;32m2.\033[0m \033[1;36mUDP mode (WireGuard, kcp, hysteria, quic, etc.)\033[0m"
             read -p "Enter your choice [1-2]: " type_choice
-
+            
             case $type_choice in
                 1) transport="tcp" ;;
                 2) transport="udp" ;;
                 *) echo -e "\033[1;31mInvalid choice! Exiting...\033[0m"; return ;;
             esac
-
+            
+            # Select server communication protocol
             echo -e "\033[1;33mSelect a protocol for communication between servers:\033[0m"
             echo -e "\033[1;32m1.\033[0m KCP"
             echo -e "\033[1;32m2.\033[0m QUIC"
@@ -353,27 +355,35 @@ configure_port_forwarding() {
             echo -e "\033[1;32m5.\033[0m gRPC"
             echo -e "\033[1;32m6.\033[0m h2 (HTTP/2)"
             echo -e "\033[1;32m7.\033[0m SSH"
-            echo -e "\033[1;32m8.\033[0m tls (TLS)"
-            echo -e "\033[1;32m9.\033[0m mwss (Multiplex Websocket)"
+            echo -e "\033[1;32m8.\033[0m TLS"
+            echo -e "\033[1;32m9.\033[0m MWSS (Multiplex Websocket)"
             echo -e "\033[1;32m10.\033[0m h2c (HTTP2 Cleartext)"
-            echo -e "\033[1;32m11.\033[0m obfs4 (OBFS4)"
+            echo -e "\033[1;32m11.\033[0m OBFS4"
             echo -e "\033[1;32m12.\033[0m ohttp (HTTP Obfuscation)"
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
             read -p "Enter your choice: " proto_choice
-
+            
             # Ask for required inputs
             read -p "Enter remote server IP (kharej): " raddr_ip
+            
+            # Check if input is an IPv6 address and format it properly
+            if [[ $raddr_ip =~ : ]]; then
+                raddr_ip="[$raddr_ip]"
+            fi
+            
+            echo "Formatted IP: $raddr_ip"
+            
             read -p "Enter servers communicate port: " raddr_port
-            read -p "Enter inbound (config) port: " lport
-
+            read -p "Enter inbound (config) ports (comma-separated, e.g., 1234,5678): " lports
+            
             # Validate inputs
-            if [[ -z "$raddr_ip" || -z "$raddr_port" || -z "$lport" ]]; then
+            if [[ -z "$raddr_ip" || -z "$raddr_port" || -z "$lports" ]]; then
                 echo -e "\033[1;31mError: All fields are required!\033[0m"
                 return
             fi
-
+            
             # Mapping protocols
             case $proto_choice in
                 1) proto="kcp" ;;
@@ -393,9 +403,24 @@ configure_port_forwarding() {
                 15) proto="mws" ;;
                 *) echo -e "\033[1;31mInvalid protocol choice! Exiting...\033[0m"; return ;;
             esac
+            
+            # Generate multiple `-L` options
+            GOST_OPTIONS=""
+            IFS=',' read -ra PORT_ARRAY <<< "$lports"
+            for port in "${PORT_ARRAY[@]}"; do
+                port=$(echo "$port" | xargs) # Trim spaces
+                if [[ -n "$port" ]]; then
+                    GOST_OPTIONS+=" -L ${transport}://:${port}/127.0.0.1:${port}"
+                fi
+            done
+            
+            # Append `-F` for the remote connection
+            GOST_OPTIONS+=" -F ${proto}://${raddr_ip}:${raddr_port}"
+            
+            # Display the final GOST command
+            echo -e "\033[1;34mGenerated GOST command:\033[0m"
+            echo "gost $GOST_OPTIONS"
 
-            # Generate GOST_OPTIONS
-            GOST_OPTIONS="-L ${transport}://:${lport}/127.0.0.1:${lport} -F ${proto}://${raddr_ip}:${raddr_port}"
             ;;
 
         2)  # Server-side configuration
@@ -526,8 +551,20 @@ configure_relay() {
         2)
             # Client-side configuration
             echo -e "\n\033[1;34mConfigure Client-Side (Iran)\033[0m"
-            read -p $'\033[1;33mEnter inbound (config) port: \033[0m' lport_client
+            
+            # Multiple inbound ports input
+            read -p $'\033[1;33mEnter inbound (config) ports (comma-separated, e.g., 1234,5678): \033[0m' lport_client
+            IFS=',' read -ra lport_array <<< "$lport_client"  # Convert to array
+            
             read -p $'\033[1;33mEnter remote server IP (kharej): \033[0m' relay_ip
+            
+            # Check if input is an IPv6 address
+            if [[ $relay_ip =~ : ]]; then
+                relay_ip="[$relay_ip]"
+            fi
+            
+            echo -e "\033[1;36mFormatted IP:\033[0m $relay_ip"
+            
             read -p $'\033[1;33mEnter servers communicate port: \033[0m' relay_port
             
             # Select listen type (TCP/UDP)
@@ -536,14 +573,13 @@ configure_relay() {
             echo -e "\033[1;32m[2]\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
             
             read -p $'\033[1;33mEnter listen transmission type [1-2]: \033[0m' listen_choice
-
             
             case $listen_choice in
                 1) LISTEN_TRANSMISSION="tcp" ;;
                 2) LISTEN_TRANSMISSION="udp" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
             esac
-
+            
             # Select relay transmission type
             echo -e "\n\033[1;34mSelect Relay Transmission Type:\033[0m"
             echo -e "\033[1;32m1.\033[0m KCP"
@@ -553,18 +589,16 @@ configure_relay() {
             echo -e "\033[1;32m5.\033[0m gRPC"
             echo -e "\033[1;32m6.\033[0m h2 (HTTP/2)"
             echo -e "\033[1;32m7.\033[0m SSH"
-            echo -e "\033[1;32m8.\033[0m tls (TLS)"
-            echo -e "\033[1;32m9.\033[0m mwss (Multiplex Websocket)"
+            echo -e "\033[1;32m8.\033[0m TLS"
+            echo -e "\033[1;32m9.\033[0m MWSS (Multiplex Websocket)"
             echo -e "\033[1;32m10.\033[0m h2c (HTTP2 Cleartext)"
-            echo -e "\033[1;32m11.\033[0m obfs4 (OBFS4)"
-            echo -e "\033[1;32m12.\033[0m ohttp (HTTP Obfuscation)"
-            echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
-            echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
-            echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
+            echo -e "\033[1;32m11.\033[0m OBFS4 (OBFS4)"
+            echo -e "\033[1;32m12.\033[0m oHTTP (HTTP Obfuscation)"
+            echo -e "\033[1;32m13.\033[0m oTLS (TLS Obfuscation)"
+            echo -e "\033[1;32m14.\033[0m mTLS (Multiplex TLS)"
+            echo -e "\033[1;32m15.\033[0m MWS (Multiplex Websocket)"
             
-            
-            read -p $'\033[1;33m?? Enter your choice for relay transmission type: \033[0m' trans_choice
-
+            read -p $'\033[1;33mEnter your choice for relay transmission type: \033[0m' trans_choice
             
             case $trans_choice in
                 1) TRANSMISSION="kcp" ;;
@@ -584,17 +618,24 @@ configure_relay() {
                 15) TRANSMISSION="mws" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
-
-            # Corrected the `-L` and `-F` parameters
-            GOST_OPTIONS="-L ${LISTEN_TRANSMISSION}://:${lport_client}/127.0.0.1:${lport_client} -F relay+${TRANSMISSION}://${relay_ip}:${relay_port}"
-
+            
+            # Construct multi-port -L parameters
+            GOST_OPTIONS=""
+            for lport in "${lport_array[@]}"; do
+                GOST_OPTIONS+=" -L ${LISTEN_TRANSMISSION}://:${lport}/127.0.0.1:${lport}"
+            done
+            
+            GOST_OPTIONS+=" -F relay+${TRANSMISSION}://${relay_ip}:${relay_port}"
+            
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
             [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
-
+            
             echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
             create_gost_service "$service_name"
             start_service "$service_name"
+            
             read -p "Press Enter to continue..."
+
             ;;
         
         *)
