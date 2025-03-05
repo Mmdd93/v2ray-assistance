@@ -552,6 +552,7 @@ done
 }
 
 # Function to install marzban node
+
 setup_marzban_node2() {
 local current_dir
     current_dir=$(pwd)
@@ -626,8 +627,8 @@ for ((i = 1; i <= NUM_NODES; i++)); do
     esac
 
     # Prompt user for ports and use defaults if input is empty
-    SERVICE_PORT=$(prompt_input "Enter service port for marzban-node-$i " $DEFAULT_SERVICE_PORT)
-    XRAY_API_PORT=$(prompt_input "Enter XRAY API port for marzban-node-$i " $DEFAULT_XRAY_API_PORT)
+    SERVICE_PORT=$(prompt_input "Enter [service port] for marzban-node-$i " $DEFAULT_SERVICE_PORT)
+    XRAY_API_PORT=$(prompt_input "Enter [XRAY API port] for marzban-node-$i " $DEFAULT_XRAY_API_PORT)
 
     # Validate ports
     validate_port "$SERVICE_PORT"
@@ -636,7 +637,7 @@ for ((i = 1; i <= NUM_NODES; i++)); do
     echo_green "Using ports for node $i: SERVICE_PORT=$SERVICE_PORT, XRAY_API_PORT=$XRAY_API_PORT"
 
     # Ask how many XRAY input ports the user wants to map
-    NUM_XRAY_IN_PORTS=$(prompt_input "How many inbounds ports for marzban-node-$i?" )
+    NUM_XRAY_IN_PORTS=$(prompt_input "How many [inbounds ports] do you need for marzban-node-$i?" )
 
     # Validate the input
     if [[ "$NUM_XRAY_IN_PORTS" =~ ^[0-9]+$ ]] && [ "$NUM_XRAY_IN_PORTS" -gt 0 ]; then
