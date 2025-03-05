@@ -54,7 +54,7 @@ main_menu() {
 
 
 tcpudp_forwarding() {
-    echo -e "\033[1;34mConfigure Port Forwarding (Client Side Only)\033[0m"
+    echo -e "\033[1;34mConfigure Multi-Port Forwarding (Client Side Only)\033[0m"
 
     # Ask for the protocol type
     echo -e "\033[1;33mSelect protocol type:\033[0m"
@@ -70,16 +70,25 @@ tcpudp_forwarding() {
 
     # Ask for required inputs
     read -p "Enter remote server IP (kharej): " raddr_ip
-    read -p "Enter inbound (config) port: " lport
+    read -p "Enter inbound (config) ports (comma-separated, e.g., 8080,9090): " lports
 
     # Validate inputs
-    if [[ -z "$raddr_ip" || -z "$lport" ]]; then
+    if [[ -z "$raddr_ip" || -z "$lports" ]]; then
         echo -e "\033[1;31mError: All fields are required!\033[0m"
         return
     fi
 
-    # Generate GOST_OPTIONS for TCP or UDP forwarding
-    GOST_OPTIONS="-L ${transport}://:${lport}/${raddr_ip}:${lport}"
+    # Check if raddr_ip is an IPv6 address and enclose it in []
+    if [[ "$raddr_ip" == *:* ]]; then
+        raddr_ip="[${raddr_ip}]"
+    fi
+
+    # Generate multiple GOST forwarding rules
+    GOST_OPTIONS=""
+    IFS=',' read -ra PORT_ARRAY <<< "$lports"
+    for lport in "${PORT_ARRAY[@]}"; do
+        GOST_OPTIONS+="-L ${transport}://:${lport}/${raddr_ip}:${lport} "
+    done
 
     # Prompt for a custom service name
     read -p "Enter a custom name for this service (leave blank for a random name): " service_name
@@ -96,13 +105,6 @@ tcpudp_forwarding() {
     read -p "Press Enter to continue..."
 }
 
-# Ensure script is run as root
-check_root() {
-    if [[ "$EUID" -ne 0 ]]; then
-        echo "$(tput setaf 1)Error: You must run this script as root!$(tput sgr0)"
-        exit 1
-    fi
-}
 
 # Fetch the latest GOST releases from GitHub
 fetch_gost_versions() {
