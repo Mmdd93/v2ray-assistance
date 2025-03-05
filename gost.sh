@@ -27,6 +27,7 @@ main_menu() {
         echo -e " \033[1;34m4.\033[0m simple port forwarding (TCP/UDP)"
         echo -e " \033[1;34m5.\033[0m Manage Tunnels Services"
         echo -e " \033[1;34m6.\033[0m Remove GOST"
+        
         echo -e " \033[1;31m0. Exit\033[0m"
         echo -e "\033[1;32m===================================\033[0m"
 
@@ -39,6 +40,7 @@ main_menu() {
             4) tcpudp_forwarding ;;
             5) select_service_to_manage ;;
             6) remove_gost ;;
+            7) configure_forward ;;
             
             0) 
                 echo -e "\033[1;31mExiting... Goodbye!\033[0m"
@@ -376,8 +378,61 @@ configure_port_forwarding() {
             
             echo "Formatted IP: $raddr_ip"
             
-            read -p "Enter servers communicate port: " raddr_port
-            read -p "Enter inbound (config) ports (comma-separated, e.g., 1234,5678): " lports
+            # Prompt the user for the server communication port
+            while true; do
+                read -p "Enter server communication port: " raddr_port
+                
+                # Check if the entered port is numeric and validate it
+                if ! [[ "$raddr_port" =~ ^[0-9]+$ ]]; then
+                    echo "Invalid input! Please enter a valid numeric port."
+                    continue
+                fi
+                
+                # Check if the port is already in use
+                if is_port_used $raddr_port; then
+                    echo "Port $raddr_port is already in use. Please enter a different port."
+                else
+                    echo "Port $raddr_port is available."
+                    break  # Exit the loop if the port is free
+                fi
+            done
+
+           
+
+            # Prompt the user for inbound ports
+            while true; do
+                read -p "Enter inbound (config) ports (comma-separated, e.g., 1234,5678): " lports
+                
+                # Convert the comma-separated input into an array
+                IFS=',' read -ra lport_array <<< "$lports"
+                
+                # Flag to track if all ports are available
+                all_ports_available=true
+                
+                # Check each port to see if it is in use
+                for port in "${lport_array[@]}"; do
+                    # Validate if the port is numeric
+                    if ! [[ "$port" =~ ^[0-9]+$ ]]; then
+                        echo "Invalid port: $port. Please enter valid numeric ports."
+                        all_ports_available=false
+                        break
+                    fi
+                    
+                    # Check if the port is already in use
+                    if is_port_used $port; then
+                        echo "Port $port is already in use. Please enter a different port."
+                        all_ports_available=false
+                        break
+                    fi
+                done
+                
+                # If all ports are available, break out of the loop
+                if $all_ports_available; then
+                    echo "All ports are available: ${lport_array[*]}"
+                    break
+                fi
+            done
+
             
             # Validate inputs
             if [[ -z "$raddr_ip" || -z "$raddr_port" || -z "$lports" ]]; then
@@ -425,6 +480,26 @@ configure_port_forwarding() {
             ;;
 
         2)  # Server-side configuration
+        
+        # Prompt the user for the server communication port
+            while true; do
+                read -p "Enter server communication port: " sport
+                
+                # Check if the entered port is numeric and validate it
+                if ! [[ "$sport" =~ ^[0-9]+$ ]]; then
+                    echo "Invalid input! Please enter a valid numeric port."
+                    continue
+                fi
+                
+                # Check if the port is already in use
+                if is_port_used $sport; then
+                    echo "Port $sport is already in use. Please enter a different port."
+                else
+                    echo "Port $sport is available."
+                    break  # Exit the loop if the port is free
+                fi
+            done
+        
             echo -e "\033[1;33mSelect a protocol for communication between servers:\033[0m"
             echo -e "\033[1;32m1.\033[0m SSH"
             echo -e "\033[1;32m2.\033[0m KCP"
@@ -443,7 +518,7 @@ configure_port_forwarding() {
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
             read -p "Enter your choice: " proto_choice
 
-            read -p "Enter servers communicate port: " sport
+            
 
             case $proto_choice in
                 1) GOST_OPTIONS="-L ssh://:${sport}" ;;
@@ -497,7 +572,18 @@ configure_relay() {
         1)
             # Server-side configuration
             echo -e "\n\033[1;34m Configure Server-Side (Kharej)\033[0m"
-            read -p $'\033[1;33m Enter server communication port: \033[0m' lport_relay
+
+            # Prompt the user for a port until a free one is provided
+              while true; do
+                  read -p $'\033[1;33mEnter server communication port: \033[0m' lport_relay
+                  
+                  if is_port_used $lport_relay; then
+                      echo -e "\033[1;31mPort $relay_port is already in use. Please enter a different port.\033[0m"
+                  else
+                      echo -e "\033[1;32mPort $relay_port is available.\033[0m"
+                      break  # Exit the loop if the port is free
+                  fi
+              done
             
             # Ask for the transmission type
             echo -e "\n\033[1;34mSelect Transmission Type for Communication:\033[0m"
@@ -565,9 +651,42 @@ configure_relay() {
                 2) LISTEN_TRANSMISSION="udp" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
             esac
+            
             # Multiple inbound ports input
-            read -p $'\033[1;33mEnter inbound (config) ports (comma-separated, e.g., 1234,5678): \033[0m' lport_client
-            IFS=',' read -ra lport_array <<< "$lport_client"  # Convert to array
+            # Prompt the user for multiple inbound ports
+            while true; do
+                read -p $'\033[1;33mEnter inbound (config) ports (comma-separated, e.g., 1234,5678): \033[0m' lport
+                
+                # Convert the comma-separated input into an array
+                IFS=',' read -ra lport_array <<< "$lport"
+                
+                # Flag to track if all ports are available
+                all_ports_available=true
+                
+                # Check each port to see if it is in use
+                for port in "${lport_array[@]}"; do
+                    # Validate if the port is numeric
+                    if ! [[ "$port" =~ ^[0-9]+$ ]]; then
+                        echo -e "\033[1;31mInvalid port: $port. Please enter valid numeric ports.\033[0m"
+                        all_ports_available=false
+                        break
+                    fi
+            
+                    # Check if the port is already in use
+                    if is_port_used $port; then
+                        echo -e "\033[1;31mPort $port is already in use. Please enter a different port.\033[0m"
+                        all_ports_available=false
+                        break
+                    fi
+                done
+                
+                # If all ports are available, break out of the loop
+                if $all_ports_available; then
+                    echo -e "\033[1;32mAll ports are available: ${lport_array[*]}\033[0m"
+                    break
+                fi
+            done
+
             
             read -p $'\033[1;33mEnter remote server IP (kharej): \033[0m' relay_ip
             
@@ -578,8 +697,18 @@ configure_relay() {
             
             echo -e "\033[1;36mFormatted IP:\033[0m $relay_ip"
             
-            read -p $'\033[1;33mEnter servers communicate port: \033[0m' relay_port
-            
+            # Prompt the user for a port until a free one is provided
+            while true; do
+                read -p $'\033[1;33mEnter server communication port: \033[0m' relay_port
+                
+                if is_port_used $relay_port; then
+                    echo -e "\033[1;31mPort $relay_port is already in use. Please enter a different port.\033[0m"
+                else
+                    echo -e "\033[1;32mPort $relay_port is available.\033[0m"
+                    break  # Exit the loop if the port is free
+                fi
+            done
+                        
             # Select relay transmission type
             echo -e "\n\033[1;34mSelect Relay Transmission Type:\033[0m"
             echo -e "\033[1;32m1.\033[0m KCP"
@@ -646,7 +775,211 @@ configure_relay() {
 }
 
 
+configure_forward() {
+      echo -e "\033[1;33mIs this the client or server side?\033[0m"
+      echo -e "\033[1;32m1.\033[0m \033[1;36mServer-Side (Kharej) - Remote server\033[0m"
+      echo -e "\033[1;32m2.\033[0m \033[1;36mClient-Side (Iran) - Local machine\033[0m"
+      read -p $'\033[1;33mEnter your choice: \033[0m' side_choice
 
+
+    case $side_choice in
+        1)
+            # Server-side configuration
+            echo -e "\n\033[1;34m Configure Server-Side (Kharej)\033[0m"
+            # Prompt the user for a port until a free one is provided
+            while true; do
+                read -p $'\033[1;33mEnter server communication port: \033[0m' relay_port
+                
+                if is_port_used $relay_port; then
+                    echo -e "\033[1;31mPort $relay_port is already in use. Please enter a different port.\033[0m"
+                else
+                    echo -e "\033[1;32mPort $relay_port is available.\033[0m"
+                    break  # Exit the loop if the port is free
+                fi
+            done
+            
+            # Multiple inbound ports input
+            read -p $'\033[1;33mEnter inbound (config) ports (only support one port): \033[0m' lport_client
+            
+            
+            # Ask for the transmission type
+            echo -e "\n\033[1;34mSelect Transmission Type for Communication:\033[0m"
+            echo -e "\033[1;32m1.\033[0m KCP"
+            echo -e "\033[1;32m2.\033[0m QUIC"
+            echo -e "\033[1;32m3.\033[0m WS (WebSocket)"
+            echo -e "\033[1;32m4.\033[0m WSS (WebSocket Secure)"
+            echo -e "\033[1;32m5.\033[0m gRPC"
+            echo -e "\033[1;32m6.\033[0m h2 (HTTP/2)"
+            echo -e "\033[1;32m7.\033[0m SSH"
+            echo -e "\033[1;32m8.\033[0m tls (TLS)"
+            echo -e "\033[1;32m9.\033[0m mwss (Multiplex Websocket)"
+            echo -e "\033[1;32m10.\033[0m h2c (HTTP2 Cleartext)"
+            echo -e "\033[1;32m11.\033[0m obfs4 (OBFS4)"
+            echo -e "\033[1;32m12.\033[0m ohttp (HTTP Obfuscation)"
+            echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
+            echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
+            echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
+            read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
+
+
+            case $trans_choice in
+                1) TRANSMISSION="kcp" ;;
+                2) TRANSMISSION="quic" ;;
+                3) TRANSMISSION="ws" ;;
+                4) TRANSMISSION="wss" ;;
+                5) TRANSMISSION="grpc" ;;
+                6) TRANSMISSION="h2" ;;
+                7) TRANSMISSION="ssh" ;;
+                8) TRANSMISSION="tls" ;;
+                9) TRANSMISSION="mwss" ;;
+                10) TRANSMISSION="h2c" ;;
+                11) TRANSMISSION="obfs4" ;;
+                12) TRANSMISSION="ohttp" ;;
+                13) TRANSMISSION="otls" ;;
+                14) TRANSMISSION="mtls" ;;
+                15) TRANSMISSION="mws" ;;
+                *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
+            esac
+
+            GOST_OPTIONS="-L ${TRANSMISSION}://:${relay_port}/:${lport_client}"
+            echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+
+            read -p "Enter a custom name for this service (leave blank for a random name): " service_name
+            [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
+
+            echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
+            create_gost_service "$service_name"
+            start_service "$service_name"
+            read -p "Press Enter to continue..."
+            ;;
+        
+        2)
+            # Client-side configuration
+            echo -e "\n\033[1;34mConfigure Client-Side (Iran)\033[0m"
+             # Select listen type (TCP/UDP)
+            echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
+            echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
+            echo -e "\033[1;32m2.\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
+            
+            read -p $'\033[1;33mEnter listen transmission type: \033[0m' listen_choice
+            
+            case $listen_choice in
+                1) LISTEN_TRANSMISSION="tcp" ;;
+                2) LISTEN_TRANSMISSION="udp" ;;
+                *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
+            esac
+            # Prompt the user for a port until a free one is provided
+            while true; do
+                read -p $'\033[1;33mEnter server communication port: \033[0m' relay_port
+                
+                if is_port_used $relay_port; then
+                    echo -e "\033[1;31mPort $relay_port is already in use. Please enter a different port.\033[0m"
+                else
+                    echo -e "\033[1;32mPort $relay_port is available.\033[0m"
+                    break  # Exit the loop if the port is free
+                fi
+            done
+            
+
+
+              # Prompt the user for an inbound port until a free one is provided
+              while true; do
+                  read -p $'\033[1;33mEnter inbound (config) port (only support one port): \033[0m' lport
+                  
+                  # Check if the entered port is numeric and validate it
+                  if ! [[ "$lport" =~ ^[0-9]+$ ]]; then
+                      echo -e "\033[1;31mInvalid input! Please enter a valid numeric port.\033[0m"
+                      continue
+                  fi
+                  
+                  if is_port_used $lport_client; then
+                      echo -e "\033[1;31mPort $lport_client is already in use. Please enter a different port.\033[0m"
+                  else
+                      echo -e "\033[1;32mPort $lport_client is available.\033[0m"
+                      break  # Exit the loop if the port is free
+                  fi
+              done
+
+            
+            read -p $'\033[1;33mEnter remote server IP (kharej): \033[0m' relay_ip
+            
+            # Check if input is an IPv6 address
+            if [[ $relay_ip =~ : ]]; then
+                relay_ip="[$relay_ip]"
+            fi
+            
+            echo -e "\033[1;36mFormatted IP:\033[0m $relay_ip"
+            
+            
+            
+            # Select relay transmission type
+            echo -e "\n\033[1;34mSelect Relay Transmission Type:\033[0m"
+            echo -e "\033[1;32m1.\033[0m KCP"
+            echo -e "\033[1;32m2.\033[0m QUIC"
+            echo -e "\033[1;32m3.\033[0m WS (WebSocket)"
+            echo -e "\033[1;32m4.\033[0m WSS (WebSocket Secure)"
+            echo -e "\033[1;32m5.\033[0m gRPC"
+            echo -e "\033[1;32m6.\033[0m h2 (HTTP/2)"
+            echo -e "\033[1;32m7.\033[0m SSH"
+            echo -e "\033[1;32m8.\033[0m TLS"
+            echo -e "\033[1;32m9.\033[0m MWSS (Multiplex Websocket)"
+            echo -e "\033[1;32m10.\033[0m h2c (HTTP2 Cleartext)"
+            echo -e "\033[1;32m11.\033[0m OBFS4 (OBFS4)"
+            echo -e "\033[1;32m12.\033[0m oHTTP (HTTP Obfuscation)"
+            echo -e "\033[1;32m13.\033[0m oTLS (TLS Obfuscation)"
+            echo -e "\033[1;32m14.\033[0m mTLS (Multiplex TLS)"
+            echo -e "\033[1;32m15.\033[0m MWS (Multiplex Websocket)"
+            
+            read -p $'\033[1;33mEnter your choice for relay transmission type: \033[0m' trans_choice
+            
+            case $trans_choice in
+                1) TRANSMISSION="kcp" ;;
+                2) TRANSMISSION="quic" ;;
+                3) TRANSMISSION="ws" ;;
+                4) TRANSMISSION="wss" ;;
+                5) TRANSMISSION="grpc" ;;
+                6) TRANSMISSION="h2" ;;
+                7) TRANSMISSION="ssh" ;;
+                8) TRANSMISSION="tls" ;;
+                9) TRANSMISSION="mwss" ;;
+                10) TRANSMISSION="h2c" ;;
+                11) TRANSMISSION="obfs4" ;;
+                12) TRANSMISSION="ohttp" ;;
+                13) TRANSMISSION="otls" ;;
+                14) TRANSMISSION="mtls" ;;
+                15) TRANSMISSION="mws" ;;
+                *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
+            esac
+            
+            # Construct multi-port -L parameters
+            GOST_OPTIONS=" -L ${LISTEN_TRANSMISSION}://:${lport} -F forward+${TRANSMISSION}://${relay_ip}:${relay_port}"
+            echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+            
+            read -p "Enter a custom name for this service (leave blank for a random name): " service_name
+            [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
+            
+            echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
+            create_gost_service "$service_name"
+            start_service "$service_name"
+            
+            read -p "Press Enter to continue..."
+
+            ;;
+        
+        *)
+            echo -e "\033[1;31mInvalid choice! Exiting.\033[0m"
+            ;;
+    esac
+}
+# Function to check if a port is already in use
+is_port_used() {
+    local port=$1
+    if sudo lsof -i :$port >/dev/null 2>&1; then
+        return 0  # Port is in use
+    else
+        return 1  # Port is not in use
+    fi
+}
 # Function to create a service for Gost (port forwarding or relay mode)
 create_gost_service() {
     local service_name=$1
