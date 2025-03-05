@@ -520,21 +520,21 @@ configure_relay() {
 
 
             case $trans_choice in
-                1) proto="kcp" ;;
-                2) proto="quic" ;;
-                3) proto="ws" ;;
-                4) proto="wss" ;;
-                5) proto="grpc" ;;
-                6) proto="h2" ;;
-                7) proto="ssh" ;;
-                8) proto="tls" ;;
-                9) proto="mwss" ;;
-                10) proto="h2c" ;;
-                11) proto="obfs4" ;;
-                12) proto="ohttp" ;;
-                13) proto="otls" ;;
-                14) proto="mtls" ;;
-                15) proto="mws" ;;
+                1) TRANSMISSION="kcp" ;;
+                2) TRANSMISSION="quic" ;;
+                3) TRANSMISSION="ws" ;;
+                4) TRANSMISSION="wss" ;;
+                5) TRANSMISSION="grpc" ;;
+                6) TRANSMISSION="h2" ;;
+                7) TRANSMISSION="ssh" ;;
+                8) TRANSMISSION="tls" ;;
+                9) TRANSMISSION="mwss" ;;
+                10) TRANSMISSION="h2c" ;;
+                11) TRANSMISSION="obfs4" ;;
+                12) TRANSMISSION="ohttp" ;;
+                13) TRANSMISSION="otls" ;;
+                14) TRANSMISSION="mtls" ;;
+                15) TRANSMISSION="mws" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
 
