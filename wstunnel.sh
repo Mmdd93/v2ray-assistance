@@ -7,7 +7,15 @@ check_and_install_wstunnel() {
         install_wstunnel
     fi
 }
-
+# Function to check if a port is already in use
+is_port_used() {
+    local port=$1
+    if sudo lsof -i :$port >/dev/null 2>&1; then
+        return 0  # Port is in use
+    else
+        return 1  # Port is not in use
+    fi
+}
 install_wstunnel() {
     # Check and install required dependencies if missing
     for pkg in tar jq wget; do
@@ -128,7 +136,17 @@ configure_wstunnel() {
                 esac
             done
             
-            read -p "Enter the communication port (press Enter for default 8880): " local_port
+
+            while true; do
+                read -p "Enter the communication port (press Enter for default 8880): " local_port
+                
+                if is_port_used $local_port; then
+                    echo -e "\033[1;31mPort $local_port is already in use. Please enter a different port.\033[0m"
+                else
+                    echo -e "\033[1;32mPort $local_port is available.\033[0m"
+                    break  # Exit the loop if the port is free
+                fi
+            done
             local_port=${local_port:-8880}
 
             # Define wstunnel options for Server-side (Listening)
@@ -162,14 +180,60 @@ configure_wstunnel() {
                   esac
               done
               
-              read -p "Enter the listening (config) ports (comma-separated, e.g., 8080,9090): " local_ports
-              read -p "Enter the remote server domain or IP (e.g., www.speedtest.net or 104.17.148.22): " remote_address
+              
+              
+              # Prompt the user for multiple inbound ports
+            while true; do
+                read -p "Enter the listening (config) ports (comma-separated, e.g., 8080,9090): " local_ports
+                # Convert the comma-separated input into an array
+                IFS=',' read -ra lport_array <<< "$local_ports"
+                
+                # Flag to track if all ports are available
+                all_ports_available=true
+                
+                # Check each port to see if it is in use
+                for port in "${lport_array[@]}"; do
+                    # Validate if the port is numeric
+                    if ! [[ "$port" =~ ^[0-9]+$ ]]; then
+                        echo -e "\033[1;31mInvalid port: $port. Please enter valid numeric ports.\033[0m"
+                        all_ports_available=false
+                        break
+                    fi
+            
+                    # Check if the port is already in use
+                    if is_port_used $port; then
+                        echo -e "\033[1;31mPort $port is already in use. Please enter a different port.\033[0m"
+                        all_ports_available=false
+                        break
+                    fi
+                done
+                
+                # If all ports are available, break out of the loop
+                if $all_ports_available; then
+                    echo -e "\033[1;32mAll ports are available: ${lport_array[*]}\033[0m"
+                    break
+                fi
+            done
+
+
+            read -p "Enter the remote server domain or IP (e.g., www.speedtest.net or 104.17.148.22): " remote_address
               # Check if input is an IPv6 address and format it properly
                           if [[ $remote_address =~ : ]]; then
                               remote_address="[$remote_address]"
                           fi
                           echo "Formatted IP: $remote_address"
               read -p "Enter the communication port (press Enter for default 8880): " remote_port
+
+              while true; do
+                 read -p "Enter the communication port (press Enter for default 8880): " remote_port
+                
+                if is_port_used $remote_port; then
+                    echo -e "\033[1;31mPort $remote_port is already in use. Please enter a different port.\033[0m"
+                else
+                    echo -e "\033[1;32mPort $remote_port is available.\033[0m"
+                    break  # Exit the loop if the port is free
+                fi
+            done
               remote_port=${remote_port:-8880}
               
               # Convert comma-separated local ports into an array
