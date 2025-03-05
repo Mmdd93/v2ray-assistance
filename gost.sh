@@ -10,6 +10,37 @@ check_and_install_gost() {
         echo -e "\033[1;32m✓ GOST is already installed.\033[0m"
     fi
 }
+# Function to check if lsof is installed and install it if necessary
+install_lsof() {
+    if ! command -v lsof &> /dev/null; then
+        echo "lsof is not installed. Installing..."
+        
+        # Install lsof based on the system's package manager
+        if [ -f /etc/debian_version ]; then
+            # For Debian/Ubuntu systems
+            sudo apt update && sudo apt install -y lsof
+        elif [ -f /etc/redhat-release ]; then
+            # For CentOS/RHEL systems
+            sudo yum install -y lsof
+        elif [ -f /etc/os-release ]; then
+            # For other Linux systems (e.g., Fedora)
+            sudo dnf install -y lsof
+        else
+            echo "Unsupported system. Please install lsof manually."
+            return 1
+        fi
+        
+        if command -v lsof &> /dev/null; then
+            echo "lsof successfully installed."
+        else
+            echo "Failed to install lsof."
+            return 1
+        fi
+    else
+        echo "lsof is already installed."
+    fi
+}
+
 # Show GOST version
 gost_version=$(gost -V 2>&1)
 
@@ -1141,4 +1172,5 @@ manage_service_action() {
 }
 # Start the main menu
 check_and_install_gost
+install_lsof
 main_menu
