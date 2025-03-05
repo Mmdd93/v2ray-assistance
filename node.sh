@@ -1055,9 +1055,7 @@ handle_port_80() {
 }
 # SSL issuance function
 ssl() {
-1) Let's Encrypt
-2) Buypass
-3) ZeroSSL
+
 
 while true; do
 clear
