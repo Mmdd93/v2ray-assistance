@@ -1055,7 +1055,9 @@ handle_port_80() {
 }
 # SSL issuance function
 ssl() {
+
 while true; do
+clear
 echo -e "\033[1;32mSSL Installation Options\033[0m"
 echo -e "1. \033[1;34mEasy mode ESSL script (recommended)\033[0m"
 echo -e "2. \033[1;34macme New single domain (sub.domain.com)\033[0m"
