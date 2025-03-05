@@ -539,6 +539,7 @@ configure_relay() {
             esac
 
             GOST_OPTIONS="-L relay+${TRANSMISSION}://:${lport_relay}"
+            echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
             [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
@@ -625,6 +626,7 @@ configure_relay() {
             done
             
             GOST_OPTIONS+=" -F relay+${TRANSMISSION}://${relay_ip}:${relay_port}"
+            echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
             
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
             [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
