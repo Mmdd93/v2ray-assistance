@@ -1035,7 +1035,7 @@ set_custom_xray_version() {
     else
         echo_yellow "Custom Xray version is currently disabled."
         local enable
-        enable=$(prompt_input "Do you want to enable the custom Xray version? (yes/no)" "no")
+        enable=$(prompt_input "Do you want to enable the custom Xray version? (yes/no)" "yes")
         
         if [[ "$enable" == "yes" ]]; then
             echo_green "Enabling custom Xray..."
