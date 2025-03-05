@@ -1411,9 +1411,7 @@ get_wildcard_ssl_with_certbot() {
     # Run Certbot command
     if ! eval "$certbot_command"; then
         echo -e "\033[1;31mWildcard SSL certificate generation failed. Returning to retry...\033[0m"
-        sleep 2
-        get_wildcard_ssl_with_certbot
-        return
+        sleep 3
     fi
 
     echo -e "\033[1;32mWildcard SSL certificate generation completed successfully.\033[0m"
