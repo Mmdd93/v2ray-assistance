@@ -81,7 +81,7 @@ tcpudp_forwarding() {
             if [[ $raddr_ip =~ : ]]; then
                 raddr_ip="[$raddr_ip]"
             fi
-
+echo "Formatted IP: $raddr_ip"
     # Generate multiple GOST forwarding rules
     GOST_OPTIONS=""
     IFS=',' read -ra PORT_ARRAY <<< "$lports"
@@ -736,6 +736,7 @@ manage_service_action() {
         echo -e " \033[1;34m3.\033[0m Restart the Service"
         echo -e " \033[1;34m4.\033[0m Check Service Status"
         echo -e " \033[1;34m5.\033[0m Remove the Service"
+        echo -e " \033[1;34m6.\033[0m Edit the Service with nano"
         echo -e " \033[1;31m0.\033[0m Return"
         echo -e "\033[1;34m==============================\033[0m"
 
@@ -766,6 +767,27 @@ manage_service_action() {
                 echo -e "\033[1;32mService $service_name removed.\033[0m"
                 read -p "Press Enter to continue..."
                 ;;
+            6)
+                
+                    service_file="/etc/systemd/system/$service_name"
+
+                    if [[ -f "$service_file" ]]; then
+                        echo -e "\033[1;33mOpening $service_file for editing...\033[0m"
+                        sleep 1
+                        nano "$service_file"
+                
+                        # Reload systemd and restart the service after editing
+                        systemctl daemon-reload
+                        systemctl restart "$service_name"
+                
+                        echo -e "\033[1;32mService $service_name reloaded and restarted.\033[0m"
+                    else
+                        echo -e "\033[1;31mError: Service file not found!\033[0m"
+                    fi
+                
+                    read -p "Press Enter to continue..."
+                ;;
+
             0)
                 break
                 ;;
@@ -776,9 +798,6 @@ manage_service_action() {
         esac
     done
 }
-
-
-
 # Start the main menu
 check_and_install_gost
 main_menu
