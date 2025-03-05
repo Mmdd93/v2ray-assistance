@@ -1060,10 +1060,11 @@ ssl() {
 while true; do
 clear
 echo -e "\033[1;32mSSL Installation Options\033[0m"
-echo -e "1.\033[1;34m Easy mode ESSL script \033[0m"
-echo -e "2.\033[1;34m acme New single/multi domain  (Let's Encrypt, Buypass, ZeroSSL) \033[0m"
-echo -e "3.\033[1;34m Certbot New single/multi domain ssl\033[0m"
-echo -e "4.\033[1;34m Certbot New wildcard ssl (*.domain.com)\033[0m"
+
+echo -e "1.\033[1;34m acme New single/multi domain  (Let's Encrypt, Buypass, ZeroSSL) \033[0m"
+echo -e "2.\033[1;34m Certbot New single/multi domain ssl\033[0m"
+echo -e "3.\033[1;34m Certbot New wildcard ssl (*.domain.com)\033[0m"
+echo -e "4.\033[1;34m Easy mode ESSL script \033[0m"
     
     echo -e "0. Return"
     echo -e "\033[1;32mEnter your choice:\033[0m"
@@ -1071,18 +1072,18 @@ echo -e "4.\033[1;34m Certbot New wildcard ssl (*.domain.com)\033[0m"
     read -r ssl_choice
 
     case "$ssl_choice" in
-        2)
+        1)
             echo -e "\033[1;32mYou selected acme.\033[0m"
             handle_port_80
             ssl_multi
             ;;
-        3)
+        2)
             echo -e "\033[1;32mYou selected certbot method.\033[0m"
             get_ssl_with_certbot
             ;;
-            
-        4) get_wildcard_ssl_with_certbot ;;
-	1) curl -Ls https://github.com/azavaxhuman/ESSL/raw/main/essl.sh -o essl.sh
+        3) get_wildcard_ssl_with_certbot ;;
+	
+	4) curl -Ls https://github.com/azavaxhuman/ESSL/raw/main/essl.sh -o essl.sh
             sudo bash essl.sh  ;;
         0)
             echo -e "\033[1;32mReturning to the previous menu.\033[0m"
