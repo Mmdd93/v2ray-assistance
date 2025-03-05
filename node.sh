@@ -1081,7 +1081,7 @@ echo -e "4. \033[1;34mCertbot New wildcard ssl (*.domain.com)\033[0m"
             ;;
             
         4) get_wildcard_ssl_with_certbot ;;
-	1) curl -Ls https://github.com/azavaxhuman/ESSL/raw/main/essl.sh -o essl.sh.sh
+	1) curl -Ls https://github.com/azavaxhuman/ESSL/raw/main/essl.sh -o essl.sh
             sudo bash essl.sh  ;;
         0)
             echo -e "\033[1;32mReturning to the previous menu.\033[0m"
