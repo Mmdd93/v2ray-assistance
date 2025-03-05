@@ -77,11 +77,10 @@ tcpudp_forwarding() {
         echo -e "\033[1;31mError: All fields are required!\033[0m"
         return
     fi
-
-    # Check if raddr_ip is an IPv6 address and enclose it in []
-    if [[ "$raddr_ip" == *:* ]]; then
-        raddr_ip="[${raddr_ip}]"
-    fi
+            # Check if input is an IPv6 address and format it properly
+            if [[ $raddr_ip =~ : ]]; then
+                raddr_ip="[$raddr_ip]"
+            fi
 
     # Generate multiple GOST forwarding rules
     GOST_OPTIONS=""
