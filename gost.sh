@@ -552,7 +552,18 @@ configure_relay() {
         2)
             # Client-side configuration
             echo -e "\n\033[1;34mConfigure Client-Side (Iran)\033[0m"
+             # Select listen type (TCP/UDP)
+            echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
+            echo -e "\033[1;32m[1]\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
+            echo -e "\033[1;32m[2]\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
             
+            read -p $'\033[1;33mEnter listen transmission type [1-2]: \033[0m' listen_choice
+            
+            case $listen_choice in
+                1) LISTEN_TRANSMISSION="tcp" ;;
+                2) LISTEN_TRANSMISSION="udp" ;;
+                *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
+            esac
             # Multiple inbound ports input
             read -p $'\033[1;33mEnter inbound (config) ports (comma-separated, e.g., 1234,5678): \033[0m' lport_client
             IFS=',' read -ra lport_array <<< "$lport_client"  # Convert to array
@@ -567,19 +578,6 @@ configure_relay() {
             echo -e "\033[1;36mFormatted IP:\033[0m $relay_ip"
             
             read -p $'\033[1;33mEnter servers communicate port: \033[0m' relay_port
-            
-            # Select listen type (TCP/UDP)
-            echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
-            echo -e "\033[1;32m[1]\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
-            echo -e "\033[1;32m[2]\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
-            
-            read -p $'\033[1;33mEnter listen transmission type [1-2]: \033[0m' listen_choice
-            
-            case $listen_choice in
-                1) LISTEN_TRANSMISSION="tcp" ;;
-                2) LISTEN_TRANSMISSION="udp" ;;
-                *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
-            esac
             
             # Select relay transmission type
             echo -e "\n\033[1;34mSelect Relay Transmission Type:\033[0m"
