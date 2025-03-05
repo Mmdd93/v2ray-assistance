@@ -121,7 +121,7 @@ configure_wstunnel() {
     echo -e "\033[1;34mPlease select the mode for wstunnel:\033[0m"
     echo -e " \033[1;34m1.\033[0m \033[1;33mServer-side (kharej)\033[0m"
     echo -e " \033[1;34m2.\033[0m \033[1;33mClient-side (iran)\033[0m"
-    echo -e "\033[1;31m0. \033[1;37mBack to Main Menu\033[0m"
+    echo -e " \033[1;31m0. \033[1;37mBack to Main Menu\033[0m"
     read -p "Enter your choice: " mode_choice
 
     case $mode_choice in
