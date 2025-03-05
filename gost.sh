@@ -27,7 +27,7 @@ main_menu() {
         echo -e " \033[1;34m2.\033[0m Basic mode (multi port) "
         echo -e " \033[1;34m3.\033[0m rely mode (multi port) "
         echo -e " \033[1;34m4.\033[0m forward mode (single port) "
-        echo -e " \033[1;34m5.\033[0m simple port forward (TCP/UDP)"
+        echo -e " \033[1;34m5.\033[0m simple port forward (only client side) (multi port)"
         echo -e " \033[1;34m6.\033[0m Manage Tunnels Services"
         echo -e " \033[1;34m7.\033[0m Remove GOST"
         
