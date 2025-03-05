@@ -18,8 +18,8 @@ gost_version=$(gost -V 2>&1)
 main_menu() {
     while true; do
         clear
-        echo -e "\033[1;32mSupport: SSH,h2,gRPC,WSS,WS,QUIC,KCP,TLS,MWSS,H2C,OBFS4,OHTTP,OTLS,MTLS \033[0m"
-        echo -e "\033[1;32mTip: You can create infinite tunnels \033[0m"
+        echo -e "\033[1;32mSupport:\033[0m SSH,h2,gRPC,WSS,WS,QUIC,KCP,TLS,MWSS,H2C,OBFS4,OHTTP,OTLS,MTL "
+        echo -e "\033[1;32mTip:\033[0m You can create infinite tunnels"
         echo -e "\033[1;32m===================================\033[0m"
         echo -e "          \033[1;36mGOST Management Menu\033[0m"
         echo -e "\033[1;32m===================================\033[0m"
