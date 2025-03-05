@@ -637,7 +637,7 @@ for ((i = 1; i <= NUM_NODES; i++)); do
     echo_green "Using ports for node $i: SERVICE_PORT=$SERVICE_PORT, XRAY_API_PORT=$XRAY_API_PORT"
 
     # Ask how many XRAY input ports the user wants to map
-    NUM_XRAY_IN_PORTS=$(prompt_input "How many inbounds (config) ports  do you need for marzban-node-$i?" )
+    NUM_XRAY_IN_PORTS=$(prompt_input "How many inbounds (config) ports  do you need for marzban-node-$i?" 1)
 
     # Validate the input
     if [[ "$NUM_XRAY_IN_PORTS" =~ ^[0-9]+$ ]] && [ "$NUM_XRAY_IN_PORTS" -gt 0 ]; then
