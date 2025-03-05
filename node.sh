@@ -1061,7 +1061,7 @@ clear
 echo -e "\033[1;32mSSL Installation Options\033[0m"
 echo -e "1. \033[1;34mEasy mode ESSL script (recommended)\033[0m"
 echo -e "2. \033[1;34macme New single domain (sub.domain.com)\033[0m"
-echo -e "3. \033[1;34mCertbot New Multi-Domain ssl (sub.domain1.com, sub2.domain2.com ...)\033[0m"
+echo -e "3. \033[1;34mCertbot New single/Multi-Domain ssl (sub.domain1.com, sub2.domain2.com ...)\033[0m"
 echo -e "4. \033[1;34mCertbot New wildcard ssl (*.domain.com)\033[0m"
     
     echo -e "0. Return"
@@ -1419,10 +1419,6 @@ get_wildcard_ssl_with_certbot() {
     read -r
     ssl
 }
-
-
-
-
 
 
 # Swap Management Script
