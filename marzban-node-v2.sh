@@ -637,13 +637,13 @@ for ((i = 1; i <= NUM_NODES; i++)); do
     echo_green "Using ports for node $i: SERVICE_PORT=$SERVICE_PORT, XRAY_API_PORT=$XRAY_API_PORT"
 
     # Ask how many XRAY input ports the user wants to map
-    NUM_XRAY_IN_PORTS=$(prompt_input "How many [inbounds ports] do you need for marzban-node-$i?" )
+    NUM_XRAY_IN_PORTS=$(prompt_input "How many inbounds (config) ports  do you need for marzban-node-$i?" )
 
     # Validate the input
     if [[ "$NUM_XRAY_IN_PORTS" =~ ^[0-9]+$ ]] && [ "$NUM_XRAY_IN_PORTS" -gt 0 ]; then
         XRAY_IN_PORTS=""  # Initialize XRAY_IN_PORTS as an empty string
         for ((j = 1; j <= NUM_XRAY_IN_PORTS; j++)); do
-            XRAY_IN_PORT=$(prompt_input "Enter inbounds ports $j for marzban-node-$i" )
+            XRAY_IN_PORT=$(prompt_input "Enter inbounds (config) ports $j for marzban-node-$i" )
             validate_port "$XRAY_IN_PORT"
             XRAY_IN_PORTS="$XRAY_IN_PORTS $XRAY_IN_PORT"  # Append ports to the variable
         done
