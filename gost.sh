@@ -20,7 +20,7 @@ main_menu() {
         echo -e "\033[1;32m===================================\033[0m"
         echo -e "          \033[1;36mGOST Management Menu\033[0m"
         echo -e "\033[1;32m===================================\033[0m"
-        echo -e " \033[1;33m2.\033[0m SSH,h2,gRPC,WSS,WS,QUIC,KCP,TLS,MWSS,H2C,OBFS4,OHTTP,OTLS,MTLS"
+        echo -e " \033[1;33m\033[0m SSH,h2,gRPC,WSS,WS,QUIC,KCP,TLS,MWSS,H2C,OBFS4,OHTTP,OTLS,MTLS"
         echo -e " \033[1;34m1.\033[0m Install GOST"
         echo -e " \033[1;34m2.\033[0m Basic mode "
         echo -e " \033[1;34m3.\033[0m rely mode "
