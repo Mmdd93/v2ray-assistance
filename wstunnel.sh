@@ -151,26 +151,47 @@ configure_wstunnel() {
                 esac
             done
 
-            # Select the protocol (tcp or udp)
-            echo -e "\033[1;34mSelect the protocol:\033[0m"
-            select protocol in "tcp" "udp"; do
-                case $protocol in
-                    tcp|udp) break ;;
-                    *) echo -e "\033[1;31mInvalid option. Please select 'tcp' or 'udp'.\033[0m" ;;
-                esac
-            done
 
-            read -p "Enter the listening (config) port: " local_port
-            read -p "Enter the remote server domain or IP (e.g., www.speedtest.net or 104.17.148.22): " remote_address
-            read -p "Enter the communication port (press Enter for default 8880): " remote_port
-            remote_port=${remote_port:-8880}
-            
-            # Define wstunnel options based on protocol and ws/wss selection
-            if [ "$protocol" == "tcp" ]; then
-                wstunnel_OPTIONS="client --log-lvl OFF -L ${protocol}://0.0.0.0:${local_port}:127.0.0.1:${local_port} ${protocol_type}://${remote_address}:${remote_port}"
-            elif [ "$protocol" == "udp" ]; then
-                wstunnel_OPTIONS="client --log-lvl OFF -L ${protocol}://0.0.0.0:${local_port}:127.0.0.1:${local_port} ${protocol_type}://${remote_address}:${remote_port}"
-            fi
+
+              # Select the protocol (tcp or udp)
+              echo -e "\033[1;34mSelect the protocol:\033[0m"
+              select protocol in "tcp" "udp"; do
+                  case $protocol in
+                      tcp|udp) break ;;
+                      *) echo -e "\033[1;31mInvalid option. Please select 'tcp' or 'udp'.\033[0m" ;;
+                  esac
+              done
+              
+              read -p "Enter the listening (config) ports (comma-separated, e.g., 8080,9090): " local_ports
+              read -p "Enter the remote server domain or IP (e.g., www.speedtest.net or 104.17.148.22): " remote_address
+              # Check if input is an IPv6 address and format it properly
+                          if [[ $remote_address =~ : ]]; then
+                              remote_address="[$remote_address]"
+                          fi
+                          echo "Formatted IP: $remote_address"
+              read -p "Enter the communication port (press Enter for default 8880): " remote_port
+              remote_port=${remote_port:-8880}
+              
+              # Convert comma-separated local ports into an array
+              IFS=',' read -r -a ports_array <<< "$local_ports"
+              
+              # Initialize the wstunnel_OPTIONS string
+              wstunnel_OPTIONS="client --log-lvl OFF"
+              
+              # Loop through the array of local ports and append each port configuration to wstunnel_OPTIONS
+              for port in "${ports_array[@]}"; do
+                  wstunnel_OPTIONS="$wstunnel_OPTIONS -L ${protocol}://0.0.0.0:${port}:127.0.0.1:${port}"
+              done
+              
+              # Append the remote server details
+              wstunnel_OPTIONS="$wstunnel_OPTIONS ${protocol_type}://${remote_address}:${remote_port}"
+              
+              # Display the constructed options
+              echo -e "\033[1;32mwstunnel command:\033[0m $wstunnel_OPTIONS"
+              
+              # Now you can run the wstunnel command
+              # wstunnel $wstunnel_OPTIONS
+
             
             # Create and start service
             service_name="${remote_port}"
@@ -212,22 +233,14 @@ Description=wstunnel ${service_name} Service
 After=network.target
 
 [Service]
-Type=simple
 ExecStart=/usr/local/bin/wstunnel ${wstunnel_OPTIONS}
+Environment="wstunnel_LOGGER_LEVEL=fatal"
 StandardOutput=null
 StandardError=null
-Restart=on-failure
-RestartSec=5
+Restart=always
 User=root
 WorkingDirectory=/root
-LimitNOFILE=1000000
-LimitNPROC=10000
-Nice=-20
-CPUQuota=90%
-LimitFSIZE=infinity
-LimitCPU=infinity
-LimitRSS=infinity
-NoNewPrivileges=true
+LimitNOFILE=4096
 
 [Install]
 WantedBy=multi-user.target
