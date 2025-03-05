@@ -766,24 +766,30 @@ manage_service_action() {
                 read -p "Press Enter to continue..."
                 ;;
             6)
-                
-                    service_file="/etc/systemd/system/$service_name"
-
-                    if [[ -f "$service_file" ]]; then
-                        echo -e "\033[1;33mOpening $service_file for editing...\033[0m"
-                        sleep 1
-                        nano "$service_file"
-                
+                service_file="/etc/systemd/system/$service_name"
+            
+                if [[ -f "$service_file" ]]; then
+                    echo -e "\033[1;33mOpening $service_file for editing...\033[0m"
+                    sleep 1
+                    nano "$service_file"
+                    systemctl daemon-reload
+                    # Ask if the user wants to restart the service
+                    read -p $'\033[1;33mDo you want to restart the service? [y/n] (default: y): \033[0m' restart_choice
+                    restart_choice="${restart_choice:-y}"  # Default to "y" if empty
+            
+                    if [[ "$restart_choice" == "y" || "$restart_choice" == "yes" ]]; then
                         # Reload systemd and restart the service after editing
-                        systemctl daemon-reload
                         systemctl restart "$service_name"
-                
                         echo -e "\033[1;32mService $service_name reloaded and restarted.\033[0m"
                     else
-                        echo -e "\033[1;31mError: Service file not found!\033[0m"
+                        echo -e "\033[1;33mService $service_name was not restarted.\033[0m"
                     fi
-                
-                    read -p "Press Enter to continue..."
+                else
+                    echo -e "\033[1;31mError: Service file not found!\033[0m"
+                fi
+            
+                read -p "Press Enter to continue..."
+
                 ;;
 
             0)
