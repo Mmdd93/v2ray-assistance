@@ -1335,92 +1335,93 @@ get_ssl_with_certbot() {
     echo -e "\033[1;32mSSL certificate generation completed successfully.\033[0m"
 }
 
-# Function to generate wildcard SSL certificates using certbot with DNS challenge
 get_wildcard_ssl_with_certbot() {
+    clear
+    echo -e "\033[1;36m============================================\033[0m"
+    echo -e "\033[1;33m       Certbot Wildcard SSL Generator      \033[0m"
+    echo -e "\033[1;36m============================================\033[0m"
 
-    # Function to check if certbot is installed
-    if ! command -v certbot &> /dev/null; then
+    # Check if certbot is installed
+    if ! command -v certbot &>/dev/null; then
         echo -e "\033[1;31mCertbot is not installed.\033[0m"
         while true; do
             read -p "Do you want to install Certbot now? (yes/no): " install_choice
-            if [[ "$install_choice" == "yes" ]]; then
-                if [[ -f /etc/debian_version ]]; then
-                    echo -e "\033[1;32mInstalling Certbot for Debian/Ubuntu...\033[0m"
-                    sudo apt install certbot -y || { echo -e "\033[1;31mFailed to install Certbot.\033[0m"; return 1; }
-                elif [[ -f /etc/redhat-release ]]; then
-                    echo -e "\033[1;32mInstalling Certbot for CentOS/RHEL...\033[0m"
-                    sudo yum install epel-release -y && sudo yum install certbot -y || { echo -e "\033[1;31mFailed to install Certbot.\033[0m"; return 1; }
-                else
-                    echo -e "\033[1;31mUnsupported OS.\033[0m"
+            case "$install_choice" in
+                yes)
+                    if [[ -f /etc/debian_version ]]; then
+                        echo -e "\033[1;32mInstalling Certbot for Debian/Ubuntu...\033[0m"
+                        sudo apt update && sudo apt install certbot -y
+                    elif [[ -f /etc/redhat-release ]]; then
+                        echo -e "\033[1;32mInstalling Certbot for CentOS/RHEL...\033[0m"
+                        sudo yum install -y epel-release && sudo yum install -y certbot
+                    else
+                        echo -e "\033[1;31mUnsupported OS.\033[0m"
+                        return 1
+                    fi
+                    break
+                    ;;
+                no)
+                    echo -e "\033[1;31mCertbot is required to proceed. Exiting...\033[0m"
                     return 1
-                fi
-                break
-            elif [[ "$install_choice" == "no" ]]; then
-                echo -e "\033[1;31mCertbot is required to proceed.\033[0m"
-                return 1
-            else
-                echo -e "\033[1;31mInvalid choice. Please enter 'yes' or 'no'.\033[0m"
-            fi
+                    ;;
+                *)
+                    echo -e "\033[1;31mInvalid choice. Please enter 'yes' or 'no'.\033[0m"
+                    ;;
+            esac
         done
     else
         echo -e "\033[1;32mCertbot is already installed.\033[0m"
     fi
 
-    echo -e "\033[1;36m============================================\033[0m"
-    echo -e "\033[1;33m      Certbot Wildcard SSL Generation\033[0m"
-    echo -e "\033[1;36m============================================\033[0m"
-    
+    # Get user input
     while true; do
         read -p "Enter your email (leave blank if you don't want to provide one): " email
         read -p "Enter the base domain (e.g., example.com): " base_domain
 
-        # Check if the base domain is empty
         if [[ -z "$base_domain" ]]; then
             echo -e "\033[1;31mError: You must enter a base domain.\033[0m"
+            continue
+        fi
+
+        if [[ -n "$email" && ! "$email" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+            echo -e "\033[1;31mError: Invalid email format. Please enter a valid email.\033[0m"
             continue
         fi
 
         break
     done
 
-    # Construct the domain arguments for the wildcard SSL request
+    # Construct the domain arguments
     domain_args="-d $base_domain -d *.$base_domain"
 
-        # Inform the user about the manual DNS challenge
-    echo -e "\033[1;33mNote:\033[0m This process requires you to manually add DNS TXT records for domain verification."
-    sleep 1
-    echo -e "\033[1;32mCertbot will prompt you to create a TXT record for each domain.\033[0m"
-    sleep 1
-    echo -e "\033[1;32mYou will need to log into your DNS provider's control panel and add the TXT records.\033[0m"
-    sleep 1
+    # Display DNS challenge instructions
+    echo -e "\n\033[1;33mNote:\033[0m This process requires manual DNS TXT record verification."
+    echo -e "\033[1;32mCertbot will prompt you to create a TXT record.\033[0m"
+    echo -e "\033[1;32mLog into your DNS provider's control panel and add the TXT records.\033[0m"
     echo -e "\033[1;34mPress Enter when you're ready to continue...\033[0m"
-    read -r  # Wait for the user to press Enter
+    read -r
 
-    # Check if email was provided
+    # Construct the Certbot command
     if [[ -z "$email" ]]; then
-        # No email provided, use the option to register without email
         certbot_command="certbot certonly --manual --preferred-challenges=dns --server https://acme-v02.api.letsencrypt.org/directory --agree-tos --register-unsafely-without-email $domain_args"
     else
-        # Validate the email format
-        if [[ ! "$email" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
-            echo -e "\033[1;31mError: Invalid email format. Please enter a valid email.\033[0m"
-            continue  # Go back to the start of the loop to re-enter the email and domain
-        fi
         certbot_command="certbot certonly --manual --preferred-challenges=dns --email \"$email\" --server https://acme-v02.api.letsencrypt.org/directory --agree-tos $domain_args"
     fi
-sleep 1
 
-
-    # Run certbot command and display its output
+    # Run Certbot command
     if ! eval "$certbot_command"; then
-        echo -e "\033[1;31mWildcard SSL certificate generation failed.\033[0m"
-        echo -e "\033[1;31mReturning to base domain entry.\033[0m"
-        ssl  # Return to allow retry from the main menu or calling function
+        echo -e "\033[1;31mWildcard SSL certificate generation failed. Returning to retry...\033[0m"
+        sleep 2
+        get_wildcard_ssl_with_certbot
+        return
     fi
 
     echo -e "\033[1;32mWildcard SSL certificate generation completed successfully.\033[0m"
+    echo -e "\033[1;34mPress Enter to return to the SSL menu...\033[0m"
+    read -r
     ssl
 }
+
 
 
 
