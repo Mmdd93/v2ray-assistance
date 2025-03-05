@@ -222,7 +222,7 @@ configure_wstunnel() {
                               remote_address="[$remote_address]"
                           fi
                           echo "Formatted IP: $remote_address"
-              read -p "Enter the communication port (press Enter for default 8880): " remote_port
+              
 
               while true; do
                  read -p "Enter the communication port (press Enter for default 8880): " remote_port
