@@ -1060,10 +1060,10 @@ ssl() {
 while true; do
 clear
 echo -e "\033[1;32mSSL Installation Options\033[0m"
-echo -e "1. \033[1;34m Easy mode ESSL script \033[0m"
-echo -e "2. \033[1;34m acme New single/multi domain  (Let's Encrypt, Buypass, ZeroSSL) \033[0m"
-echo -e "3. \033[1;34m Certbot New single/multi domain ssl\033[0m"
-echo -e "4. \033[1;34m Certbot New wildcard ssl (*.domain.com)\033[0m"
+echo -e "1.\033[1;34m Easy mode ESSL script \033[0m"
+echo -e "2.\033[1;34m acme New single/multi domain  (Let's Encrypt, Buypass, ZeroSSL) \033[0m"
+echo -e "3.\033[1;34m Certbot New single/multi domain ssl\033[0m"
+echo -e "4.\033[1;34m Certbot New wildcard ssl (*.domain.com)\033[0m"
     
     echo -e "0. Return"
     echo -e "\033[1;32mEnter your choice:\033[0m"
