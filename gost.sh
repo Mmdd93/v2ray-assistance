@@ -1,4 +1,3 @@
-
 #!/bin/bash
 clear
 # Function to check and install GOST if missing
