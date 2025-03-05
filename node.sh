@@ -1386,6 +1386,16 @@ get_wildcard_ssl_with_certbot() {
     # Construct the domain arguments for the wildcard SSL request
     domain_args="-d $base_domain -d *.$base_domain"
 
+        # Inform the user about the manual DNS challenge
+    echo -e "\033[1;33mNote:\033[0m This process requires you to manually add DNS TXT records for domain verification."
+    sleep 1
+    echo -e "\033[1;32mCertbot will prompt you to create a TXT record for each domain.\033[0m"
+    sleep 1
+    echo -e "\033[1;32mYou will need to log into your DNS provider's control panel and add the TXT records.\033[0m"
+    sleep 1
+    echo -e "\033[1;34mPress Enter when you're ready to continue...\033[0m"
+    read -r  # Wait for the user to press Enter
+
     # Check if email was provided
     if [[ -z "$email" ]]; then
         # No email provided, use the option to register without email
@@ -1399,15 +1409,7 @@ get_wildcard_ssl_with_certbot() {
         certbot_command="certbot certonly --manual --preferred-challenges=dns --email \"$email\" --server https://acme-v02.api.letsencrypt.org/directory --agree-tos $domain_args"
     fi
 sleep 1
-    # Inform the user about the manual DNS challenge
-    echo -e "\033[1;33mNote:\033[0m This process requires you to manually add DNS TXT records for domain verification."
-    sleep 1
-    echo -e "\033[1;32mCertbot will prompt you to create a TXT record for each domain.\033[0m"
-    sleep 1
-    echo -e "\033[1;32mYou will need to log into your DNS provider's control panel and add the TXT records.\033[0m"
-    sleep 1
-    echo -e "\033[1;34mPress Enter when you're ready to continue...\033[0m"
-    read -r  # Wait for the user to press Enter
+
 
     # Run certbot command and display its output
     if ! eval "$certbot_command"; then
