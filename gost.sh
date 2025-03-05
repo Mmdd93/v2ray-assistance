@@ -20,8 +20,9 @@ main_menu() {
         clear
         echo -e "\033[1;32m===================================\033[0m"
         echo -e "          \033[1;36mGOST Management Menu\033[0m"
+        echo -e " \033[1;32mSupport: SSH,h2,gRPC,WSS,WS,QUIC,KCP,TLS,MWSS,H2C,OBFS4,OHTTP,OTLS,MTLS \033[0m"
+        echo -e " \033[1;32mTip: You can create infinite tunnels \033[0m"
         echo -e "\033[1;32m===================================\033[0m"
-        echo -e " \033[1;33mSupport: SSH,h2,gRPC,WSS,WS,QUIC,KCP,TLS,MWSS,H2C,OBFS4,OHTTP,OTLS,MTLS \033[0m"
         echo -e " \033[1;34m1.\033[0m Install GOST"
         echo -e " \033[1;34m2.\033[0m Basic mode (multi port) "
         echo -e " \033[1;34m3.\033[0m rely mode (multi port) "
