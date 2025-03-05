@@ -1277,7 +1277,7 @@ get_ssl_with_certbot() {
    
 # Get the public IP of the server
    # Get the public IP of the server
-    server_ip=$(curl -s ifconfig.me)
+    server_ip=$(curl -s -4 ifconfig.me)
 
     while true; do
         read -p "Enter your email (leave blank if you don't want to provide one): " email
@@ -1328,11 +1328,14 @@ get_ssl_with_certbot() {
     # Run certbot command and display its output
     if ! eval "$certbot_command"; then
         echo -e "\033[1;31mSSL certificate generation failed.\033[0m"
-        echo -e "\033[1;31mReturning to domain entry.\033[0m"
-        continue  # Go back to the start of the loop if certbot fails
+        echo -e "\033[1;31mWildcard SSL certificate generation failed.\033[0m"
+
     fi
 
-    echo -e "\033[1;32mSSL certificate generation completed successfully.\033[0m"
+    echo -e "\033[1;32mWildcard SSL certificate generation completed successfully.\033[0m"
+    echo -e "\033[1;34mPress Enter to return to the SSL menu...\033[0m"
+    read -r
+    ssl
 }
 
 get_wildcard_ssl_with_certbot() {
