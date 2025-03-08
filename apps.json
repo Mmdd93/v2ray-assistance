@@ -128,15 +128,5 @@
       "Android": "https://play.google.com/store/apps/details?id=io.nekohasekai.sfa"
     },
     "ShowInMenu": true
-  },
-  {
-    "name": "آموزش اتصال",
-    "urlScheme": "tg://resolve?domain=v2rayAppsHelp",
-    "image": "https://play-lh.googleusercontent.com/yrL3NQO1uWgn39jgzZUgLbry-vUlaJWzX-BWqFtp2S3KqmZHEzWJr-Ad5SwWUdcbMg",
-    "link": "tg://resolve?domain=v2rayAppsHelp",
-    "downloadLinks": {
-      "iOS": "https://play.google.com/store/apps/details?id=org.telegram.messenger"
-    },
-    "ShowInMenu": true
   }
 ]
