@@ -98,6 +98,7 @@
     "name": "V2rayN",
     "urlScheme": "v2rayng://install-config",
     "image": "https://fa.v2rayn.org/wp-content/uploads/2024/01/favicon.png",
+    "link": "v2rayng://install-config",
     "os": ["Windows", "Linux"],
     "downloadLinks": {
       "Windows": "https://github.com/2dust/v2rayN/releases/download/7.10.4/v2rayN-windows-64-desktop.zip",
