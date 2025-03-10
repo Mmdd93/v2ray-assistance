@@ -2172,10 +2172,10 @@ create_custom_dns() {
         default_ip=$(get_current_ssh_user_ip)
 
 
-    echo -e "\033[1;32m1)\033[0m \033[1;37mDefault [Your IP: $default_ip]\033[0m"
-    echo -e "\033[1;32m2)\033[0m \033[1;37mUse 0.0.0.0/0 for all clients\033[0m"
-    echo -e "\033[1;32m3)\033[0m \033[1;37mEnter allowed clients (comma-separated) [Default: $default_ip]\033[0m"
-    echo -e "\033[1;32m4)\033[0m \033[1;37mLoad allowed clients from /root/allowed.txt\033[0m"
+    echo -e "\033[1;32m1. \033[0m \033[1;37mDefault [Your IP: $default_ip]\033[0m"
+    echo -e "\033[1;32m2. \033[0m \033[1;37mUse 0.0.0.0/0 for all clients\033[0m"
+    echo -e "\033[1;32m3. \033[0m \033[1;37mEnter allowed clients (comma-separated) [Default: $default_ip]\033[0m"
+    echo -e "\033[1;32m4. \033[0m \033[1;37mLoad allowed clients from /root/allowed.txt\033[0m"
 
     echo -e "\033[1;36m--------------------------------------------\033[0m"
     read -p "$(echo -e "\033[1;33mEnter allowed clients [defualt: all clients]: \033[0m")" option
@@ -2203,13 +2203,13 @@ create_custom_dns() {
                     echo -e "\033[1;32mAllowed clients from /root/allowed.txt: $ALLOWED_CLIENTS\033[0m"
                 fi
             else
-                echo -e "\033[1;31mFile /root/allowed.txt not found. Defaulting to your IP: $default_ip.\033[0m"
-                ALLOWED_CLIENTS="0.0.0.0/0"
+                echo -e "\033[1;31mFile /root/allowed.txt not found. Defaulting to : $default_ip.\033[0m"
+                ALLOWED_CLIENTS="$default_ip"
             fi
             ;;
         *)
-            echo -e "\033[1;31mInvalid option. Defaulting to your IP: $default_ip.\033[0m"
-            ALLOWED_CLIENTS="$default_ip"
+            echo -e "\033[1;31mInvalid option. Defaulting to all clients: "0.0.0.0/0"\033[0m"
+            ALLOWED_CLIENTS="0.0.0.0/0"
             ;;
     esac
 
