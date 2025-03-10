@@ -2259,25 +2259,39 @@ else
     spoof_domains="true" # Set to true if no custom domains are provided
     echo -e "\033[1;32mSelected all domains for spoofing.\033[0m"
 fi
+echo -e "\033[1;33mDo you want to use custom RAM and swap? (yes/no) [no]:\033[0m"
+read -p " > " custom_ram_swap
+
+if [[ "$custom_ram_swap" == "yes" ]]; then
+    read -p $'\033[1;33mEnter RAM size (e.g., 512m, 1g) [defualt: 512m]: \033[0m' ram_size
+    read -p $'\033[1;33mEnter swap size (e.g., 512m, 2g) [defualt: 512m]: \033[0m' swap_size
+    ram_size=${ram_size:-512m}
+    swap_size=${swap_size:-512m}
+    memory_flags="--memory=\"$ram_size\" --memory-swap=\"$swap_size\""
+else
+    memory_flags=""
+fi
+
+# Prepare the Docker command
+docker_command="docker run -d \
+    --name \"$container_name\" \
+    -e ALLOWED_CLIENTS=\"$ALLOWED_CLIENTS\" \
+    -e EXTERNAL_IP=\"$external_ip\" \
+    -e SPOOF_ALL_DOMAINS=\"$spoof_domains\" \
+    -p 443:8443 \
+    -p 80:8080 \
+    -p 53:5300/udp \
+    $custom_domains \
+    --log-driver=none \
+    $memory_flags \
+    ghcr.io/seji64/snidust:1.0.15"
 
 
-    # Prepare the Docker command
-    docker_command="docker run -d \
-        --name \"$container_name\" \
-        -e ALLOWED_CLIENTS=\"$ALLOWED_CLIENTS\" \
-        -e EXTERNAL_IP=\"$external_ip\" \
-        -e SPOOF_ALL_DOMAINS=\"$spoof_domains\" \
-        -p 443:8443 \
-        -p 80:8080 \
-        -p 53:5300/udp \
-        $custom_domains \
-        --log-driver=none \
-        ghcr.io/seji64/snidust:1.0.15"
+echo -e "\033[1;32mRunning Docker with the following command:\033[0m"
+echo "$docker_command"
 
-
-    # Run Docker container with snidust image
-    echo -e "\033[1;32mRunning the Docker container with snidust configuration...\033[0m"
-    eval "$docker_command"
+# Execute the command
+eval "$docker_command"
 
     # Verify that the container is running
     if [ "$(docker ps -q -f name="$container_name")" ]; then
