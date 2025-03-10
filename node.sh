@@ -2178,7 +2178,7 @@ create_custom_dns() {
     echo -e "\033[1;32m4)\033[0m \033[1;37mLoad allowed clients from /root/allowed.txt\033[0m"
 
     echo -e "\033[1;36m--------------------------------------------\033[0m"
-    read -p "$(echo -e "\033[1;33mEnter allowed clients [1-4]: \033[0m")" option
+    read -p "$(echo -e "\033[1;33mEnter allowed clients [defualt: all clients]: \033[0m")" option
 
     case $option in
         1)
@@ -2204,7 +2204,7 @@ create_custom_dns() {
                 fi
             else
                 echo -e "\033[1;31mFile /root/allowed.txt not found. Defaulting to your IP: $default_ip.\033[0m"
-                ALLOWED_CLIENTS="$default_ip"
+                ALLOWED_CLIENTS="0.0.0.0/0"
             fi
             ;;
         *)
@@ -2272,12 +2272,23 @@ else
     memory_flags=""
 fi
 
+echo -e "\033[1;33mDo you want to enable DOT (DNS over TLS)? (yes/no) [no]:\033[0m"
+read -p " > " enable_dot
+
+if [[ "$enable_dot" == "yes" ]]; then
+    ENABLE_DOT="true"
+    enable_dot="-e DNSDIST_ENABLE_DOT=\"$ENABLE_DOT\" -e DNSDIST_DOT_CERT_TYPE=\"auto-self\""
+else
+    enable_dot=""
+fi
+
 # Prepare the Docker command
 docker_command="docker run -d \
     --name \"$container_name\" \
     -e ALLOWED_CLIENTS=\"$ALLOWED_CLIENTS\" \
     -e EXTERNAL_IP=\"$external_ip\" \
     -e SPOOF_ALL_DOMAINS=\"$spoof_domains\" \
+    $enable_dot \
     -p 443:8443 \
     -p 80:8080 \
     -p 53:5300/udp \
@@ -2286,7 +2297,6 @@ docker_command="docker run -d \
     --log-driver=none \
     $memory_flags \
     ghcr.io/seji64/snidust:1.0.15"
-
 
 echo -e "\033[1;32mRunning Docker with the following command:\033[0m"
 echo "$docker_command"
