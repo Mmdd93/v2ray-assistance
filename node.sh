@@ -2281,6 +2281,7 @@ docker_command="docker run -d \
     -p 443:8443 \
     -p 80:8080 \
     -p 53:5300/udp \
+    -p 53:5300/tcp \
     $custom_domains \
     --log-driver=none \
     $memory_flags \
