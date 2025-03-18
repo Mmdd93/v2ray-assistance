@@ -1074,6 +1074,7 @@ manage_service_action() {
         echo -e " \033[1;34m4.\033[0m Check Service Status"
         echo -e " \033[1;34m5.\033[0m Remove the Service"
         echo -e " \033[1;34m6.\033[0m Edit the Service with nano"
+        echo -e " \033[1;34m7.\033[0m Auto Restart Service (Cron)"
         echo -e " \033[1;31m0.\033[0m Return"
         echo -e "\033[1;34m==============================\033[0m"
 
@@ -1130,6 +1131,22 @@ manage_service_action() {
                 read -p "Press Enter to continue..."
 
                 ;;
+                       7)
+    read -p "Enter the interval in hours to restart the service (1-23): " restart_interval
+    if [[ ! "$restart_interval" =~ ^[1-9]$|^1[0-9]$|^2[0-3]$ ]]; then
+        echo -e "\033[1;31mInvalid input! Please enter a number between 1 and 23.\033[0m"
+    else
+        # Schedule cron job for every N hours
+        cron_job="0 */$restart_interval * * * /bin/systemctl restart $service_name"
+        
+        # Remove existing cron job for this service and add the new one
+        (crontab -l 2>/dev/null | grep -v "/bin/systemctl restart $service_name"; echo "$cron_job") | crontab -
+        
+        echo -e "\033[1;32mCron job added to restart $service_name every $restart_interval hour(s).\033[0m"
+    fi
+    read -p "Press Enter to continue..."
+    ;;
+
 
             0)
                 break
