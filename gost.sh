@@ -572,7 +572,7 @@ configure_port_forwarding() {
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
-            #echo -e "\033[1;32m16.\033[0m sni"
+            echo -e "\033[1;32m16.\033[0m icmp (ping tunnel)"
             #echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
             read -p "Enter your choice: " proto_choice
             
@@ -662,7 +662,7 @@ configure_port_forwarding() {
                 13) proto="otls" ;;
                 14) proto="mtls" ;;
                 15) proto="mws" ;;
-                16) proto="sni" ;;
+                16) proto="icmp" ;;
                 17)
                     # For sni+host, ask for the hostname
                     read -p "Enter the hostname for obfuscation (e.g., example.com): " sni_host
@@ -729,7 +729,7 @@ configure_port_forwarding() {
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
-            #echo -e "\033[1;32m16.\033[0m sni"
+            echo -e "\033[1;32m16.\033[0m icmp (ping tunnel)"
             #echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
             read -p "Enter your choice: " proto_choice
 
@@ -749,7 +749,7 @@ configure_port_forwarding() {
                 13) GOST_OPTIONS="-L otls://:${sport}" ;;
                 14) GOST_OPTIONS="-L mtls://:${sport}" ;;
                 15) GOST_OPTIONS="-L mws://:${sport}" ;;
-                16) GOST_OPTIONS="-L sni://:${sport}" ;;
+                16) GOST_OPTIONS="-L icmp://:${sport}" ;;
                 17)
                     # For sni+host, ask for the hostname
                     read -p "Enter the hostname for obfuscation (e.g., example.com): " sni_host
@@ -820,7 +820,7 @@ configure_relay() {
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
-            #echo -e "\033[1;32m16.\033[0m sni"
+            echo -e "\033[1;32m16.\033[0m icmp (ping tunnel)"
             #echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
             read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
 
@@ -840,7 +840,7 @@ configure_relay() {
                 13) TRANSMISSION="otls" ;;
                 14) TRANSMISSION="mtls" ;;
                 15) TRANSMISSION="mws" ;;
-                16) TRANSMISSION="sni" ;;
+                16) TRANSMISSION="icmp" ;;
                 17)
                     # For sni+host, ask for the hostname
                     read -p $'\033[1;33mEnter the hostname for obfuscation (e.g., example.com): \033[0m' sni_host
@@ -955,7 +955,7 @@ configure_relay() {
             echo -e "\033[1;32m13.\033[0m oTLS (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mTLS (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m MWS (Multiplex Websocket)"
-            #echo -e "\033[1;32m16.\033[0m sni"
+            echo -e "\033[1;32m16.\033[0m icmp (ping tunnel)"
             #echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
             read -p $'\033[1;33mEnter your choice for relay transmission type: \033[0m' trans_choice
             
@@ -975,7 +975,7 @@ configure_relay() {
                 13) TRANSMISSION="otls" ;;
                 14) TRANSMISSION="mtls" ;;
                 15) TRANSMISSION="mws" ;;
-                16) TRANSMISSION="sni" ;;
+                16) TRANSMISSION="icmp" ;;
                 17)
                     # For sni+host, ask for the hostname
                     read -p $'\033[1;33mEnter the hostname for obfuscation (e.g., example.com): \033[0m' sni_host
