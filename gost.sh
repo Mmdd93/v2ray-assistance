@@ -572,8 +572,8 @@ configure_port_forwarding() {
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
-            echo -e "\033[1;32m16.\033[0m sni"
-            echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
+            #echo -e "\033[1;32m16.\033[0m sni"
+            #echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
             read -p "Enter your choice: " proto_choice
             
             # Ask for required inputs
@@ -729,8 +729,8 @@ configure_port_forwarding() {
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
-            echo -e "\033[1;32m16.\033[0m sni"
-            echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
+            #echo -e "\033[1;32m16.\033[0m sni"
+            #echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
             read -p "Enter your choice: " proto_choice
 
             case $proto_choice in
@@ -820,8 +820,8 @@ configure_relay() {
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
-            echo -e "\033[1;32m16.\033[0m sni"
-            echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
+            #echo -e "\033[1;32m16.\033[0m sni"
+            #echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
             read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
 
             case $trans_choice in
@@ -955,8 +955,8 @@ configure_relay() {
             echo -e "\033[1;32m13.\033[0m oTLS (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mTLS (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m MWS (Multiplex Websocket)"
-            echo -e "\033[1;32m16.\033[0m sni"
-            echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
+            #echo -e "\033[1;32m16.\033[0m sni"
+            #echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
             read -p $'\033[1;33mEnter your choice for relay transmission type: \033[0m' trans_choice
             
             case $trans_choice in
