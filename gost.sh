@@ -572,7 +572,8 @@ configure_port_forwarding() {
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
-            echo -e "\033[1;32m16.\033[0m sni "
+            echo -e "\033[1;32m16.\033[0m sni"
+            echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
             read -p "Enter your choice: " proto_choice
             
             # Ask for required inputs
@@ -603,8 +604,6 @@ configure_port_forwarding() {
                     break  # Exit the loop if the port is free
                 fi
             done
-
-           
 
             # Prompt the user for inbound ports
             while true; do
@@ -640,7 +639,6 @@ configure_port_forwarding() {
                 fi
             done
 
-            
             # Validate inputs
             if [[ -z "$raddr_ip" || -z "$raddr_port" || -z "$lports" ]]; then
                 echo -e "\033[1;31mError: All fields are required!\033[0m"
@@ -665,6 +663,11 @@ configure_port_forwarding() {
                 14) proto="mtls" ;;
                 15) proto="mws" ;;
                 16) proto="sni" ;;
+                17)
+                    # For sni+host, ask for the hostname
+                    read -p "Enter the hostname for obfuscation (e.g., example.com): " sni_host
+                    proto="sni://${raddr_ip}:${raddr_port}?host=${sni_host}"
+                    ;;
                 *) echo -e "\033[1;31mInvalid protocol choice! Exiting...\033[0m"; return ;;
             esac
             
@@ -679,17 +682,19 @@ configure_port_forwarding() {
             done
             
             # Append `-F` for the remote connection
-            GOST_OPTIONS+=" -F ${proto}://${raddr_ip}:${raddr_port}"
+            if [[ $proto_choice -eq 17 ]]; then
+                GOST_OPTIONS+=" -F ${proto}"
+            else
+                GOST_OPTIONS+=" -F ${proto}://${raddr_ip}:${raddr_port}"
+            fi
             
             # Display the final GOST command
             echo -e "\033[1;34mGenerated GOST command:\033[0m"
             echo "gost $GOST_OPTIONS"
-
             ;;
 
         2)  # Server-side configuration
-        
-        # Prompt the user for the server communication port
+            # Prompt the user for the server communication port
             while true; do
                 read -p "Enter server communication port: " sport
                 
@@ -724,10 +729,9 @@ configure_port_forwarding() {
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
-            echo -e "\033[1;32m16.\033[0m sni "
+            echo -e "\033[1;32m16.\033[0m sni"
+            echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
             read -p "Enter your choice: " proto_choice
-
-            
 
             case $proto_choice in
                 1) GOST_OPTIONS="-L ssh://:${sport}" ;;
@@ -746,6 +750,11 @@ configure_port_forwarding() {
                 14) GOST_OPTIONS="-L mtls://:${sport}" ;;
                 15) GOST_OPTIONS="-L mws://:${sport}" ;;
                 16) GOST_OPTIONS="-L sni://:${sport}" ;;
+                17)
+                    # For sni+host, ask for the hostname
+                    read -p "Enter the hostname for obfuscation (e.g., example.com): " sni_host
+                    GOST_OPTIONS="-L sni://:${sport}?host=${sni_host}"
+                    ;;
                 *) echo -e "\033[1;31mInvalid protocol choice!\033[0m"; return ;;
             esac
             ;;
