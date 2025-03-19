@@ -582,9 +582,9 @@ configure_relay() {
                   read -p $'\033[1;33mEnter server communication port: \033[0m' lport_relay
                   
                   if is_port_used $lport_relay; then
-                      echo -e "\033[1;31mPort $relay_port is already in use. Please enter a different port.\033[0m"
+                      echo -e "\033[1;31mPort $lport_relay is already in use. Please enter a different port.\033[0m"
                   else
-                      echo -e "\033[1;32mPort $relay_port is available.\033[0m"
+                      echo -e "\033[1;32mPort $lport_relay is available.\033[0m"
                       break  # Exit the loop if the port is free
                   fi
               done
