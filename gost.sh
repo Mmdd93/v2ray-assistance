@@ -24,10 +24,11 @@ main_menu() {
         echo -e "          \033[1;36mGOST Management Menu\033[0m"
         echo -e "\033[1;32m===================================\033[0m"
         echo -e " \033[1;34m1.\033[0m Install GOST"
-        echo -e " \033[1;34m2.\033[0m Basic mode (multi port) "
+        echo -e " \033[1;34m2.\033[0m Protocols mode (multi port) "
         echo -e " \033[1;34m3.\033[0m rely mode (multi port) "
         echo -e " \033[1;34m4.\033[0m forward mode (single port) "
         echo -e " \033[1;34m5.\033[0m simple port forward (only client side) (multi port)"
+        echo -e " \033[1;34m8.\033[0m SNI mode (multi port) "
         echo -e " \033[1;34m6.\033[0m Manage Tunnels Services"
         echo -e " \033[1;34m7.\033[0m Remove GOST"
         
@@ -42,6 +43,7 @@ main_menu() {
             3) configure_relay ;;
             4) configure_forward ;;
             5) tcpudp_forwarding ;;
+            8) configure_sni ;;
             6) select_service_to_manage ;;
             7) remove_gost ;;
             
@@ -57,7 +59,207 @@ main_menu() {
         esac
     done
 }
+configure_sni() {
+      echo -e "\033[1;33mIs this the client or server side?\033[0m"
+      echo -e "\033[1;32m1.\033[0m \033[1;36mServer-Side (Kharej) - Remote server\033[0m"
+      echo -e "\033[1;32m2.\033[0m \033[1;36mClient-Side (Iran) - Local machine\033[0m"
+      read -p $'\033[1;33mEnter your choice: \033[0m' side_choice
 
+
+    case $side_choice in
+    1)
+        # Server-side configuration
+        echo -e "\n\033[1;34m Configure Server-Side (Kharej)\033[0m"
+
+        # Prompt the user for a port until a free one is provided
+        while true; do
+            read -p $'\033[1;33mEnter server communication port: \033[0m' lport_sni
+            
+            if is_port_used $lport_sni; then
+                echo -e "\033[1;31mPort $lport_sni is already in use. Please enter a different port.\033[0m"
+            else
+                echo -e "\033[1;32mPort $lport_sni is available.\033[0m"
+                break  # Exit the loop if the port is free
+            fi
+        done
+
+        # Ask for the transmission type
+        echo -e "\n\033[1;34mSelect Transmission Type for Communication:\033[0m"
+        echo -e "\033[1;32m1.\033[0m QUIC"
+        echo -e "\033[1;32m2.\033[0m WS (WebSocket)"
+        echo -e "\033[1;32m3.\033[0m WSS (WebSocket Secure)"
+        echo -e "\033[1;32m4.\033[0m gRPC"
+        echo -e "\033[1;32m5.\033[0m h2 (HTTP/2)"
+        echo -e "\033[1;32m6.\033[0m tls (TLS)"
+        echo -e "\033[1;32m7.\033[0m mwss (Multiplex Websocket)"
+        echo -e "\033[1;32m8.\033[0m h2c (HTTP2 Cleartext)"
+        echo -e "\033[1;32m9.\033[0m obfs4 (OBFS4)"
+        echo -e "\033[1;32m10.\033[0m ohttp (HTTP Obfuscation)"
+        echo -e "\033[1;32m11.\033[0m otls (TLS Obfuscation)"
+        echo -e "\033[1;32m12.\033[0m mtls (Multiplex TLS)"
+        echo -e "\033[1;32m13.\033[0m mws (Multiplex Websocket)"
+        read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
+
+        case $trans_choice in
+            1) TRANSMISSION="quic" ;;
+            2) TRANSMISSION="ws" ;;
+            3) TRANSMISSION="wss" ;;
+            4) TRANSMISSION="grpc" ;;
+            5) TRANSMISSION="h2" ;;
+            6) TRANSMISSION="tls" ;;
+            7) TRANSMISSION="mwss" ;;
+            8) TRANSMISSION="h2c" ;;
+            9) TRANSMISSION="obfs4" ;;
+            10) TRANSMISSION="ohttp" ;;
+            11) TRANSMISSION="otls" ;;
+            12) TRANSMISSION="mtls" ;;
+            13) TRANSMISSION="mws" ;;
+            *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
+        esac
+
+        # Prompt for SNI domain
+        read -p $'\033[1;33mEnter SNI domain (e.g., example.com): \033[0m' sni_domain
+
+        # Construct GOST options with SNI domain
+        GOST_OPTIONS="-L sni+${TRANSMISSION}://:${lport_sni}?host=${sni_domain}"
+        echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+
+        read -p "Enter a custom name for this service (leave blank for a random name): " service_name
+        [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
+
+        echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
+        create_gost_service "$service_name"
+        start_service "$service_name"
+        read -p "Press Enter to continue..."
+        ;;
+        
+            2)
+        # Client-side configuration
+        echo -e "\n\033[1;34mConfigure Client-Side (Iran)\033[0m"
+
+        # Select listen type (TCP/UDP)
+        echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
+        echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
+        echo -e "\033[1;32m2.\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
+        
+        read -p $'\033[1;33mEnter listen transmission type: \033[0m' listen_choice
+        
+        case $listen_choice in
+            1) LISTEN_TRANSMISSION="tcp" ;;
+            2) LISTEN_TRANSMISSION="udp" ;;
+            *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
+        esac
+        
+        # Multiple inbound ports input
+        while true; do
+            read -p $'\033[1;33mEnter inbound (config) ports (comma-separated, e.g., 1234,5678): \033[0m' lport
+            
+            IFS=',' read -ra lport_array <<< "$lport"
+            
+            all_ports_available=true
+            
+            for port in "${lport_array[@]}"; do
+                if ! [[ "$port" =~ ^[0-9]+$ ]]; then
+                    echo -e "\033[1;31mInvalid port: $port. Please enter valid numeric ports.\033[0m"
+                    all_ports_available=false
+                    break
+                fi
+        
+                if is_port_used $port; then
+                    echo -e "\033[1;31mPort $port is already in use. Please enter a different port.\033[0m"
+                    all_ports_available=false
+                    break
+                fi
+            done
+            
+            if $all_ports_available; then
+                echo -e "\033[1;32mAll ports are available: ${lport_array[*]}\033[0m"
+                break
+            fi
+        done
+
+        read -p $'\033[1;33mEnter remote server IP (kharej): \033[0m' sni_ip
+        
+        if [[ $sni_ip =~ : ]]; then
+            sni_ip="[$sni_ip]"
+        fi
+        
+        echo -e "\033[1;36mFormatted IP:\033[0m $sni_ip"
+        
+        while true; do
+            read -p $'\033[1;33mEnter server communication port: \033[0m' sni_port
+            
+            if is_port_used $sni_port; then
+                echo -e "\033[1;31mPort $sni_port is already in use. Please enter a different port.\033[0m"
+            else
+                echo -e "\033[1;32mPort $sni_port is available.\033[0m"
+                break
+            fi
+        done
+                    
+        # Select sni transmission type
+        echo -e "\n\033[1;34mSelect sni Transmission Type:\033[0m"
+        echo -e "\033[1;32m1.\033[0m QUIC"
+        echo -e "\033[1;32m2.\033[0m WS (WebSocket)"
+        echo -e "\033[1;32m3.\033[0m WSS (WebSocket Secure)"
+        echo -e "\033[1;32m4.\033[0m gRPC"
+        echo -e "\033[1;32m5.\033[0m h2 (HTTP/2)"
+        echo -e "\033[1;32m6.\033[0m TLS"
+        echo -e "\033[1;32m7.\033[0m MWSS (Multiplex Websocket)"
+        echo -e "\033[1;32m8.\033[0m h2c (HTTP2 Cleartext)"
+        echo -e "\033[1;32m9.\033[0m OBFS4 (OBFS4)"
+        echo -e "\033[1;32m10.\033[0m oHTTP (HTTP Obfuscation)"
+        echo -e "\033[1;32m11.\033[0m oTLS (TLS Obfuscation)"
+        echo -e "\033[1;32m12.\033[0m mTLS (Multiplex TLS)"
+        echo -e "\033[1;32m13.\033[0m MWS (Multiplex Websocket)"
+        
+        read -p $'\033[1;33mEnter your choice for sni transmission type: \033[0m' trans_choice
+        
+        case $trans_choice in
+            1) TRANSMISSION="quic" ;;
+            2) TRANSMISSION="ws" ;;
+            3) TRANSMISSION="wss" ;;
+            4) TRANSMISSION="grpc" ;;
+            5) TRANSMISSION="h2" ;;
+            6) TRANSMISSION="tls" ;;
+            7) TRANSMISSION="mwss" ;;
+            8) TRANSMISSION="h2c" ;;
+            9) TRANSMISSION="obfs4" ;;
+            10) TRANSMISSION="ohttp" ;;
+            11) TRANSMISSION="otls" ;;
+            12) TRANSMISSION="mtls" ;;
+            13) TRANSMISSION="mws" ;;
+            *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
+        esac
+        
+        # Prompt for SNI domain
+        read -p $'\033[1;33mEnter SNI domain (e.g., example.com): \033[0m' sni_domain
+
+        # Construct multi-port -L parameters
+        GOST_OPTIONS=""
+        for lport in "${lport_array[@]}"; do
+            GOST_OPTIONS+=" -L ${LISTEN_TRANSMISSION}://:${lport}/127.0.0.1:${lport}"
+        done
+        
+        # Append SNI domain to GOST options
+        GOST_OPTIONS+=" -F sni+${TRANSMISSION}://${sni_ip}:${sni_port}?host=${sni_domain}"
+        echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+        
+        read -p "Enter a custom name for this service (leave blank for a random name): " service_name
+        [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
+        
+        echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
+        create_gost_service "$service_name"
+        start_service "$service_name"
+        
+        read -p "Press Enter to continue..."
+        ;;
+        
+        *)
+            echo -e "\033[1;31mInvalid choice! Exiting.\033[0m"
+            ;;
+    esac
+}
 
 tcpudp_forwarding() {
     echo -e "\033[1;34mConfigure Multi-Port Forwarding (Client Side Only)\033[0m"
@@ -370,6 +572,7 @@ configure_port_forwarding() {
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
+            echo -e "\033[1;32m16.\033[0m sni "
             read -p "Enter your choice: " proto_choice
             
             # Ask for required inputs
@@ -461,6 +664,7 @@ configure_port_forwarding() {
                 13) proto="otls" ;;
                 14) proto="mtls" ;;
                 15) proto="mws" ;;
+                16) proto="sni" ;;
                 *) echo -e "\033[1;31mInvalid protocol choice! Exiting...\033[0m"; return ;;
             esac
             
@@ -520,6 +724,7 @@ configure_port_forwarding() {
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
+            echo -e "\033[1;32m16.\033[0m sni "
             read -p "Enter your choice: " proto_choice
 
             
@@ -540,6 +745,7 @@ configure_port_forwarding() {
                 13) GOST_OPTIONS="-L otls://:${sport}" ;;
                 14) GOST_OPTIONS="-L mtls://:${sport}" ;;
                 15) GOST_OPTIONS="-L mws://:${sport}" ;;
+                16) GOST_OPTIONS="-L sni://:${sport}" ;;
                 *) echo -e "\033[1;31mInvalid protocol choice!\033[0m"; return ;;
             esac
             ;;
