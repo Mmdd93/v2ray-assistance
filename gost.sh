@@ -781,11 +781,10 @@ configure_port_forwarding() {
 }
 
 configure_relay() {
-      echo -e "\033[1;33mIs this the client or server side?\033[0m"
-      echo -e "\033[1;32m1.\033[0m \033[1;36mServer-Side (Kharej) - Remote server\033[0m"
-      echo -e "\033[1;32m2.\033[0m \033[1;36mClient-Side (Iran) - Local machine\033[0m"
-      read -p $'\033[1;33mEnter your choice: \033[0m' side_choice
-
+    echo -e "\033[1;33mIs this the client or server side?\033[0m"
+    echo -e "\033[1;32m1.\033[0m \033[1;36mServer-Side (Kharej) - Remote server\033[0m"
+    echo -e "\033[1;32m2.\033[0m \033[1;36mClient-Side (Iran) - Local machine\033[0m"
+    read -p $'\033[1;33mEnter your choice: \033[0m' side_choice
 
     case $side_choice in
         1)
@@ -793,16 +792,16 @@ configure_relay() {
             echo -e "\n\033[1;34m Configure Server-Side (Kharej)\033[0m"
 
             # Prompt the user for a port until a free one is provided
-              while true; do
-                  read -p $'\033[1;33mEnter server communication port: \033[0m' lport_relay
-                  
-                  if is_port_used $lport_relay; then
-                      echo -e "\033[1;31mPort $lport_relay is already in use. Please enter a different port.\033[0m"
-                  else
-                      echo -e "\033[1;32mPort $lport_relay is available.\033[0m"
-                      break  # Exit the loop if the port is free
-                  fi
-              done
+            while true; do
+                read -p $'\033[1;33mEnter server communication port: \033[0m' lport_relay
+                
+                if is_port_used $lport_relay; then
+                    echo -e "\033[1;31mPort $lport_relay is already in use. Please enter a different port.\033[0m"
+                else
+                    echo -e "\033[1;32mPort $lport_relay is available.\033[0m"
+                    break  # Exit the loop if the port is free
+                fi
+            done
             
             # Ask for the transmission type
             echo -e "\n\033[1;34mSelect Transmission Type for Communication:\033[0m"
@@ -821,8 +820,9 @@ configure_relay() {
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
+            echo -e "\033[1;32m16.\033[0m sni"
+            echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
             read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
-
 
             case $trans_choice in
                 1) TRANSMISSION="kcp" ;;
@@ -840,10 +840,22 @@ configure_relay() {
                 13) TRANSMISSION="otls" ;;
                 14) TRANSMISSION="mtls" ;;
                 15) TRANSMISSION="mws" ;;
+                16) TRANSMISSION="sni" ;;
+                17)
+                    # For sni+host, ask for the hostname
+                    read -p $'\033[1;33mEnter the hostname for obfuscation (e.g., example.com): \033[0m' sni_host
+                    TRANSMISSION="sni://:${lport_relay}?host=${sni_host}"
+                    ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
 
-            GOST_OPTIONS="-L relay+${TRANSMISSION}://:${lport_relay}"
+            # Construct GOST options
+            if [[ $trans_choice -eq 17 ]]; then
+                GOST_OPTIONS="-L ${TRANSMISSION}"
+            else
+                GOST_OPTIONS="-L relay+${TRANSMISSION}://:${lport_relay}"
+            fi
+
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
@@ -858,7 +870,7 @@ configure_relay() {
         2)
             # Client-side configuration
             echo -e "\n\033[1;34mConfigure Client-Side (Iran)\033[0m"
-             # Select listen type (TCP/UDP)
+            # Select listen type (TCP/UDP)
             echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
             echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
             echo -e "\033[1;32m2.\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
@@ -872,7 +884,6 @@ configure_relay() {
             esac
             
             # Multiple inbound ports input
-            # Prompt the user for multiple inbound ports
             while true; do
                 read -p $'\033[1;33mEnter inbound (config) ports (comma-separated, e.g., 1234,5678): \033[0m' lport
                 
@@ -906,7 +917,6 @@ configure_relay() {
                 fi
             done
 
-            
             read -p $'\033[1;33mEnter remote server IP (kharej): \033[0m' relay_ip
             
             # Check if input is an IPv6 address
@@ -945,7 +955,8 @@ configure_relay() {
             echo -e "\033[1;32m13.\033[0m oTLS (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mTLS (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m MWS (Multiplex Websocket)"
-            
+            echo -e "\033[1;32m16.\033[0m sni"
+            echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
             read -p $'\033[1;33mEnter your choice for relay transmission type: \033[0m' trans_choice
             
             case $trans_choice in
@@ -964,6 +975,12 @@ configure_relay() {
                 13) TRANSMISSION="otls" ;;
                 14) TRANSMISSION="mtls" ;;
                 15) TRANSMISSION="mws" ;;
+                16) TRANSMISSION="sni" ;;
+                17)
+                    # For sni+host, ask for the hostname
+                    read -p $'\033[1;33mEnter the hostname for obfuscation (e.g., example.com): \033[0m' sni_host
+                    TRANSMISSION="sni://${relay_ip}:${relay_port}?host=${sni_host}"
+                    ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
             
@@ -973,7 +990,13 @@ configure_relay() {
                 GOST_OPTIONS+=" -L ${LISTEN_TRANSMISSION}://:${lport}/127.0.0.1:${lport}"
             done
             
-            GOST_OPTIONS+=" -F relay+${TRANSMISSION}://${relay_ip}:${relay_port}"
+            # Append -F for the remote connection
+            if [[ $trans_choice -eq 17 ]]; then
+                GOST_OPTIONS+=" -F ${TRANSMISSION}"
+            else
+                GOST_OPTIONS+=" -F relay+${TRANSMISSION}://${relay_ip}:${relay_port}"
+            fi
+            
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
             
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
@@ -984,7 +1007,6 @@ configure_relay() {
             start_service "$service_name"
             
             read -p "Press Enter to continue..."
-
             ;;
         
         *)
@@ -992,7 +1014,6 @@ configure_relay() {
             ;;
     esac
 }
-
 
 configure_forward() {
       echo -e "\033[1;33mIs this the client or server side?\033[0m"
