@@ -26,6 +26,7 @@ main_menu() {
         clear
         echo -e "\033[1;32mTransmission:\033[0m SSH,h2,gRPC,WSS,WS,QUIC,KCP,TLS,MWSS,H2C,OBFS4,OHTTP,OTLS,MTL "
         echo -e "\033[1;32mTip:\033[0m You can create infinite tunnels"
+        echo -e "\033[1;32mgost version:\033[0m ${gost_version}"
         echo -e "\033[1;32m===================================\033[0m"
         echo -e "          \033[1;36mGOST Management Menu\033[0m"
         echo -e "\033[1;32m===================================\033[0m"
