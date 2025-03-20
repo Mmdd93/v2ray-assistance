@@ -74,7 +74,8 @@ configure_relay() {
 
             # Prompt the user for a port until a free one is provided
             while true; do
-                read -p $'\033[1;33mEnter server communication port: \033[0m' lport_relay
+                read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' lport_relay
+                lport_relay=${lport_relay:-9001}
                 
                 #if is_port_used $lport_relay; then
                    # echo -e "\033[1;31mPort $lport_relay is already in use. Please enter a different port.\033[0m"
@@ -200,7 +201,8 @@ configure_relay() {
             
             # Prompt the user for a port until a free one is provided
             while true; do
-                read -p $'\033[1;33mEnter server communication port: \033[0m' relay_port
+                read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' relay_port
+                relay_port=${relay_port:-9001}
                 
                 #if is_port_used $relay_port; then
                    #echo -e "\033[1;31mPort $relay_port is already in use. Please enter a different port.\033[0m"
@@ -292,7 +294,8 @@ configure_socks5() {
 
             # Prompt the user for a port until a free one is provided
             while true; do
-                read -p $'\033[1;33mEnter server communication port: \033[0m' lport_socks5
+                read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' lport_socks5
+                lport_socks5=${lport_socks5:-9001}
                 
                 #if is_port_used $lport_socks5; then
                    # echo -e "\033[1;31mPort $lport_socks5 is already in use. Please enter a different port.\033[0m"
@@ -418,7 +421,9 @@ configure_socks5() {
             
             # Prompt the user for a port until a free one is provided
             while true; do
-                read -p $'\033[1;33mEnter server communication port: \033[0m' socks5_port
+                read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' socks5_port
+                socks5_port=${socks5_port:-9001}
+                
                 
                 #if is_port_used $socks5_port; then
                    #echo -e "\033[1;31mPort $socks5_port is already in use. Please enter a different port.\033[0m"
