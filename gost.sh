@@ -634,7 +634,7 @@ configure_relay() {
                 15) TRANSMISSION="+mws" ;;
                 16) TRANSMISSION="+icmp" ;;
                 17) TRANSMISSION="" ;;
-                *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
+                *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="+tcp" ;;
             esac
 
 
@@ -762,7 +762,7 @@ configure_relay() {
                 15) TRANSMISSION="+mws" ;;
                 16) TRANSMISSION="+icmp" ;;
                 17) TRANSMISSION="" ;;
-                *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
+                *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="+tcp" ;;
             esac
             
             # Construct multi-port -L parameters
