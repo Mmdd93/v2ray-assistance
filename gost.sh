@@ -575,8 +575,8 @@ configure_port_forwarding() {
 
 configure_relay() {
     echo -e "\033[1;33mIs this the client or server side?\033[0m"
-    echo -e "\033[1;32m1.\033[0m \033[1;36mServer-Side (Kharej) - Remote server\033[0m"
-    echo -e "\033[1;32m2.\033[0m \033[1;36mClient-Side (Iran) - Local machine\033[0m"
+    echo -e "\033[1;32m1.\033[0m \033[1;36mServer-Side (Kharej)\033[0m"
+    echo -e "\033[1;32m2.\033[0m \033[1;36mClient-Side (Iran)\033[0m"
     read -p $'\033[1;33mEnter your choice: \033[0m' side_choice
 
     case $side_choice in
@@ -796,8 +796,8 @@ configure_relay() {
 
 configure_forward() {
       echo -e "\033[1;33mIs this the client or server side?\033[0m"
-      echo -e "\033[1;32m1.\033[0m \033[1;36mServer-Side (Kharej) - Remote server\033[0m"
-      echo -e "\033[1;32m2.\033[0m \033[1;36mClient-Side (Iran) - Local machine\033[0m"
+      echo -e "\033[1;32m1.\033[0m \033[1;36mServer-Side (Kharej)\033[0m"
+      echo -e "\033[1;32m2.\033[0m \033[1;36mClient-Side (Iran)\033[0m"
       read -p $'\033[1;33mEnter your choice: \033[0m' side_choice
 
 
