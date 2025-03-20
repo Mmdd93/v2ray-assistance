@@ -768,11 +768,11 @@ configure_relay() {
             # Construct multi-port -L parameters
             GOST_OPTIONS=""
             for lport in "${lport_array[@]}"; do
-                GOST_OPTIONS+=" -L ${LISTEN_TRANSMISSION}://:${lport}/127.0.0.1:${lport}"
+                GOST_OPTIONS+="-L ${LISTEN_TRANSMISSION}://:${lport}/127.0.0.1:${lport}"
             done
             
 
-                GOST_OPTIONS+=" -F relay${TRANSMISSION}://${relay_ip}:${relay_port}"
+                GOST_OPTIONS+="-F relay${TRANSMISSION}://${relay_ip}:${relay_port}"
 
             
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
@@ -971,7 +971,7 @@ configure_forward() {
             esac
             
             # Construct multi-port -L parameters
-            GOST_OPTIONS=" -L ${LISTEN_TRANSMISSION}://:${lport} -F forward+${TRANSMISSION}://${relay_ip}:${relay_port}"
+            GOST_OPTIONS="-L ${LISTEN_TRANSMISSION}://:${lport} -F forward+${TRANSMISSION}://${relay_ip}:${relay_port}"
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
             
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
