@@ -671,7 +671,7 @@ configure_relay() {
             echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
             echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
             echo -e "\033[1;32m2.\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
-            echo -e "\033[1;32m3.\033[0m \033[1;36mAll traffic mode\033[0m"
+            #echo -e "\033[1;32m3.\033[0m \033[1;36mAll traffic mode\033[0m"
             read -p $'\033[1;33mEnter listen transmission type: \033[0m' listen_choice
             
             case $listen_choice in
@@ -891,7 +891,7 @@ configure_forward() {
             echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
             echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
             echo -e "\033[1;32m2.\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
-            echo -e "\033[1;32m3.\033[0m \033[1;36mAll traffic mode\033[0m"
+           # echo -e "\033[1;32m3.\033[0m \033[1;36mAll traffic mode\033[0m"
             read -p $'\033[1;33mEnter listen transmission type: \033[0m' listen_choice
             
             case $listen_choice in
