@@ -1,5 +1,11 @@
 #!/bin/bash
 clear
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        echo -e "\033[1;31mError:\033[0m This script must be run as root."
+        exit 1
+    fi
+}
 # Function to check and install GOST if missing
 check_and_install_gost() {
     if [[ ! -f /usr/local/bin/gost ]]; then
