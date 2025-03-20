@@ -859,7 +859,7 @@ configure_forward() {
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
 
-            GOST_OPTIONS="-L ${TRANSMISSION}://:${relay_port}/:${lport_client}"
+            GOST_OPTIONS="-L forward+${TRANSMISSION}://:${relay_port}/:${lport_client}"
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
