@@ -626,40 +626,32 @@ configure_relay() {
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
             echo -e "\033[1;32m16.\033[0m icmp (ping tunnel)"
-            #echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
+            echo -e "\033[1;32m17.\033[0m relay"
             read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
 
             case $trans_choice in
-                1) TRANSMISSION="kcp" ;;
-                2) TRANSMISSION="quic" ;;
-                3) TRANSMISSION="ws" ;;
-                4) TRANSMISSION="wss" ;;
-                5) TRANSMISSION="grpc" ;;
-                6) TRANSMISSION="h2" ;;
-                7) TRANSMISSION="ssh" ;;
-                8) TRANSMISSION="tls" ;;
-                9) TRANSMISSION="mwss" ;;
-                10) TRANSMISSION="h2c" ;;
-                11) TRANSMISSION="obfs4" ;;
-                12) TRANSMISSION="ohttp" ;;
-                13) TRANSMISSION="otls" ;;
-                14) TRANSMISSION="mtls" ;;
-                15) TRANSMISSION="mws" ;;
-                16) TRANSMISSION="icmp" ;;
-                17)
-                    # For sni+host, ask for the hostname
-                    read -p $'\033[1;33mEnter the hostname for obfuscation (e.g., example.com): \033[0m' sni_host
-                    TRANSMISSION="sni://:${lport_relay}?host=${sni_host}"
-                    ;;
+                1) TRANSMISSION="+kcp" ;;
+                2) TRANSMISSION="+quic" ;;
+                3) TRANSMISSION="+ws" ;;
+                4) TRANSMISSION="+wss" ;;
+                5) TRANSMISSION="+grpc" ;;
+                6) TRANSMISSION="+h2" ;;
+                7) TRANSMISSION="+ssh" ;;
+                8) TRANSMISSION="+tls" ;;
+                9) TRANSMISSION="+mwss" ;;
+                10) TRANSMISSION="+h2c" ;;
+                11) TRANSMISSION="+obfs4" ;;
+                12) TRANSMISSION="+ohttp" ;;
+                13) TRANSMISSION="+otls" ;;
+                14) TRANSMISSION="+mtls" ;;
+                15) TRANSMISSION="+mws" ;;
+                16) TRANSMISSION="+icmp" ;;
+                17) TRANSMISSION="" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
 
-            # Construct GOST options
-            if [[ $trans_choice -eq 17 ]]; then
-                GOST_OPTIONS="-L ${TRANSMISSION}"
-            else
-                GOST_OPTIONS="-L relay+${TRANSMISSION}://:${lport_relay}"
-            fi
+
+                GOST_OPTIONS="-L relay${TRANSMISSION}://:${lport_relay}"
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
@@ -761,31 +753,27 @@ configure_relay() {
             echo -e "\033[1;32m14.\033[0m mTLS (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m MWS (Multiplex Websocket)"
             echo -e "\033[1;32m16.\033[0m icmp (ping tunnel)"
-            #echo -e "\033[1;32m17.\033[0m sni+host (Host obfuscation)"
+            echo -e "\033[1;32m17.\033[0m relay"
             read -p $'\033[1;33mEnter your choice for relay transmission type: \033[0m' trans_choice
             
             case $trans_choice in
-                1) TRANSMISSION="kcp" ;;
-                2) TRANSMISSION="quic" ;;
-                3) TRANSMISSION="ws" ;;
-                4) TRANSMISSION="wss" ;;
-                5) TRANSMISSION="grpc" ;;
-                6) TRANSMISSION="h2" ;;
-                7) TRANSMISSION="ssh" ;;
-                8) TRANSMISSION="tls" ;;
-                9) TRANSMISSION="mwss" ;;
-                10) TRANSMISSION="h2c" ;;
-                11) TRANSMISSION="obfs4" ;;
-                12) TRANSMISSION="ohttp" ;;
-                13) TRANSMISSION="otls" ;;
-                14) TRANSMISSION="mtls" ;;
-                15) TRANSMISSION="mws" ;;
-                16) TRANSMISSION="icmp" ;;
-                17)
-                    # For sni+host, ask for the hostname
-                    read -p $'\033[1;33mEnter the hostname for obfuscation (e.g., example.com): \033[0m' sni_host
-                    TRANSMISSION="sni://${relay_ip}:${relay_port}?host=${sni_host}"
-                    ;;
+                1) TRANSMISSION="+kcp" ;;
+                2) TRANSMISSION="+quic" ;;
+                3) TRANSMISSION="+ws" ;;
+                4) TRANSMISSION="+wss" ;;
+                5) TRANSMISSION="+grpc" ;;
+                6) TRANSMISSION="+h2" ;;
+                7) TRANSMISSION="+ssh" ;;
+                8) TRANSMISSION="+tls" ;;
+                9) TRANSMISSION="+mwss" ;;
+                10) TRANSMISSION="+h2c" ;;
+                11) TRANSMISSION="+obfs4" ;;
+                12) TRANSMISSION="+ohttp" ;;
+                13) TRANSMISSION="+otls" ;;
+                14) TRANSMISSION="+mtls" ;;
+                15) TRANSMISSION="+mws" ;;
+                16) TRANSMISSION="+icmp" ;;
+                17) TRANSMISSION="" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
             
@@ -795,12 +783,9 @@ configure_relay() {
                 GOST_OPTIONS+=" -L ${LISTEN_TRANSMISSION}://:${lport}/127.0.0.1:${lport}"
             done
             
-            # Append -F for the remote connection
-            if [[ $trans_choice -eq 17 ]]; then
-                GOST_OPTIONS+=" -F ${TRANSMISSION}"
-            else
-                GOST_OPTIONS+=" -F relay+${TRANSMISSION}://${relay_ip}:${relay_port}"
-            fi
+
+                GOST_OPTIONS+=" -F relay${TRANSMISSION}://${relay_ip}:${relay_port}"
+
             
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
             
