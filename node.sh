@@ -4559,13 +4559,14 @@ main_menu() {
     
 
     echo -e "\n\033[1;31m+-----------------Tunnel-----------------+\033[0m"
-    echo -e "\e[1;34mCombine local tunnels (IPv4-IPv6) with Backhaul, GOST, WSS, etc., for enhanced stealth and obfuscation.\e[0m"
+    echo -e "\e[1;34mCombine local tunnels (SIT, GRE, GENEVE, VXLAN) with Backhaul, GOST, WSS, etc., for enhanced stealth and obfuscation.\e[0m"
     echo -e "\033[1;32m26.\033[0m SIT tunnel 6to4 (IPV6 local)"
     echo -e "\033[1;32m28.\033[0m GRE tunnel (IPV4/IPV6 local)"
     echo -e "\033[1;32m45.\033[0m GENEVE tunnel (IPV4 local)"
     echo -e "\033[1;32m46.\033[0m VXLAN tunnel (IPV4 local)"
-    echo -e "\033[1;32m27.\033[0m Backhaul reverse tunnel"
-    echo -e "\033[1;32m44.\033[0m GOST tunnel (SSH,h2,gRPC,WSS,WS,QUIC,KCP)"
+    echo -e "\033[1;32m27.\033[0m Backhaul Reverse tunnel"
+    echo -e "\033[1;32m44.\033[0m GOST tunnel (SSH,h2,gRPC,WSS,WS,QUIC,KCP,TLS,MWSS,H2C,OBFS4,OHTTP,OTLS,MTL etc.)"
+    echo -e "\033[1;32m55.\033[0m GOST Reverse tunnel (SSH,h2,gRPC,WSS,WS,TLS,MWSS,H2C,OBFS4,OHTTP,OTLS,MTL etc.)"
     echo -e "\033[1;32m47.\033[0m WSS,WS tunnel (CDN support)"
 
    
@@ -4697,6 +4698,9 @@ main_menu() {
 	54) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/Sir-MmD/RTX-VPN/v2/rtxvpn_v2.sh -o rtxvpn_v2.sh
             sudo bash rtxvpn_v2.sh ;;
+	55) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/Reverse-gost.sh -o Reverse-gost.sh
+            sudo bash Reverse-gost.sh ;;
         0) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
