@@ -394,7 +394,8 @@ configure_port_forwarding() {
             
             # Prompt the user for the server communication port
             while true; do
-                read -p "Enter server communication port: " raddr_port
+                read -p "Enter server communication port (default: 9001): " raddr_port
+                raddr_port=${raddr_port:-9001}
                 
                 # Check if the entered port is numeric and validate it
                 if ! [[ "$raddr_port" =~ ^[0-9]+$ ]]; then
@@ -494,8 +495,8 @@ configure_port_forwarding() {
         2)  # Server-side configuration
             # Prompt the user for the server communication port
             while true; do
-                read -p "Enter server communication port: " sport
-                
+                read -p "Enter server communication port (default: 9001): " sport
+                sport=${sport:-9001}
                 # Check if the entered port is numeric and validate it
                 if ! [[ "$sport" =~ ^[0-9]+$ ]]; then
                     echo "Invalid input! Please enter a valid numeric port."
@@ -586,8 +587,8 @@ configure_relay() {
 
             # Prompt the user for a port until a free one is provided
             while true; do
-                read -p $'\033[1;33mEnter server communication port: \033[0m' lport_relay
-                
+                read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' lport_relay
+                lport_relay=${lport_relay:-9001}
                 if is_port_used $lport_relay; then
                     echo -e "\033[1;31mPort $lport_relay is already in use. Please enter a different port.\033[0m"
                 else
@@ -714,8 +715,8 @@ configure_relay() {
             
             # Prompt the user for a port until a free one is provided
             while true; do
-                read -p $'\033[1;33mEnter server communication port: \033[0m' relay_port
-                
+                read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' relay_port
+                relay_port=${relay_port:-9001}
                 if is_port_used $relay_port; then
                     echo -e "\033[1;31mPort $relay_port is already in use. Please enter a different port.\033[0m"
                 else
@@ -807,8 +808,8 @@ configure_forward() {
             echo -e "\n\033[1;34m Configure Server-Side (Kharej)\033[0m"
             # Prompt the user for a port until a free one is provided
             while true; do
-                read -p $'\033[1;33mEnter server communication port: \033[0m' relay_port
-                
+                read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' relay_port
+                relay_port=${relay_port:-9001}
                 if is_port_used $relay_port; then
                     echo -e "\033[1;31mPort $relay_port is already in use. Please enter a different port.\033[0m"
                 else
@@ -890,8 +891,8 @@ configure_forward() {
             esac
             # Prompt the user for a port until a free one is provided
             while true; do
-                read -p $'\033[1;33mEnter server communication port: \033[0m' relay_port
-                
+                read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' relay_port
+                relay_port=${relay_port:-9001}
                 if is_port_used $relay_port; then
                     echo -e "\033[1;31mPort $relay_port is already in use. Please enter a different port.\033[0m"
                 else
