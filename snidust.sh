@@ -184,6 +184,35 @@ else
     enable_dot=""
 fi
 
+echo -e "\033[1;33mDo you want to configure DNS rate limiting? (yes/no) [no]:\033[0m"
+read -p " > " enable_rate_limit
+
+if [[ "$enable_rate_limit" == "yes" ]]; then
+    read -p $'\033[1;33mEnter warning QPS limit (default: 800): \033[0m' rate_limit_warn
+    read -p $'\033[1;33mEnter block QPS limit (default: 1000): \033[0m' rate_limit_block
+    read -p $'\033[1;33mEnter block duration in seconds (default: 360): \033[0m' rate_limit_block_duration
+    read -p $'\033[1;33mEnter evaluation window in seconds (default: 60): \033[0m' rate_limit_eval_window
+
+    rate_limit_warn=${rate_limit_warn:-800}
+    rate_limit_block=${rate_limit_block:-1000}
+    rate_limit_block_duration=${rate_limit_block_duration:-360}
+    rate_limit_eval_window=${rate_limit_eval_window:-60}
+
+    rate_limit_flags="-e DNSDIST_RATE_LIMIT_WARN=\"$rate_limit_warn\" \
+                      -e DNSDIST_RATE_LIMIT_BLOCK=\"$rate_limit_block\" \
+                      -e DNSDIST_RATE_LIMIT_BLOCK_DURATION=\"$rate_limit_block_duration\" \
+                      -e DNSDIST_RATE_LIMIT_EVAL_WINDOW=\"$rate_limit_eval_window\""
+else
+    echo -e "\033[1;33mDo you want to completly disable rate limiting? (yes/no) [no] (use default rate limit):\033[0m"
+    read -p " > " disable_rate_limit
+
+    if [[ "$disable_rate_limit" == "yes" ]]; then
+        rate_limit_flags="-e DNSDIST_RATE_LIMIT_DISABLE=true"
+    else
+        rate_limit_flags=""
+    fi
+fi
+
 # Prepare the Docker command
 docker_command="docker run -d \
     --name \"$container_name\" \
@@ -191,6 +220,7 @@ docker_command="docker run -d \
     -e EXTERNAL_IP=\"$external_ip\" \
     -e SPOOF_ALL_DOMAINS=\"$spoof_domains\" \
     $enable_dot \
+    $rate_limit_flags \
     -p 443:8443 \
     -p 80:8080 \
     -p 53:5300/udp \
