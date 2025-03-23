@@ -453,8 +453,8 @@ create_dns() {
 clear
     while true; do
         echo -e "\033[1;36m===========create custom dns==============\033[0m"
-        echo -e "\033[1;31mport 80 443 53 must be free \033[0m"
-        echo -e "\033[1;31m[set custom dns] to free up port 53 (from main menu) \033[0m"
+        echo -e "\033[1;31mPort 80 443 53 must be free \033[0m"
+        echo -e "\033[1;34mTips: use (Change server DNS) from main menu to free up port 53 \033[0m"
         echo -e "\033[1;32m1. Create DNS\033[0m"
         echo -e "\033[1;32m2. Edit Custom Domains\033[0m"
         echo -e "\033[1;32m3. Manage Docker Container (start, stop, remove) \033[0m"
