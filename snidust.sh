@@ -246,6 +246,7 @@ eval "$docker_command"
 
 # Function to manage the Docker container (start, stop, restart, remove, check status)
 manage_container() {
+clear
     while true; do
         echo -e "\033[1;36m============================================\033[0m"
         echo -e "\033[1;33m            Manage Docker Container\033[0m"
@@ -299,6 +300,7 @@ manage_container() {
 
 
 manage_custom_domains() {
+clear
     echo -e "\033[1;36m============================================\033[0m"
     echo -e "\033[1;33m         Edit Custom Domains\033[0m"
     echo -e "\033[1;36m============================================\033[0m"
@@ -365,6 +367,7 @@ manage_custom_domains() {
 
 
 edit_clients() {
+clear
     echo -e "\033[1;36m============================================\033[0m"
     echo -e "\033[1;33m         Edit Allowed Clients\033[0m"
     echo -e "\033[1;36m============================================\033[0m"
@@ -398,6 +401,7 @@ edit_clients() {
     create_dns  # Exit after handling the restart
 }
 auto_restart() {
+clear
     while true; do
         clear
         echo -e "\n\033[1;34mManage Service Cron Jobs:\033[0m"
@@ -456,6 +460,7 @@ auto_restart() {
 
 # create_dns
 create_dns() {
+clear
     while true; do
         echo -e "\033[1;36m===========create custom dns==============\033[0m"
         echo -e "\033[1;31mport 80 443 53 must be free \033[0m"
