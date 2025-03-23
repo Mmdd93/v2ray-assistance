@@ -242,8 +242,9 @@ eval "$docker_command"
 
 # Function to manage the Docker container (start, stop, restart, remove, check status)
 manage_container() {
-clear
+
     while true; do
+    clear
         echo -e "\033[1;36m=========Manage Docker Container==========\033[0m"
         echo -e "\033[1;32m1. Start Container\033[0m"
         echo -e "\033[1;32m2. Stop Container\033[0m"
@@ -391,7 +392,6 @@ clear
     create_dns  # Exit after handling the restart
 }
 auto_restart() {
-clear
     while true; do
         clear
         echo -e "\n\033[1;34mManage Service Cron Jobs:\033[0m"
@@ -450,8 +450,9 @@ clear
 
 # create_dns
 create_dns() {
-clear
+
     while true; do
+    clear
         echo -e "\033[1;36m===========create custom dns==============\033[0m"
         echo -e "\033[1;31mPort 80 443 53 must be free \033[0m"
         echo -e "\033[1;34mTips: use (Change server DNS) from main menu to free up port 53 \033[0m"
