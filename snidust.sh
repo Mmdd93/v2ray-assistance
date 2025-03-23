@@ -118,7 +118,7 @@ clear
     select_allowed_clients
 
     # Prompt for external IP, with a method to find public IP
-    echo -e "\033[1;33mEnter your server IP: [$(curl -4 -s https://icanhazip.com)]:\033[0m"
+    echo -e "\033[1;33mEnter your server IP: [defualt: $(curl -4 -s https://icanhazip.com)]:\033[0m"
     read -p " > " external_ip
     external_ip=${external_ip:-$(curl -4 -s https://icanhazip.com)} # Use public IP as default
 
