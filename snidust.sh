@@ -446,7 +446,7 @@ create_dns() {
         echo -e "\033[1;31m[set custom dns] to free up port 53 (from main menu) \033[0m"
         echo -e "\033[1;32m1. Create DNS\033[0m"
         echo -e "\033[1;32m2. Edit Custom Domains\033[0m"
-        echo -e "\033[1;32m3. Edit Docker Container\033[0m"
+        echo -e "\033[1;32m3. Manage Docker Container (start, stop, remove) \033[0m"
         echo -e "\033[1;32m4. Check Ports Status\033[0m"
         echo -e "\033[1;32m5. Edit Allowed clients\033[0m"
         echo -e "\033[1;32m6. Auto Restart Service (Cron)\033[0m"
