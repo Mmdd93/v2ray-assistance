@@ -430,3 +430,4 @@ create_dns() {
     done
 }
 
+create_dns
