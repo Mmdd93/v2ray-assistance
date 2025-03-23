@@ -355,7 +355,7 @@ auto_restart() {
     while true; do
         clear
         echo -e "\n\033[1;34mManage Service Cron Jobs:\033[0m"
-        echo -e " \033[1;34m1.\033[0m Add/Update Cron Job"
+        echo -e " \033[1;34m1.\033[0m Add/Update Cron Job (Includes Restart & Start at Reboot)"
         echo -e " \033[1;34m2.\033[0m Remove Cron Job"
         echo -e " \033[1;34m3.\033[0m Edit Cron Jobs with Nano"
         echo -e " \033[1;31m0.\033[0m Return"
@@ -368,22 +368,25 @@ auto_restart() {
                 if [[ ! "$restart_interval" =~ ^[1-9]$|^1[0-9]$|^2[0-3]$ ]]; then
                     echo -e "\033[1;31mInvalid input! Please enter a number between 1 and 23.\033[0m"
                 else
-                    # Define cron job for restarting the service
-                    cron_job="0 */$restart_interval * * * /usr/bin/docker restart snidust"
+                    # Define cron jobs
+                    restart_cron="0 */$restart_interval * * * /usr/bin/docker restart snidust"
+                    reboot_cron="@reboot /usr/bin/docker start snidust"
 
-                    # Remove any existing cron job for this service
-                    (crontab -l 2>/dev/null | grep -v "/usr/bin/docker restart snidust") | crontab -
+                    # Remove any existing cron jobs for this service
+                    (crontab -l 2>/dev/null | grep -v "/usr/bin/docker restart snidust" | grep -v "/usr/bin/docker start snidust") | crontab -
 
-                    # Add the new cron job
-                    (crontab -l 2>/dev/null; echo "$cron_job") | crontab -
+                    # Add the new cron jobs
+                    (crontab -l 2>/dev/null; echo "$restart_cron"; echo "$reboot_cron") | crontab -
 
-                    echo -e "\033[1;32mCron job updated: Restart snidust every $restart_interval hour(s).\033[0m"
+                    echo -e "\033[1;32mCron job updated:\033[0m"
+                    echo -e "\033[1;32m- Restart snidust every $restart_interval hour(s).\033[0m"
+                    echo -e "\033[1;32m- Start snidust at system boot.\033[0m"
                 fi
                 ;;
             2)
-                # Remove the cron job related to the service
-                crontab -l 2>/dev/null | grep -v "/usr/bin/docker restart snidust" | crontab -
-                echo -e "\033[1;32mCron job for /usr/bin/docker restart snidust removed.\033[0m"
+                # Remove both the restart and reboot cron jobs
+                crontab -l 2>/dev/null | grep -v "/usr/bin/docker restart snidust" | grep -v "/usr/bin/docker start snidust" | crontab -
+                echo -e "\033[1;32mCron jobs for snidust removed.\033[0m"
                 ;;
             3)
                 echo -e "\033[1;33mOpening crontab for manual editing...\033[0m"
@@ -404,6 +407,7 @@ auto_restart() {
     done
 }
 
+
 # create_dns
 create_dns() {
     while true; do
@@ -415,6 +419,7 @@ create_dns() {
         echo -e "\033[1;32m3. Edit Docker Container\033[0m"
         echo -e "\033[1;32m4. Check Ports Status\033[0m"
         echo -e "\033[1;32m5. Edit Allowed clients\033[0m"
+        echo -e "\033[1;32m6. Auto Restart Service (Cron)\033[0m"
         echo -e "\033[1;32m0. Main menu\033[0m"
         read -p "> " choice
 
@@ -424,6 +429,7 @@ create_dns() {
             3) manage_container ;;
             4) check_ports ;;
             5) edit_clients ;;
+            6) auto_restart ;;
             0) main_menu ;;
             *) echo -e "\033[1;31mInvalid option. Please try again.\033[0m" ;;
         esac
