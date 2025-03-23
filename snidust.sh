@@ -180,7 +180,7 @@ else
     enable_dot=""
 fi
 
-echo -e "\033[1;33mDo you want to configure DNS rate limiting? (yes/no) [no]:\033[0m"
+echo -e "\033[1;33mDo you want to configure IP rate limiting? (yes/no) [no]:\033[0m"
 read -p " > " enable_rate_limit
 
 if [[ "$enable_rate_limit" == "yes" ]]; then
@@ -199,7 +199,9 @@ if [[ "$enable_rate_limit" == "yes" ]]; then
                       -e DNSDIST_RATE_LIMIT_BLOCK_DURATION=\"$rate_limit_block_duration\" \
                       -e DNSDIST_RATE_LIMIT_EVAL_WINDOW=\"$rate_limit_eval_window\""
 else
-    echo -e "\033[1;33mDo you want to completly disable rate limiting? (yes/no) [no] (use default rate limit):\033[0m"
+    echo -e "\033[1;33mDo you want to completly disable IP rate limiting? (yes/no) [no]t:\033[0m"
+    echo -e "\033[1;31m[no]= use default IP rate limit (recommendation):\033[0m"
+    echo -e "\033[1;31m[yes]= completly disable IP rate limit:\033[0m"
     read -p " > " disable_rate_limit
 
     if [[ "$disable_rate_limit" == "yes" ]]; then
