@@ -2,9 +2,8 @@
 clear
 # Function to check if specific ports are busy (TCP only)
 check_ports() {
-    echo -e "\033[1;36m============================================\033[0m"
-    echo -e "\033[1;33m         Check Ports Status\033[0m"
-    echo -e "\033[1;36m============================================\033[0m"
+    echo -e "\033[1;36m==========Check Ports Status===========\033[0m"
+
 
     ports=(443 80 53) # Ports to check
     any_port_busy=false  # Track if any port is busy
@@ -28,8 +27,6 @@ check_ports() {
     read -r  # Wait for the user to press Enter
     create_dns  # Call the create_dns function
 }
-
-
 
 # Function to get the current SSH user's IP address
 get_current_ssh_user_ip() {
@@ -57,9 +54,7 @@ clear
     if [[ "$any_port_busy" == false ]]; then
         echo -e "\033[1;32mNo TCP ports are busy.\033[0m"
     fi
-    echo -e "\033[1;36m============================================\033[0m"
-    echo -e "\033[1;33m            Create Your Custom DNS (snidust)\033[0m"
-    echo -e "\033[1;36m============================================\033[0m"
+    echo -e "\033[1;36m==========Create Your Custom DNS (snidust)========\033[0m"
 
     # Check if the container is already running
     container_name="snidust"
@@ -249,9 +244,7 @@ eval "$docker_command"
 manage_container() {
 clear
     while true; do
-        echo -e "\033[1;36m============================================\033[0m"
-        echo -e "\033[1;33m            Manage Docker Container\033[0m"
-        echo -e "\033[1;36m============================================\033[0m"
+        echo -e "\033[1;36m=========Manage Docker Container==========\033[0m"
         echo -e "\033[1;32m1. Start Container\033[0m"
         echo -e "\033[1;32m2. Stop Container\033[0m"
         echo -e "\033[1;32m3. Restart Container\033[0m"
@@ -302,9 +295,7 @@ clear
 
 manage_custom_domains() {
 clear
-    echo -e "\033[1;36m============================================\033[0m"
-    echo -e "\033[1;33m         Edit Custom Domains\033[0m"
-    echo -e "\033[1;36m============================================\033[0m"
+    echo -e "\033[1;36m============Edit Custom Domains==========\033[0m"
 
     echo -e "\033[1;33mExample for editing:\033[0m"
     echo -e "\033[1;33mcheck-host.net\033[0m"
@@ -369,9 +360,7 @@ clear
 
 edit_clients() {
 clear
-    echo -e "\033[1;36m============================================\033[0m"
-    echo -e "\033[1;33m         Edit Allowed Clients\033[0m"
-    echo -e "\033[1;36m============================================\033[0m"
+    echo -e "\033[1;36m==============Edit Allowed Clients===============\033[0m"
 
     echo -e "\033[1;33mSeparate with a comma, for example:\033[0m"
     echo -e "\033[1;32m192.168.1.1,ddns.com,1.2.3.4\033[0m"
