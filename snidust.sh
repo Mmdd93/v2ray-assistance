@@ -253,7 +253,7 @@ manage_container() {
         echo -e "\033[1;32m3. Restart Container\033[0m"
         echo -e "\033[1;32m4. Remove Container\033[0m"
         echo -e "\033[1;32m5. Check Status\033[0m"
-        echo -e "\033[1;32m6. Return to Main Menu\033[0m"
+        echo -e "\033[1;32m0. Return to Main Menu\033[0m"
         read -p "> " choice
 
         case $choice in
@@ -283,7 +283,7 @@ manage_container() {
                     echo -e "\033[1;31mThe container 'snidust' does not exist.\033[0m"
                 fi
                 ;;
-            6) 
+            0) 
                 echo -e "\033[1;34mReturning to Main Menu...\033[0m"
                 return
                 ;;
