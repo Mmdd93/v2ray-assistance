@@ -244,43 +244,59 @@ eval "$docker_command"
     fi
 }
 
-# Function to manage the Docker container (start, stop, restart, remove)
+# Function to manage the Docker container (start, stop, restart, remove, check status)
 manage_container() {
-    echo -e "\033[1;36m============================================\033[0m"
-    echo -e "\033[1;33m            Manage Docker Container\033[0m"
-    echo -e "\033[1;36m============================================\033[0m"
-    echo -e "\033[1;32m1. Start Container\033[0m"
-    echo -e "\033[1;32m2. Stop Container\033[0m"
-    echo -e "\033[1;32m3. Restart Container\033[0m"
-    echo -e "\033[1;32m4. Remove Container\033[0m"
-    echo -e "\033[1;32m5. Return to Main Menu\033[0m"
-    read -p "> " choice
+    while true; do
+        echo -e "\033[1;36m============================================\033[0m"
+        echo -e "\033[1;33m            Manage Docker Container\033[0m"
+        echo -e "\033[1;36m============================================\033[0m"
+        echo -e "\033[1;32m1. Start Container\033[0m"
+        echo -e "\033[1;32m2. Stop Container\033[0m"
+        echo -e "\033[1;32m3. Restart Container\033[0m"
+        echo -e "\033[1;32m4. Remove Container\033[0m"
+        echo -e "\033[1;32m5. Check Status\033[0m"
+        echo -e "\033[1;32m6. Return to Main Menu\033[0m"
+        read -p "> " choice
 
-    case $choice in
-        1) 
-            echo -e "\033[1;32mStarting Docker container 'snidust'...\033[0m"
-            docker start snidust
-            ;;
-        2) 
-            echo -e "\033[1;32mStopping Docker container 'snidust'...\033[0m"
-            docker stop snidust
-            ;;
-        3) 
-            echo -e "\033[1;32mRestarting Docker container 'snidust'...\033[0m"
-            docker restart snidust
-            ;;
-        4) 
-            echo -e "\033[1;32mRemoving Docker container 'snidust'...\033[0m"
-            docker rm -f snidust
-            ;;
-        5) 
-            return
-            ;;
-        *) 
-            echo -e "\033[1;31mInvalid option. Please try again.\033[0m"
-            ;;
-    esac
+        case $choice in
+            1) 
+                echo -e "\033[1;32mStarting Docker container 'snidust'...\033[0m"
+                docker start snidust
+                ;;
+            2) 
+                echo -e "\033[1;32mStopping Docker container 'snidust'...\033[0m"
+                docker stop snidust
+                ;;
+            3) 
+                echo -e "\033[1;32mRestarting Docker container 'snidust'...\033[0m"
+                docker restart snidust
+                ;;
+            4) 
+                echo -e "\033[1;32mRemoving Docker container 'snidust'...\033[0m"
+                docker rm -f snidust
+                ;;
+            5)
+                echo -e "\033[1;32mChecking status of Docker container 'snidust'...\033[0m"
+                if docker ps -a --format '{{.Names}}: {{.State}}' | grep -q '^snidust: running$'; then
+                    echo -e "\033[1;32mThe container 'snidust' is running.\033[0m"
+                elif docker ps -a --format '{{.Names}}: {{.State}}' | grep -q '^snidust: exited$'; then
+                    echo -e "\033[1;33mThe container 'snidust' is stopped.\033[0m"
+                else
+                    echo -e "\033[1;31mThe container 'snidust' does not exist.\033[0m"
+                fi
+                ;;
+            6) 
+                echo -e "\033[1;34mReturning to Main Menu...\033[0m"
+                return
+                ;;
+            *) 
+                echo -e "\033[1;31mInvalid option. Please try again.\033[0m"
+                ;;
+        esac
+        read -p $'\033[1;34mPress Enter to continue...\033[0m'
+    done
 }
+
 
 manage_custom_domains() {
     echo -e "\033[1;36m============================================\033[0m"
