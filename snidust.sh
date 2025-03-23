@@ -240,6 +240,7 @@ eval "$docker_command"
     else
         echo -e "\033[1;31mFailed to start the Docker container. Please check your settings and try again.\033[0m"
     fi
+    read -p "Press Enter to continue..."
 }
 
 # Function to manage the Docker container (start, stop, restart, remove, check status)
