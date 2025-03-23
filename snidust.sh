@@ -39,6 +39,7 @@ get_current_ssh_user_ip() {
 
 
 create_custom_dns() {
+clear
     # Check if the ports are available
     ports=(443 80 53) # Ports to check
     any_port_busy=false  # Track if any port is busy
