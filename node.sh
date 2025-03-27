@@ -628,7 +628,7 @@ setup_cache_and_reboot() {
                 cache_hours=${cache_hours:-$default_cache_clear_hours}
 
                 # Clear cache command
-                clear_cache_command="/usr/bin/sync; echo 3 > /proc/sys/vm/drop_caches >/dev/null 2>&1"
+                clear_cache_command="sudo /usr/bin/sync && echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null 2>&1"
 
                 # Remove old cache clearing job if it exists
                 if crontab -l | grep -q "$clear_cache_command"; then
