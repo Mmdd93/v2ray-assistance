@@ -16,8 +16,12 @@ check_and_install_gost() {
     fi
 }
 
-# Show GOST version
-gost_version=$(gost -V 2>&1)
+# Check if GOST is installed and get its version
+if command -v gost &> /dev/null; then
+    gost_version=$(gost -V 2>&1)
+else
+    gost_version="GOST not installed"
+fi
 
 # Main Menu Function
 main_menu() {
