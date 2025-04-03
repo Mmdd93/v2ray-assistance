@@ -133,7 +133,7 @@ create_backend() {
         
         # Get IP
         while true; do
-          read -p "Enter Server IP: " ip
+          read -p "Enter Server (kharej) IP: " ip
           [ -z "$ip" ] && break
           
           ip=$(echo "$ip" | xargs) # Trim whitespace
@@ -148,7 +148,7 @@ create_backend() {
           
           # Get Port for this IP
           while true; do
-            read -p "Enter Port for $ip: " port
+            read -p "Enter config Port for $ip: " port
             
             
             if [[ $port =~ ^[0-9]+$ ]] && [ "$port" -ge 1 ] && [ "$port" -le 65535 ]; then
@@ -190,7 +190,7 @@ create_backend() {
         echo "2) leastconn"
         echo "3) source"
         echo "4) static-rr"
-        read -p "Your choice [1-4]: " lb_choice
+        read -p "Your choice [default roundrobi]): " lb_choice
         
         case $lb_choice in
           1) lb_method="roundrobin" ;;
@@ -310,7 +310,7 @@ simple_port_forward() {
       break
     done
 
-    frontend_name="pf_${listen_port}"
+    frontend_name="frontend_${listen_port}"
     
     # Get backend details
     server_entries=()
@@ -371,7 +371,7 @@ simple_port_forward() {
       echo "2) leastconn"
       echo "3) source"
       echo "4) static-rr"
-      read -p "Enter choice [1-4]: " lb_choice
+      read -p "Enter choice [default roundrobin]: " lb_choice
       
       case $lb_choice in
         1) lb_method="roundrobin" ;;
