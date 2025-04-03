@@ -4133,7 +4133,75 @@ manage_marzban_node() {
 }
 
 
+change_timezone() {
+    while true; do
+        clear
+        echo -e "\033[1;34m=== Server Timezone Configuration ===\033[0m"
+        echo -e "\033[1;32mCurrent Timezone:\033[0m $(timedatectl | grep "Time zone" | cut -d':' -f2 | xargs)"
+        echo -e "\033[1;32mCurrent Time:\033[0m $(date)"
+        echo ""
+        echo -e "\033[1;36m1. UTC (Default)\033[0m"
+        echo -e "\033[1;36m2. Asia/Tehran\033[0m"
+        echo -e "\033[1;36m3. America/New_York\033[0m"
+        echo -e "\033[1;36m4. Europe/London\033[0m"
+        echo -e "\033[1;36m5. Asia/Tokyo\033[0m"
+        echo -e "\033[1;36m6. Australia/Sydney\033[0m"
+        echo -e "\033[1;36m7. List all available timezones\033[0m"
+        echo -e "\033[1;36m8. Enter custom timezone\033[0m"
+        echo -e "\033[1;31m0. Return to main menu\033[0m"
+        echo ""
+        read -p "Select an option [0-8]: " tz_option
 
+        case $tz_option in
+            1)
+                sudo timedatectl set-timezone UTC
+                echo -e "\033[1;32mTimezone set to UTC\033[0m"
+                ;;
+            2)
+                sudo timedatectl set-timezone Asia/Tehran
+                echo -e "\033[1;32mTimezone set to Asia/Tehran\033[0m"
+                ;;
+            3)
+                sudo timedatectl set-timezone America/New_York
+                echo -e "\033[1;32mTimezone set to America/New_York\033[0m"
+                ;;
+            4)
+                sudo timedatectl set-timezone Europe/London
+                echo -e "\033[1;32mTimezone set to Europe/London\033[0m"
+                ;;
+            5)
+                sudo timedatectl set-timezone Asia/Tokyo
+                echo -e "\033[1;32mTimezone set to Asia/Tokyo\033[0m"
+                ;;
+            6)
+                sudo timedatectl set-timezone Australia/Sydney
+                echo -e "\033[1;32mTimezone set to Australia/Sydney\033[0m"
+                ;;
+            7)
+                echo -e "\033[1;33mListing all available timezones...\033[0m"
+                timedatectl list-timezones | less
+                ;;
+            8)
+                read -p "Enter the full timezone (e.g., America/Los_Angeles): " custom_tz
+                if timedatectl list-timezones | grep -q "^$custom_tz$"; then
+                    sudo timedatectl set-timezone "$custom_tz"
+                    echo -e "\033[1;32mTimezone set to $custom_tz\033[0m"
+                else
+                    echo -e "\033[1;31mInvalid timezone! Use option 7 to see available timezones.\033[0m"
+                fi
+                ;;
+            0)
+                echo -e "\033[1;33mReturning to main menu...\033[0m"
+                break
+                ;;
+            *)
+                echo -e "\033[1;31mInvalid option! Please try again.\033[0m"
+                ;;
+        esac
+
+        read -p "Press Enter to continue..."
+    done
+}
 
 # Main menu function
 main_menu() {
@@ -4173,7 +4241,7 @@ main_menu() {
     echo -e "\033[1;32m25.\033[0m ZRAM (Optimize RAM)"
     echo -e "\033[1;32m29.\033[0m Send File to Remote Server & Forward to Telegram"
     echo -e "\033[1;32m30.\033[0m Auto Check URLs"
-    echo -e "\033[1;32m32.\033[0m Fix WhatsApp Time (set timezone to TEHRAN)"
+    echo -e "\033[1;32m32.\033[0m Change timezone (Fix WhatsApp Time)"
     echo -e "\033[1;32m33.\033[0m Secure SSH (fail2ban)"
     echo -e "\033[1;32m34.\033[0m Block torrent"
     echo -e "\033[1;32m35.\033[0m AWS cli"
@@ -4259,11 +4327,7 @@ main_menu() {
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/HAproxy.sh -o HAproxy.sh
 	    sudo bash HAproxy.sh
             ;;
-        32) echo "Running WhatsApp Data and Time fixer..."
-            sleep 2
-            sudo timedatectl set-timezone Asia/Tehran
-            sleep 2
-            echo "Done, WhatsApp Data and Time fixed..."
+        32) change_timezone
             sleep 2 ;;
         33) echo "Running installer fail2ban script for ssh security..."
             sleep 2
