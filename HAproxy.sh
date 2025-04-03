@@ -670,8 +670,8 @@ haproxy_menu() {
     
     # Only show configuration options if installed
     if [ -n "$current_version" ]; then
-      echo -e "\033[1;32m2.\033[0m Port Forwarding (simple mode) "
-      echo -e "\033[1;32m3.\033[0m Port Forwarding (SNI mode)"
+      echo -e "\033[1;32m2.\033[0m Port Forwarding (Simple mode) "
+      echo -e "\033[1;32m3.\033[0m Port Forwarding (SNI-Dependent)"
       echo -e "\033[1;32m4.\033[0m Check HAProxy Status"
       echo -e "\033[1;32m5.\033[0m Backup HAProxy Configuration"
       echo -e "\033[1;32m6.\033[0m Restore HAProxy Configuration"
