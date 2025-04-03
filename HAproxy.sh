@@ -240,7 +240,7 @@ create_backend() {
 
     # Add default backend if not exists
     if ! grep -q "^backend default_backend" "$HAPROXY_CONFIG"; then
-      read -p "Configure fallback backend? (y/n) [default: n]: " add_fallback
+      read -p "do you need default fallback backend? (y/n) [default: n]: " add_fallback
       if [[ "$add_fallback" == "y" ]]; then
         read -p "Fallback IP [default: 127.0.0.1]: " fallback_ip
         fallback_ip=${fallback_ip:-127.0.0.1}
