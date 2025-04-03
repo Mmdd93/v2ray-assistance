@@ -4132,7 +4132,7 @@ manage_marzban_node() {
     done
 }
 update() {
-    curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/node.sh -o /usr/bin/v2 && sudo chmod +x /usr/bin/v2 && v2
+    curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/node.sh -o /usr/bin/v2
 
 }
 
