@@ -133,7 +133,7 @@ create_backend() {
         
         # Get IP
         while true; do
-          read -p "Enter Server IP (leave empty when done): " ip
+          read -p "Enter Server IP: " ip
           [ -z "$ip" ] && break
           
           ip=$(echo "$ip" | xargs) # Trim whitespace
