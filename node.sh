@@ -4131,7 +4131,10 @@ manage_marzban_node() {
         read -rp "Press Enter to continue..."
     done
 }
+update() {
+    curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/node.sh -o /usr/bin/v2 && sudo chmod +x /usr/bin/v2 && v2
 
+}
 
 change_timezone() {
     while true; do
@@ -4420,5 +4423,6 @@ main_menu() {
     done
 }
 # Start the main menu
+update
 main_menu
 
