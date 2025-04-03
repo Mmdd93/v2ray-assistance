@@ -4255,7 +4255,10 @@ main_menu() {
         29) download_and_run_ssh_assistance ;;
         30) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup_URLs_check.sh -o setup_URLs_check.sh
             sudo bash setup_URLs_check.sh ;;
-        31) run_haproxy_script ;;
+        31) echo -e "\033[1;34mRunning HAproxy.sh...\033[0m"
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/HAproxy.sh -o HAproxy.sh
+	    sudo bash HAproxy.sh
+            ;;
         32) echo "Running WhatsApp Data and Time fixer..."
             sleep 2
             sudo timedatectl set-timezone Asia/Tehran
