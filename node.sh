@@ -4178,8 +4178,9 @@ change_timezone() {
                 echo -e "\033[1;32mTimezone set to Australia/Sydney\033[0m"
                 ;;
             7)
-                echo -e "\033[1;33mListing all available timezones...\033[0m"
-                timedatectl list-timezones | less
+                echo -e "\033[1;33mAvailable timezones (showing first 200):\033[0m"
+                timedatectl list-timezones | head -n 200 | pr -5 -t -w 120
+                echo -e "\n\033[1;33m(Showing first 200 timezones, use option 8 to enter any timezone)\033[0m"
                 ;;
             8)
                 read -p "Enter the full timezone (e.g., America/Los_Angeles): " custom_tz
