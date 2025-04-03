@@ -4178,10 +4178,30 @@ change_timezone() {
                 echo -e "\033[1;32mTimezone set to Australia/Sydney\033[0m"
                 ;;
             7)
-                echo -e "\033[1;33mAvailable timezones (showing first 200):\033[0m"
-                timedatectl list-timezones | head -n 200 | pr -5 -t -w 120
-                echo -e "\n\033[1;33m(Showing first 200 timezones, use option 8 to enter any timezone)\033[0m"
-                ;;
+    echo -e "\033[1;33mAvailable timezones:\033[0m"
+    # Create a temporary file with timezones
+    TZ_TEMP_FILE=$(mktemp)
+    timedatectl list-timezones > "$TZ_TEMP_FILE"
+    
+    # Display with line numbers and pagination
+    less -N -M --prompt="Use arrows to navigate, enter number to select, Q to quit: " "$TZ_TEMP_FILE"
+    
+    # Get selection
+    read -p $'\n\033[1;36mEnter line number of timezone to select (or 0 to cancel): \033[0m' tz_line
+    
+    if [[ "$tz_line" -gt 0 ]]; then
+        selected_tz=$(sed -n "${tz_line}p" "$TZ_TEMP_FILE")
+        if [[ -n "$selected_tz" ]]; then
+            sudo timedatectl set-timezone "$selected_tz"
+            echo -e "\033[1;32mTimezone set to: $selected_tz\033[0m"
+        else
+            echo -e "\033[1;31mInvalid selection!\033[0m"
+        fi
+    fi
+    
+    # Clean up
+    rm -f "$TZ_TEMP_FILE"
+    ;;
             8)
                 read -p "Enter the full timezone (e.g., America/Los_Angeles): " custom_tz
                 if timedatectl list-timezones | grep -q "^$custom_tz$"; then
