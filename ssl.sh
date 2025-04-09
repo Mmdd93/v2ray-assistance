@@ -54,7 +54,7 @@ ssl_multi() {
             echo -e "\033[1;33mPlease choose an option:\033[0m"
             echo "1) Stop $service_name to proceed with HTTP-01 challenge."
             echo "2) Continue  (not recommended) ."
-            echo "3) Return."
+            echo "0) Return."
             read -p "Enter your choice (1-3): " menu_choice
 
             case $menu_choice in
@@ -71,9 +71,9 @@ ssl_multi() {
                     break
                     ;;
                 2)
-                    continue
+                    break
                     ;;
-                3)
+                0)
                     echo -e "\033[1;31mReturning to main menu...\033[0m"
                     ssl
                     ;;
