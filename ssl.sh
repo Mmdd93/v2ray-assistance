@@ -281,7 +281,9 @@ get_ssl_with_certbot() {
    
 # Get the public IP of the server
    # Get the public IP of the server
-    server_ip=$(curl -s ifconfig.me)
+    # Get the public IPv4 and IPv6 of the server
+server_ipv4=$(curl -4 -s https://checkip.amazonaws.com)
+server_ipv6=$(curl -6 -s https://checkip.amazonaws.com 2>/dev/null)  # fallback to a working IPv6 service
 
     while true; do
         read -p "Enter your email (leave blank if you don't want to provide one): " email
@@ -299,7 +301,9 @@ get_ssl_with_certbot() {
         for domain in "${domain_array[@]}"; do
             domain_ip=$(dig +short "$domain" | tail -n1)  # Get the last resolved IP
             if [[ "$domain_ip" != "$server_ip" ]]; then
-                echo -e "\033[1;31mError: Domain '$domain' does not resolve to the server's public IP ($server_ip).\033[0m"
+            echo -e "\033[1;31mError: Domain '$domain' does not resolve to the server's public IP.\033[0m"
+            echo -e "\033[1;33mServer IPv4: $server_ipv4\033[0m"
+            echo -e "\033[1;33mServer IPv6: ${server_ipv6:-Not available}\033[0m"
                 echo -e "\033[1;33mResolved IP for '$domain' is $domain_ip.\033[0m"
                 echo -e "\033[1;33mPlease ensure that the DNS records are correctly set before continuing.\033[0m"
                 echo -e "\033[1;33mReturning to domain entry.\033[0m"
