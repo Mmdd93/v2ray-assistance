@@ -279,41 +279,65 @@ get_ssl_with_certbot() {
 
    # Loop for entering domains
    
-# Get the public IP of the server
-   # Get the public IP of the server
-    # Get the public IPv4 and IPv6 of the server
+
+# Get the public IPv4 and IPv6 of the server
 server_ipv4=$(curl -4 -s https://checkip.amazonaws.com)
-server_ipv6=$(curl -6 -s https://checkip.amazonaws.com 2>/dev/null)  # fallback to a working IPv6 service
+server_ipv6=$(curl -6 -s https://checkip.amazonaws.com 2>/dev/null)
 
-    while true; do
-        read -p "Enter your email (leave blank if you don't want to provide one): " email
-        read -p "Enter your domains (comma separated, e.g., example.com,www.example.com): " domains
-        
-        # Check if domains are empty
-        if [[ -z "$domains" ]]; then
-            echo -e "\033[1;31mError: You must enter at least one domain.\033[0m"
-            continue
-        fi
+echo -e "\033[1;32mServer IPv4: $server_ipv4\033[0m"
+echo -e "\033[1;32mServer IPv6: ${server_ipv6:-Not available}\033[0m"
 
-        IFS=',' read -r -a domain_array <<< "$domains"
+while true; do
+    read -p "Enter your email (leave blank if you don't want to provide one): " email
+    read -p "Enter your domains (comma separated, e.g., example.com,www.example.com): " domains
 
-        # Check if the IPs behind the domains match the server's public IP
-        for domain in "${domain_array[@]}"; do
-            domain_ip=$(dig +short "$domain" | tail -n1)  # Get the last resolved IP
-            if [[ "$domain_ip" != "$server_ip" ]]; then
-            echo -e "\033[1;31mError: Domain '$domain' does not resolve to the server's public IP.\033[0m"
-            echo -e "\033[1;33mServer IPv4: $server_ipv4\033[0m"
-            echo -e "\033[1;33mServer IPv6: ${server_ipv6:-Not available}\033[0m"
-                echo -e "\033[1;33mResolved IP for '$domain' is $domain_ip.\033[0m"
-                echo -e "\033[1;33mPlease ensure that the DNS records are correctly set before continuing.\033[0m"
-                echo -e "\033[1;33mReturning to domain entry.\033[0m"
-                continue 2  # Go back to the start of the while loop to prompt for domains again
+    if [[ -z "$domains" ]]; then
+        echo -e "\033[1;31mError: You must enter at least one domain.\033[0m"
+        continue
+    fi
+
+    IFS=',' read -r -a domain_array <<< "$domains"
+
+    for domain in "${domain_array[@]}"; do
+        ipv4s=($(dig +short A "$domain"))
+        ipv6s=($(dig +short AAAA "$domain"))
+
+        echo -e "\033[1;33mResolved IPs for '$domain': IPv4: ${ipv4s[*]} IPv6: ${ipv6s[*]}\033[0m"
+
+        match_found=false
+
+        # Check for a match in either IPv4 or IPv6
+        for ip in "${ipv4s[@]}"; do
+            echo -e "\033[1;34mComparing Domain IPv4: $ip with Server IPv4: $server_ipv4\033[0m"
+            if [[ "$ip" == "$server_ipv4" ]]; then
+                match_found=true
+                break
             fi
         done
 
-        # If all domains resolve correctly, break out of the loop
-        break
+        for ip in "${ipv6s[@]}"; do
+            echo -e "\033[1;34mComparing Domain IPv6: $ip with Server IPv6: $server_ipv6\033[0m"
+            if [[ "$ip" == "$server_ipv6" || "$server_ipv6" == "Not available" ]]; then
+                match_found=true
+                break
+            fi
+        done
+
+        if [[ "$match_found" == false ]]; then
+            echo -e "\033[1;31mError: Domain '$domain' does not resolve to the server's public IP.\033[0m"
+            echo -e "\033[1;33mServer IPv4: $server_ipv4\033[0m"
+            echo -e "\033[1;33mServer IPv6: ${server_ipv6:-Not available}\033[0m"
+            echo -e "\033[1;33mResolved IPs for '$domain': IPv4: ${ipv4s[*]} IPv6: ${ipv6s[*]}\033[0m"
+            echo -e "\033[1;33mPlease ensure that the DNS records are correctly set before continuing.\033[0m"
+            echo -e "\033[1;33mReturning to domain entry.\033[0m"
+            continue 2
+        fi
     done
+
+    break  # All domains passed the check
+done
+
+
 
     domain_args=""
     for domain in "${domain_array[@]}"; do
