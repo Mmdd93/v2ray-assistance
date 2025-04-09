@@ -1,8 +1,48 @@
 #!/bin/bash
-#ssl
-# Function to handle port 80 conflicts
-handle_port_80() {
-    # Check if port 80 is in use
+# SSL issuance function
+ssl() {
+
+
+while true; do
+clear
+echo -e "\033[1;32mSSL Installation Options\033[0m"
+
+echo -e "1.\033[1;34m acme New single/multi domain  (Let's Encrypt, Buypass, ZeroSSL) \033[0m"
+echo -e "2.\033[1;34m Certbot New single/multi domain ssl\033[0m"
+echo -e "3.\033[1;34m Certbot New wildcard ssl (*.domain.com)\033[0m"
+echo -e "4.\033[1;34m Easy mode ESSL script \033[0m"
+    
+    echo -e "0. Return"
+    echo -e "\033[1;32mEnter your choice:\033[0m"
+    
+    read -r ssl_choice
+
+    case "$ssl_choice" in
+        1)
+            echo -e "\033[1;32mYou selected acme.\033[0m"
+            ssl_multi
+            ;;
+        2)
+            echo -e "\033[1;32mYou selected certbot method.\033[0m"
+            get_ssl_with_certbot
+            ;;
+        3) get_wildcard_ssl_with_certbot ;;
+	
+	4) curl -Ls https://github.com/azavaxhuman/ESSL/raw/main/essl.sh -o essl.sh
+            sudo bash essl.sh  ;;
+        0)
+            echo -e "\033[1;32mReturning to the previous menu.\033[0m"
+            return
+            ;;
+        *)
+            echo -e "\033[1;31mInvalid choice. Please select 0, 1, or 2.\033[0m"
+            ;;
+    esac
+done
+}
+
+ssl_multi() {
+
     # Check if port 80 is in use
     if sudo lsof -i :80 | grep LISTEN &> /dev/null; then
         service_name=$(sudo lsof -i :80 | grep LISTEN | awk '{print $1}' | head -n 1)
@@ -31,7 +71,7 @@ handle_port_80() {
                     break
                     ;;
                 2)
-                    ssl1
+                    continue
                     ;;
                 3)
                     echo -e "\033[1;31mReturning to main menu...\033[0m"
@@ -43,51 +83,6 @@ handle_port_80() {
             esac
         done
     fi
-}
-# SSL issuance function
-ssl() {
-
-
-while true; do
-clear
-echo -e "\033[1;32mSSL Installation Options\033[0m"
-
-echo -e "1.\033[1;34m acme New single/multi domain  (Let's Encrypt, Buypass, ZeroSSL) \033[0m"
-echo -e "2.\033[1;34m Certbot New single/multi domain ssl\033[0m"
-echo -e "3.\033[1;34m Certbot New wildcard ssl (*.domain.com)\033[0m"
-echo -e "4.\033[1;34m Easy mode ESSL script \033[0m"
-    
-    echo -e "0. Return"
-    echo -e "\033[1;32mEnter your choice:\033[0m"
-    
-    read -r ssl_choice
-
-    case "$ssl_choice" in
-        1)
-            echo -e "\033[1;32mYou selected acme.\033[0m"
-            handle_port_80
-            ssl_multi
-            ;;
-        2)
-            echo -e "\033[1;32mYou selected certbot method.\033[0m"
-            get_ssl_with_certbot
-            ;;
-        3) get_wildcard_ssl_with_certbot ;;
-	
-	4) curl -Ls https://github.com/azavaxhuman/ESSL/raw/main/essl.sh -o essl.sh
-            sudo bash essl.sh  ;;
-        0)
-            echo -e "\033[1;32mReturning to the previous menu.\033[0m"
-            return
-            ;;
-        *)
-            echo -e "\033[1;31mInvalid choice. Please select 0, 1, or 2.\033[0m"
-            ;;
-    esac
-done
-}
-
-ssl_multi() {
     echo -e "\033[1;36m============================================\033[0m"
     echo -e "\033[1;33m   Multi-Domain SSL Certificate Issuance\033[0m"
     echo -e "\033[1;36m============================================\033[0m"
