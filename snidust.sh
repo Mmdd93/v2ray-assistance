@@ -166,7 +166,7 @@ select_allowed_clients
     external_ip=${external_ip:-$(curl -4 -s https://icanhazip.com)} # Use public IP as default
 
     # Prompt for using custom domains with default set to 'yes'
-echo -e "\033[1;33mDo you have custom domains? (yes/no) [yes]:\033[0m"
+echo -e "\033[1;33mDo you have custom domains (/root/99-custom.lst)? (yes/no) [yes]:\033[0m"
 echo -e "\033[1;32mSelect no to spoof all domains (Not recommended.)\033[0m"
 read -p " > " custom_domains_input
 custom_domains_input=${custom_domains_input,,} # Convert to lowercase
