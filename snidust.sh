@@ -619,8 +619,8 @@ create_dns() {
         echo -e "\033[1;32m5. Edit Allowed clients\033[0m"
         echo -e "\033[1;32m6. Auto Restart Service (Cron)\033[0m"
         echo -e "\033[1;32m7. Auto start Service after reboot (systemd)\033[0m"
-        echo -e "\033[1;32m8. reload clients IPS (log driver must be enabled) \033[0m"
-        echo -e "\033[1;32m9. reload custom domains (log driver must be enabled) \033[0m"
+        echo -e "\033[1;32m8. reload clients IPS \033[0m"
+        echo -e "\033[1;32m9. reload custom domains \033[0m"
         echo -e "\033[1;32m0. Main menu\033[0m"
         read -p "> " choice
 
