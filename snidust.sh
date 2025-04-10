@@ -427,7 +427,6 @@ clear
     read -p "Press Enter to edit with nano, or type '0' to return: " input
     if [[ "$input" == "0" ]]; then
         echo -e "\033[1;31mExiting without changes.\033[0m"
-        create_dns
         return
     fi
 
@@ -435,12 +434,12 @@ clear
     nano /root/myacls.acl
 
     # Ask the user if they want to recreate the container
-    read -p "Do you want to recreate the container? (yes/no): " restart_choice
+    read -p "Do you want to restart the container? (yes/no): " restart_choice
     if [[ "$restart_choice" == "yes" ]]; then
         echo -e "\033[1;33mRecreating the container...\033[0m"
-        docker stop snidust
-        docker rm -f snidust
-        create_custom_dns
+        docker restart snidust
+        
+        
     elif [[ "$restart_choice" == "no" ]]; then
         echo -e "\033[1;31mContainer recreate skipped.\033[0m"
     else
