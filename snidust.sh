@@ -353,16 +353,13 @@ manage_container() {
 
 
 manage_custom_domains() {
-clear
-    echo -e "\033[1;36m============Edit Custom Domains==========\033[0m"
+    clear
+    echo -e "\033[1;36m============ Edit Custom Domains ============\033[0m"
+    echo -e "\033[1;33mExample entries:\033[0m"
+    echo -e "\033[1;33m- check-host.net\n- xbox.com\033[0m"
 
-    echo -e "\033[1;33mExample for editing:\033[0m"
-    echo -e "\033[1;33mcheck-host.net\033[0m"
-    echo -e "\033[1;33mxbox.com\033[0m"
-
-    # Main menu for managing custom domains
     while true; do
-        echo -e "\033[1;36m============================================\033[0m"
+        echo -e "\n\033[1;36m============================================\033[0m"
         echo -e "\033[1;33mOptions:\033[0m"
         echo -e "\033[1;32m1.\033[0m Edit custom domains file"
         echo -e "\033[1;32m2.\033[0m Download custom domains file"
@@ -372,96 +369,86 @@ clear
         read -p "Choose an option: " choice
         case $choice in
             1)
-                echo -e "\033[1;33mOpening the custom domains file for editing...\033[0m"
+                echo -e "\033[1;33mOpening file for editing...\033[0m"
                 nano /root/99-custom.lst
-                # Ask the user if they want to recreate the container
-    read -p "Do you want to restart the container? (yes/no): " restart_choice
-    if [[ "$restart_choice" == "yes" ]]; then
-        echo -e "\033[1;33mRecreating the container...\033[0m"
-        docker restart snidust
-        
-        
-    elif [[ "$restart_choice" == "no" ]]; then
-        echo -e "\033[1;31mskipped...\033[0m"
-    else
-        echo -e "\033[1;31mInvalid input. Please enter 'yes' or 'no'.\033[0m"
-    fi
-
-    create_dns  # Exit after handling the restart
                 ;;
-
             2)
-                # Download the custom domains file
                 echo -e "\033[1;33mDownloading the custom domains file...\033[0m"
                 wget -O /root/99-custom.lst https://sub-s3.s3.eu-central-1.amazonaws.com/99-custom.lst
                 if [[ $? -eq 0 ]]; then
-                    echo -e "\033[1;32mDownload successful! The file has been saved to /root/99-custom.lst.\033[0m"
+                    echo -e "\033[1;32mDownload successful!\033[0m"
                 else
-                    echo -e "\033[1;31mDownload failed. Please check your connection or URL.\033[0m"
+                    echo -e "\033[1;31mDownload failed. Check URL or connection.\033[0m"
                 fi
                 ;;
-
             0)
                 echo -e "\033[1;31mReturning to the DNS menu...\033[0m"
                 create_dns
-                
+                return
                 ;;
-
             *)
                 echo -e "\033[1;31mInvalid option. Please choose again.\033[0m"
+                continue
                 ;;
         esac
 
-        # Ask the user if they want to restart the container after editing/downloading
+        # Ask about container restart after action
         while true; do
             read -p "Do you want to restart the container? (yes/no): " restart_choice
-            if [[ "$restart_choice" == "yes" ]]; then
-                echo -e "\033[1;33mRestarting the container...\033[0m"
-                docker restart snidust
-                create_dns
-                
-            elif [[ "$restart_choice" == "no" ]]; then
-                echo -e "\033[1;31mContainer restart skipped.\033[0m"
-                create_dns
-            else
-                echo -e "\033[1;31mInvalid input. Please enter 'yes' or 'no'.\033[0m"
-            fi
+            case "$restart_choice" in
+                yes)
+                    echo -e "\033[1;33mRestarting the container...\033[0m"
+                    docker restart snidust
+                    break
+                    ;;
+                no)
+                    echo -e "\033[1;31mContainer restart skipped.\033[0m"
+                    break
+                    ;;
+                *)
+                    echo -e "\033[1;31mInvalid input. Please enter 'yes' or 'no'.\033[0m"
+                    ;;
+            esac
         done
     done
 }
 
 
 edit_clients() {
-clear
-    echo -e "\033[1;36m==============Edit Allowed Clients===============\033[0m"
+    clear
+    echo -e "\033[1;36m=========== Edit Allowed Clients ===========\033[0m"
+    echo -e "\033[1;33mAdd IPs line by line.\033[0m"
 
-    echo -e "\033[1;33mAdd clients IPS line by line\033[0m"
-    
-
-    read -p "Press Enter to edit with nano, or type '0' to return: " input
+    read -p "Press Enter to edit or type '0' to return: " input
     if [[ "$input" == "0" ]]; then
         echo -e "\033[1;31mExiting without changes.\033[0m"
         return
     fi
 
-    # Open the custom domains file with nano
     nano /root/myacls.acl
 
-    # Ask the user if they want to recreate the container
-    read -p "Do you want to restart the container? (yes/no): " restart_choice
-    if [[ "$restart_choice" == "yes" ]]; then
-        echo -e "\033[1;33mRecreating the container...\033[0m"
-        docker restart snidust
-        
-        
-    elif [[ "$restart_choice" == "no" ]]; then
-        echo -e "\033[1;31mskipped...\033[0m"
-    else
-        echo -e "\033[1;31mInvalid input. Please enter 'yes' or 'no'.\033[0m"
-    fi
+    # Ask about restarting the container
+    while true; do
+        read -p "Do you want to restart the container? (yes/no): " restart_choice
+        case "$restart_choice" in
+            yes)
+                echo -e "\033[1;33mRestarting the container...\033[0m"
+                docker restart snidust
+                break
+                ;;
+            no)
+                echo -e "\033[1;31mContainer restart skipped.\033[0m"
+                break
+                ;;
+            *)
+                echo -e "\033[1;31mInvalid input. Please enter 'yes' or 'no'.\033[0m"
+                ;;
+        esac
+    done
 
-    create_dns  # Exit after handling the restart
+    create_dns
 }
+
 auto_restart() {
     while true; do
         clear
