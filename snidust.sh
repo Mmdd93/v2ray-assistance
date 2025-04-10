@@ -421,7 +421,7 @@ clear
     fi
 
     # Open the custom domains file with nano
-    nano /root/allowed.txt
+    nano /root/myacls.acl
 
     # Ask the user if they want to recreate the container
     read -p "Do you want to recreate the container? (yes/no): " restart_choice
