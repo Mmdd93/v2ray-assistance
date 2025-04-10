@@ -410,8 +410,8 @@ edit_clients() {
 clear
     echo -e "\033[1;36m==============Edit Allowed Clients===============\033[0m"
 
-    echo -e "\033[1;33mSeparate with a comma, for example:\033[0m"
-    echo -e "\033[1;32m192.168.1.1,ddns.com,1.2.3.4\033[0m"
+    echo -e "\033[1;33mAdd clients IPS line by line\033[0m"
+    
 
     read -p "Press Enter to edit with nano, or type '0' to return: " input
     if [[ "$input" == "0" ]]; then
