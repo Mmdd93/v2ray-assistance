@@ -494,6 +494,76 @@ auto_restart() {
     done
 }
 
+manage_snidust_service() {
+    # Define the path to the systemd service file
+    local service_file="/etc/systemd/system/snidust.service"
+
+    # Ask the user for an option
+    echo -e "\033[1;32mPlease select an option:\033[0m"
+    echo -e "\033[1;32m1. \033[0m Add Snidust service"
+    echo -e "\033[1;32m2. \033[0m Remove Snidust service"
+    echo -e "\033[1;32m3. \033[0m Check Snidust service status"
+    echo -e "\033[1;32m0. \033[0m return"
+    read -p "$(echo -e "\033[1;33mEnter your choice [1-3]: \033[0m")" option
+
+    case $option in
+        1)
+            # Add Snidust service
+            echo -e "[Unit]
+Description=Snidust Docker Service
+After=docker.service
+Requires=docker.service
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/docker start snidust
+ExecStop=/usr/bin/docker stop snidust
+ExecReload=/usr/bin/docker restart snidust
+TimeoutStartSec=30
+TimeoutStopSec=30
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target" | sudo tee $service_file > /dev/null
+
+            # Reload systemd to recognize the new service
+            sudo systemctl daemon-reload
+
+            # Enable the service to start on boot
+            sudo systemctl enable snidust.service
+
+            # Start the snidust service
+            sudo systemctl start snidust.service
+
+            echo -e "\033[1;32mSnidust service has been added and started.\033[0m"
+            ;;
+        2)
+            # Remove Snidust service
+            if [[ -f $service_file ]]; then
+                sudo systemctl stop snidust.service
+                sudo systemctl disable snidust.service
+                sudo rm -f $service_file
+                sudo systemctl daemon-reload
+                echo -e "\033[1;32mSnidust service has been removed.\033[0m"
+            else
+                echo -e "\033[1;31mSnidust service does not exist.\033[0m"
+            fi
+            ;;
+        3)
+            # Check Snidust service status
+            if systemctl is-active --quiet snidust.service; then
+                echo -e "\033[1;32mSnidust service is running.\033[0m"
+            else
+                echo -e "\033[1;31mSnidust service is not running.\033[0m"
+            fi
+            ;;
+        *)
+            echo -e "\033[1;31mInvalid option. Please choose between 1-3.\033[0m"
+            ;;
+        0) create_dns ;;
+    esac
+}
+
 
 # create_dns
 create_dns() {
@@ -509,6 +579,7 @@ create_dns() {
         echo -e "\033[1;32m4. Check Ports Status\033[0m"
         echo -e "\033[1;32m5. Edit Allowed clients\033[0m"
         echo -e "\033[1;32m6. Auto Restart Service (Cron)\033[0m"
+        echo -e "\033[1;32m7. Auto start Service after reboot (systemd)\033[0m"
         echo -e "\033[1;32m0. Main menu\033[0m"
         read -p "> " choice
 
@@ -519,7 +590,8 @@ create_dns() {
             4) check_ports ;;
             5) edit_clients ;;
             6) auto_restart ;;
-            0) main_menu ;;
+            7) manage_snidust_service ;;
+            0) return ;;
             *) echo -e "\033[1;31mInvalid option. Please try again.\033[0m" ;;
         esac
     done
