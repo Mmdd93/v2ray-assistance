@@ -526,13 +526,11 @@ After=docker.service
 Requires=docker.service
 
 [Service]
-Restart=always
+Type=oneshot
+RemainAfterExit=true
 ExecStart=/usr/bin/docker start snidust
 ExecStop=/usr/bin/docker stop snidust
 ExecReload=/usr/bin/docker restart snidust
-TimeoutStartSec=30
-TimeoutStopSec=30
-RestartSec=10
 
 [Install]
 WantedBy=multi-user.target" | sudo tee $service_file > /dev/null
