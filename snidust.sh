@@ -621,8 +621,12 @@ create_dns() {
             5) edit_clients ;;
             6) auto_restart ;;
             7) manage_snidust_service ;;
-            8) reload_acls ;;
-            9) reload_domains ;;
+            8) reload_acls
+            read -p "Press Enter to continue..."
+            ;;
+            9) reload_domains
+            read -p "Press Enter to continue..."
+            ;;
             0) return ;;
             *) echo -e "\033[1;31mInvalid option. Please try again.\033[0m" ;;
         esac
