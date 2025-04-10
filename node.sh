@@ -3798,7 +3798,7 @@ main_menu() {
     while true; do
     clear
     echo -e "\033[1;32mv2ray-assistant | Telegram: @tlgrmv2 \033[0m"
-    echo -e "\033[1;32mv:3.4.25\033[0m"
+    echo -e "\033[1;32mv:10.4.25\033[0m"
     echo -e "\033[1;31m+----------Update and upgrade----------+\033[0m"
     echo -e "\033[1;32m1.\033[0m Update and upgrade + install necessary packages"
     echo -e "\033[1;32m2.\033[0m Fix update issues (broken apt or dependencies)"
