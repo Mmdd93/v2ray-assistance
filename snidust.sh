@@ -564,6 +564,34 @@ WantedBy=multi-user.target" | sudo tee $service_file > /dev/null
     esac
 }
 
+reload_acls() {
+    # Get the external IP dynamically
+    external_ip=${external_ip:-$(curl -4 -s https://icanhazip.com)}  # Use public IP as default
+    local dns_query="reload.acl.snidust.local"
+
+    echo -e "\033[1;32mReloading ACLs from $external_ip...\033[0m"
+    
+    # Send a DNS query to trigger ACL reload
+    dig @$external_ip $dns_query
+
+    # Optionally, you can check the logs to ensure the reload was successful
+    echo -e "\033[1;36mCheck logs for reload confirmation:\033[0m"
+    echo "docker logs snidust"
+}
+reload_domains() {
+    # Get the external IP dynamically
+    external_ip=${external_ip:-$(curl -4 -s https://icanhazip.com)}  # Use public IP as default
+    local dns_query="reload.domainlist.snidust.local"
+
+    echo -e "\033[1;32mReloading domain lists from $external_ip...\033[0m"
+    
+    # Send a DNS query to trigger domain list reload
+    dig @$external_ip $dns_query
+
+    # Optionally, you can check the logs to ensure the reload was successful
+    echo -e "\033[1;36mCheck logs for reload confirmation:\033[0m"
+    echo "docker logs snidust"
+}
 
 # create_dns
 create_dns() {
@@ -580,6 +608,8 @@ create_dns() {
         echo -e "\033[1;32m5. Edit Allowed clients\033[0m"
         echo -e "\033[1;32m6. Auto Restart Service (Cron)\033[0m"
         echo -e "\033[1;32m7. Auto start Service after reboot (systemd)\033[0m"
+        echo -e "\033[1;32m8. reload clients IPS without a restart (systemd)\033[0m"
+        echo -e "\033[1;32m9. reload custom domains without a restart (systemd)\033[0m"
         echo -e "\033[1;32m0. Main menu\033[0m"
         read -p "> " choice
 
@@ -591,6 +621,8 @@ create_dns() {
             5) edit_clients ;;
             6) auto_restart ;;
             7) manage_snidust_service ;;
+            8) reload_acls ;;
+            9) reload_domains ;;
             0) return ;;
             *) echo -e "\033[1;31mInvalid option. Please try again.\033[0m" ;;
         esac
