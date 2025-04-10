@@ -65,57 +65,100 @@ clear
     fi
       echo -e "\033[1;33mStarting Create Your Custom DNS (snidust)\033[0m"
       
-    select_allowed_clients() {
-        # Get current SSH user IP
-        default_ip=$(get_current_ssh_user_ip)
-
+select_allowed_clients() {
+    default_ip=$(get_current_ssh_user_ip)
 
     echo -e "\033[1;32m1. \033[0m \033[1;37mDefault [Your IP: $default_ip]\033[0m"
     echo -e "\033[1;32m2. \033[0m \033[1;37mUse 0.0.0.0/0 for all clients\033[0m"
-    echo -e "\033[1;32m3. \033[0m \033[1;37mEnter allowed clients (comma-separated) [Default: $default_ip]\033[0m"
-    echo -e "\033[1;32m4. \033[0m \033[1;37mLoad allowed clients from /root/allowed.txt\033[0m"
-
+    echo -e "\033[1;32m3. \033[0m \033[1;37mEnter static allowed clients (comma-separated) [Default: $default_ip]\033[0m"
+    echo -e "\033[1;32m4. \033[0m \033[1;37mEnter dynamic allowed clients (comma-separated) [Default: $default_ip]\033[0m"
+    echo -e "\033[1;32m5. \033[0m \033[1;37mLoad static allowed clients from /root/myacls.acl\033[0m"
+    echo -e "\033[1;32m6. \033[0m \033[1;37mLoad dynamic allowed clients from /root/myacls.acl\033[0m"
     echo -e "\033[1;36m--------------------------------------------\033[0m"
-    read -p "$(echo -e "\033[1;33mEnter allowed clients [defualt: all clients]: \033[0m")" option
+
+    read -p "$(echo -e "\033[1;33mEnter allowed clients [default: all clients]: \033[0m")" option
 
     case $option in
         1)
             ALLOWED_CLIENTS="$default_ip"
+            allowed_clients_env="-e ALLOWED_CLIENTS=\"$ALLOWED_CLIENTS\""
+            allowed_clients_volume=""
             ;;
         2)
             ALLOWED_CLIENTS="0.0.0.0/0"
+            allowed_clients_env="-e ALLOWED_CLIENTS=\"$ALLOWED_CLIENTS\""
+            allowed_clients_volume=""
             ;;
         3)
             read -p "Enter the allowed clients (separate with a comma): " custom_clients
-            ALLOWED_CLIENTS=${custom_clients:-$default_ip}  # Use default IP if no input is provided
+            ALLOWED_CLIENTS="${custom_clients:-$default_ip}"
+            allowed_clients_env="-e ALLOWED_CLIENTS=\"$ALLOWED_CLIENTS\""
+            allowed_clients_volume=""
             ;;
         4)
-            if [ -f /root/allowed.txt ]; then
-                # Extract IPs and domains from /root/allowed.txt
-                ALLOWED_CLIENTS=$(grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' /root/allowed.txt | paste -sd, -)
-                
-                if [ -z "$ALLOWED_CLIENTS" ]; then
-                    echo -e "\033[1;31mNo valid clients (IPs or domains) found in /root/allowed.txt. Defaulting to your IP: $default_ip.\033[0m"
+            read -p "Enter dynamic allowed clients (comma-separated): " dynamic_clients
+            ALLOWED_CLIENTS="${dynamic_clients:-$default_ip}"
+            echo "$ALLOWED_CLIENTS" | tr ',' '\n' > /root/myacls.acl
+            echo -e "\033[1;32mDynamic allowed clients saved to /root/myacls.acl (line by line)\033[0m"
+            allowed_clients_env="-e ALLOWED_CLIENTS_FILE=/tmp/myacls.acl"
+            allowed_clients_volume="-v /root/myacls.acl:/tmp/myacls.acl:ro"
+            ;;
+        5)
+            if [[ -f /root/myacls.acl ]]; then
+                ALLOWED_CLIENTS=$(grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' /root/myacls.acl | paste -sd, -)
+                if [[ -z "$ALLOWED_CLIENTS" ]]; then
+                    echo -e "\033[1;31mNo valid clients found in /root/myacls.acl. Defaulting to your IP: $default_ip.\033[0m"
                     ALLOWED_CLIENTS="$default_ip"
+                    allowed_clients_env="-e ALLOWED_CLIENTS=\"$ALLOWED_CLIENTS\""
+                    allowed_clients_volume=""
                 else
-                    echo -e "\033[1;32mAllowed clients from /root/allowed.txt: $ALLOWED_CLIENTS\033[0m"
+                    echo -e "\033[1;32mAllowed clients from /root/myacls.acl: $ALLOWED_CLIENTS\033[0m"
+                    allowed_clients_env="-e ALLOWED_CLIENTS_FILE=/tmp/myacls.acl"
+                    allowed_clients_volume="-v /root/myacls.acl:/tmp/myacls.acl:ro"
                 fi
             else
-                echo -e "\033[1;31mFile /root/allowed.txt not found. Defaulting to : $default_ip.\033[0m"
+                echo -e "\033[1;31mFile /root/myacls.acl not found. Defaulting to: $default_ip.\033[0m"
                 ALLOWED_CLIENTS="$default_ip"
+                allowed_clients_env="-e ALLOWED_CLIENTS=\"$ALLOWED_CLIENTS\""
+                allowed_clients_volume=""
+            fi
+            ;;
+        6)
+            if [[ -f /root/myacls.acl ]]; then
+                ALLOWED_CLIENTS=$(grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' /root/myacls.acl | paste -sd, -)
+                if [[ -z "$ALLOWED_CLIENTS" ]]; then
+                    echo -e "\033[1;31mNo valid dynamic clients found in /root/myacls.acl. Defaulting to your IP: $default_ip.\033[0m"
+                    ALLOWED_CLIENTS="$default_ip"
+                    allowed_clients_env="-e ALLOWED_CLIENTS=\"$ALLOWED_CLIENTS\""
+                    allowed_clients_volume=""
+                else
+                    echo -e "\033[1;32mDynamic allowed clients from /root/myacls.acl: $ALLOWED_CLIENTS\033[0m"
+                    allowed_clients_env="-e ALLOWED_CLIENTS_FILE=/tmp/myacls.acl"
+                    allowed_clients_volume="-v /root/myacls.acl:/tmp/myacls.acl:ro"
+                fi
+            else
+                echo -e "\033[1;31mFile /root/myacls.acl not found. Defaulting to: $default_ip.\033[0m"
+                ALLOWED_CLIENTS="$default_ip"
+                allowed_clients_env="-e ALLOWED_CLIENTS_FILE=/tmp/myacls.acl"
+                allowed_clients_volume="-v /root/myacls.acl:/tmp/myacls.acl:ro"
             fi
             ;;
         *)
-            echo -e "\033[1;31mInvalid option. Defaulting to all clients: "0.0.0.0/0"\033[0m"
+            echo -e "\033[1;31mInvalid option. Defaulting to all clients: 0.0.0.0/0\033[0m"
             ALLOWED_CLIENTS="0.0.0.0/0"
+            allowed_clients_env="-e ALLOWED_CLIENTS=\"$ALLOWED_CLIENTS\""
+            allowed_clients_volume=""
             ;;
     esac
 
     echo -e "\033[1;32mAllowed clients set to: $ALLOWED_CLIENTS\033[0m"
 }
 
-    # Call select_allowed_clients to determine allowed clients
-    select_allowed_clients
+
+# Call select_allowed_clients
+select_allowed_clients
+
+
 
     # Prompt for external IP, with a method to find public IP
     echo -e "\033[1;33mEnter your server IP: [defualt: $(curl -4 -s https://icanhazip.com)]:\033[0m"
@@ -214,7 +257,7 @@ fi
 # Prepare the Docker command
 docker_command="docker run -d \
     --name \"$container_name\" \
-    -e ALLOWED_CLIENTS=\"$ALLOWED_CLIENTS\" \
+    $allowed_clients_env \
     -e EXTERNAL_IP=\"$external_ip\" \
     -e SPOOF_ALL_DOMAINS=\"$spoof_domains\" \
     $enable_dot \
@@ -226,6 +269,7 @@ docker_command="docker run -d \
     $custom_domains \
     --log-driver=none \
     $memory_flags \
+    $allowed_clients_volume \
     ghcr.io/seji64/snidust:1.0.15"
 
 echo -e "\033[1;32mRunning Docker with the following command:\033[0m"
