@@ -243,8 +243,8 @@ if [[ "$enable_rate_limit" == "yes" ]]; then
                       -e DNSDIST_RATE_LIMIT_EVAL_WINDOW=\"$rate_limit_eval_window\""
 else
     echo -e "\033[1;33mDo you want to completly disable IP rate limiting? (yes/no) [no]:\033[0m"
-    echo -e "\033[1;31m[no]= use default IP rate limit (recommended):\033[0m"
-    echo -e "\033[1;31m[yes]= completly disable IP rate limit:\033[0m"
+    echo -e "\033[1;32m[no]= use default IP rate limit (recommended):\033[0m"
+    echo -e "\033[1;32m[yes]= completly disable IP rate limit:\033[0m"
     read -p " > " disable_rate_limit
 
     if [[ "$disable_rate_limit" == "yes" ]]; then
@@ -254,7 +254,7 @@ else
     fi
 fi
 # Ask if they want to enable the log driver
-read -p "$(echo -e "\033[1;33mDo you want to enable the log driver? (yes/no, default: no): \033[0m")" enable_logging
+read -p "$(echo -e "\033[1;34mDo you want to enable the log driver (increases ram and CPU usage)? (yes/no, default: no): \033[0m")" enable_logging
 
 # Check if the user wants to enable the log driver
 if [[ "$enable_logging" =~ ^[Yy][Ee][Ss]$ || -z "$enable_logging" ]]; then
@@ -619,8 +619,8 @@ create_dns() {
         echo -e "\033[1;32m5. Edit Allowed clients\033[0m"
         echo -e "\033[1;32m6. Auto Restart Service (Cron)\033[0m"
         echo -e "\033[1;32m7. Auto start Service after reboot (systemd)\033[0m"
-        echo -e "\033[1;32m8. reload clients IPS without a restart (systemd)\033[0m"
-        echo -e "\033[1;32m9. reload custom domains without a restart (systemd)\033[0m"
+        echo -e "\033[1;32m8. reload clients IPS (log driver must be enabled) \033[0m"
+        echo -e "\033[1;32m9. reload custom domains (log driver must be enabled) \033[0m"
         echo -e "\033[1;32m0. Main menu\033[0m"
         read -p "> " choice
 
