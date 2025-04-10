@@ -374,6 +374,20 @@ clear
             1)
                 echo -e "\033[1;33mOpening the custom domains file for editing...\033[0m"
                 nano /root/99-custom.lst
+                # Ask the user if they want to recreate the container
+    read -p "Do you want to restart the container? (yes/no): " restart_choice
+    if [[ "$restart_choice" == "yes" ]]; then
+        echo -e "\033[1;33mRecreating the container...\033[0m"
+        docker restart snidust
+        
+        
+    elif [[ "$restart_choice" == "no" ]]; then
+        echo -e "\033[1;31mskipped...\033[0m"
+    else
+        echo -e "\033[1;31mInvalid input. Please enter 'yes' or 'no'.\033[0m"
+    fi
+
+    create_dns  # Exit after handling the restart
                 ;;
 
             2)
@@ -441,7 +455,7 @@ clear
         
         
     elif [[ "$restart_choice" == "no" ]]; then
-        echo -e "\033[1;31mContainer recreate skipped.\033[0m"
+        echo -e "\033[1;31mskipped...\033[0m"
     else
         echo -e "\033[1;31mInvalid input. Please enter 'yes' or 'no'.\033[0m"
     fi
