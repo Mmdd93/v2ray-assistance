@@ -561,13 +561,15 @@ WantedBy=multi-user.target" | sudo tee $service_file > /dev/null
             fi
             ;;
         3)
-            # Check Snidust service status
-            if systemctl is-active --quiet snidust.service; then
-                echo -e "\033[1;32mSnidust service is running.\033[0m"
-            else
-                echo -e "\033[1;31mSnidust service is not running.\033[0m"
-            fi
-            ;;
+    # Check Snidust service status
+    systemctl status snidust.service
+    if systemctl status snidust.service > /dev/null 2>&1; then
+        echo -e "\033[1;32mSnidust service is running.\033[0m"
+    else
+        echo -e "\033[1;31mSnidust service is not running.\033[0m"
+    fi
+    ;;
+
         *)
             echo -e "\033[1;31mInvalid option. Please choose between 1-3.\033[0m"
             ;;
