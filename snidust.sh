@@ -631,7 +631,9 @@ create_dns() {
             4) check_ports ;;
             5) edit_clients ;;
             6) auto_restart ;;
-            7) manage_snidust_service ;;
+            7) manage_snidust_service
+            read -p "Press Enter to continue..."
+            ;;
             8) reload_acls
             read -p "Press Enter to continue..."
             ;;
