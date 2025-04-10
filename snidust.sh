@@ -253,7 +253,23 @@ else
         rate_limit_flags=""
     fi
 fi
+# Ask if they want to enable the log driver
+read -p "$(echo -e "\033[1;33mDo you want to enable the log driver? (yes/no, default: no): \033[0m")" enable_logging
 
+# If the user chooses 'yes', ask for the log driver type
+if [[ "$enable_logging" =~ ^[Yy][Ee][Ss]$ || -z "$enable_logging" ]]; then
+    # Prompt for log driver type, defaulting to 'none' if nothing is entered
+    read -p "$(echo -e "\033[1;33mEnter log driver (default: none): \033[0m")" log_driver
+
+    # If the user does not enter anything, set the default to 'none'
+    log_driver=${log_driver:-none}
+
+    # Log driver is enabled, so add it to the Docker command
+    log_driver_option="--log-driver=$log_driver"
+else
+    # Log driver is disabled
+    log_driver_option=""
+fi
 # Prepare the Docker command
 docker_command="docker run -d \
     --name \"$container_name\" \
@@ -267,7 +283,7 @@ docker_command="docker run -d \
     -p 53:5300/udp \
     -p 53:5300/tcp \
     $custom_domains \
-    --log-driver=none \
+    $log_driver_option \
     $memory_flags \
     $allowed_clients_volume \
     ghcr.io/seji64/snidust:1.0.15"
