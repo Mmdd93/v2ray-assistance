@@ -3850,7 +3850,7 @@ main_menu() {
     echo -e "\033[1;32m44.\033[0m GOST tunnel"
     echo -e "\033[1;32m55.\033[0m GOST Reverse tunnel"
     echo -e "\033[1;32m47.\033[0m WSS,WS tunnel (CDN support)"
-
+    echo -e "\033[1;32m56.\033[0m WireGuard Reverse Tunnel (EYLAN Tunnel )"
    
     echo -e "\n\033[1;31m+---------------Xray panel-----------------+\033[0m"
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
@@ -3985,6 +3985,9 @@ main_menu() {
 	55) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/Reverse-gost.sh -o Reverse-gost.sh
             sudo bash Reverse-gost.sh ;;
+	56) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/eylandoo/openvpn_webpanel_manager/main/wg-tunnel-manager.sh -o Reverse-wg-tunnel-manager.sh
+            sudo bash Reverse-wg-tunnel-manager.sh ;;
         0) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
