@@ -3798,7 +3798,7 @@ main_menu() {
     while true; do
     clear
     echo -e "\033[1;32mv2ray-assistant | Telegram: @tlgrmv2 \033[0m"
-    echo -e "\033[1;32mv:10.4.25\033[0m"
+    echo -e "\033[1;32mv:25.5.25\033[0m"
     echo -e "\033[1;31m+----------Update and upgrade----------+\033[0m"
     echo -e "\033[1;32m1.\033[0m Update and upgrade + install necessary packages"
     echo -e "\033[1;32m2.\033[0m Fix update issues (broken apt or dependencies)"
@@ -3851,6 +3851,7 @@ main_menu() {
     echo -e "\033[1;32m55.\033[0m GOST Reverse tunnel"
     echo -e "\033[1;32m47.\033[0m WSS,WS tunnel (CDN support)"
     echo -e "\033[1;32m56.\033[0m WireGuard Reverse Tunnel (EYLAN Tunnel )"
+    echo -e "\033[1;32m58.\033[0m WireGuard/hysteria Tunnel ((TAQ-BOSTAN) )"
    
     echo -e "\n\033[1;31m+---------------Xray panel-----------------+\033[0m"
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
@@ -3992,6 +3993,9 @@ main_menu() {
 	57) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/eylandoo/openvpn_webpanel_manager/main/vpn_manager.sh -o openvpn_webpanel_manager.sh
             sudo bash openvpn_webpanel_manager.sh ;;
+	58) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/ParsaKSH/TAQ-BOSTAN/main/script.sh -o hysteria_tunnel.sh
+            sudo bash hysteria_tunnel.sh ;;
         0) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
