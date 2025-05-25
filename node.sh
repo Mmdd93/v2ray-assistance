@@ -3867,6 +3867,7 @@ main_menu() {
     echo -e "\033[1;32m51.\033[0m Marzneshin node by Mehrdad"
     echo -e "\033[1;34m+-----------------------------------------+\033[0m"
     echo -e "\033[1;32m54.\033[0m SoftEther by RTX-VPN v2 (L2TP, OpenVPN, SSTP)"
+    echo -e "\033[1;32m57.\033[0m OPENVPN Webpanel (Multi node location)"
     echo -e "\033[1;32m41.\033[0m Panel Backup (Marzban,X-UI,Hiddify,Marzneshin)+transfer panel data"
     echo -e "\033[1;32m42.\033[0m Auto panel restart"
     echo -e "\033[1;31m+-----------------------------------------+\033[0m"
@@ -3988,6 +3989,9 @@ main_menu() {
 	56) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/eylandoo/openvpn_webpanel_manager/main/wg-tunnel-manager.sh -o Reverse-wg-tunnel-manager.sh
             sudo bash Reverse-wg-tunnel-manager.sh ;;
+	57) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/eylandoo/openvpn_webpanel_manager/main/vpn_manager.sh -o openvpn_webpanel_manager.sh
+            sudo bash openvpn_webpanel_manager.sh ;;
         0) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
