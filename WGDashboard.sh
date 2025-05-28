@@ -52,6 +52,7 @@ function install_wgdashboard() {
 
     echo -e "${GREEN}[?] WGDashboard installed successfully.${RESET}"
     start_wgdashboard
+    enable_service
 }
 
 function start_wgdashboard() {
