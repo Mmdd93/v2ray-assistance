@@ -4002,7 +4002,9 @@ main_menu() {
 	58) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/ParsaKSH/TAQ-BOSTAN/main/script.sh -o hysteria_tunnel.sh
             sudo bash hysteria_tunnel.sh ;;
-        0) echo "Exiting..."; exit 0 ;;
+        0) echo "Exiting...";
+	exit 0
+ ;;
         *) echo "Invalid choice. Please try again." ;;
     esac
     done
