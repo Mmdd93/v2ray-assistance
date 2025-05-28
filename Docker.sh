@@ -150,7 +150,7 @@ fi
                 fi
                 ;;
 
-            0) main_menu ;;
+            0) break ;;
 
             *)
                 echo -e "\033[1;31mInvalid choice. Please try again.\033[0m"
