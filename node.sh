@@ -1889,15 +1889,21 @@ panels_restart_cron() {
 setup_docker() {
     while true; do
         echo -e "\033[1;34mSelect an option:\033[0m"
-        echo "1. Set DNS to Electro or Shecan etc..."
-	echo "2. Change Update sources to Iran"
-        echo "3. Auto-install Docker step-by-step"
+	echo "1. Auto-install (irDocker script)"
+        echo "2. Set DNS to Electro or Shecan, etc..."
+	echo "3. Change Update sources to Iran"
+        echo "4. Auto-install step-by-step (official Docker)"
         echo "0. Main menu"
 
         read -p "Enter your choice: " choice
         
         case $choice in
             1)
+	    echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/AlefbeMedia/irDocker/main/install.sh -o irDocker.sh
+            sudo bash irDocker.sh ;;
+                ;;
+            2)
                 # Display current DNS settings
                 echo -e "\033[1;34mCurrent DNS settings:\033[0m"
                 cat /etc/resolv.conf | grep "nameserver"
@@ -1914,7 +1920,7 @@ setup_docker() {
                     echo -e "\033[1;34mNo DNS change requested.\033[0m"
                 fi
                 ;;
-	2)
+	3)
                 echo -e "\033[1;34mCurrent sources.list:\033[0m"
 if grep -q '^deb ' /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null; then
     cat /etc/apt/sources.list 2>/dev/null
@@ -1936,7 +1942,7 @@ fi
 
                 ;;
 
-            3)
+            4)
                 echo -e "\033[1;34mStarting Docker setup...\033[0m"
 
                 # Step 1: Check if Docker is already installed
