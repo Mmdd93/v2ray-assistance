@@ -3537,6 +3537,7 @@ main_menu() {
     echo -e "\033[1;32m50.\033[0m Marzneshin node by ErfJab"
     echo -e "\033[1;32m51.\033[0m Marzneshin node by Mehrdad"
     echo -e "\033[1;34m+-----------------------------------------+\033[0m"
+    echo -e "\033[1;32m60.\033[0m WGDashboard (dashboard to manage WireGuard)"
     echo -e "\033[1;32m54.\033[0m SoftEther by RTX-VPN v2 (L2TP, OpenVPN, SSTP)"
     echo -e "\033[1;32m57.\033[0m OPENVPN Webpanel (Multi node location)"
     echo -e "\033[1;32m41.\033[0m Panel Backup (Marzban,X-UI,Hiddify,Marzneshin)+transfer panel data"
@@ -3673,7 +3674,10 @@ main_menu() {
             sudo bash hysteria_tunnel.sh ;;
 59) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/UptimeKuma.sh -o UptimeKuma.sh
-            sudo bash UptimeKuma.sh ;;   
+            sudo bash UptimeKuma.sh ;;  
+	60) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/WGDashboard.sh -o WGDashboard.sh
+            sudo bash WGDashboard.sh ;;  
         0) echo "Exiting...";
 	exit 0
  ;;
