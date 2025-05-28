@@ -99,7 +99,7 @@ main_menu() {
     echo -e "${GREEN}4.${RESET} Restart Uptime Kuma"
     echo -e "${GREEN}5.${RESET} Check Status"
     echo -e "${GREEN}6.${RESET} Remove Uptime Kuma"
-    echo -e "${GREEN}7.${RESET} Exit"
+    echo -e "${GREEN}0.${RESET} Exit"
     echo -ne "${CYAN}Enter choice [1-7]: ${RESET}"
     read choice
 
@@ -110,7 +110,7 @@ main_menu() {
       4) restart_kuma ;;
       5) status_kuma ;;
       6) remove_kuma ;;
-      7) echo -e "${CYAN}Goodbye!${RESET}"; exit ;;
+      0) echo -e "${CYAN}Goodbye!${RESET}"; exit ;;
       *) echo -e "${RED}Invalid choice. Try again.${RESET}" ;;
     esac
 
