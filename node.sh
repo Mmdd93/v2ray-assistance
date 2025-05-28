@@ -1902,7 +1902,6 @@ setup_docker() {
 	    echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/AlefbeMedia/irDocker/main/install.sh -o irDocker.sh
             sudo bash irDocker.sh ;;
-                ;;
             2)
                 # Display current DNS settings
                 echo -e "\033[1;34mCurrent DNS settings:\033[0m"
