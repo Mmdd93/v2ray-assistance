@@ -3993,8 +3993,8 @@ main_menu() {
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/Reverse-gost.sh -o Reverse-gost.sh
             sudo bash Reverse-gost.sh ;;
 	56) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/eylandoo/openvpn_webpanel_manager/main/wg-tunnel-manager.sh -o Reverse-wg-tunnel-manager.sh
-            sudo bash Reverse-wg-tunnel-manager.sh ;;
+            curl -Ls https://raw.githubusercontent.com/eylandoo/openvpn_webpanel_manager/main/wg-tunnel-manager.sh -o wg-tunnel-manager.sh
+            sudo bash wg-tunnel-manager.sh ;;
 	57) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/eylandoo/openvpn_webpanel_manager/main/vpn_manager.sh -o openvpn_webpanel_manager.sh
             sudo bash openvpn_webpanel_manager.sh ;;
