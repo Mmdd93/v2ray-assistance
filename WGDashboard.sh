@@ -527,7 +527,7 @@ function main_menu() {
         # Validate input with 1-12 now
         while true; do
             read -rp $'\nChoose an option: ' choice
-            if [[ "$choice" =~ ^([1-9]|1[0-3])$ ]]; then
+            if [[ "$choice" =~ ^([0-9]|1[0-3])$ ]]; then
                 break
             else
                 echo -e "${RED}[!] Invalid input, please enter a number between 1 and 12.${RESET}"
