@@ -20,6 +20,32 @@ print_header() {
   echo -e "========================================${RESET}"
 }
 
+check_docker() {
+  if ! command -v docker &> /dev/null; then
+    echo -e "${YELLOW}Docker not found. Installing Docker...${RESET}"
+    curl -fsSL https://get.docker.com | sh
+    systemctl start docker
+    systemctl enable docker
+    echo -e "${GREEN}Docker installed successfully.${RESET}"
+  else
+    echo -e "${GREEN}Docker is already installed.${RESET}"
+  fi
+}
+
+check_docker_compose() {
+  if ! docker compose version &> /dev/null; then
+    echo -e "${YELLOW}Docker Compose v2 not found. Attempting installation...${RESET}"
+    DOCKER_COMPOSE_PLUGIN_DIR="/usr/libexec/docker/cli-plugins"
+    mkdir -p "$DOCKER_COMPOSE_PLUGIN_DIR"
+    curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+      -o "$DOCKER_COMPOSE_PLUGIN_DIR/docker-compose"
+    chmod +x "$DOCKER_COMPOSE_PLUGIN_DIR/docker-compose"
+    echo -e "${GREEN}Docker Compose plugin installed successfully.${RESET}"
+  else
+    echo -e "${GREEN}Docker Compose is already installed.${RESET}"
+  fi
+}
+
 select_port() {
   echo -ne "${YELLOW}Enter the port for Uptime Kuma [default: ${UK_PORT}]: ${RESET}"
   read input_port
@@ -43,6 +69,8 @@ EOF
 
 install_kuma() {
   print_header
+  check_docker
+  check_docker_compose
   if [ -f "$COMPOSE_FILE" ]; then
     echo -e "${YELLOW}Uptime Kuma is already installed.${RESET}"
     return
