@@ -133,7 +133,7 @@ EOF
     sudo systemctl enable wg-dashboard.service
     sudo systemctl start wg-dashboard.service
 
-    echo -e "${GREEN}[✔] WGDashboard service enabled and started.${RESET}"
+    echo -e "${GREEN}[?] WGDashboard service enabled and started.${RESET}"
 }
 
 function disable_service() {
@@ -143,7 +143,7 @@ function disable_service() {
         sudo systemctl disable wg-dashboard.service
         sudo rm -f "$SERVICE_PATH"
         sudo systemctl daemon-reload
-        echo -e "${GREEN}[✔] Service removed.${RESET}"
+        echo -e "${GREEN}[?] Service removed.${RESET}"
     else
         echo -e "${YELLOW}[!] No systemd service found.${RESET}"
     fi
@@ -158,7 +158,7 @@ function uninstall_wgdashboard() {
     echo -e "${RED}[-] Uninstalling WGDashboard...${RESET}"
     disable_service
     sudo rm -rf "$HOME/WGDashboard"
-    echo -e "${GREEN}[✔] WGDashboard has been completely removed.${RESET}"
+    echo -e "${GREEN}[?] WGDashboard has been completely removed.${RESET}"
 }
 function setup_ssl_https() {
     echo -e "\n${CYAN}[*] Starting SSL setup and NGINX reverse proxy configuration...${RESET}"
@@ -169,7 +169,7 @@ function setup_ssl_https() {
 
     echo -e "${BLUE}[2/7] Gathering configuration input...${RESET}"
     read -rp "Enter your domain (e.g. panel.example.com): " DOMAIN
-    [[ -z "$DOMAIN" ]] && { echo -e "${RED}[✘] Domain cannot be empty! Exiting.${RESET}"; return 1; }
+    [[ -z "$DOMAIN" ]] && { echo -e "${RED}[?] Domain cannot be empty! Exiting.${RESET}"; return 1; }
 
     # Default values
     DEFAULT_NGINX_PORT=443
@@ -224,20 +224,20 @@ EOF
 
     echo -e "${BLUE}[5/7] Requesting SSL certificate via Certbot...${RESET}"
     read -rp "Enter your email for Let's Encrypt: " EMAIL
-    [[ -z "$EMAIL" ]] && { echo -e "${RED}[✘] Email cannot be empty! Exiting.${RESET}"; return 1; }
+    [[ -z "$EMAIL" ]] && { echo -e "${RED}[?] Email cannot be empty! Exiting.${RESET}"; return 1; }
 
     sudo certbot --nginx -d "$DOMAIN" --agree-tos -m "$EMAIL" --redirect || {
-        echo -e "${RED}[✘] SSL certificate request failed. Check domain and DNS.${RESET}"
+        echo -e "${RED}[?] SSL certificate request failed. Check domain and DNS.${RESET}"
         return 1
     }
 
     echo -e "${BLUE}[6/7] Restarting NGINX to apply SSL...${RESET}"
     sudo systemctl restart nginx
 
-    echo -e "\n${GREEN}[✔] SSL setup completed successfully!${RESET}"
-    echo -e "${YELLOW}[🔒] Access your panel securely at: https://${DOMAIN}${RESET}"
-    echo -e "${YELLOW}↪ NGINX listens on: $NGINX_PORT${RESET}"
-    echo -e "${YELLOW}↪ WGDashboard runs on: http://127.0.0.1:$WG_PORT${RESET}"
+    echo -e "\n${GREEN}[?] SSL setup completed successfully!${RESET}"
+    echo -e "${YELLOW}[??] Access your panel securely at: https://${DOMAIN}${RESET}"
+    echo -e "${YELLOW}? NGINX listens on: $NGINX_PORT${RESET}"
+    echo -e "${YELLOW}? WGDashboard runs on: http://127.0.0.1:$WG_PORT${RESET}"
 }
 
 
@@ -376,7 +376,11 @@ function clear_postup_postdown() {
 manage_wireguard_interfaces() {
     WG_DIR="/etc/wireguard"
 
-
+    RED='\033[1;31m'
+    GREEN='\033[1;32m'
+    YELLOW='\033[1;33m'
+    CYAN='\033[1;36m'
+    RESET='\033[0m'
 
     while true; do
         shopt -s nullglob
