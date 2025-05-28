@@ -734,192 +734,6 @@ setup_cache_and_reboot() {
 
 
 
-
-
-
-
-
-change_dns() {
-    while true; do
-        echo -e "\033[1;36m============================================\033[0m"
-        echo -e "\033[1;33m           Change DNS Configuration\033[0m"
-        echo -e "\033[1;36m============================================\033[0m"
-
-        echo -e "\033[1;33mChoose the type of DNS change:\033[0m"
-        echo -e "\033[1;35m1.\033[0m Change DNS"
-        echo -e "\033[1;32m2.\033[0m Restore Default DNS"
-        echo -e "\033[1;32m3.\033[0m Test current DNS"
-        echo -e "\033[1;32m4.\033[0m Edit /etc/systemd/resolved.conf using nano"
-        echo -e "\033[1;32m5.\033[0m Edit /etc/resolv.conf using nano"
-        echo -e "\033[1;32m6.\033[0m Restart resolv.conf"
-        echo -e "\033[1;32m0.\033[0m Return to the main menu"
-
-        read -p "Enter your choice: " dns_choice
-
-        # DNS List with descriptions
-        declare -A dns_servers_list=(  
-            [1]="Cisco:208.67.222.222:208.67.222.220"
-            [2]="Verisign:64.6.64.6:64.6.65.6"
-            [3]="Electro:78.157.42.100:78.157.42.101"
-            [4]="Shecan:178.22.122.100:185.51.200.2"
-            [5]="Radar:10.202.10.10:10.202.10.11"
-            [6]="Cloudflare:1.1.1.1:1.0.0.1"
-            [7]="Yandex:77.88.8.8:77.88.8.1"
-            [8]="Google:8.8.8.8:8.8.4.4"
-            [9]="403:10.202.10.102:10.202.10.202"
-            [10]="Shelter:91.92.255.160:91.92.255.24"
-        )
-
-        case "$dns_choice" in
-            1)
-                echo -e "\033[1;36m============================================\033[0m"
-                echo -e "\033[1;33mChoose the DNS provider from the list or set custom DNS:\033[0m"
-                echo -e "\033[1;36m============================================\033[0m"
-                colors=(31 32 33)
-
-                for index in "${!dns_servers_list[@]}"; do
-                    IFS=":" read -r dns_name dns_primary dns_secondary <<< "${dns_servers_list[$index]}"
-                    color=${colors[index % ${#colors[@]}]}  # Cycle through colors
-                    echo -e "\033[${color}m$index. $dns_name: Primary: [$dns_primary] Secondary: [$dns_secondary]\033[0m"
-                    
-                    echo -e "\033[1;36m---------------------------------------------\033[0m"
-                done
-                
-                echo -e "\033[1;31m11. Set Custom DNS\033[0m"
-                echo -e "\033[1;36m---------------------------------------------\033[0m"
-
-                read -p "Enter your choice: " dns_selection
-
-                if [[ $dns_selection == 11 ]]; then
-                    echo -e "\033[1;33mEnter custom primary DNS:\033[0m"
-                    read -p "Enter your choice: " custom_primary_dns
-                    echo -e "\033[1;33mEnter custom secondary DNS (optional):\033[0m"
-                    read -p "Enter your choice: " custom_secondary_dns
-                    dns_servers=("$custom_primary_dns" "$custom_secondary_dns")
-                else
-                    # Validate the input in a loop
-                    while true; do
-                        if ! [[ "$dns_selection" =~ ^[0-9]+$ ]] || [ "$dns_selection" -gt "${#dns_servers_list[@]}" ]; then
-                            echo -e "\033[1;31mInvalid DNS selection. Please try again.\033[0m"
-                            read -p "Enter your choice: " dns_selection
-                        else
-                            IFS=":" read -r dns_name dns_primary dns_secondary <<< "${dns_servers_list[$dns_selection]}"
-                            dns_servers=("$dns_primary" "$dns_secondary")
-                            break  # Valid input, exit the loop
-                        fi
-                    done
-                fi
-
-                echo -e "\033[1;33mSetting up permanent DNS...\033[0m"
-
-                # Update DNS settings in /etc/systemd/resolved.conf
-                {
-                    echo "[Resolve]"
-                    for dns in "${dns_servers[@]}"; do
-                        [ -n "$dns" ] && echo "DNS=$dns"
-                    done
-                    echo "DNSStubListener=no"
-                } | sudo tee /etc/systemd/resolved.conf > /dev/null
-
-                
-
-                # Create symbolic link for /etc/resolv.conf
-                sudo ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
-                echo -e "\033[1;32mSymbolic link created: /etc/resolv.conf -> /run/systemd/resolve/resolv.conf\033[0m"
-                
-                # Restart systemd-resolved to apply changes
-                sudo systemctl restart systemd-resolved.service
-
-                # Create the DNS configuration script
-                dns_script_path="/root/configure-dns.sh"
-                echo -e "\033[1;33mCreating DNS configuration script...\033[0m"
-
-                {
-                    echo "#!/bin/bash"
-                    echo ""
-                    echo "# Define the DNS servers to be used"
-                    echo "dns_servers=(\"${dns_servers[0]}\" \"${dns_servers[1]}\")"
-                    echo ""
-                    echo "# Update DNS settings in /etc/systemd/resolved.conf"
-                    echo "{"
-                    echo "    echo \"[Resolve]\""
-                    echo "    # Loop through each DNS server and add it to the resolved.conf"
-                    echo "    for dns in \"\${dns_servers[@]}\"; do"
-                    echo "        [ -n \"\$dns\" ] && echo \"DNS=\$dns\""
-                    echo "    done"
-                    echo "    # Disable the DNS stub listener to avoid conflicts with /etc/resolv.conf"
-                    echo "    echo \"DNSStubListener=no\""
-                    echo "} | sudo tee /etc/systemd/resolved.conf > /dev/null"
-                    echo ""
-                    echo "# Create symbolic link for /etc/resolv.conf to use systemd-resolved DNS settings"
-                    echo "sudo ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf"
-                    echo "echo -e \"\033[1;32mSymbolic link created: /etc/resolv.conf -> /run/systemd/resolve/resolv.conf\033[0m\""
-                    echo ""
-                    echo "# Restart systemd-resolved to apply the new DNS configuration"
-                    echo "sudo systemctl restart systemd-resolved.service"
-                    echo "echo -e \"\033[1;32mDNS settings updated and systemd-resolved service restarted.\033[0m\""
-                } > "$dns_script_path"
-
-                chmod +x "$dns_script_path"
-                echo -e "\033[1;32mScript created at $dns_script_path\033[0m"
-
-                # Check if the cron job already exists and overwrite if necessary
-cron_job="@reboot $dns_script_path"
-if crontab -l 2>/dev/null | grep -qF "$cron_job"; then
-    echo -e "\033[1;33mCron job already exists. Overwriting...\033[0m"
-    (crontab -l 2>/dev/null | grep -vF "$cron_job"; echo "$cron_job") | crontab -
-else
-    echo -e "\033[1;33mAdding cron job for DNS configuration script...\033[0m"
-    (crontab -l 2>/dev/null; echo "$cron_job") | crontab -
-fi
-
-                echo -e "\033[1;32mCron job added to run DNS configuration script at reboot.\033[0m"
-                ;;
-
-            2)
-                echo -e "\033[1;33mRestoring DNS settings to system default...\033[0m"
-                sudo systemctl enable --now systemd-resolved.service
-                sudo ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
-                sudo systemctl restart systemd-resolved.service
-                echo -e "\033[1;32mDNS restored to default settings.\033[0m"
-                ;;
-
-            3)
-                echo -e "\033[1;33mDisplaying /etc/resolv.conf content:\033[0m"
-                cat /etc/resolv.conf
-                sudo systemctl status systemd-resolved.service --no-pager
-                echo -e "\n\033[1;33mTesting DNS resolution by pinging domains:\033[0m"
-                for domain in "google.com" "yahoo.com" "cloudflare.com"; do
-                    echo -e "\033[1;36mPinging $domain:\033[0m"
-                    ping -c 4 "$domain"
-                done
-                ;;
-
-            4)
-                sudo nano /etc/systemd/resolved.conf
-                ;;
-
-            5)
-                sudo nano /etc/resolv.conf
-                ;;
-
-            6)
-                sudo systemctl restart systemd-resolved.service
-                echo -e "\033[1;32mresolv.conf restarted.\033[0m"
-                ;;
-
-            0)
-                break  # Return to the main menu
-                ;;
-
-            *)
-                echo -e "\033[1;31mInvalid choice. Please try again.\033[0m"
-                ;;
-        esac
-    done
-}
-
-
 xui() {
     echo -e "\033[1;36m============================================\033[0m"
     echo -e "\033[1;33m         Select panel\033[0m"
@@ -1883,159 +1697,6 @@ panels_restart_cron() {
     done
 }
 
-
-
-
-setup_docker() {
-    while true; do
-        echo -e "\033[1;34mSelect an option:\033[0m"
-	echo "1. Auto-install (irDocker script)"
-        echo "2. Set DNS to Electro or Shecan, etc..."
-	echo "3. Change Update sources to Iran"
-        echo "4. Auto-install step-by-step (official Docker)"
-        echo "0. Main menu"
-
-        read -p "Enter your choice: " choice
-        
-        case $choice in
-            1)
-	    echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/AlefbeMedia/irDocker/main/install.sh -o irDocker.sh
-            sudo bash irDocker.sh ;;
-            2)
-                # Display current DNS settings
-                echo -e "\033[1;34mCurrent DNS settings:\033[0m"
-                cat /etc/resolv.conf | grep "nameserver"
-
-                # Display DNS recommendations for 3 seconds
-                echo -e "\033[1;33m1: It is recommended to use Electro or Shecan DNS for better access.\033[0m"
-                echo -e "\033[1;33m2: Reboot your server after changing the DNS.\033[0m"
-                echo -e "\033[1;33m3: After Reboot change the DNS again and run test.\033[0m"
-                # Ask if they want to change DNS
-                read -p "Do you want to change your DNS? (yes/no): " change_dns_answer
-                if [[ "$change_dns_answer" == "yes" ]]; then
-                    change_dns  # Call the function to change DNS
-                else
-                    echo -e "\033[1;34mNo DNS change requested.\033[0m"
-                fi
-                ;;
-	3)
-                echo -e "\033[1;34mCurrent sources.list:\033[0m"
-if grep -q '^deb ' /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null; then
-    cat /etc/apt/sources.list 2>/dev/null
-    if [ -d /etc/apt/sources.list.d/ ] && ls /etc/apt/sources.list.d/*.list &>/dev/null; then
-        cat /etc/apt/sources.list.d/*.list 2>/dev/null
-    fi
-    echo -e "\033[1;32m✔ Sources list found.\033[0m"
-else
-    echo -e "\033[1;31m✘ No sources found!\033[0m"
-fi
-
-# Ask if they want to change update sources
-read -p "Do you want to change update sources to Iran? (yes/no): " change_sources_answer
-if [[ "$change_sources_answer" == "yes" ]]; then
-    change_sources_list  # Call the function to change sources
-else
-    echo -e "\033[1;34mNo update sources change requested.\033[0m"
-fi
-
-                ;;
-
-            4)
-                echo -e "\033[1;34mStarting Docker setup...\033[0m"
-
-                # Step 1: Check if Docker is already installed
-                if command -v docker &> /dev/null; then
-                    echo -e "\033[1;33m update Docker? (yes/no):\033[0m"
-                    read -p "" docker_update_response
-                    if [[ "$docker_update_response" != "yes" ]]; then
-                        echo -e "\033[1;34mDocker setup aborted.\033[0m"
-                        continue
-                    fi
-                fi
-
-                # Docker installation process
-                {
-                    # Update the apt package index
-                    echo -e "\033[1;32m1. Updating apt package index...\033[0m"
-                    sudo apt-get update
-
-                    # Install required packages
-                    echo -e "\033[1;32m2. Installing ca-certificates and curl...\033[0m"
-                    sudo apt-get install -y ca-certificates curl
-
-                    # Create keyrings directory
-                    echo -e "\033[1;32m3. Creating /etc/apt/keyrings directory...\033[0m"
-                    sudo install -m 0755 -d /etc/apt/keyrings
-
-                    # Download Docker's GPG key
-                    echo -e "\033[1;32m4. Downloading Docker's GPG key...\033[0m"
-                    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-
-                    # Set appropriate permissions on the GPG key
-                    echo -e "\033[1;32m5. Setting permissions for the GPG key...\033[0m"
-                    sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-                    # Add Docker's repository to Apt sources
-                    echo -e "\033[1;32m6. Adding Docker repository to apt sources...\033[0m"
-                    echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-
-                    # Update apt package index again
-                    echo -e "\033[1;32m7. Updating apt package index...\033[0m"
-                    sudo apt-get update
-
-                    # Install Docker and related components
-                    echo -e "\033[1;32m8. Installing Docker CE, CLI, and related plugins...\033[0m"
-                    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-                    # Verify Docker installation by running the hello-world image
-                    echo -e "\033[1;32m9. Verifying Docker installation by running hello-world...\033[0m"
-                    sudo docker run hello-world
-                } || {
-                    echo -e "\033[1;31mAn error occurred during the installation. Please check the logs.\033[0m"
-                    continue
-                }
-
-                # Check if Docker was installed successfully
-                if command -v docker &> /dev/null; then
-                    echo -e "\033[1;32mDocker setup and verification complete.\033[0m"
-                else
-                    echo -e "\033[1;31mDocker installation failed. Please check the logs and try again.\033[0m"
-                fi
-
-                # Check for Docker Compose
-                if ! command -v docker-compose &> /dev/null; then
-                    echo -e "\033[1;33mDocker Compose is not installed. Do you want to install it? (yes/no):\033[0m"
-                    read -p "" compose_install_response
-                    if [[ "$compose_install_response" == "yes" ]]; then
-                        echo -e "\033[1;32mInstalling Docker Compose...\033[0m"
-                        {
-                            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-                            sudo chmod +x /usr/local/bin/docker-compose
-                            echo -e "\033[1;32mDocker Compose installed successfully.\033[0m"
-                        } || {
-                            echo -e "\033[1;31mAn error occurred during Docker Compose installation. Please check the logs.\033[0m"
-                        }
-                    else
-                        echo -e "\033[1;34mDocker Compose installation skipped.\033[0m"
-                    fi
-                else
-                    echo -e "\033[1;32mDocker Compose is already installed.\033[0m"
-                fi
-                ;;
-
-            0) main_menu ;;
-
-            *)
-                echo -e "\033[1;31mInvalid choice. Please try again.\033[0m"
-                ;;
-        esac
-    done
-}
 
 
 
@@ -3876,6 +3537,7 @@ main_menu() {
     echo -e "\033[1;32m57.\033[0m OPENVPN Webpanel (Multi node location)"
     echo -e "\033[1;32m41.\033[0m Panel Backup (Marzban,X-UI,Hiddify,Marzneshin)+transfer panel data"
     echo -e "\033[1;32m42.\033[0m Auto panel restart"
+    echo -e "\033[1;32m59.\033[0m Uptime Kuma"
     echo -e "\033[1;31m+-----------------------------------------+\033[0m"
     echo -e "\033[1;31m0.\033[0m Exit"
 
@@ -3888,14 +3550,18 @@ main_menu() {
         3) change_sources_list ;;
         4) display_system_info ;;
         5) docker_install_menu ;;
-        6) setup_docker ;;
+        6) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/Docker.sh -o Docker.sh
+            sudo bash Docker.sh ;;
         7) isp_blocker ;;
         8) Optimizer ;;
         9) run_system_benchmark ;;
         10) initial_menu ;;
         11) setup_cache_and_reboot ;;
         12) manage_ping ;;
-        13) change_dns ;;
+        13) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/ChangeDNS.sh -o ChangeDNS.sh
+            sudo bash ChangeDNS.sh ;;
         14) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/snidust.sh -o snidust.sh
             sudo bash snidust.sh ;;
@@ -4001,6 +3667,9 @@ main_menu() {
 	58) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/ParsaKSH/TAQ-BOSTAN/main/script.sh -o hysteria_tunnel.sh
             sudo bash hysteria_tunnel.sh ;;
+59) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/UptimeKuma.sh -o UptimeKuma.sh
+            sudo bash UptimeKuma.sh ;;   
         0) echo "Exiting...";
 	exit 0
  ;;
