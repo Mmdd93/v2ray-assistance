@@ -373,6 +373,129 @@ function clear_postup_postdown() {
     done
 }
 
+manage_wireguard_interfaces() {
+    WG_DIR="/etc/wireguard"
+
+
+
+    while true; do
+        shopt -s nullglob
+        conf_files=("$WG_DIR"/*.conf)
+        shopt -u nullglob
+
+        if [ ${#conf_files[@]} -eq 0 ]; then
+            echo -e "${RED}No WireGuard config files found in $WG_DIR.${RESET}"
+            return 1
+        fi
+
+        echo -e "\n${CYAN}Available WireGuard config files:${RESET}"
+        for i in "${!conf_files[@]}"; do
+            iface=$(basename "${conf_files[$i]}" .conf)
+            echo -e "${YELLOW}$((i+1)).${RESET} $iface"
+        done
+        echo -e "${YELLOW}0)${RESET} Return to main menu"
+
+        read -rp "Select interface number to manage (or 0 to return): " choice
+
+        if [[ -z "$choice" || "$choice" == "0" ]]; then
+            echo -e "${GREEN}Returning to main menu.${RESET}"
+            break
+        fi
+
+        if ! [[ "$choice" =~ ^[0-9]+$ ]] || (( choice < 1 || choice > ${#conf_files[@]} )); then
+            echo -e "${RED}Invalid choice. Returning to main menu.${RESET}"
+            break
+        fi
+
+        iface=$(basename "${conf_files[$((choice-1))]}" .conf)
+
+        while true; do
+            echo -e "\n${CYAN}Selected interface:${RESET} ${GREEN}$iface${RESET}"
+            echo -e "${CYAN}Actions:${RESET}"
+            echo -e "${YELLOW}1)${RESET} Start"
+            echo -e "${YELLOW}2)${RESET} Stop"
+            echo -e "${YELLOW}3)${RESET} Restart"
+            echo -e "${YELLOW}4)${RESET} Status"
+            echo -e "${YELLOW}5)${RESET} Enable (systemd service)"
+            echo -e "${YELLOW}6)${RESET} Disable (systemd service)"
+            echo -e "${YELLOW}7)${RESET} Remove (stop, disable, delete config)"
+            echo -e "${YELLOW}8)${RESET} Edit configuration file"
+            echo -e "${YELLOW}0)${RESET} Return to interface list"
+
+            read -rp "Choose action number: " action
+
+            if [[ -z "$action" || "$action" == "0" ]]; then
+                echo -e "${GREEN}Returning to interface list.${RESET}"
+                break
+            fi
+
+            case $action in
+                1)
+                    if sudo wg-quick up "$iface"; then
+                        echo -e "${GREEN}Interface $iface started successfully.${RESET}"
+                    else
+                        echo -e "${RED}Failed to start interface $iface.${RESET}"
+                    fi
+                    ;;
+                2)
+                    if sudo wg-quick down "$iface"; then
+                        echo -e "${GREEN}Interface $iface stopped successfully.${RESET}"
+                    else
+                        echo -e "${RED}Failed to stop interface $iface.${RESET}"
+                    fi
+                    ;;
+                3)
+                    if sudo wg-quick down "$iface" && sudo wg-quick up "$iface"; then
+                        echo -e "${GREEN}Interface $iface restarted successfully.${RESET}"
+                    else
+                        echo -e "${RED}Failed to restart interface $iface.${RESET}"
+                    fi
+                    ;;
+                4)
+                    echo -e "${CYAN}Status for wg-quick@$iface service:${RESET}"
+                    sudo systemctl status wg-quick@"$iface"
+                    ;;
+                5)
+                    if sudo systemctl enable wg-quick@"$iface"; then
+                        echo -e "${GREEN}Enabled wg-quick@$iface service.${RESET}"
+                    else
+                        echo -e "${RED}Failed to enable wg-quick@$iface service.${RESET}"
+                    fi
+                    ;;
+                6)
+                    if sudo systemctl disable wg-quick@"$iface"; then
+                        echo -e "${GREEN}Disabled wg-quick@$iface service.${RESET}"
+                    else
+                        echo -e "${RED}Failed to disable wg-quick@$iface service.${RESET}"
+                    fi
+                    ;;
+                7)
+                    read -rp "Are you sure you want to ${RED}REMOVE${RESET} interface $iface? This will stop, disable, and delete the config. (y/n): " confirm
+                    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+                        sudo wg-quick down "$iface" 2>/dev/null
+                        sudo systemctl disable wg-quick@"$iface" 2>/dev/null
+                        if sudo rm -f "$WG_DIR/$iface.conf"; then
+                            echo -e "${GREEN}Interface $iface removed successfully.${RESET}"
+                        else
+                            echo -e "${RED}Failed to remove configuration file for $iface.${RESET}"
+                        fi
+                        break
+                    else
+                        echo -e "${YELLOW}Removal cancelled.${RESET}"
+                    fi
+                    ;;
+                8)
+                    echo -e "${CYAN}Opening $WG_DIR/$iface.conf in nano editor...${RESET}"
+                    sudo nano "$WG_DIR/$iface.conf"
+                    ;;
+                *)
+                    echo -e "${RED}Invalid action. Please select a valid option.${RESET}"
+                    ;;
+            esac
+        done
+    done
+}
+
 
 function main_menu() {
     clear
@@ -393,12 +516,13 @@ function main_menu() {
         echo -e "${YELLOW}10)${RESET} Enable SSL / HTTPS Setup"
         echo -e "${YELLOW}11)${RESET} Set PostUp and PostDown in WireGuard Configs"
         echo -e "${YELLOW}12)${RESET} Remove PostUp and PostDown in WireGuard Configs"
+        echo -e "${YELLOW}13)${RESET} Manage WireGuard Configs"
         echo -e "${YELLOW}0)${RESET} Exit"
 
         # Validate input with 1-12 now
         while true; do
             read -rp $'\nChoose an option: ' choice
-            if [[ "$choice" =~ ^([1-9]|1[0-2])$ ]]; then
+            if [[ "$choice" =~ ^([1-9]|1[0-3])$ ]]; then
                 break
             else
                 echo -e "${RED}[!] Invalid input, please enter a number between 1 and 12.${RESET}"
@@ -419,6 +543,7 @@ function main_menu() {
             0) echo -e "\n${CYAN}Goodbye! Thanks for using WGDashboard manager.${RESET}\n"; exit 0 ;;
             11) set_postup_postdown ;;
             12) clear_postup_postdown ;;
+            13) manage_wireguard_interfaces ;;
         esac
 
         echo -e "\n${GREEN}Press Enter to return to the menu...${RESET}"
