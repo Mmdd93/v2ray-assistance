@@ -50,9 +50,13 @@ docker_install_menu() {
         echo "2) Install Docker Compose"
 	echo "3) install Docker step-by-step"
 	echo "4) Uninstall Docker"
+ echo "0) Exit"
         read -p "Choose an option: " option
         
         case $option in
+0)
+                break  # Return to the main menu
+                ;;
             1)
                 install_docker
 		read -p "Press Enter to continue..."
