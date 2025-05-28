@@ -3957,7 +3957,7 @@ main_menu() {
             sudo bash marzban-node-v2.sh ;;
         41) backup_menu ;;
         42) panels_restart_cron ;;
-        43) setup_docker ;;
+        
 	44) echo "Running gost..."
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/gost.sh -o gost.sh
             sudo bash gost.sh ;;
