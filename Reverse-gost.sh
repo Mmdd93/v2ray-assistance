@@ -261,7 +261,7 @@ configure_relay() {
             # Construct multi-port -L parameters
             GOST_OPTIONS=""
             for lport in "${lport_array[@]}"; do
-                GOST_OPTIONS+="-L ${LISTEN_TRANSMISSION}://:${lport}/127.0.0.1:${lport}"
+                GOST_OPTIONS+=" -L ${LISTEN_TRANSMISSION}://:${lport}/127.0.0.1:${lport}"
             done
             
 
