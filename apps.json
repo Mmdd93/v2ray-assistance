@@ -40,7 +40,7 @@
     "name": "HAPP",
     "urlScheme": "happ://routing/onadd/",
     "image": "https://play-lh.googleusercontent.com/a3dR56g1viLgbtdBBu_NSEdDuWkqJFIn5XFFoc7lKXApkf-av4HI7fTn2NhBjxVmPFHf",
-    "link": "happ://routing/onadd/?url={url}&name=SUBnew",
+    "link": "happ://routing/onadd/url={url}&name=SUBnew",
     "os": ["Windows", "iOS", "Android"],
     "downloadLinks": {
       "iOS": "https://apps.apple.com/us/app/happ-proxy-utility/id6504287215",
