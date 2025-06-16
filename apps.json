@@ -80,7 +80,7 @@
     "link": "v2rayng://install-config?url={url}",
     "os": ["Android"],
     "downloadLinks": {
-      "Android": "https://play.google.com/store/apps/details?id=com.v2ray.ang"
+      "Android": "https://dev-ir.github.io/v2rayNG-Auto-Downloader/"
     },
     "ShowInMenu": true
   },
