@@ -115,7 +115,7 @@
     "link": "v2rayng://install-config",
     "os": ["Windows", "Linux"],
     "downloadLinks": {
-      "Windows": "https://github.com/2dust/v2rayN/releases/download/7.10.4/v2rayN-windows-64-desktop.zip",
+      "Windows": "https://github.com/2dust/v2rayN/releases/download/7.12.5/v2rayN-windows-64-desktop.zip",
       "Linux": "https://github.com/2dust/v2rayN/releases"
     },
     "ShowInMenu": false
