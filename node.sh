@@ -2794,22 +2794,34 @@ manage_ipv6() {
             1)
                 # Enable IPv6 (Permanent)
                 echo -e "\033[1;34mEnabling IPv6 permanently...\033[0m"
-                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0 && \
-                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0 && \
-                echo "net.ipv6.conf.all.disable_ipv6 = 0" | sudo tee -a /etc/sysctl.conf && \
-                echo "net.ipv6.conf.default.disable_ipv6 = 0" | sudo tee -a /etc/sysctl.conf && \
-                echo -e "\033[1;32mIPv6 has been enabled permanently.\033[0m" || \
-                echo -e "\033[1;31mFailed to enable IPv6.\033[0m"
+                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                # Remove existing entries to prevent duplicates
+                sudo sed -i '/net.ipv6.conf.all.disable_ipv6/d' /etc/sysctl.conf
+                sudo sed -i '/net.ipv6.conf.default.disable_ipv6/d' /etc/sysctl.conf
+
+                # Append new rules
+                echo "net.ipv6.conf.all.disable_ipv6 = 0" | sudo tee -a /etc/sysctl.conf > /dev/null
+                echo "net.ipv6.conf.default.disable_ipv6 = 0" | sudo tee -a /etc/sysctl.conf > /dev/null
+
+                echo -e "\033[1;32mIPv6 has been enabled permanently.\033[0m"
                 ;;
             2)
                 # Disable IPv6 (Permanent)
                 echo -e "\033[1;34mDisabling IPv6 permanently...\033[0m"
-                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1 && \
-                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1 && \
-                echo "net.ipv6.conf.all.disable_ipv6 = 1" | sudo tee -a /etc/sysctl.conf && \
-                echo "net.ipv6.conf.default.disable_ipv6 = 1" | sudo tee -a /etc/sysctl.conf && \
-                echo -e "\033[1;32mIPv6 has been disabled permanently.\033[0m" || \
-                echo -e "\033[1;31mFailed to disable IPv6.\033[0m"
+                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+                # Remove existing entries to prevent duplicates
+                sudo sed -i '/net.ipv6.conf.all.disable_ipv6/d' /etc/sysctl.conf
+                sudo sed -i '/net.ipv6.conf.default.disable_ipv6/d' /etc/sysctl.conf
+
+                # Append new rules
+                echo "net.ipv6.conf.all.disable_ipv6 = 1" | sudo tee -a /etc/sysctl.conf > /dev/null
+                echo "net.ipv6.conf.default.disable_ipv6 = 1" | sudo tee -a /etc/sysctl.conf > /dev/null
+
+                echo -e "\033[1;32mIPv6 has been disabled permanently.\033[0m"
                 ;;
             3)
                 # Apply changes
@@ -2821,10 +2833,9 @@ manage_ipv6() {
             4)
                 # Remove IPv6 rules from /etc/sysctl.conf
                 echo -e "\033[1;34mRemoving IPv6 rules from /etc/sysctl.conf...\033[0m"
-                sudo sed -i '/net.ipv6.conf.all.disable_ipv6/d' /etc/sysctl.conf && \
-                sudo sed -i '/net.ipv6.conf.default.disable_ipv6/d' /etc/sysctl.conf && \
-                echo -e "\033[1;32mIPv6 rules have been removed from /etc/sysctl.conf.\033[0m" || \
-                echo -e "\033[1;31mFailed to remove IPv6 rules.\033[0m"
+                sudo sed -i '/net.ipv6.conf.all.disable_ipv6/d' /etc/sysctl.conf
+                sudo sed -i '/net.ipv6.conf.default.disable_ipv6/d' /etc/sysctl.conf
+                echo -e "\033[1;32mIPv6 rules have been removed from /etc/sysctl.conf.\033[0m"
                 ;;
             0)
                 echo -e "\033[1;33mReturning to the main menu...\033[0m"
@@ -2836,6 +2847,7 @@ manage_ipv6() {
         esac
     done
 }
+
 # Function to check and disable swap files
 check_and_disable_swap() {
     # Check if any swap is currently enabled
