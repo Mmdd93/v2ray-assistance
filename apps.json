@@ -20,6 +20,7 @@
       { "iox": "tg://resolve?domain=Mr_gpt4" },
       { "ME": "tg://resolve?domain=SupHellov2Ray" },
       { "senator": "tg://resolve?domain=senator_ms" },
+      { "hesam": "tg://resolve?domain=x6_ir" },
       { "default": "tg://resolve?domain=tlgrmv2" }
     ],
     "downloadLinks": {
