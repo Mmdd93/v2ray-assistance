@@ -36,6 +36,19 @@
     "ShowInMenu": true
   },
   {
+    "name": "HAPP",
+    "urlScheme": "HAPP://install-sub",
+    "image": "https://play-lh.googleusercontent.com/a3dR56g1viLgbtdBBu_NSEdDuWkqJFIn5XFFoc7lKXApkf-av4HI7fTn2NhBjxVmPFHf",
+    "link": "HAPP://install-sub?url={url}&name=SUBnew",
+    "os": ["Windows", "iOS", "Android"],
+    "downloadLinks": {
+      "iOS": "https://apps.apple.com/us/app/happ-proxy-utility/id6504287215",
+	  "Windows": "https://github.com/Happ-proxy/happ-desktop/releases/",
+      "Android": "https://play.google.com/store/apps/details?id=com.happproxy"
+    },
+    "ShowInMenu": false
+  },
+  {
     "name": "Hiddify",
     "urlScheme": "hiddify://import/",
     "image": "https://play-lh.googleusercontent.com/Dm_6ugf7Wwib_A3AFFdtkktufYGGOamhb072Ii46zYyb__qZHSocnJGErEUWxp7UWaGG",
