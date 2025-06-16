@@ -47,7 +47,7 @@
 	  "Windows": "https://github.com/Happ-proxy/happ-desktop/releases/",
       "Android": "https://play.google.com/store/apps/details?id=com.happproxy"
     },
-    "ShowInMenu": false
+    "ShowInMenu": true
   },
   {
     "name": "Hiddify",
