@@ -160,39 +160,46 @@ configure_relay() {
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
             esac
             
-            # Multiple inbound ports input
-            while true; do
-                read -p $'\033[1;33mEnter inbound (config) ports (comma-separated, e.g., 1234,5678): \033[0m' lport
-                
-                # Convert the comma-separated input into an array
-                IFS=',' read -ra lport_array <<< "$lport"
-                
-                # Flag to track if all ports are available
-                all_ports_available=true
-                
-                # Check each port to see if it is in use
-                for port in "${lport_array[@]}"; do
-                    # Validate if the port is numeric
-                    if ! [[ "$port" =~ ^[0-9]+$ ]]; then
-                        echo -e "\033[1;31mInvalid port: $port. Please enter valid numeric ports.\033[0m"
-                        all_ports_available=false
-                        break
-                    fi
-            
-                    # Check if the port is already in use
-                   # if is_port_used $port; then
-                     #   echo -e "\033[1;31mPort $port is already in use. Please enter a different port.\033[0m"
-                      #  all_ports_available=false
-                        break
-                   # fi
-                done
-                
-                # If all ports are available, break out of the loop
-                if $all_ports_available; then
-                    echo -e "\033[1;32mAll ports are available: ${lport_array[*]}\033[0m"
-                    break
-                fi
-            done
+          # Single inbound port input with validation
+while true; do
+    read -p $'\033[1;33mEnter inbound (config) port: \033[0m' config_port
+
+    # Validate that the port is numeric
+    if ! [[ "$config_port" =~ ^[0-9]+$ ]]; then
+        echo -e "\033[1;31mInvalid port: $config_port. Please enter a valid numeric port.\033[0m"
+        continue
+    fi
+
+    # Uncomment the following block to check if port is used
+    # if is_port_used "$config_port"; then
+    #     echo -e "\033[1;31mPort $config_port is already in use. Please choose another.\033[0m"
+    #     continue
+    # fi
+
+    break
+done
+
+# Prompt for listen port with validation
+while true; do
+    read -p $'\033[1;33mEnter listen port: \033[0m' listen_port
+
+    if ! [[ "$listen_port" =~ ^[0-9]+$ ]]; then
+        echo -e "\033[1;31mInvalid port: $listen_port. Please enter a valid numeric port.\033[0m"
+        continue
+    fi
+
+    # Uncomment the following block to check if port is used
+    # if is_port_used "$listen_port"; then
+    #     echo -e "\033[1;31mPort $listen_port is already in use. Please choose another.\033[0m"
+    #     continue
+    # fi
+
+    break
+done
+
+echo -e "\033[1;32mInbound (config) port set to: $config_port\033[0m"
+echo -e "\033[1;32mListen port set to: $listen_port\033[0m"
+
 
             read -p $'\033[1;33mEnter remote server IP (iran): \033[0m' relay_ip
             
@@ -261,7 +268,7 @@ configure_relay() {
             # Construct multi-port -L parameters
             GOST_OPTIONS=""
             for lport in "${lport_array[@]}"; do
-                GOST_OPTIONS+=" -L ${LISTEN_TRANSMISSION}://:${lport}/127.0.0.1:${lport}"
+                GOST_OPTIONS+=" -L ${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}"
             done
             
 
@@ -380,39 +387,46 @@ configure_socks5() {
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
             esac
             
-            # Multiple inbound ports input
-            while true; do
-                read -p $'\033[1;33mEnter inbound (config) ports (comma-separated, e.g., 1234,5678): \033[0m' lport
-                
-                # Convert the comma-separated input into an array
-                IFS=',' read -ra lport_array <<< "$lport"
-                
-                # Flag to track if all ports are available
-                all_ports_available=true
-                
-                # Check each port to see if it is in use
-                for port in "${lport_array[@]}"; do
-                    # Validate if the port is numeric
-                    if ! [[ "$port" =~ ^[0-9]+$ ]]; then
-                        echo -e "\033[1;31mInvalid port: $port. Please enter valid numeric ports.\033[0m"
-                        all_ports_available=false
-                        break
-                    fi
-            
-                    # Check if the port is already in use
-                   # if is_port_used $port; then
-                     #   echo -e "\033[1;31mPort $port is already in use. Please enter a different port.\033[0m"
-                      #  all_ports_available=false
-                        break
-                   # fi
-                done
-                
-                # If all ports are available, break out of the loop
-                if $all_ports_available; then
-                    echo -e "\033[1;32mAll ports are available: ${lport_array[*]}\033[0m"
-                    break
-                fi
-            done
+            # Single inbound port input with validation
+while true; do
+    read -p $'\033[1;33mEnter inbound (config) port: \033[0m' config_port
+
+    # Validate that the port is numeric
+    if ! [[ "$config_port" =~ ^[0-9]+$ ]]; then
+        echo -e "\033[1;31mInvalid port: $config_port. Please enter a valid numeric port.\033[0m"
+        continue
+    fi
+
+    # Uncomment the following block to check if port is used
+    # if is_port_used "$config_port"; then
+    #     echo -e "\033[1;31mPort $config_port is already in use. Please choose another.\033[0m"
+    #     continue
+    # fi
+
+    break
+done
+
+# Prompt for listen port with validation
+while true; do
+    read -p $'\033[1;33mEnter listen port: \033[0m' listen_port
+
+    if ! [[ "$listen_port" =~ ^[0-9]+$ ]]; then
+        echo -e "\033[1;31mInvalid port: $listen_port. Please enter a valid numeric port.\033[0m"
+        continue
+    fi
+
+    # Uncomment the following block to check if port is used
+    # if is_port_used "$listen_port"; then
+    #     echo -e "\033[1;31mPort $listen_port is already in use. Please choose another.\033[0m"
+    #     continue
+    # fi
+
+    break
+done
+
+echo -e "\033[1;32mInbound (config) port set to: $config_port\033[0m"
+echo -e "\033[1;32mListen port set to: $listen_port\033[0m"
+
 
             read -p $'\033[1;33mEnter remote server IP (iran): \033[0m' socks5_ip
             
@@ -482,7 +496,7 @@ configure_socks5() {
             # Construct multi-port -L parameters
             GOST_OPTIONS=""
             for lport in "${lport_array[@]}"; do
-                GOST_OPTIONS+=" -L ${LISTEN_TRANSMISSION}://:${lport}/127.0.0.1:${lport}"
+                GOST_OPTIONS+=" -L ${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}"
             done
             
 
