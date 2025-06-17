@@ -340,148 +340,113 @@ configure_socks5() {
             read -p "Press Enter to continue..."
             ;;
         
-        2)
-            # Client-side configuration
-            echo -e "\n\033[1;34mConfigure Server-Side (kharej)\033[0m"
-            # Select listen type (TCP/UDP)
-            echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
-            echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
-            echo -e "\033[1;32m2.\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
-            read -p $'\033[1;33mEnter listen transmission type: \033[0m' listen_choice
-            
-            case $listen_choice in
-                1) LISTEN_TRANSMISSION="rtcp" ;;
-                2) LISTEN_TRANSMISSION="rudp" ;;
-                *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
-            esac
-            
-            # Single inbound port input with validation
-while true; do
-    read -p $'\033[1;33mEnter inbound (config) port: \033[0m' config_port
+       2)
+    echo -e "\n\033[1;34mConfigure Server-Side (kharej)\033[0m"
 
-    # Validate that the port is numeric
-    if ! [[ "$config_port" =~ ^[0-9]+$ ]]; then
-        echo -e "\033[1;31mInvalid port: $config_port. Please enter a valid numeric port.\033[0m"
-        continue
-    fi
+    # Select Listen Type (TCP/UDP)
+    echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
+    echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
+    echo -e "\033[1;32m2.\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
+    read -p $'\033[1;33mEnter listen transmission type: \033[0m' listen_choice
 
-    # Uncomment the following block to check if port is used
-    # if is_port_used "$config_port"; then
-    #     echo -e "\033[1;31mPort $config_port is already in use. Please choose another.\033[0m"
-    #     continue
-    # fi
+    case $listen_choice in
+        1) LISTEN_TRANSMISSION="rtcp" ;;
+        2) LISTEN_TRANSMISSION="rudp" ;;
+        *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
+    esac
 
-    break
-done
+    # Inbound port input
+    while true; do
+        read -p $'\033[1;33mEnter inbound (config) port: \033[0m' config_port
+        if [[ "$config_port" =~ ^[0-9]+$ ]]; then
+            break
+        else
+            echo -e "\033[1;31mInvalid port. Please enter a numeric value.\033[0m"
+        fi
+    done
 
-# Prompt for listen port with validation
-while true; do
-    read -p $'\033[1;33mEnter listen port: \033[0m' listen_port
+    # Listen port input
+    while true; do
+        read -p $'\033[1;33mEnter listen port: \033[0m' listen_port
+        if [[ "$listen_port" =~ ^[0-9]+$ ]]; then
+            break
+        else
+            echo -e "\033[1;31mInvalid port. Please enter a numeric value.\033[0m"
+        fi
+    done
 
-    if ! [[ "$listen_port" =~ ^[0-9]+$ ]]; then
-        echo -e "\033[1;31mInvalid port: $listen_port. Please enter a valid numeric port.\033[0m"
-        continue
-    fi
+    echo -e "\033[1;32mInbound (config) port set to: $config_port\033[0m"
+    echo -e "\033[1;32mListen port set to: $listen_port\033[0m"
 
-    # Uncomment the following block to check if port is used
-    # if is_port_used "$listen_port"; then
-    #     echo -e "\033[1;31mPort $listen_port is already in use. Please choose another.\033[0m"
-    #     continue
-    # fi
+    # Remote server IP input
+    read -p $'\033[1;33mEnter remote server IP (iran): \033[0m' socks5_ip
+    [[ "$socks5_ip" =~ : ]] && socks5_ip="[$socks5_ip]"
+    echo -e "\033[1;36mFormatted IP:\033[0m $socks5_ip"
 
-    break
-done
+    # Server communication port input
+    while true; do
+        read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' socks5_port
+        socks5_port=${socks5_port:-9001}
+        break
+    done
 
-echo -e "\033[1;32mInbound (config) port set to: $config_port\033[0m"
-echo -e "\033[1;32mListen port set to: $listen_port\033[0m"
+    # Select socks5 Transmission Type
+    echo -e "\n\033[1;34mSelect socks5 Transmission Type:\033[0m"
+    echo -e "\033[1;32m1.\033[0m WS (WebSocket)"
+    echo -e "\033[1;32m2.\033[0m WSS (WebSocket Secure)"
+    echo -e "\033[1;32m3.\033[0m gRPC"
+    echo -e "\033[1;32m4.\033[0m h2 (HTTP/2)"
+    echo -e "\033[1;32m5.\033[0m SSH"
+    echo -e "\033[1;32m6.\033[0m TLS"
+    echo -e "\033[1;32m7.\033[0m MWSS (Multiplex Websocket)"
+    echo -e "\033[1;32m8.\033[0m h2c (HTTP2 Cleartext)"
+    echo -e "\033[1;32m9.\033[0m OBFS4 (OBFS4)"
+    echo -e "\033[1;32m10.\033[0m oHTTP (HTTP Obfuscation)"
+    echo -e "\033[1;32m11.\033[0m oTLS (TLS Obfuscation)"
+    echo -e "\033[1;32m12.\033[0m mTLS (Multiplex TLS)"
+    echo -e "\033[1;32m13.\033[0m MWS (Multiplex Websocket)"
+    echo -e "\033[1;32m14.\033[0m icmp (ping tunnel)"
+    echo -e "\033[1;32m15.\033[0m socks5"
+    echo -e "\033[1;32m16.\033[0m tcp"
 
+    read -p $'\033[1;33mEnter your choice for socks5 transmission type: \033[0m' trans_choice
+    case $trans_choice in
+        1) TRANSMISSION="+ws" ;;
+        2) TRANSMISSION="+wss" ;;
+        3) TRANSMISSION="+grpc" ;;
+        4) TRANSMISSION="+h2" ;;
+        5) TRANSMISSION="+ssh" ;;
+        6) TRANSMISSION="+tls" ;;
+        7) TRANSMISSION="+mwss" ;;
+        8) TRANSMISSION="+h2c" ;;
+        9) TRANSMISSION="+obfs4" ;;
+        10) TRANSMISSION="+ohttp" ;;
+        11) TRANSMISSION="+otls" ;;
+        12) TRANSMISSION="+mtls" ;;
+        13) TRANSMISSION="+mws" ;;
+        14) TRANSMISSION="+icmp" ;;
+        15) TRANSMISSION="" ;;
+        16) TRANSMISSION="+tcp" ;;
+        *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="+tcp" ;;
+    esac
 
-            read -p $'\033[1;33mEnter remote server IP (iran): \033[0m' socks5_ip
-            
-            # Check if input is an IPv6 address
-            if [[ $socks5_ip =~ : ]]; then
-                socks5_ip="[$socks5_ip]"
-            fi
-            
-            echo -e "\033[1;36mFormatted IP:\033[0m $socks5_ip"
-            
-            # Prompt the user for a port until a free one is provided
-            while true; do
-                read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' socks5_port
-                socks5_port=${socks5_port:-9001}
-                
-                
-                #if is_port_used $socks5_port; then
-                   #echo -e "\033[1;31mPort $socks5_port is already in use. Please enter a different port.\033[0m"
-                #else
-                    #echo -e "\033[1;32mPort $socks5_port is available.\033[0m"
-                    break  # Exit the loop if the port is free
-               # fi
-            done
-                        
-            # Select socks5 transmission type
-            echo -e "\n\033[1;34mSelect socks5 Transmission Type:\033[0m"
+    # Build GOST options
+    GOST_OPTIONS="-L ${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}"
+    GOST_OPTIONS+=" -F socks5${TRANSMISSION}://${socks5_ip}:${socks5_port}"
 
-            echo -e "\033[1;32m1.\033[0m WS (WebSocket)"
-            echo -e "\033[1;32m2.\033[0m WSS (WebSocket Secure)"
-            echo -e "\033[1;32m3.\033[0m gRPC"
-            echo -e "\033[1;32m4.\033[0m h2 (HTTP/2)"
-            echo -e "\033[1;32m5.\033[0m SSH"
-            echo -e "\033[1;32m6.\033[0m TLS"
-            echo -e "\033[1;32m7.\033[0m MWSS (Multiplex Websocket)"
-            echo -e "\033[1;32m8.\033[0m h2c (HTTP2 Cleartext)"
-            echo -e "\033[1;32m9.\033[0m OBFS4 (OBFS4)"
-            echo -e "\033[1;32m10.\033[0m oHTTP (HTTP Obfuscation)"
-            echo -e "\033[1;32m11.\033[0m oTLS (TLS Obfuscation)"
-            echo -e "\033[1;32m12.\033[0m mTLS (Multiplex TLS)"
-            echo -e "\033[1;32m13.\033[0m MWS (Multiplex Websocket)"
-            echo -e "\033[1;32m14.\033[0m icmp (ping tunnel)"
-            echo -e "\033[1;32m15.\033[0m socks5"
-            echo -e "\033[1;32m16.\033[0m tcp"
-            read -p $'\033[1;33mEnter your choice for socks5 transmission type: \033[0m' trans_choice
-            
-            case $trans_choice in
+    echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
-                1) TRANSMISSION="+ws" ;;
-                2) TRANSMISSION="+wss" ;;
-                3) TRANSMISSION="+grpc" ;;
-                4) TRANSMISSION="+h2" ;;
-                5) TRANSMISSION="+ssh" ;;
-                6) TRANSMISSION="+tls" ;;
-                7) TRANSMISSION="+mwss" ;;
-                8) TRANSMISSION="+h2c" ;;
-                9) TRANSMISSION="+obfs4" ;;
-                10) TRANSMISSION="+ohttp" ;;
-                11) TRANSMISSION="+otls" ;;
-                12) TRANSMISSION="+mtls" ;;
-                13) TRANSMISSION="+mws" ;;
-                14) TRANSMISSION="+icmp" ;;
-                15) TRANSMISSION="" ;;
-                16) TRANSMISSION="+tcp" ;;
-                *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
-            esac
-            
-            # Construct multi-port -L parameters
-            GOST_OPTIONS=""
-            for lport in "${lport_array[@]}"; do
-                GOST_OPTIONS+=" -L ${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}"
-            done
-            
+    # Prompt for custom service name
+    read -p "Enter a custom name for this service (leave blank for a random name): " service_name
+    [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
 
-                GOST_OPTIONS+=" -F socks5${TRANSMISSION}://${socks5_ip}:${socks5_port}"
+    echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
+    create_gost_service "$service_name"
+    start_service "$service_name"
 
-            
-            echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
-            
-            read -p "Enter a custom name for this service (leave blank for a random name): " service_name
-            [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
-            
-            echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
-            create_gost_service "$service_name"
-            start_service "$service_name"
-            
-            read -p "Press Enter to continue..."
-            ;;
+    read -p "Press Enter to continue..."
+    ;;
+
         
         *)
             echo -e "\033[1;31mInvalid choice! Exiting.\033[0m"
