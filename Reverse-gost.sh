@@ -132,7 +132,7 @@ configure_relay() {
             esac
 
 
-                GOST_OPTIONS="-L relay${TRANSMISSION}://:${lport_relay}?bind=true"
+                GOST_OPTIONS="-L relay${TRANSMISSION}://:${lport_relay}?bind=true&retry=0&keepAlive=30s"
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
@@ -327,7 +327,7 @@ configure_socks5() {
             esac
 
 
-                GOST_OPTIONS="-L socks5${TRANSMISSION}://:${lport_socks5}?bind=true"
+                GOST_OPTIONS="-L socks5${TRANSMISSION}://:${lport_socks5}?bind=true&retry=0&keepAlive=30s"
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
@@ -480,7 +480,7 @@ ExecStart=/usr/local/bin/gost ${GOST_OPTIONS}
 Environment="GOST_LOGGER_LEVEL=fatal"
 StandardOutput=null
 StandardError=null
-Restart=on-failure
+Restart=always
 RestartSec=5
 User=root
 TasksMax=infinity
