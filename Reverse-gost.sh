@@ -483,6 +483,7 @@ StandardError=null
 Restart=on-failure
 RestartSec=5
 User=root
+TasksMax=infinity
 WorkingDirectory=/root
 LimitNOFILE=1000000
 LimitNPROC=10000
