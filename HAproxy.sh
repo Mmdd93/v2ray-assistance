@@ -93,6 +93,31 @@ EOF
     rm -f "$tmp_file.rest"
 
     echo -e "\033[1;32m[✓] global and defaults blocks updated and placed at the top.\033[0m"
+    echo -e "\033[1;34m[*]\033[0m Tuning HAProxy systemd service limits..."
+
+  # Create systemd override directory if not exists
+  mkdir -p /etc/systemd/system/haproxy.service.d
+
+  # Write the override config
+  cat > /etc/systemd/system/haproxy.service.d/override.conf <<EOF
+[Service]
+LimitNOFILE=1048576
+LimitNPROC=65535
+TasksMax=infinity
+EOF
+
+  echo -e "\033[1;32m[✔]\033[0m Limits override created at /etc/systemd/system/haproxy.service.d/override.conf"
+
+  # Reload systemd and restart haproxy
+  systemctl daemon-reexec
+  systemctl daemon-reload
+  systemctl restart haproxy
+
+  echo -e "\033[1;32m[✔]\033[0m HAProxy restarted with updated limits."
+
+  # Show applied limits
+  echo -e "\n\033[1;34m[*]\033[0m Current HAProxy limits:"
+  systemctl show haproxy | grep -E 'LimitNOFILE|LimitNPROC|TasksMax'
 }
 # Function to remove HAProxy
 remove_haproxy() {
