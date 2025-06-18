@@ -37,7 +37,63 @@ install_haproxy() {
   
 
 }
+tune_haproxy_config() {
+    local config_file="/etc/haproxy/haproxy.cfg"
+    local backup_file="/etc/haproxy/haproxy.cfg.bak.$(date +%s)"
+    local tmp_file="/tmp/haproxy.cfg.tmp.$$"
 
+    echo -e "\033[1;34m[*] Backing up config to:\033[0m $backup_file"
+    cp "$config_file" "$backup_file" || {
+        echo -e "\033[1;31m[!] Backup failed.\033[0m"
+        return 1
+    }
+
+    read -r -d '' new_global <<'EOF'
+global
+    maxconn 100000
+    nbthread 4
+    cpu-map auto:1/1-4 0-3
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+    ssl-default-bind-options ssl-min-ver TLSv1.2 no-tls-tickets
+    ssl-default-bind-ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384
+    ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+EOF
+
+    read -r -d '' new_defaults <<'EOF'
+defaults
+    mode http
+    option dontlognull
+    timeout connect 5s
+    timeout client  50s
+    timeout server  50s
+    maxconn 100000
+EOF
+
+    # Remove any existing global/defaults blocks, then prepend new ones
+    awk '
+    BEGIN {skip=0}
+    $1 == "global" || $1 == "defaults" {skip=1; next}
+    skip && /^[^ \t]/ {skip=0}
+    !skip {print}
+    ' "$config_file" > "$tmp_file.rest"
+
+    {
+        echo "$new_global"
+        echo
+        echo "$new_defaults"
+        echo
+        cat "$tmp_file.rest"
+    } > "$config_file"
+
+    rm -f "$tmp_file.rest"
+
+    echo -e "\033[1;32m[✓] global and defaults blocks updated and placed at the top.\033[0m"
+}
 # Function to remove HAProxy
 remove_haproxy() {
   echo -e "\033[1;34m--- Removing HAProxy ---\033[0m"
@@ -683,6 +739,7 @@ haproxy_menu() {
       echo -e "\033[1;32m12.\033[0m Clear HAProxy Configuration"
       echo -e "\033[1;32m13.\033[0m Remove HAProxy"
       echo -e "\033[1;32m14.\033[0m Auto restart haproxy"
+      echo -e "\033[1;32m15.\033[0m Tune haproxy"
     else
       echo -e "\033[1;90m2. Port Forwarding (simple mode) [Install HAProxy first]\033[0m"
       echo -e "\033[1;90m3. Port Forwarding (SNI mode) [Install HAProxy first]\033[0m"
@@ -799,6 +856,15 @@ haproxy_menu() {
           echo -e "\033[1;31mHAProxy is not installed!\033[0m"
           sleep 2
         fi 
+       ;;
+      15)
+              if [ -n "$current_version" ]; then 
+         tune_haproxy_config 
+          read -p "Press Enter to continue..."
+        else
+          echo -e "\033[1;31mHAProxy is not installed!\033[0m"
+         read -p "Press Enter to continue..."
+        fi
        ;;
       0) break ;;
       *) echo -e "\033[1;31mInvalid option!\033[0m"; sleep 1 ;;
