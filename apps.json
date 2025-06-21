@@ -25,6 +25,7 @@
       { "M123321": "tg://resolve?domain=amirhosienmokhtari" },
       { "VPN-2": "tg://resolve?domain=P41444" },
       { "V2": "tg://resolve?domain=P41444" },
+      { "erfjab": "tg://resolve?domain=erfjab" },
       { "default": "tg://resolve?domain=tlgrmv2" }
     ],
     "downloadLinks": {
