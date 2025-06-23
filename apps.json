@@ -28,6 +28,8 @@
       { "erfjab": "tg://resolve?domain=ErfJab" },
       { "A4": "tg://resolve?domain=" },
       { "VIP": "tg://resolve?domain=" },
+      { "Mokhtari": "tg://resolve?domain=" },
+      { "Alir3zw": "tg://resolve?domain=" },
       { "default": "tg://resolve?domain=tlgrmv2" }
     ],
     "downloadLinks": {
