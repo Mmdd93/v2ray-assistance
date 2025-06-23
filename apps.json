@@ -27,6 +27,7 @@
       { "V2": "tg://resolve?domain=shahanmovies11" },
       { "erfjab": "tg://resolve?domain=ErfJab" },
       { "A4": "tg://resolve?domain=" },
+      { "VIP": "tg://resolve?domain=" },
       { "default": "tg://resolve?domain=tlgrmv2" }
     ],
     "downloadLinks": {
