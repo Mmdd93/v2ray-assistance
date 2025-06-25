@@ -35,12 +35,13 @@
       { "A5": "tg://resolve?domain=" },
       { "A6": "tg://resolve?domain=" },
       { "A7": "tg://resolve?domain=" },
+      { "A8": "tg://resolve?domain=" },
       { "VIPMud": "tg://resolve?domain=" },
       { "elsgdfh198": "tg://resolve?domain=" },
       { "EViopp10": "tg://resolve?domain=" },
-{ "AliVIP": "tg://resolve?domain=" },
-{ "Amin1800": "tg://resolve?domain=" },
-{ "gop3000": "tg://resolve?domain=" },
+      { "AliVIP": "tg://resolve?domain=" },
+      { "Amin1800": "tg://resolve?domain=" },
+      { "gop3000": "tg://resolve?domain=" },
       { "default": "tg://resolve?domain=tlgrmv2" }
     ],
     "downloadLinks": {
