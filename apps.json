@@ -42,6 +42,7 @@
       { "AliVIP": "tg://resolve?domain=" },
       { "Amin1800": "tg://resolve?domain=" },
       { "gop3000": "tg://resolve?domain=" },
+      { "SA1": "tg://resolve?domain=chap_sajad0" },
       { "default": "tg://resolve?domain=tlgrmv2" }
     ],
     "downloadLinks": {
