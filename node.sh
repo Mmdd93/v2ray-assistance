@@ -3206,6 +3206,7 @@ main_menu() {
     echo -e "\033[1;32mv2ray-assistant | Telegram: @tlgrmv2 \033[0m"
     echo -e "\033[1;32mv:25.5.29\033[0m"
     echo -e "\033[1;31m+----------Update and upgrade----------+\033[0m"
+    echo -e "\033[1;32m00.\033[0m Update scripts"
     echo -e "\033[1;32m1.\033[0m Update and upgrade + install necessary packages"
     echo -e "\033[1;32m2.\033[0m Fix update issues (broken apt or dependencies)"
     echo -e "\033[1;32m3.\033[0m Change Update sources to Iran"
@@ -3415,7 +3416,9 @@ main_menu() {
 	60) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/WGDashboard.sh -o WGDashboard.sh
             sudo bash WGDashboard.sh ;;  
-        0) echo "Exiting...";
+       	00) echo "updating...";
+	update ;;
+	0) echo "Exiting...";
 	exit 0
  ;;
         *) echo "Invalid choice. Please try again." ;;
@@ -3423,6 +3426,6 @@ main_menu() {
     done
 }
 # Start the main menu
-update
+
 main_menu
 
