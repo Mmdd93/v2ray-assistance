@@ -689,8 +689,8 @@ Optimizer() {
 			13) tc ;;
             0)
                 echo -e "\033[1;34mReturning to main menu...\033[0m"
-                exit 0
-                ;;
+                break ;;
+               
             *) echo -e "\033[1;31mInvalid option. Please select a valid number.\033[0m" ;;
         esac
 
