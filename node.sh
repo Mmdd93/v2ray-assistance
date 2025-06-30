@@ -3422,7 +3422,6 @@ main_menu() {
             curl -Ls https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul.sh -o backhaul-cracked.sh
             sudo bash backhaul-cracked.sh ;;  
 
-     bash <(curl -Ls --ipv4 https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul.sh)
 
        	00) echo "updating...";
 	update ;;
