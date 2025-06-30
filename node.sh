@@ -3253,12 +3253,13 @@ main_menu() {
     echo -e "\033[1;32m45.\033[0m GENEVE tunnel (IPV4 local)"
     echo -e "\033[1;32m46.\033[0m VXLAN tunnel (IPV4 local)"
     echo -e "\033[1;32m31.\033[0m HAProxy tunnel"
-    echo -e "\033[1;32m27.\033[0m Backhaul Reverse tunnel"
+    echo -e "\033[1;32m27.\033[0m Backhaul tunnel"
     echo -e "\033[1;32m44.\033[0m GOST tunnel"
     echo -e "\033[1;32m55.\033[0m GOST Reverse tunnel"
     echo -e "\033[1;32m47.\033[0m WSS,WS tunnel (CDN support)"
     echo -e "\033[1;32m56.\033[0m WireGuard Reverse Tunnel (EYLAN Tunnel )"
     echo -e "\033[1;32m58.\033[0m WireGuard/hysteria Tunnel ((TAQ-BOSTAN) )"
+    echo -e "\033[1;32m61.\033[0m Backhaul premium tunnel (cracked by https://t.me/anony_identity) "
    
     echo -e "\n\033[1;31m+---------------Xray panel-----------------+\033[0m"
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
@@ -3416,6 +3417,13 @@ main_menu() {
 	60) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/WGDashboard.sh -o WGDashboard.sh
             sudo bash WGDashboard.sh ;;  
+
+     61) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul.sh -o backhaul-cracked.sh
+            sudo bash backhaul-cracked.sh ;;  
+
+     bash <(curl -Ls --ipv4 https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul.sh)
+
        	00) echo "updating...";
 	update ;;
 	0) echo "Exiting...";
