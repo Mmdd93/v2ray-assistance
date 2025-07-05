@@ -51,6 +51,7 @@
 	     { "gonbadi": "tg://resolve?domain=" },
 	     { "mrbtc": "tg://resolve?domain=" },
 	    { "ip-ir99": "tg://resolve?domain=" },
+	    { "AliKameli": "tg://resolve?domain=" },
       { "default": "tg://resolve?domain=tlgrmv2" }
     ],
     "downloadLinks": {
