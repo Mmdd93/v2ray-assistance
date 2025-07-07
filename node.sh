@@ -2340,139 +2340,109 @@ ip_quality_check() {
     done
 }
 
-
-
-
-
-
-
 change_sources_list() {
     while true; do
+        # Detect codename and distribution
+        if [ -f /etc/os-release ]; then
+            . /etc/os-release
+            distro_id=$ID
+            distro_codename=$(lsb_release -cs 2>/dev/null || echo "$VERSION_CODENAME")
+        else
+            distro_id="ubuntu"
+            distro_codename="noble"
+        fi
+
         timestamp=$(date +"%Y%m%d_%H%M%S")
         sudo cp /etc/apt/sources.list "/etc/apt/sources.list.bak.$timestamp"
         echo -e "\033[1;32mBackup of sources.list created at /etc/apt/sources.list.bak.$timestamp\033[0m"
 
         mirrors=(
-            "http://mirror.arvancloud.ir/ubuntu"  # Default
-            "https://ir.ubuntu.sindad.cloud/ubuntu"
-            "https://ir.archive.ubuntu.com/ubuntu"
-            "http://ubuntu.byteiran.com/ubuntu"
-            "http://mirror.faraso.org/ubuntu"
-            "http://mirror.aminidc.com/ubuntu"
-            "https://mirror.iranserver.com/ubuntu"
+            "http://mirror.arvancloud.ir/$distro_id"
+            "https://ir.ubuntu.sindad.cloud/$distro_id"
+            "https://ir.archive.ubuntu.com/$distro_id"
+            "http://ubuntu.byteiran.com/$distro_id"
+            "http://mirror.faraso.org/$distro_id"
+            "http://mirror.aminidc.com/$distro_id"
+            "https://mirror.iranserver.com/$distro_id"
             "https://ubuntu.pars.host"
-            "http://linuxmirrors.ir/pub/ubuntu"
-            "http://repo.iut.ac.ir/repo/Ubuntu"
-            "https://mirror.0-1.cloud/ubuntu"
+            "http://linuxmirrors.ir/pub/$distro_id"
+            "http://repo.iut.ac.ir/repo/$distro_id"
+            "https://mirror.0-1.cloud/$distro_id"
             "https://ubuntu.hostiran.ir/ubuntuarchive"
-            "http://archive.ubuntu.com/ubuntu"             # Global mirror
-            "http://mirror.kku.ac.th/ubuntu"               # Global mirror (Thailand)
-            "https://mirrors.pardisco.co/ubuntu"
-            "https://ubuntu.shatel.ir/ubuntu"
+            "https://archive.ubuntu.petiak.ir/$distro_id"
+            "https://mirrors.pardisco.co/$distro_id"
+            "https://ubuntu.shatel.ir/$distro_id"
+            "http://archive.ubuntu.com/$distro_id"
         )
 
-        ubuntu_codename=$(lsb_release -cs 2>/dev/null || echo "noble")
+        echo -e "\n\033[1;34mTesting mirror availability and speed (lower is better)...\033[0m"
+        declare -A mirror_times
 
-        echo -e "\n\033[1;34mSelect an option:\033[0m"
-        echo -e "\033[1;32m1.\033[0m Change sources list"
-        echo -e "\033[1;32m2.\033[0m Restore sources list from backup"
-        echo -e "\033[1;32m3.\033[0m Edit sources list with nano"
-        echo -e "\033[1;32m4.\033[0m Start update"
-        echo -e "\033[1;32m5.\033[0m Fix update issues (broken apt or dependencies)"
-        echo -e "\033[1;32m0.\033[0m Return to main menu"
+        for mirror in "${mirrors[@]}"; do
+            url="${mirror}/dists/${distro_codename}/Release"
+            start_time=$(date +%s%N)
+            if curl -s --head --max-time 3 "$url" >/dev/null; then
+                end_time=$(date +%s%N)
+                elapsed_ms=$(( (end_time - start_time) / 1000000 ))
+                mirror_times["$mirror"]=$elapsed_ms
+            else
+                mirror_times["$mirror"]=9999
+            fi
+        done
 
-        read -p "Enter your choice (0-5): " option
+        echo -e "\n\033[1;34mAvailable Mirrors (sorted by response time):\033[0m"
+        sorted_mirrors=($(for m in "${!mirror_times[@]}"; do echo "$m ${mirror_times[$m]}"; done | sort -k2 -n))
 
-        case $option in
-            1)
-                echo -e "\n\033[1;34mSelect a new source for updates (0 to return):\033[0m"
-                for i in "${!mirrors[@]}"; do
-                    echo -e "\033[1;32m$((i + 1)).\033[0m ${mirrors[i]}"
-                done
-                read -p "Enter your choice (0-${#mirrors[@]}) [default: 1]: " choice
-                [[ -z "$choice" ]] && choice=1
+        index=1
+        for entry in "${sorted_mirrors[@]}"; do
+            mirror=$(echo "$entry" | awk '{print $1}')
+            latency=$(echo "$entry" | awk '{print $2}')
+            if [[ $latency -eq 9999 ]]; then
+                echo -e "\033[1;31m$index. $mirror [unreachable]\033[0m"
+            else
+                echo -e "\033[1;32m$index.\033[0m $mirror [${latency}ms]"
+            fi
+            sorted_mirrors_list+=("$mirror")
+            ((index++))
+        done
 
-                if [[ $choice -eq 0 ]]; then
-                    echo -e "\033[1;33mReturning to the previous menu...\033[0m"
-                    continue
-                elif [[ $choice -ge 1 && $choice -le ${#mirrors[@]} ]]; then
-                    selected_mirror="${mirrors[$((choice - 1))]}"
-                    echo -e "\033[1;32mYou selected: $selected_mirror\033[0m"
+        echo -e "\n\033[1;34mSelect a mirror to use (0 to cancel):\033[0m"
+        read -p "Enter your choice (1-${#sorted_mirrors_list[@]}) [default: 1]: " choice
+        [[ -z "$choice" ]] && choice=1
 
-                    sudo bash -c "cat > /etc/apt/sources.list <<EOF
-# Main Repositories
-deb ${selected_mirror} $ubuntu_codename main restricted universe multiverse
-deb ${selected_mirror} $ubuntu_codename-updates main restricted universe multiverse
-deb ${selected_mirror} $ubuntu_codename-backports main restricted universe multiverse
-deb ${selected_mirror} $ubuntu_codename-security main restricted universe multiverse
+        if [[ $choice -eq 0 ]]; then
+            echo -e "\033[1;33mCancelled. Returning...\033[0m"
+            return
+        elif [[ $choice -ge 1 && $choice -le ${#sorted_mirrors_list[@]} ]]; then
+            selected_mirror="${sorted_mirrors_list[$((choice - 1))]}"
+            echo -e "\033[1;34mSelected: $selected_mirror\033[0m"
 
-# Source Code Repositories (optional)
-deb-src ${selected_mirror} $ubuntu_codename main restricted universe multiverse
-deb-src ${selected_mirror} $ubuntu_codename-updates main restricted universe multiverse
-deb-src ${selected_mirror} $ubuntu_codename-backports main restricted universe multiverse
-deb-src ${selected_mirror} $ubuntu_codename-security main restricted universe multiverse
+            if [[ "$distro_id" == "debian" ]]; then
+                sudo bash -c "cat > /etc/apt/sources.list <<EOF
+deb $selected_mirror $distro_codename main contrib non-free non-free-firmware
+deb $selected_mirror $distro_codename-updates main contrib non-free non-free-firmware
+deb $selected_mirror $distro_codename-security main contrib non-free non-free-firmware
+deb $selected_mirror $distro_codename-backports main contrib non-free non-free-firmware
 EOF"
-                    echo -e "\033[1;32mSources updated to: ${selected_mirror}\033[0m"
-                else
-                    echo -e "\033[1;31mInvalid option. No changes were made.\033[0m"
-                fi
-                ;;
-            2)
-                echo -e "\033[1;34mAvailable backups:\033[0m"
-                backups=($(ls /etc/apt/sources.list.bak.* 2>/dev/null))
+            else
+                sudo bash -c "cat > /etc/apt/sources.list <<EOF
+deb $selected_mirror $distro_codename main restricted universe multiverse
+deb $selected_mirror $distro_codename-updates main restricted universe multiverse
+deb $selected_mirror $distro_codename-security main restricted universe multiverse
+deb $selected_mirror $distro_codename-backports main restricted universe multiverse
+EOF"
+            fi
 
-                if [ ${#backups[@]} -eq 0 ]; then
-                    echo -e "\033[1;31mNo backup files found.\033[0m"
-                    continue
-                fi
-
-                for i in "${!backups[@]}"; do
-                    echo -e "\033[1;32m$((i + 1)).\033[0m ${backups[i]}"
-                done
-                echo -e "\033[1;32m0.\033[0m Return"
-
-                read -p "Enter the backup number to restore (1-${#backups[@]}) [default: 1]: " backup_choice
-                [[ -z "$backup_choice" ]] && backup_choice=1
-
-                if [[ $backup_choice -eq 0 ]]; then
-                    echo -e "\033[1;33mReturning to the previous menu...\033[0m"
-                    continue
-                elif [[ $backup_choice -ge 1 && $backup_choice -le ${#backups[@]} ]]; then
-                    selected_backup="${backups[$((backup_choice - 1))]}"
-                    sudo cp "$selected_backup" /etc/apt/sources.list
-                    echo -e "\033[1;32mRestored sources.list from $selected_backup\033[0m"
-                else
-                    echo -e "\033[1;31mInvalid option. No changes were made.\033[0m"
-                fi
-                ;;
-            3)
-                echo -e "\033[1;34mOpening sources.list in nano...\033[0m"
-                sudo nano /etc/apt/sources.list
-                echo -e "\033[1;32mPlease review your changes.\033[0m"
-                ;;
-            4)
-                echo -e "\033[1;34mStarting manual update...\033[0m"
-                sudo apt update && sudo apt upgrade -y
-                echo -e "\033[1;32mUpdate completed.\033[0m"
-                ;;
-            5)
-                echo -e "\033[1;34mFixing broken packages and apt issues...\033[0m"
-                sudo apt --fix-broken install -y
-                sudo apt-get autoremove -y
-                sudo apt-get autoclean -y
-                sudo dpkg --configure -a
-                echo -e "\033[1;32mUpdate issues fixed.\033[0m"
-                ;;
-            0)
-                echo -e "\033[1;33mReturning to the main menu...\033[0m"
-                main_menu
-                ;;
-            *)
-                echo -e "\033[1;31mInvalid option. Please select 1-5 or 0.\033[0m"
-                ;;
-        esac
+            echo -e "\033[1;32mSources list updated successfully.\033[0m"
+            read -p "Run apt update now? (yes/no): " update_now
+            [[ "$update_now" == "yes" ]] && sudo apt update
+        else
+            echo -e "\033[1;31mInvalid option.\033[0m"
+        fi
+        break
     done
 }
+
 
 manage_ipv6() {
     while true; do
