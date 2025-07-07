@@ -2348,16 +2348,12 @@ ip_quality_check() {
 
 change_sources_list() {
     while true; do
-        # Create a timestamp for backup
         timestamp=$(date +"%Y%m%d_%H%M%S")
-
-        # Backup the existing sources list with timestamp
         sudo cp /etc/apt/sources.list "/etc/apt/sources.list.bak.$timestamp"
         echo -e "\033[1;32mBackup of sources.list created at /etc/apt/sources.list.bak.$timestamp\033[0m"
 
-        # Define the list of mirrors with the default one first
         mirrors=(
-            "http://mirror.arvancloud.ir/ubuntu"  # Default mirror
+            "http://mirror.arvancloud.ir/ubuntu"  # Default
             "https://ir.ubuntu.sindad.cloud/ubuntu"
             "https://ir.archive.ubuntu.com/ubuntu"
             "http://ubuntu.byteiran.com/ubuntu"
@@ -2369,42 +2365,33 @@ change_sources_list() {
             "http://repo.iut.ac.ir/repo/Ubuntu"
             "https://mirror.0-1.cloud/ubuntu"
             "https://ubuntu.hostiran.ir/ubuntuarchive"
-            "http://archive.ubuntu.com/ubuntu"
-            "https://archive.ubuntu.petiak.ir/ubuntu"
+            "http://archive.ubuntu.com/ubuntu"             # Global mirror
+            "http://mirror.kku.ac.th/ubuntu"               # Global mirror (Thailand)
             "https://mirrors.pardisco.co/ubuntu"
             "https://ubuntu.shatel.ir/ubuntu"
         )
 
-        # Determine the Ubuntu release codename with a fallback for "noble"
         ubuntu_codename=$(lsb_release -cs 2>/dev/null || echo "noble")
 
-        # Display the menu options
         echo -e "\n\033[1;34mSelect an option:\033[0m"
         echo -e "\033[1;32m1.\033[0m Change sources list"
         echo -e "\033[1;32m2.\033[0m Restore sources list from backup"
         echo -e "\033[1;32m3.\033[0m Edit sources list with nano"
         echo -e "\033[1;32m4.\033[0m Start update"
-	echo -e "\033[1;32m5.\033[0m Fix update issues (broken apt or dependencies)"
+        echo -e "\033[1;32m5.\033[0m Fix update issues (broken apt or dependencies)"
         echo -e "\033[1;32m0.\033[0m Return to main menu"
 
-        read -p "Enter your choice (1-5): " option
+        read -p "Enter your choice (0-5): " option
 
         case $option in
             1)
-                # Display the mirror options
                 echo -e "\n\033[1;34mSelect a new source for updates (0 to return):\033[0m"
                 for i in "${!mirrors[@]}"; do
                     echo -e "\033[1;32m$((i + 1)).\033[0m ${mirrors[i]}"
                 done
-
                 read -p "Enter your choice (0-${#mirrors[@]}) [default: 1]: " choice
+                [[ -z "$choice" ]] && choice=1
 
-                # Set default choice if no input is provided
-                if [[ -z "$choice" ]]; then
-                    choice=1
-                fi
-
-                # Validate the choice
                 if [[ $choice -eq 0 ]]; then
                     echo -e "\033[1;33mReturning to the previous menu...\033[0m"
                     continue
@@ -2412,22 +2399,25 @@ change_sources_list() {
                     selected_mirror="${mirrors[$((choice - 1))]}"
                     echo -e "\033[1;32mYou selected: $selected_mirror\033[0m"
 
-                    # Update sources.list with the selected mirror (clearing previous entries)
-sudo bash -c "cat > /etc/apt/sources.list <<EOF
-deb ${selected_mirror} $(lsb_release -cs) main restricted universe multiverse
-deb ${selected_mirror} $(lsb_release -cs)-updates main restricted universe multiverse
-deb ${selected_mirror} $(lsb_release -cs)-security main restricted universe multiverse
-deb ${selected_mirror} $(lsb_release -cs)-backports main restricted universe multiverse
-EOF"
-echo -e "\033[1;32mSources updated to: ${selected_mirror}\033[0m"
+                    sudo bash -c "cat > /etc/apt/sources.list <<EOF
+# Main Repositories
+deb ${selected_mirror} $ubuntu_codename main restricted universe multiverse
+deb ${selected_mirror} $ubuntu_codename-updates main restricted universe multiverse
+deb ${selected_mirror} $ubuntu_codename-backports main restricted universe multiverse
+deb ${selected_mirror} $ubuntu_codename-security main restricted universe multiverse
 
+# Source Code Repositories (optional)
+deb-src ${selected_mirror} $ubuntu_codename main restricted universe multiverse
+deb-src ${selected_mirror} $ubuntu_codename-updates main restricted universe multiverse
+deb-src ${selected_mirror} $ubuntu_codename-backports main restricted universe multiverse
+deb-src ${selected_mirror} $ubuntu_codename-security main restricted universe multiverse
+EOF"
+                    echo -e "\033[1;32mSources updated to: ${selected_mirror}\033[0m"
                 else
                     echo -e "\033[1;31mInvalid option. No changes were made.\033[0m"
                 fi
                 ;;
-
             2)
-                # Restore sources.list from backup
                 echo -e "\033[1;34mAvailable backups:\033[0m"
                 backups=($(ls /etc/apt/sources.list.bak.* 2>/dev/null))
 
@@ -2436,20 +2426,14 @@ echo -e "\033[1;32mSources updated to: ${selected_mirror}\033[0m"
                     continue
                 fi
 
-                # Display backups with numbers
                 for i in "${!backups[@]}"; do
                     echo -e "\033[1;32m$((i + 1)).\033[0m ${backups[i]}"
                 done
                 echo -e "\033[1;32m0.\033[0m Return"
 
                 read -p "Enter the backup number to restore (1-${#backups[@]}) [default: 1]: " backup_choice
+                [[ -z "$backup_choice" ]] && backup_choice=1
 
-                # Set default choice if no input is provided
-                if [[ -z "$backup_choice" ]]; then
-                    backup_choice=1
-                fi
-
-                # Validate the choice
                 if [[ $backup_choice -eq 0 ]]; then
                     echo -e "\033[1;33mReturning to the previous menu...\033[0m"
                     continue
@@ -2461,43 +2445,30 @@ echo -e "\033[1;32mSources updated to: ${selected_mirror}\033[0m"
                     echo -e "\033[1;31mInvalid option. No changes were made.\033[0m"
                 fi
                 ;;
-
             3)
-                # Edit sources.list with nano
                 echo -e "\033[1;34mOpening sources.list in nano...\033[0m"
                 sudo nano /etc/apt/sources.list
                 echo -e "\033[1;32mPlease review your changes.\033[0m"
                 ;;
-
             4)
-                # Start update manually
                 echo -e "\033[1;34mStarting manual update...\033[0m"
                 sudo apt update && sudo apt upgrade -y
                 echo -e "\033[1;32mUpdate completed.\033[0m"
                 ;;
-
+            5)
+                echo -e "\033[1;34mFixing broken packages and apt issues...\033[0m"
+                sudo apt --fix-broken install -y
+                sudo apt-get autoremove -y
+                sudo apt-get autoclean -y
+                sudo dpkg --configure -a
+                echo -e "\033[1;32mUpdate issues fixed.\033[0m"
+                ;;
             0)
                 echo -e "\033[1;33mReturning to the main menu...\033[0m"
                 main_menu
                 ;;
-            5)
-                # Fix update issues (fix broken apt and dependencies)
-                echo -e "\033[1;34mFixing broken packages and apt issues...\033[0m"
-
-                # Fix broken packages
-                sudo apt --fix-broken install -y
-
-                # Clean up partial installations and dependencies
-                sudo apt-get autoremove -y
-                sudo apt-get autoclean -y
-
-                # Try fixing any other package issues
-                sudo dpkg --configure -a
-
-                echo -e "\033[1;32mUpdate issues fixed.\033[0m"
-                ;;
             *)
-                echo -e "\033[1;31mInvalid option. Please select 1, 2, 3, 4, or 5.\033[0m"
+                echo -e "\033[1;31mInvalid option. Please select 1-5 or 0.\033[0m"
                 ;;
         esac
     done
