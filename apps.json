@@ -54,6 +54,7 @@
 	    { "AliKameli": "tg://resolve?domain=" },
 	    { "NVIP": "tg://resolve?domain=" },
 	    { "v2ray5": "tg://resolve?domain=" },
+	    { "P2": "tg://resolve?domain=" },
       { "default": "tg://resolve?domain=tlgrmv2" }
     ],
     "downloadLinks": {
