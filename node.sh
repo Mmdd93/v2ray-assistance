@@ -3045,10 +3045,7 @@ manage_marzban_node() {
         read -rp "Press Enter to continue..."
     done
 }
-update() {
-    curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/node.sh -o /usr/bin/v2
 
-}
 
 change_timezone() {
     while true; do
@@ -3140,6 +3137,10 @@ change_timezone() {
         read -p "Press Enter to continue..."
     done
 }
+update() {
+    curl -Lso /usr/bin/v2 https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/node.sh
+    chmod +x /usr/bin/v2
+}
 # Main menu function
 main_menu() {
     while true; do
@@ -3225,6 +3226,7 @@ main_menu() {
     echo -e "\033[1;32m42.\033[0m Auto panel restart"
     echo -e "\033[1;32m59.\033[0m Uptime Kuma"
     echo -e "\033[1;31m+-----------------------------------------+\033[0m"
+    echo -e "\033[1;32m00.\033[0m Update scripts"
     echo -e "\033[1;31m0.\033[0m Exit"
 
     read -p "Enter your choice: " choice
@@ -3381,6 +3383,7 @@ main_menu() {
     done
 }
 # Start the main menu
+
 
 main_menu
 
