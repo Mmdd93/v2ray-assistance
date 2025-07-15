@@ -3202,6 +3202,7 @@ main_menu() {
     echo -e "\033[1;32m58.\033[0m WireGuard/hysteria Tunnel ((TAQ-BOSTAN) )"
     echo -e "\033[1;32m61.\033[0m Backhaul premium tunnel (cracked by https://t.me/anony_identity) "
     echo -e "\033[1;32m62.\033[0m Rathole tunnel v2 (https://github.com/Musixal/) "
+    echo -e "\033[1;32m63.\033[0m Trust Tunnel  (TCP/UDP tunnel over QUIC)(https://github.com/Erfan-XRay/) "
    
     echo -e "\n\033[1;31m+---------------Xray panel-----------------+\033[0m"
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
@@ -3366,7 +3367,10 @@ main_menu() {
 
 62) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/Musixal/Rathole-Tunnel/refs/heads/main/rathole_v2.sh -o rathole_v2.sh
-            sudo bash rathole_v2.sh ;;  
+            sudo bash rathole_v2.sh ;; 
+	 63) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/Erfan-XRay/TrustTunnel/main/main.sh -o TrustTunnel.sh
+            sudo bash TrustTunnel.sh ;;   
        	00) echo "updating...";
 	update ;;
 	0) echo "Exiting...";
