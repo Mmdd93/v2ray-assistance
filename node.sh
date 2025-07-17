@@ -3195,15 +3195,16 @@ main_menu() {
     echo -e "\033[1;32m45.\033[0m GENEVE tunnel (IPV4 local)"
     echo -e "\033[1;32m46.\033[0m VXLAN tunnel (IPV4 local)"
     echo -e "\033[1;32m31.\033[0m HAProxy tunnel"
-    echo -e "\033[1;32m27.\033[0m Backhaul tunnel (https://github.com/Musixal/)"
+    echo -e "\033[1;32m27.\033[0m Backhaul tunnel (github.com/Musixal)"
     echo -e "\033[1;32m44.\033[0m GOST tunnel"
     echo -e "\033[1;32m55.\033[0m GOST Reverse tunnel"
     echo -e "\033[1;32m47.\033[0m WSS,WS tunnel (CDN support)"
     echo -e "\033[1;32m56.\033[0m WireGuard Reverse Tunnel (EYLAN Tunnel )"
     echo -e "\033[1;32m58.\033[0m WireGuard/hysteria Tunnel ((TAQ-BOSTAN) )"
-    echo -e "\033[1;32m61.\033[0m Backhaul premium tunnel (cracked by https://t.me/anony_identity) "
-    echo -e "\033[1;32m62.\033[0m Rathole tunnel v2 (https://github.com/Musixal/) "
-    echo -e "\033[1;32m63.\033[0m Trust Tunnel  (TCP/UDP tunnel over QUIC)(https://github.com/Erfan-XRay/) "
+    echo -e "\033[1;32m61.\033[0m Backhaul premium tunnel (cracked by t.me/anony_identity) "
+    echo -e "\033[1;32m62.\033[0m Rathole tunnel v2 (github.com/Musixal) "
+    echo -e "\033[1;32m63.\033[0m Trust Tunnel  (TCP/UDP tunnel over QUIC)(github.com/Erfan-XRay) "
+    echo -e "\033[1;32m64.\033[0m HPulse Tunnel  (TCP/UDP tunnel over Hysteria 2)(github.com/Erfan-XRay) "
    
     echo -e "\n\033[1;31m+---------------Xray panel-----------------+\033[0m"
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
@@ -3372,7 +3373,10 @@ main_menu() {
             sudo bash rathole_v2.sh ;; 
 	 63) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/Erfan-XRay/TrustTunnel/main/main.sh -o TrustTunnel.sh
-            sudo bash TrustTunnel.sh ;;   
+            sudo bash TrustTunnel.sh ;;  
+	    64) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/Erfan-XRay/HPulse/main/HPulse.sh -o HPulse.sh
+            sudo bash HPulse.sh ;;   
        	00) echo "updating...";
 	update ;;
 	0) echo "Exiting...";
