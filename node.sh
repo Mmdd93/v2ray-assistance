@@ -3380,7 +3380,8 @@ main_menu() {
 	    65) echo "Running ..."
             curl -Ls https://digitalvps.org/scripts/toolbox.sh -o toolbox.sh
             sudo bash toolbox.sh
-	    read -p "Press Enter to continue..." ;; 
+	    sudo toolbox
+	     ;; 
        	00) echo "updating...";
 	update ;;
 	0) echo "Exiting...";
