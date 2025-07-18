@@ -3205,6 +3205,7 @@ main_menu() {
     echo -e "\033[1;32m62.\033[0m Rathole tunnel v2 (github.com/Musixal) "
     echo -e "\033[1;32m63.\033[0m Trust Tunnel  (TCP/UDP tunnel over QUIC)(github.com/Erfan-XRay) "
     echo -e "\033[1;32m64.\033[0m HPulse Tunnel  (TCP/UDP tunnel over Hysteria 2)(github.com/Erfan-XRay) "
+    echo -e "\033[1;32m66.\033[0m DNS Tunnel  (tunnel over DNS)(github.com/IRSupp/DnsTunnel) "
    
     echo -e "\n\033[1;31m+---------------Xray panel-----------------+\033[0m"
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
@@ -3382,6 +3383,9 @@ main_menu() {
             sudo bash toolbox.sh && sudo toolbox
 	    
 	     ;; 
+       66) echo "Running ..."
+            curl -Ls https://github.com/IRSupp/DnsTunnel/raw/main/Irsupp-DnsTunnel.sh -o Irsupp-DnsTunnel.sh
+            sudo bash Irsupp-DnsTunnel.sh ;;   
        	00) echo "updating...";
 	update ;;
 	0) echo "Exiting...";
