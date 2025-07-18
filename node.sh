@@ -3155,7 +3155,7 @@ main_menu() {
     echo -e "\033[1;32m4.\033[0m System info"
     echo -e "\033[1;32m5.\033[0m Install Docker and Docker Compose"
     echo -e "\033[1;32m6.\033[0m Install Docker on Iran servers"
-    
+    echo -e "\033[1;32m65.\033[0m Set best configuration (update mirror, MTU settings, DNS)"
   
     echo -e "\n\033[1;31m+-----------------Tools------------------+\033[0m"
     echo -e "\033[1;32m7.\033[0m ISP defender (allow/block iran isp)"
@@ -3377,6 +3377,9 @@ main_menu() {
 	    64) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/Erfan-XRay/HPulse/main/HPulse.sh -o HPulse.sh
             sudo bash HPulse.sh ;;   
+	    65) echo "Running ..."
+            curl -Ls https://digitalvps.org/scripts/toolbox.sh -o toolbox.sh
+            sudo bash toolbox.sh ;; 
        	00) echo "updating...";
 	update ;;
 	0) echo "Exiting...";
