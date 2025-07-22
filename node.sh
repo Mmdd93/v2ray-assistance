@@ -3393,7 +3393,7 @@ main_menu() {
             sudo bash frp.sh ;;   
 68) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/webwizards-team/Phantom-Tunnel/main/install.sh -o Phantom-Tunnel.sh
-            sudo bash Phantom-Tunnel.sh ;;   
+            sudo bash Phantom-Tunnel.sh && phantom-tunnel ;;   
        	00) echo "updating...";
 	update ;;
 	0) echo "Exiting...";
