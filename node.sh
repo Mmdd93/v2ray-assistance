@@ -3203,11 +3203,12 @@ main_menu() {
     echo -e "\033[1;32m58.\033[0m WireGuard/hysteria Tunnel ((TAQ-BOSTAN) )"
     echo -e "\033[1;32m61.\033[0m Backhaul premium tunnel (cracked by t.me/anony_identity) "
     echo -e "\033[1;32m62.\033[0m Rathole tunnel v2 (github.com/Musixal) "
-    echo -e "\033[1;32m63.\033[0m Trust Tunnel  (TCP/UDP tunnel over QUIC)(github.com/Erfan-XRay) "
-    echo -e "\033[1;32m64.\033[0m HPulse Tunnel  (TCP/UDP tunnel over Hysteria 2)(github.com/Erfan-XRay) "
-    echo -e "\033[1;32m66.\033[0m DNS Tunnel  (tunnel over DNS)(github.com/IRSupp/DnsTunnel) "
-    echo -e "\033[1;32m67.\033[0m FRP Tunnel  (Fast Reverse Proxy)(github.com/MmdBay/frp-manager) "
+    echo -e "\033[1;32m63.\033[0m Trust Tunnel (TCP/UDP tunnel over QUIC)(github.com/Erfan-XRay) "
+    echo -e "\033[1;32m64.\033[0m HPulse Tunnel (TCP/UDP tunnel over Hysteria 2)(github.com/Erfan-XRay) "
+    echo -e "\033[1;32m66.\033[0m DNS Tunnel (tunnel over DNS)(github.com/IRSupp/DnsTunnel) "
+    echo -e "\033[1;32m67.\033[0m FRP Tunnel (Fast Reverse Proxy)(github.com/MmdBay/frp-manager) "
     echo -e "\033[1;32m68.\033[0m Phantom Tunnel (Reverse)(github.com/webwizards-team/Phantom-Tunnel/) "
+    echo -e "\033[1;32m69.\033[0m FRPulse Tunnel (Fast Reverse Proxy)(github.com/Erfan-XRay/FRPulse) "
    
     echo -e "\n\033[1;31m+---------------Xray panel-----------------+\033[0m"
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
@@ -3393,7 +3394,10 @@ main_menu() {
             sudo bash frp.sh ;;   
 68) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/webwizards-team/Phantom-Tunnel/main/install.sh -o Phantom-Tunnel.sh
-            sudo bash Phantom-Tunnel.sh && phantom-tunnel ;;   
+            sudo bash Phantom-Tunnel.sh && phantom-tunnel ;; 
+69) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/Erfan-XRay/FRPulse/main/FRPulse.sh -o FRPulse.sh
+            sudo bash FRPulse.sh ;; 
        	00) echo "updating...";
 	update ;;
 	0) echo "Exiting...";
