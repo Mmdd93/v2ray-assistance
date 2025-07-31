@@ -3209,6 +3209,7 @@ main_menu() {
     echo -e "\033[1;32m67.\033[0m FRP Tunnel (Fast Reverse Proxy)(github.com/MmdBay/frp-manager) "
     echo -e "\033[1;32m68.\033[0m Phantom Tunnel (Reverse)(github.com/webwizards-team/Phantom-Tunnel/) "
     echo -e "\033[1;32m69.\033[0m FRPulse Tunnel (Fast Reverse Proxy)(github.com/Erfan-XRay/FRPulse) "
+    echo -e "\033[1;32m70.\033[0m FRP Tunnel (Fast Reverse Proxy) by Mehrad (github.com/mikeesierrah/frp-script) "
    
     echo -e "\n\033[1;31m+---------------Xray panel-----------------+\033[0m"
     echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
@@ -3398,6 +3399,9 @@ main_menu() {
 69) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/Erfan-XRay/FRPulse/main/FRPulse.sh -o FRPulse.sh
             sudo bash FRPulse.sh ;; 
+70) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/mikeesierrah/frp-script/main/frp-setup.sh -o frp-setup.sh
+            sudo bash frp-setup.sh ;; 
        	00) echo "updating...";
 	update ;;
 	0) echo "Exiting...";
