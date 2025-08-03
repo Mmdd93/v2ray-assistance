@@ -63,6 +63,7 @@
 	    { "Abd": "tg://resolve?domain=abdolreza1365" },
 	    { "Server": "tg://resolve?domain=amirmyari" },
 	    { "AV6": "tg://resolve?domain=" },
+	    { "Pov": "tg://resolve?domain=@P41444" },
       { "default": "tg://resolve?domain=tlgrmv2" }
     ],
     "downloadLinks": {
