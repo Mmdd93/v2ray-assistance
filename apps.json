@@ -64,6 +64,7 @@
 	    { "Server": "tg://resolve?domain=amirmyari" },
 	    { "AV6": "tg://resolve?domain=TempTeR7" },
 	    { "Pov": "tg://resolve?domain=@P41444" },
+		{ "ParsianMob": "tg://resolve?domain=" },
       { "default": "tg://resolve?domain=tlgrmv2" }
     ],
     "downloadLinks": {
