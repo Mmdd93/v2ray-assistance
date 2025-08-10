@@ -65,7 +65,7 @@
 	    { "AV6": "tg://resolve?domain=TempTeR7" },
 	    { "Pov": "tg://resolve?domain=@P41444" },
 		{ "ParsianMob": "tg://resolve?domain=" },
-      { "default": "tg://resolve?domain=tlgrmv2" }
+      { "default": "tg://resolve?domain=" }
     ],
     "downloadLinks": {
       "iOS": "https://play.google.com/store/apps/details?id=org.telegram.messenger"
