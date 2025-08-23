@@ -65,6 +65,7 @@
 	    { "AV6": "tg://resolve?domain=TempTeR7" },
 	    { "Pov": "tg://resolve?domain=@P41444" },
 		{ "ParsianMob": "tg://resolve?domain=" },
+		{ "M09": "tg://resolve?domain=" },
       { "default": "tg://resolve?domain=" }
     ],
     "downloadLinks": {
