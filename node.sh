@@ -3185,6 +3185,7 @@ main_menu() {
     echo -e "\033[1;32m35.\033[0m AWS cli"
     echo -e "\033[1;32m36.\033[0m Cron job management"
     echo -e "\033[1;32m37.\033[0m File management (Copy/Remove/Move/Rename etc.)"
+	echo -e "\033[1;32m71.\033[0m Abuse Defender (hetzner) (github.com/Kiya6955/Abuse-Defender)"
     
 
     echo -e "\n\033[1;31m+-----------------Tunnel-----------------+\033[0m"
@@ -3402,6 +3403,9 @@ main_menu() {
 70) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/mikeesierrah/frp-script/main/frp-setup.sh -o frp-setup.sh
             sudo bash frp-setup.sh ;; 
+71) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/Kiya6955/Abuse-Defender/main/abuse-defender.sh -o abuse-defender.sh
+            sudo bash abuse-defender.sh ;;
        	00) echo "updating...";
 	update ;;
 	0) echo "Exiting...";
