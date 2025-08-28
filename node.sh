@@ -3384,8 +3384,8 @@ main_menu() {
             curl -Ls https://raw.githubusercontent.com/Erfan-XRay/HPulse/main/HPulse.sh -o HPulse.sh
             sudo bash HPulse.sh ;;   
 	    65) echo "Running ..."
-            curl -Ls https://digitalvps.org/scripts/toolbox.sh -o toolbox.sh
-            sudo bash toolbox.sh && sudo toolbox
+            curl -Ls https://github.com/Digitalvps-Ir/Digitalvps-Toolbox/blob/main/toolbox.sh -o toolbox.sh
+            sudo bash toolbox.sh
 	    
 	     ;; 
        66) echo "Running ..."
