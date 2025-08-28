@@ -3155,7 +3155,7 @@ main_menu() {
     echo -e "\033[1;32m4.\033[0m System info"
     echo -e "\033[1;32m5.\033[0m Install Docker and Docker Compose"
     echo -e "\033[1;32m6.\033[0m Install Docker on Iran servers"
-	echo -e "\033[1;32m71.\033[0m MTU management "
+	echo -e "\033[1;32m72.\033[0m MTU management "
     echo -e "\033[1;32m65.\033[0m Set best configuration (update mirror, MTU settings, DNS)"
   
     echo -e "\n\033[1;31m+-----------------Tools------------------+\033[0m"
