@@ -3155,6 +3155,7 @@ main_menu() {
     echo -e "\033[1;32m4.\033[0m System info"
     echo -e "\033[1;32m5.\033[0m Install Docker and Docker Compose"
     echo -e "\033[1;32m6.\033[0m Install Docker on Iran servers"
+	echo -e "\033[1;32m71.\033[0m MTU management "
     echo -e "\033[1;32m65.\033[0m Set best configuration (update mirror, MTU settings, DNS)"
   
     echo -e "\n\033[1;31m+-----------------Tools------------------+\033[0m"
@@ -3406,6 +3407,9 @@ main_menu() {
 71) echo "Running ..."
             curl -Ls https://raw.githubusercontent.com/Kiya6955/Abuse-Defender/main/abuse-defender.sh -o abuse-defender.sh
             sudo bash abuse-defender.sh ;;
+			72) echo "Running ..."
+            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/mtu.sh -o mtu.sh
+            sudo bash mtu.sh ;;
        	00) echo "updating...";
 	update ;;
 	0) echo "Exiting...";
