@@ -216,12 +216,10 @@ marzban_cli_commands() {
 
         case $cli_choice in
             1)
-                read -p "Enter the admin name to create: " admin_name
-                sudo marzban cli admin create "$admin_name" || echo -e "\033[1;31mError occurred while creating admin. Returning to CLI commands.\033[0m"
+                sudo marzban cli admin create || echo -e "\033[1;31mError occurred while creating admin. Returning to CLI commands.\033[0m"
                 ;;
             2)
-                read -p "Enter the admin name to delete: " admin_name
-                sudo marzban cli admin delete "$admin_name" || echo -e "\033[1;31mError occurred while deleting admin. Returning to CLI commands.\033[0m"
+                sudo marzban cli admin delete || echo -e "\033[1;31mError occurred while deleting admin. Returning to CLI commands.\033[0m"
                 ;;
             3)
                 sudo marzban cli admin import-from-env || echo -e "\033[1;31mError occurred while importing admin. Returning to CLI commands.\033[0m"
@@ -230,8 +228,7 @@ marzban_cli_commands() {
                 sudo marzban cli admin list || echo -e "\033[1;31mError occurred while displaying admin list. Returning to CLI commands.\033[0m"
                 ;;
             5)
-                read -p "Enter the admin name to update: " admin_name
-                sudo marzban cli admin update "$admin_name" || echo -e "\033[1;31mError occurred while updating admin. Returning to CLI commands.\033[0m"
+                sudo marzban cli admin update || echo -e "\033[1;31mError occurred while updating admin. Returning to CLI commands.\033[0m"
                 ;;
             0)
                 return
