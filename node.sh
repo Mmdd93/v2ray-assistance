@@ -3141,286 +3141,512 @@ update() {
     curl -Lso /usr/bin/v2 https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/node.sh
     chmod +x /usr/bin/v2
 }
+#!/bin/bash
+
+# Colors for better visual organization
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+MAGENTA='\033[1;35m'
+CYAN='\033[1;36m'
+WHITE='\033[1;37m'
+NC='\033[0m' # No Color
+
+# Header function
+display_header() {
+    clear
+    echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║${NC}${CYAN}                   v2ray ASSISTANT MANAGEMENT TOOL                   ${NC}${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}${YELLOW}              Telegram: @tlgrmv2 | Version: 25.5.29                ${NC}${GREEN}║${NC}"
+    echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+}
+
+# Function to display section headers
+section_header() {
+    echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║${NC}${WHITE} $1 ${NC}${BLUE}║${NC}"
+    echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
+}
+
+# Function to display menu options with better formatting
+menu_option() {
+    printf "${GREEN}%3s${NC} ${YELLOW}%-55s${NC}\n" "$1" "$2"
+}
+
+# Function to display a horizontal separator
+separator() {
+    echo -e "${MAGENTA}──────────────────────────────────────────────────────────────────────${NC}"
+}
+
+# Function to validate IP addresses
+validate_ip() {
+    local ip=$1
+    local stat=1
+    
+    if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        OIFS=$IFS
+        IFS='.'
+        ip=($ip)
+        IFS=$OIFS
+        [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
+        stat=$?
+    fi
+    return $stat
+}
+
+# Function to validate domain names
+validate_domain() {
+    local domain=$1
+    if [[ $domain =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Function to display a confirmation prompt
+confirm_action() {
+    local prompt=$1
+    read -p "$prompt (y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Function to display a status message
+show_status() {
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ ${2}${NC}"
+    else
+        echo -e "${RED}✗ ${2}${NC}"
+    fi
+}
+
+# Function to display a progress bar
+progress_bar() {
+    local duration=${1}
+    local bars=50
+    local filled=0
+    local progress=0
+    
+    for ((i=0; i<=$bars; i++)); do
+        filled=$i
+        progress=$((i * 2))
+        printf "\r["
+        printf "%${filled}s" | tr ' ' '='
+        printf "%$((bars-filled))s" | tr ' ' ' '
+        printf "] ${progress}%%"
+        sleep $((duration * 10 / bars))
+    done
+    printf "\n"
+}
+
 # Main menu function
 main_menu() {
     while true; do
-    clear
-    echo -e "\033[1;32mv2ray-assistant | Telegram: @tlgrmv2 \033[0m"
-    echo -e "\033[1;32mv:25.5.29\033[0m"
-    echo -e "\033[1;31m+----------Update and upgrade----------+\033[0m"
-    echo -e "\033[1;32m00.\033[0m Update scripts"
-    echo -e "\033[1;32m1.\033[0m Update and upgrade + install necessary packages"
-    echo -e "\033[1;32m2.\033[0m Fix update issues (broken apt or dependencies)"
-    echo -e "\033[1;32m3.\033[0m Change Update sources to Iran"
-    echo -e "\033[1;32m4.\033[0m System info"
-    echo -e "\033[1;32m5.\033[0m Install Docker and Docker Compose"
-    echo -e "\033[1;32m6.\033[0m Install Docker on Iran servers"
-	echo -e "\033[1;32m72.\033[0m MTU management "
-   #echo -e "\033[1;32m65.\033[0m Set best configuration (update mirror, MTU settings, DNS)"
-  
-    echo -e "\n\033[1;31m+-----------------Tools------------------+\033[0m"
-    echo -e "\033[1;32m7.\033[0m ISP defender (allow/block iran isp)"
-    echo -e "\033[1;32m8.\033[0m Network Optimizer, BBR"
-    echo -e "\033[1;32m9.\033[0m Speed test, benchmark"
-    echo -e "\033[1;32m10.\033[0m Port (in-use ports, connected IPs, kill process)"
-    echo -e "\033[1;32m11.\033[0m Auto Clear cache, Auto server reboot"
-    echo -e "\033[1;32m12.\033[0m Ping (Disable/enable)"
-    echo -e "\033[1;32m13.\033[0m DNS (Change server DNS)"
-    echo -e "\033[1;32m14.\033[0m DNS (Create your personal DNS)"
-    echo -e "\033[1;32m15.\033[0m SSL certificate management"
-    echo -e "\033[1;32m16.\033[0m SWAP management"
-    echo -e "\033[1;32m17.\033[0m Desktop + firefox on ubuntu server"
-    echo -e "\033[1;32m18.\033[0m Server monthly traffic limit"
-    echo -e "\033[1;32m19.\033[0m CPU/RAM MONITORING"
-    echo -e "\033[1;32m20.\033[0m UFW management"
-    echo -e "\033[1;32m21.\033[0m Cloudflare auto ip changer"
-    echo -e "\033[1;32m22.\033[0m IP quality checks"
-    echo -e "\033[1;32m23.\033[0m Nginx management"
-    echo -e "\033[1;32m24.\033[0m IPV6 (Enable/Disable)"
-    echo -e "\033[1;32m25.\033[0m ZRAM (Optimize RAM)"
-    echo -e "\033[1;32m29.\033[0m Send File to Remote Server & Forward to Telegram"
-    echo -e "\033[1;32m30.\033[0m Auto Check URLs"
-    echo -e "\033[1;32m32.\033[0m Change timezone (Fix WhatsApp Time)"
-    echo -e "\033[1;32m33.\033[0m Secure SSH (fail2ban)"
-    echo -e "\033[1;32m34.\033[0m Block torrent"
-    echo -e "\033[1;32m35.\033[0m AWS cli"
-    echo -e "\033[1;32m36.\033[0m Cron job management"
-    echo -e "\033[1;32m37.\033[0m File management (Copy/Remove/Move/Rename etc.)"
-	echo -e "\033[1;32m71.\033[0m Abuse Defender (hetzner) (github.com/Kiya6955/Abuse-Defender)"
-    
-
-    echo -e "\n\033[1;31m+-----------------Tunnel-----------------+\033[0m"
-    echo -e "\e[1;34mCombine local tunnels (SIT, GRE, GENEVE, VXLAN) with:\e[0m"
-    echo -e "\e[1;34mBackhaul, GOST, WSS, etc., for enhanced stealth and obfuscation.\e[0m"
-    echo -e "\033[1;32m26.\033[0m SIT tunnel 6to4 (IPV6 local)"
-    echo -e "\033[1;32m28.\033[0m GRE tunnel (IPV4/IPV6 local)"
-    echo -e "\033[1;32m45.\033[0m GENEVE tunnel (IPV4 local)"
-    echo -e "\033[1;32m46.\033[0m VXLAN tunnel (IPV4 local)"
-    echo -e "\033[1;32m31.\033[0m HAProxy tunnel"
-    echo -e "\033[1;32m27.\033[0m Backhaul tunnel (github.com/Musixal)"
-    echo -e "\033[1;32m44.\033[0m GOST tunnel"
-    echo -e "\033[1;32m55.\033[0m GOST Reverse tunnel"
-    echo -e "\033[1;32m47.\033[0m WSS,WS tunnel (CDN support)"
-    echo -e "\033[1;32m56.\033[0m WireGuard Reverse Tunnel (EYLAN Tunnel )"
-    echo -e "\033[1;32m58.\033[0m WireGuard/hysteria Tunnel ((TAQ-BOSTAN) )"
-    echo -e "\033[1;32m61.\033[0m Backhaul premium tunnel (cracked by t.me/anony_identity) "
-    echo -e "\033[1;32m62.\033[0m Rathole tunnel v2 (github.com/Musixal) "
-    echo -e "\033[1;32m63.\033[0m Trust Tunnel (TCP/UDP tunnel over QUIC)(github.com/Erfan-XRay) "
-    echo -e "\033[1;32m64.\033[0m HPulse Tunnel (TCP/UDP tunnel over Hysteria 2)(github.com/Erfan-XRay) "
-    echo -e "\033[1;32m66.\033[0m DNS Tunnel (tunnel over DNS)(github.com/IRSupp/DnsTunnel) "
-    echo -e "\033[1;32m67.\033[0m FRP Tunnel (Fast Reverse Proxy)(github.com/MmdBay/frp-manager) "
-    echo -e "\033[1;32m68.\033[0m Phantom Tunnel (Reverse)(github.com/webwizards-team/Phantom-Tunnel/) "
-    echo -e "\033[1;32m69.\033[0m FRPulse Tunnel (Fast Reverse Proxy)(github.com/Erfan-XRay/FRPulse) "
-    echo -e "\033[1;32m70.\033[0m FRP Tunnel (Fast Reverse Proxy) by Mehrad (github.com/mikeesierrah/frp-script) "
-   
-    echo -e "\n\033[1;31m+---------------Xray panel-----------------+\033[0m"
-    echo -e "\033[1;32m38.\033[0m X-UI panel (x-ui 3x-ui tx-ui)"
-    echo -e "\033[1;34m+-----------------------------------------+\033[0m"
-    echo -e "\033[1;32m39.\033[0m Marzban panel"
-    echo -e "\033[1;32m40.\033[0m Marzban node by v2"
-    echo -e "\033[1;32m53.\033[0m Marzban node official script"
-    echo -e "\033[1;32m52.\033[0m Marzban node by Mehrdad"
-    echo -e "\033[1;34m+-----------------------------------------+\033[0m"
-    echo -e "\033[1;32m48.\033[0m Remnawave"
-    echo -e "\033[1;34m+-----------------------------------------+\033[0m"
-    echo -e "\033[1;32m49.\033[0m Marzneshin"
-    echo -e "\033[1;32m50.\033[0m Marzneshin node by ErfJab"
-    echo -e "\033[1;32m51.\033[0m Marzneshin node by Mehrdad"
-    echo -e "\033[1;34m+-----------------------------------------+\033[0m"
-    echo -e "\033[1;32m60.\033[0m WGDashboard (dashboard to manage WireGuard)"
-    echo -e "\033[1;32m54.\033[0m SoftEther by RTX-VPN v2 (L2TP, OpenVPN, SSTP)"
-    echo -e "\033[1;32m57.\033[0m OPENVPN Webpanel (Multi node location)"
-    echo -e "\033[1;32m41.\033[0m Panel Backup (Marzban,X-UI,Hiddify,Marzneshin)+transfer panel data"
-    echo -e "\033[1;32m42.\033[0m Auto panel restart"
-    echo -e "\033[1;32m59.\033[0m Uptime Kuma"
-    echo -e "\033[1;31m+-----------------------------------------+\033[0m"
-    echo -e "\033[1;32m00.\033[0m Update scripts"
-    echo -e "\033[1;31m0.\033[0m Exit"
-
-    read -p "Enter your choice: " choice
-    
-    case $choice in
-        1) update_system
-           install_packages ;;
-        2) fix_update_issues ;;
-        3) change_sources_list ;;
-        4) display_system_info ;;
-        5) docker_install_menu ;;
-        6) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/Docker.sh -o Docker.sh
-            sudo bash Docker.sh ;;
-        7) isp_blocker ;;
-        8) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/optimizations.sh -o optimizations.sh
-            sudo bash optimizations.sh ;;
-        9) run_system_benchmark ;;
-        10) initial_menu ;;
-        11) setup_cache_and_reboot ;;
-        12) manage_ping ;;
-        13) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/ChangeDNS.sh -o ChangeDNS.sh
-            sudo bash ChangeDNS.sh ;;
-        14) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/snidust.sh -o snidust.sh
-            sudo bash snidust.sh ;;
-        15) curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/ssl.sh -o ssl.sh
-            sudo bash ssl.sh ;;
-        16) swap ;;
-        17) webtop ;;
-        18) traffic ;;
-        19) usage ;;
-        20) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/ufw.sh -o ufw.sh
-            sudo bash ufw.sh ;;
-        21) cf-auto-ip ;;
-        22) ip_quality_check ;;
-        23) curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/nginx.sh -o nginx.sh
-            sudo bash nginx.sh ;;
-        24) manage_ipv6 ;;
-        25) manage_zram ;;
-        26) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/6to4-service-method.sh -o 6to4-service-method.sh
-		sudo bash 6to4-service-method.sh ;;
-        27) run_backhaul_script ;;
-        28) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/gre-service-method.sh -o gre-service-method.sh
-            sudo bash gre-service-method.sh ;;
-        29) download_and_run_ssh_assistance ;;
-        30) curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup_URLs_check.sh -o setup_URLs_check.sh
-            sudo bash setup_URLs_check.sh ;;
-        31) echo -e "\033[1;34mRunning HAproxy.sh...\033[0m"
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/HAproxy.sh -o HAproxy.sh
-	    sudo bash HAproxy.sh
-            ;;
-        32) change_timezone
-            sleep 2 ;;
-        33) echo "Running installer fail2ban script for ssh security..."
-            sleep 2
-            curl -fsSL https://raw.githubusercontent.com/MrAminiDev/NetOptix/main/scripts/fail2ban.sh -o /tmp/fail2ban.sh
-            bash /tmp/fail2ban.sh
-            rm /tmp/fail2ban.sh ;;
-        34) echo "Running Block torrent list..."
-            sleep 2
-            curl -fsSL https://raw.githubusercontent.com/MrAminiDev/NetOptix/main/scripts/blocktorrent/blocktorrent.sh -o /tmp/blocktorrent.sh
-            bash /tmp/blocktorrent.sh
-            rm /tmp/blocktorrent.sh ;;
-        35) echo "Running AWS cli..."
-            sleep 1
-            curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/main/aws-cli.sh -o aws-cli.sh
-            sudo bash aws-cli.sh ;;
-        36) echo "Running cron..."
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/cron.sh -o cron.sh
-            sudo bash cron.sh ;;
-        37) echo "Running file management..."
-            curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/file_management.sh -o file_management.sh
-            sudo bash file_management.sh ;;
-        38) xui ;;
-        39) echo "Running marzban.sh..."
-            curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/marzban.sh -o marzban.sh
-            sudo bash marzban.sh ;;
-        40) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/marzban-node-v2.sh -o marzban-node-v2.sh
-            sudo bash marzban-node-v2.sh ;;
-        41) backup_menu ;;
-        42) panels_restart_cron ;;
+        display_header
         
-	44) echo "Running gost..."
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/gost.sh -o gost.sh
-            sudo bash gost.sh ;;
-	45) echo "Running geneve..."
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/geneve-service-method.sh -o geneve-service-method.sh
-            sudo bash geneve-service-method.sh ;;
-	46) echo "Running geneve..."
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/vxlan-service-method.sh -o vxlan-service-method.sh
-            sudo bash vxlan-service-method.sh ;;
-	47) echo "Running wstunnel.sh..."
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/wstunnel.sh -o wstunnel.sh
-            sudo bash wstunnel.sh ;;
-	48) echo "Running Remnawave..."
-            curl -Ls https://raw.githubusercontent.com/AsanFillter/Remnawave-AutoSetup/main/start.sh -o Remnawave.sh
-            sudo bash Remnawave.sh ;;
-	49) echo "Running marzneshin..."
-            curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/marzneshin.sh -o marzneshin.sh
-            sudo bash marzneshin.sh ;;
-	50) echo "Running marznode1..."
-            curl -Ls https://raw.githubusercontent.com/erfjab/marznode/main/install.sh -o marznode1.sh
-            sudo bash marznode1.sh ;;
-	51) echo "Running marznode2..."
-            curl -Ls https://raw.githubusercontent.com/mikeesierrah/ez-node/main/marznode.sh -o marznode2.sh
-            sudo bash marznode2.sh ;;
-	52) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/mikeesierrah/ez-node/main/marzban-node.sh -o marzban-node.sh
-            sudo bash marzban-node.sh ;;
-	53) echo "Running ..."
-            manage_marzban_node ;;
-	54) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/Sir-MmD/RTX-VPN/v2/rtxvpn_v2.sh -o rtxvpn_v2.sh
-            sudo bash rtxvpn_v2.sh ;;
-	55) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/Reverse-gost.sh -o Reverse-gost.sh
-            sudo bash Reverse-gost.sh ;;
-	56) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/eylandoo/openvpn_webpanel_manager/main/wg-tunnel-manager.sh -o wg-tunnel-manager.sh
-            sudo bash wg-tunnel-manager.sh ;;
-	57) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/eylandoo/openvpn_webpanel_manager/main/vpn_manager.sh -o openvpn_webpanel_manager.sh
-            sudo bash openvpn_webpanel_manager.sh ;;
-	58) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/ParsaKSH/TAQ-BOSTAN/main/script.sh -o hysteria_tunnel.sh
-            sudo bash hysteria_tunnel.sh ;;
-59) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/UptimeKuma.sh -o UptimeKuma.sh
-            sudo bash UptimeKuma.sh ;;  
-	60) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/WGDashboard.sh -o WGDashboard.sh
-            sudo bash WGDashboard.sh ;;  
-
-     61) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul.sh -o backhaul-cracked.sh
-            sudo bash backhaul-cracked.sh ;;  
-
-62) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/Musixal/Rathole-Tunnel/refs/heads/main/rathole_v2.sh -o rathole_v2.sh
-            sudo bash rathole_v2.sh ;; 
-	 63) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/Erfan-XRay/TrustTunnel/main/main.sh -o TrustTunnel.sh
-            sudo bash TrustTunnel.sh ;;  
-	    64) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/Erfan-XRay/HPulse/main/HPulse.sh -o HPulse.sh
-            sudo bash HPulse.sh ;;   
-	    65) echo "Running ..."
-            curl -Ls https://github.com/Digitalvps-Ir/Digitalvps-Toolbox/blob/main/toolbox.sh -o toolbox.sh
-            sudo bash toolbox.sh
-	    
-	     ;; 
-       66) echo "Running ..."
-            curl -Ls https://github.com/IRSupp/DnsTunnel/raw/main/Irsupp-DnsTunnel.sh -o Irsupp-DnsTunnel.sh
-            sudo bash Irsupp-DnsTunnel.sh ;;   
-67) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/mmdbay/frp-manager/main/frp.sh -o frp.sh
-            sudo bash frp.sh ;;   
-68) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/webwizards-team/Phantom-Tunnel/main/install.sh -o Phantom-Tunnel.sh
-            sudo bash Phantom-Tunnel.sh && phantom ;; 
-69) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/Erfan-XRay/FRPulse/main/FRPulse.sh -o FRPulse.sh
-            sudo bash FRPulse.sh ;; 
-70) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/mikeesierrah/frp-script/main/frp-setup.sh -o frp-setup.sh
-            sudo bash frp-setup.sh ;; 
-71) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/Kiya6955/Abuse-Defender/main/abuse-defender.sh -o abuse-defender.sh
-            sudo bash abuse-defender.sh ;;
-			72) echo "Running ..."
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/mtu.sh -o mtu.sh
-            sudo bash mtu.sh ;;
-       	00) echo "updating...";
-	update ;;
-	0) echo "Exiting...";
-	exit 0
- ;;
-        *) echo "Invalid choice. Please try again." ;;
-    esac
+        # System section
+        section_header "SYSTEM MANAGEMENT"
+        menu_option "1" "Update and upgrade system + install packages"
+        menu_option "2" "Fix update issues (broken apt/dependencies)"
+        menu_option "3" "Change update sources to Iran"
+        menu_option "4" "System information"
+        menu_option "5" "Install Docker and Docker Compose"
+        menu_option "6" "Install Docker on Iran servers"
+        menu_option "72" "MTU management"
+        separator
+        
+        # Tools section
+        section_header "NETWORK TOOLS"
+        menu_option "7" "ISP defender (allow/block Iran ISPs)"
+        menu_option "8" "Network Optimizer and BBR"
+        menu_option "9" "Speed test and benchmark"
+        menu_option "10" "Port management (in-use ports, connected IPs)"
+        menu_option "11" "Auto clear cache and server reboot"
+        menu_option "12" "Ping management (enable/disable)"
+        menu_option "13" "Change server DNS"
+        menu_option "14" "Create personal DNS"
+        menu_option "15" "SSL certificate management"
+        menu_option "16" "SWAP management"
+        menu_option "17" "Desktop + Firefox on Ubuntu server"
+        menu_option "18" "Server monthly traffic limit"
+        menu_option "19" "CPU/RAM monitoring"
+        menu_option "20" "UFW firewall management"
+        menu_option "21" "Cloudflare auto IP changer"
+        menu_option "22" "IP quality checks"
+        menu_option "23" "Nginx management"
+        menu_option "24" "IPv6 management (enable/disable)"
+        menu_option "25" "ZRAM optimization"
+        menu_option "29" "Send file to remote server & Telegram"
+        menu_option "30" "Auto check URLs"
+        menu_option "32" "Change timezone (Fix WhatsApp time)"
+        menu_option "33" "Secure SSH (fail2ban)"
+        menu_option "34" "Block torrent traffic"
+        menu_option "35" "AWS CLI installation"
+        menu_option "36" "Cron job management"
+        menu_option "37" "File management tools"
+        menu_option "71" "Abuse Defender (Hetzner)"
+        separator
+        
+        # Tunnel section
+        section_header "TUNNEL SERVICES"
+        echo -e "${CYAN}Combine local tunnels (SIT, GRE, GENEVE, VXLAN) with:${NC}"
+        echo -e "${CYAN}Backhaul, GOST, WSS, etc., for enhanced stealth${NC}"
+        separator
+        menu_option "26" "SIT tunnel 6to4 (IPv6 local)"
+        menu_option "28" "GRE tunnel (IPv4/IPv6 local)"
+        menu_option "45" "GENEVE tunnel (IPv4 local)"
+        menu_option "46" "VXLAN tunnel (IPv4 local)"
+        menu_option "31" "HAProxy tunnel"
+        menu_option "27" "Backhaul tunnel"
+        menu_option "44" "GOST tunnel"
+        menu_option "55" "GOST Reverse tunnel"
+        menu_option "47" "WSS/WS tunnel (CDN support)"
+        menu_option "56" "WireGuard Reverse Tunnel (EYLAN)"
+        menu_option "58" "WireGuard/Hysteria Tunnel (TAQ-BOSTAN)"
+        menu_option "61" "Backhaul premium tunnel"
+        menu_option "62" "Rathole tunnel v2"
+        menu_option "63" "Trust Tunnel (TCP/UDP over QUIC)"
+        menu_option "64" "HPulse Tunnel (TCP/UDP over Hysteria 2)"
+        menu_option "66" "DNS Tunnel (tunnel over DNS)"
+        menu_option "67" "FRP Tunnel (Fast Reverse Proxy)"
+        menu_option "68" "Phantom Tunnel (Reverse)"
+        menu_option "69" "FRPulse Tunnel (Fast Reverse Proxy)"
+        menu_option "70" "FRP Tunnel by Mehrad"
+        separator
+        
+        # Panel section
+        section_header "PANEL MANAGEMENT"
+        menu_option "38" "X-UI panel (x-ui, 3x-ui, tx-ui)"
+        separator
+        menu_option "39" "Marzban panel"
+        menu_option "40" "Marzban node by v2"
+        menu_option "53" "Marzban node official script"
+        menu_option "52" "Marzban node by Mehrdad"
+        separator
+        menu_option "48" "Remnawave"
+        separator
+        menu_option "49" "Marzneshin"
+        menu_option "50" "Marzneshin node by ErfJab"
+        menu_option "51" "Marzneshin node by Mehrdad"
+        separator
+        menu_option "60" "WGDashboard (WireGuard management)"
+        menu_option "54" "SoftEther by RTX-VPN v2 (L2TP, OpenVPN, SSTP)"
+        menu_option "57" "OPENVPN Webpanel (Multi node location)"
+        menu_option "41" "Panel Backup (Marzban, X-UI, Hiddify)"
+        menu_option "42" "Auto panel restart"
+        menu_option "59" "Uptime Kuma monitoring"
+        separator
+        
+        # Footer options
+        section_header "MAINTENANCE"
+        menu_option "00" "Update scripts"
+        menu_option "0" "Exit"
+        echo ""
+        
+        read -p "$(echo -e ${GREEN}"Enter your choice [0-72]: "${NC})" choice
+        
+        case $choice in
+            1) 
+                echo -e "${YELLOW}Updating system and installing packages...${NC}"
+                progress_bar 5
+                update_system
+                install_packages 
+                ;;
+            2) 
+                if confirm_action "Fix update issues?"; then
+                    fix_update_issues
+                fi
+                ;;
+            3) 
+                if confirm_action "Change update sources to Iran?"; then
+                    change_sources_list
+                fi
+                ;;
+            4) display_system_info ;;
+            5) docker_install_menu ;;
+            6) 
+                echo -e "${YELLOW}Installing Docker on Iran servers...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/Docker.sh -o Docker.sh
+                sudo bash Docker.sh 
+                show_status "Docker installation completed"
+                ;;
+            7) isp_blocker ;;
+            8) 
+                echo -e "${YELLOW}Running network optimization...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/optimizations.sh -o optimizations.sh
+                sudo bash optimizations.sh 
+                ;;
+            9) run_system_benchmark ;;
+            10) initial_menu ;;
+            11) setup_cache_and_reboot ;;
+            12) manage_ping ;;
+            13) 
+                echo -e "${YELLOW}Changing DNS settings...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/ChangeDNS.sh -o ChangeDNS.sh
+                sudo bash ChangeDNS.sh 
+                ;;
+            14) 
+                echo -e "${YELLOW}Creating personal DNS...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/snidust.sh -o snidust.sh
+                sudo bash snidust.sh 
+                ;;
+            15) 
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/ssl.sh -o ssl.sh
+                sudo bash ssl.sh 
+                ;;
+            16) swap ;;
+            17) webtop ;;
+            18) traffic ;;
+            19) usage ;;
+            20) 
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/ufw.sh -o ufw.sh
+                sudo bash ufw.sh 
+                ;;
+            21) cf-auto-ip ;;
+            22) ip_quality_check ;;
+            23) 
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/nginx.sh -o nginx.sh
+                sudo bash nginx.sh 
+                ;;
+            24) manage_ipv6 ;;
+            25) manage_zram ;;
+            26) 
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/6to4-service-method.sh -o 6to4-service-method.sh
+                sudo bash 6to4-service-method.sh 
+                ;;
+            27) run_backhaul_script ;;
+            28) 
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/gre-service-method.sh -o gre-service-method.sh
+                sudo bash gre-service-method.sh 
+                ;;
+            29) download_and_run_ssh_assistance ;;
+            30) 
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/setup_URLs_check.sh -o setup_URLs_check.sh
+                sudo bash setup_URLs_check.sh 
+                ;;
+            31) 
+                echo -e "${YELLOW}Setting up HAProxy tunnel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/HAproxy.sh -o HAproxy.sh
+                sudo bash HAproxy.sh
+                ;;
+            32) 
+                change_timezone
+                sleep 2 
+                ;;
+            33) 
+                echo -e "${YELLOW}Installing fail2ban for SSH security...${NC}"
+                curl -fsSL https://raw.githubusercontent.com/MrAminiDev/NetOptix/main/scripts/fail2ban.sh -o /tmp/fail2ban.sh
+                bash /tmp/fail2ban.sh
+                rm /tmp/fail2ban.sh
+                show_status "fail2ban installation completed"
+                ;;
+            34) 
+                echo -e "${YELLOW}Blocking torrent traffic...${NC}"
+                curl -fsSL https://raw.githubusercontent.com/MrAminiDev/NetOptix/main/scripts/blocktorrent/blocktorrent.sh -o /tmp/blocktorrent.sh
+                bash /tmp/blocktorrent.sh
+                rm /tmp/blocktorrent.sh
+                show_status "Torrent blocking completed"
+                ;;
+            35) 
+                echo -e "${YELLOW}Installing AWS CLI...${NC}"
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/main/aws-cli.sh -o aws-cli.sh
+                sudo bash aws-cli.sh 
+                ;;
+            36) 
+                echo -e "${YELLOW}Managing cron jobs...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/cron.sh -o cron.sh
+                sudo bash cron.sh 
+                ;;
+            37) 
+                echo -e "${YELLOW}File management tools...${NC}"
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/file_management.sh -o file_management.sh
+                sudo bash file_management.sh 
+                ;;
+            38) xui ;;
+            39) 
+                echo -e "${YELLOW}Installing Marzban panel...${NC}"
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/marzban.sh -o marzban.sh
+                sudo bash marzban.sh 
+                ;;
+            40) 
+                echo -e "${YELLOW}Installing Marzban node by v2...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/marzban-node-v2.sh -o marzban-node-v2.sh
+                sudo bash marzban-node-v2.sh 
+                ;;
+            41) backup_menu ;;
+            42) panels_restart_cron ;;
+            44) 
+                echo -e "${YELLOW}Setting up GOST tunnel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/gost.sh -o gost.sh
+                sudo bash gost.sh 
+                ;;
+            45) 
+                echo -e "${YELLOW}Setting up GENEVE tunnel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/geneve-service-method.sh -o geneve-service-method.sh
+                sudo bash geneve-service-method.sh 
+                ;;
+            46) 
+                echo -e "${YELLOW}Setting up VXLAN tunnel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/vxlan-service-method.sh -o vxlan-service-method.sh
+                sudo bash vxlan-service-method.sh 
+                ;;
+            47) 
+                echo -e "${YELLOW}Setting up WSS/WS tunnel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/wstunnel.sh -o wstunnel.sh
+                sudo bash wstunnel.sh 
+                ;;
+            48) 
+                echo -e "${YELLOW}Installing Remnawave...${NC}"
+                curl -Ls https://raw.githubusercontent.com/AsanFillter/Remnawave-AutoSetup/main/start.sh -o Remnawave.sh
+                sudo bash Remnawave.sh 
+                ;;
+            49) 
+                echo -e "${YELLOW}Installing Marzneshin...${NC}"
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/marzneshin.sh -o marzneshin.sh
+                sudo bash marzneshin.sh 
+                ;;
+            50) 
+                echo -e "${YELLOW}Installing Marzneshin node by ErfJab...${NC}"
+                curl -Ls https://raw.githubusercontent.com/erfjab/marznode/main/install.sh -o marznode1.sh
+                sudo bash marznode1.sh 
+                ;;
+            51) 
+                echo -e "${YELLOW}Installing Marzneshin node by Mehrdad...${NC}"
+                curl -Ls https://raw.githubusercontent.com/mikeesierrah/ez-node/main/marznode.sh -o marznode2.sh
+                sudo bash marznode2.sh 
+                ;;
+            52) 
+                echo -e "${YELLOW}Installing Marzban node by Mehrdad...${NC}"
+                curl -Ls https://raw.githubusercontent.com/mikeesierrah/ez-node/main/marzban-node.sh -o marzban-node.sh
+                sudo bash marzban-node.sh 
+                ;;
+            53) manage_marzban_node ;;
+            54) 
+                echo -e "${YELLOW}Installing SoftEther by RTX-VPN v2...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Sir-MmD/RTX-VPN/v2/rtxvpn_v2.sh -o rtxvpn_v2.sh
+                sudo bash rtxvpn_v2.sh 
+                ;;
+            55) 
+                echo -e "${YELLOW}Setting up GOST Reverse tunnel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/Reverse-gost.sh -o Reverse-gost.sh
+                sudo bash Reverse-gost.sh 
+                ;;
+            56) 
+                echo -e "${YELLOW}Setting up WireGuard Reverse Tunnel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/eylandoo/openvpn_webpanel_manager/main/wg-tunnel-manager.sh -o wg-tunnel-manager.sh
+                sudo bash wg-tunnel-manager.sh 
+                ;;
+            57) 
+                echo -e "${YELLOW}Setting up OpenVPN Webpanel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/eylandoo/openvpn_webpanel_manager/main/vpn_manager.sh -o openvpn_webpanel_manager.sh
+                sudo bash openvpn_webpanel_manager.sh 
+                ;;
+            58) 
+                echo -e "${YELLOW}Setting up Hysteria Tunnel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/ParsaKSH/TAQ-BOSTAN/main/script.sh -o hysteria_tunnel.sh
+                sudo bash hysteria_tunnel.sh 
+                ;;
+            59) 
+                echo -e "${YELLOW}Installing Uptime Kuma...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/UptimeKuma.sh -o UptimeKuma.sh
+                sudo bash UptimeKuma.sh 
+                ;;
+            60) 
+                echo -e "${YELLOW}Installing WGDashboard...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/WGDashboard.sh -o WGDashboard.sh
+                sudo bash WGDashboard.sh 
+                ;;
+            61) 
+                echo -e "${YELLOW}Setting up Backhaul premium tunnel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul.sh -o backhaul-cracked.sh
+                sudo bash backhaul-cracked.sh 
+                ;;
+            62) 
+                echo -e "${YELLOW}Setting up Rathole tunnel v2...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Musixal/Rathole-Tunnel/refs/heads/main/rathole_v2.sh -o rathole_v2.sh
+                sudo bash rathole_v2.sh 
+                ;;
+            63) 
+                echo -e "${YELLOW}Setting up Trust Tunnel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Erfan-XRay/TrustTunnel/main/main.sh -o TrustTunnel.sh
+                sudo bash TrustTunnel.sh 
+                ;;
+            64) 
+                echo -e "${YELLOW}Setting up HPulse Tunnel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Erfan-XRay/HPulse/main/HPulse.sh -o HPulse.sh
+                sudo bash HPulse.sh 
+                ;;
+            65) 
+                echo -e "${YELLOW}Running DigitalVPS Toolbox...${NC}"
+                curl -Ls https://github.com/Digitalvps-Ir/Digitalvps-Toolbox/blob/main/toolbox.sh -o toolbox.sh
+                sudo bash toolbox.sh
+                ;;
+            66) 
+                echo -e "${YELLOW}Setting up DNS Tunnel...${NC}"
+                curl -Ls https://github.com/IRSupp/DnsTunnel/raw/main/Irsupp-DnsTunnel.sh -o Irsupp-DnsTunnel.sh
+                sudo bash Irsupp-DnsTunnel.sh 
+                ;;
+            67) 
+                echo -e "${YELLOW}Setting up FRP Tunnel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/mmdbay/frp-manager/main/frp.sh -o frp.sh
+                sudo bash frp.sh 
+                ;;
+            68) 
+                echo -e "${YELLOW}Setting up Phantom Tunnel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/webwizards-team/Phantom-Tunnel/main/install.sh -o Phantom-Tunnel.sh
+                sudo bash Phantom-Tunnel.sh && phantom 
+                ;;
+            69) 
+                echo -e "${YELLOW}Setting up FRPulse Tunnel...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Erfan-XRay/FRPulse/main/FRPulse.sh -o FRPulse.sh
+                sudo bash FRPulse.sh 
+                ;;
+            70) 
+                echo -e "${YELLOW}Setting up FRP Tunnel by Mehrad...${NC}"
+                curl -Ls https://raw.githubusercontent.com/mikeesierrah/frp-script/main/frp-setup.sh -o frp-setup.sh
+                sudo bash frp-setup.sh 
+                ;;
+            71) 
+                echo -e "${YELLOW}Running Abuse Defender...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Kiya6955/Abuse-Defender/main/abuse-defender.sh -o abuse-defender.sh
+                sudo bash abuse-defender.sh 
+                ;;
+            72) 
+                echo -e "${YELLOW}Managing MTU settings...${NC}"
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/mtu.sh -o mtu.sh
+                sudo bash mtu.sh 
+                ;;
+            00) 
+                echo -e "${YELLOW}Updating scripts...${NC}"
+                update 
+                ;;
+            0) 
+                echo -e "${GREEN}Exiting... Thank you for using v2ray Assistant!${NC}"
+                exit 0
+                ;;
+            *) 
+                echo -e "${RED}Invalid choice. Please try again.${NC}"
+                sleep 2
+                ;;
+        esac
+        
+        echo ""
+        read -p "$(echo -e ${GREEN}"Press Enter to continue..."${NC})" dummy
     done
 }
+
 # Start the main menu
-
-
 main_menu
 
