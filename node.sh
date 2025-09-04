@@ -3364,7 +3364,7 @@ main_menu() {
         
         # Panel section
         section_header "PANEL MANAGEMENT"
-        menu_option "38" "X-UI panel (x-ui, 3x-ui, tx-ui)"
+        menu_option "38" "X-UI panels (x-ui, 3x-ui, tx-ui)"
         separator
         menu_option "39" "Marzban panel"
         menu_option "40" "Marzban node by v2"
