@@ -3138,8 +3138,44 @@ change_timezone() {
     done
 }
 update() {
-    curl -Lso /usr/bin/v2 https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/node.sh
-    chmod +x /usr/bin/v2
+    echo -e "${YELLOW}Updating v2ray Assistant scripts...${NC}"
+    
+    
+    # Download the new version
+    echo -e "${CYAN}Downloading latest version...${NC}"
+    if curl -Lso /usr/bin/v2 https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/node.sh; then
+        echo -e "${GREEN}Download successful!${NC}"
+        
+        # Make it executable
+        chmod +x /usr/bin/v2
+        
+        # Verify the script is valid
+        if head -n 5 /usr/bin/v2 | grep -q "bash"; then
+            echo -e "${GREEN}Update completed successfully!${NC}"
+            echo -e "${YELLOW}Restarting v2ray Assistant...${NC}"
+            sleep 2
+            exec /usr/bin/v2
+        else
+            echo -e "${RED}Downloaded file appears to be invalid. Restoring backup.${NC}"
+            # Restore from backup if available
+            if ls /usr/bin/v2.backup.* 1> /dev/null 2>&1; then
+                cp /usr/bin/v2.backup.* /usr/bin/v2
+                chmod +x /usr/bin/v2
+                echo -e "${YELLOW}Previous version restored.${NC}"
+            fi
+            return 1
+        fi
+    else
+        echo -e "${RED}Download failed! Check your internet connection.${NC}"
+        
+        # Restore from backup if available
+        if ls /usr/bin/v2.backup.* 1> /dev/null 2>&1; then
+            cp /usr/bin/v2.backup.* /usr/bin/v2
+            chmod +x /usr/bin/v2
+            echo -e "${YELLOW}Previous version restored.${NC}"
+        fi
+        return 1
+    fi
 }
 #!/bin/bash
 
