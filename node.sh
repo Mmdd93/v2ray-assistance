@@ -3304,7 +3304,7 @@ main_menu() {
         separator
         
         # Tools section
-        section_header "NETWORK TOOLS"
+        section_header "TOOLS"
         menu_option "7" "ISP defender (allow/block Iran ISPs)"
         menu_option "8" "Network Optimizer and BBR"
         menu_option "9" "Speed test and benchmark"
