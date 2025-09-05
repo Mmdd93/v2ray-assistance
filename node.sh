@@ -3436,6 +3436,7 @@ main_menu() {
         menu_option "68" "Phantom Tunnel (Reverse) by (github.com/webwizards-team/Phantom-Tunnel/)"
         menu_option "69" "FRPulse Tunnel (Fast Reverse Proxy) by (github.com/Erfan-XRay/FRPulse)" 
         menu_option "70" "FRP Tunnel by Mehrad (github.com/mikeesierrah/frp-script)" 
+		menu_option "76" "ZEX Tunnel Waterwall (github.com/izex/ZEX-Tunnel)"
         separator
         
         # Panel section
@@ -3754,6 +3755,13 @@ main_menu() {
                 echo -e "${YELLOW}Managing MTU settings...${NC}"
                 curl -Ls https://raw.githubusercontent.com/mahdiMGF2/botmirzapanel/main/install.sh -o mirza.sh
                 sudo bash mirza.sh 
+                ;;
+			76) 
+                echo -e "${YELLOW}Managing MTU settings...${NC}"
+                git clone https://github.com/izex/ZEX-Tunnel.git
+cd ZEX-Tunnel
+chmod +x *
+sudo bash zex-tunnel-install.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
