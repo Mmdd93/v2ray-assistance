@@ -3446,7 +3446,7 @@ main_menu() {
 		menu_option "73" "X-UI panel multi node location by (github.com/azavaxhuman/Nodex/)"
         menu_option "75" "Mirza (telegram bot for sale) (github.com/mahdiMGF2/botmirzapanel)"
 		menu_option "77" "mtproto proxy (telegram proxy) (github.com/seriyps/mtproto_proxy)"
-        menu_option "78" "OpenVPN panel (github.com/palark/ovpn-admin)"
+        #menu_option "78" "OpenVPN panel (github.com/palark/ovpn-admin)"
   
         separator
         menu_option "39" "Marzban panel"
