@@ -1,13 +1,27 @@
+#!/bin/bash
+
 # Define paths to configuration files
 SYSCTL_CONF="/etc/sysctl.conf"
 LIMITS_CONF="/etc/security/limits.conf"
+BACKUP_DIR="/etc/optimizer_backups"
+
+# Function to create backup directory
+create_backup_dir() {
+    if [ ! -d "$BACKUP_DIR" ]; then
+        mkdir -p "$BACKUP_DIR"
+        echo -e "\033[1;32mCreated backup directory: $BACKUP_DIR\033[0m"
+    fi
+}
 
 # Function to back up existing configurations
 backup_configs() {
+    create_backup_dir
     echo -e "\033[1;32mBacking up configuration files...\033[0m"
-    cp "$SYSCTL_CONF" "${SYSCTL_CONF}.bak"
-    cp "$LIMITS_CONF" "${LIMITS_CONF}.bak"
-    echo -e "\033[1;32mBackup completed.\033[0m"
+    local timestamp=$(date +%Y%m%d_%H%M%S)
+    cp "$SYSCTL_CONF" "${BACKUP_DIR}/sysctl.conf.bak.${timestamp}"
+    cp "$LIMITS_CONF" "${BACKUP_DIR}/limits.conf.bak.${timestamp}"
+    echo -e "\033[1;32mBackup completed: ${BACKUP_DIR}/sysctl.conf.bak.${timestamp}\033[0m"
+    echo -e "\033[1;32mBackup completed: ${BACKUP_DIR}/limits.conf.bak.${timestamp}\033[0m"
 }
 
 # Function to reload sysctl configurations
@@ -16,63 +30,78 @@ reload_sysctl() {
     sysctl -p
 }
 
+# Function to check if a setting exists and update it
+update_config() {
+    local file="$1"
+    local key="$2"
+    local value="$3"
+    
+    if grep -q "^$key" "$file"; then
+        # Check if the value is already set correctly
+        if grep -q "^$key.*$value" "$file"; then
+            echo -e "\033[1;33mSetting $key already configured with value $value\033[0m"
+        else
+            sed -i "s|^$key.*|$key = $value|" "$file"
+            echo -e "\033[1;32mUpdated $key to $value\033[0m"
+        fi
+    else
+        echo "$key = $value" >> "$file"
+        echo -e "\033[1;32mAdded $key with value $value\033[0m"
+    fi
+}
+
 # Function to apply optimizations (overwrite existing values only)
 apply_optimizations() {
     echo -e "\033[1;32mApplying optimizations...\033[0m"
 
-    # Update /etc/sysctl.conf with new configurations (overwrite existing values or add if missing)
+    # Update /etc/sysctl.conf with new configurations
     declare -A sysctl_settings=(
         # Gaming-optimized sysctl settings
-["vm.swappiness"]="10"                      # Allow some use of swap to prevent memory pressure issues in long sessions.
-["vm.dirty_ratio"]="30"                     # Lower write-back threshold to reduce potential stutters caused by high I/O.
-["vm.dirty_background_ratio"]="10"          # Trigger background writeback sooner to avoid large I/O spikes.
-["fs.file-max"]="2097152"                   # No change; sufficient for most gaming setups.
-["net.core.somaxconn"]="1024"               # Lower backlog for gaming workloads to avoid delays.
-["net.core.netdev_max_backlog"]="4096"      # Reduced to minimize bufferbloat in high-packet-rate scenarios.
-["net.ipv4.ip_local_port_range"]="1024 65535"  # Keep full port range for outbound connections.
-["net.ipv4.ip_nonlocal_bind"]="1"           # Useful for some advanced gaming setups (e.g., hosting).
-["net.ipv4.tcp_keepalive_time"]="300"        # Shorter keepalive time to detect stale connections faster.
-["net.ipv4.tcp_keepalive_intvl"]="30"       # Reduced interval to ensure faster keepalive probes.
-["net.ipv4.tcp_keepalive_probes"]="5"       # Fewer probes to kill stale connections more quickly.
-["net.ipv4.tcp_syncookies"]="1"             # Enable SYN cookies to protect against SYN flood attacks.
-["net.ipv4.tcp_max_orphans"]="65536"        # Lower to prevent excessive resource use from orphaned connections.
-["net.ipv4.tcp_max_syn_backlog"]="2048"     # Lower backlog size for a gaming environment.
-["net.ipv4.tcp_max_tw_buckets"]="1048576"   # Prevent excessive time-wait buckets.
-["net.ipv4.tcp_reordering"]="3"             # Default value; sufficient for gaming.
-["net.ipv4.tcp_mem"]="786432 1697152 1945728" # No change; tuned for most workloads.
-["net.ipv4.tcp_rmem"]="4096 262144 16777216"  # Larger initial buffer for fast response but avoids excessive buffering.
-["net.ipv4.tcp_wmem"]="4096 65536 16777216"  # Balanced buffer sizes for outbound traffic.
-["net.ipv4.tcp_syn_retries"]="3"            # Lower retry count for faster recovery from lost packets.
-["net.ipv4.tcp_tw_reuse"]="1"               # Enable reuse of time-wait sockets to reduce delays.
-["net.ipv4.tcp_mtu_probing"]="1"            # Enable MTU probing to optimize packet sizes.
-["net.ipv4.tcp_congestion_control"]="bbr"   # Use BBR for low-latency, high-throughput gaming.
-["net.ipv4.tcp_sack"]="1"                   # Enable Selective Acknowledgments for better packet loss recovery.
-["net.ipv4.conf.all.rp_filter"]="1"         # Enable Reverse Path Filtering for security.
-["net.ipv4.conf.default.rp_filter"]="1"     # Same as above for new interfaces.
-["net.ipv4.ip_no_pmtu_disc"]="0"            # Enable Path MTU Discovery for optimal packet sizes.
-["vm.vfs_cache_pressure"]="50"              # Increase inode cache retention for smoother gameplay.
-["net.ipv4.tcp_fastopen"]="0"               # Enable fast open for lower connection setup latency.
-["net.ipv4.tcp_ecn"]="0"                    # Disable ECN for better compatibility with older routers.
-["net.ipv4.tcp_retries2"]="5"               # Lower retries for faster recovery of failed connections.
-["net.ipv6.conf.all.forwarding"]="1"        # enable forwarding unless IPv6 routing is needed.
-["net.ipv4.conf.all.forwarding"]="1"        # enable IPv4 forwarding for most gaming setups.
-["net.ipv4.tcp_low_latency"]="0"            # Prioritize low latency over throughput.
-["net.ipv4.tcp_window_scaling"]="1"         # Enable TCP window scaling for better performance.
-["net.core.default_qdisc"]="fq_codel"       # Use FQ-CoDel to reduce bufferbloat.
-["net.netfilter.nf_conntrack_max"]="65536"  # No change; sufficient for gaming.
-["net.ipv4.tcp_fin_timeout"]="15"           # Short timeout for closing stale connections.
-["net.netfilter.nf_conntrack_log_invalid"]="0" # Disable logging invalid packets for cleaner logs.
-["net.ipv4.conf.all.log_martians"]="0"      # Disable logging martian packets for performance.
-["net.ipv4.conf.default.log_martians"]="0"  # Same as above for new interfaces.
-	
+        ["vm.swappiness"]="10"
+        ["vm.dirty_ratio"]="30"
+        ["vm.dirty_background_ratio"]="10"
+        ["fs.file-max"]="2097152"
+        ["net.core.somaxconn"]="1024"
+        ["net.core.netdev_max_backlog"]="4096"
+        ["net.ipv4.ip_local_port_range"]="1024 65535"
+        ["net.ipv4.ip_nonlocal_bind"]="1"
+        ["net.ipv4.tcp_keepalive_time"]="300"
+        ["net.ipv4.tcp_keepalive_intvl"]="30"
+        ["net.ipv4.tcp_keepalive_probes"]="5"
+        ["net.ipv4.tcp_syncookies"]="1"
+        ["net.ipv4.tcp_max_orphans"]="65536"
+        ["net.ipv4.tcp_max_syn_backlog"]="2048"
+        ["net.ipv4.tcp_max_tw_buckets"]="1048576"
+        ["net.ipv4.tcp_reordering"]="3"
+        ["net.ipv4.tcp_mem"]="786432 1697152 1945728"
+        ["net.ipv4.tcp_rmem"]="4096 262144 16777216"
+        ["net.ipv4.tcp_wmem"]="4096 65536 16777216"
+        ["net.ipv4.tcp_syn_retries"]="3"
+        ["net.ipv4.tcp_tw_reuse"]="1"
+        ["net.ipv4.tcp_mtu_probing"]="1"
+        ["net.ipv4.tcp_congestion_control"]="bbr"
+        ["net.ipv4.tcp_sack"]="1"
+        ["net.ipv4.conf.all.rp_filter"]="1"
+        ["net.ipv4.conf.default.rp_filter"]="1"
+        ["net.ipv4.ip_no_pmtu_disc"]="0"
+        ["vm.vfs_cache_pressure"]="50"
+        ["net.ipv4.tcp_fastopen"]="0"
+        ["net.ipv4.tcp_ecn"]="0"
+        ["net.ipv4.tcp_retries2"]="5"
+        ["net.ipv6.conf.all.forwarding"]="1"
+        ["net.ipv4.conf.all.forwarding"]="1"
+        ["net.ipv4.tcp_low_latency"]="0"
+        ["net.ipv4.tcp_window_scaling"]="1"
+        ["net.core.default_qdisc"]="fq_codel"
+        ["net.netfilter.nf_conntrack_max"]="65536"
+        ["net.ipv4.tcp_fin_timeout"]="15"
+        ["net.netfilter.nf_conntrack_log_invalid"]="0"
+        ["net.ipv4.conf.all.log_martians"]="0"
+        ["net.ipv4.conf.default.log_martians"]="0"
     )
 
     for key in "${!sysctl_settings[@]}"; do
-        if grep -q "^$key" "$SYSCTL_CONF"; then
-            sed -i "s|^$key.*|$key = ${sysctl_settings[$key]}|" "$SYSCTL_CONF"
-        else
-            echo "$key = ${sysctl_settings[$key]}" >> "$SYSCTL_CONF"
-        fi
+        update_config "$SYSCTL_CONF" "$key" "${sysctl_settings[$key]}"
     done
 
     # Update /etc/security/limits.conf with new limits
@@ -174,6 +203,7 @@ disable_optimizations() {
 
     echo -e "\033[1;32mAll optimizations have been disabled!\033[0m"
 }
+
 apply_fast_tcp() {
     echo -e "\033[1;32mApplying VERY FAST TCP optimizations...\033[0m"
 
@@ -212,11 +242,7 @@ apply_fast_tcp() {
 
     # Apply sysctl settings
     for key in "${!sysctl_settings[@]}"; do
-        if grep -q "^$key" "$SYSCTL_CONF"; then
-            sed -i "s|^$key.*|$key = ${sysctl_settings[$key]}|" "$SYSCTL_CONF"
-        else
-            echo "$key = ${sysctl_settings[$key]}" >> "$SYSCTL_CONF"
-        fi
+        update_config "$SYSCTL_CONF" "$key" "${sysctl_settings[$key]}"
     done
 
     # Limits for fast connections
@@ -247,6 +273,7 @@ apply_fast_tcp() {
     reload_sysctl
     echo -e "\033[1;32mVERY FAST TCP optimizations applied!\033[0m"
 }
+
 disable_fast_tcp() {
     echo -e "\033[1;32mDisabling VERY FAST TCP optimizations...\033[0m"
 
@@ -331,7 +358,7 @@ apply_full_optimizations() {
         ["vm.stat_interval"]="1"
 
         # Kernel scheduler
-        ["kernel.sched_latency_ns"]="6000000"
+        ["kernel.sched_latitude_ns"]="6000000"
         ["kernel.sched_min_granularity_ns"]="1500000"
         ["kernel.sched_wakeup_granularity_ns"]="2000000"
         ["kernel.sched_migration_cost_ns"]="500000"
@@ -487,14 +514,13 @@ apply_full_optimizations() {
     )
 
     for key in "${!sysctl_settings[@]}"; do
-        grep -q "^${key} = " /etc/sysctl.conf && \
-            sudo sed -i "s|^${key} = .*|${key} = ${sysctl_settings[$key]}|" /etc/sysctl.conf || \
-            echo "${key} = ${sysctl_settings[$key]}" | sudo tee -a /etc/sysctl.conf >/dev/null
+        update_config "$SYSCTL_CONF" "$key" "${sysctl_settings[$key]}"
     done
 
-    sudo sysctl -p
+    reload_sysctl
     echo -e "\033[1;32mAll optimizations have been applied successfully.\033[0m"
 }
+
 remove_full_optimizations() {
     echo -e "\033[1;31mRemoving optimizations...\033[0m"
 
@@ -703,7 +729,7 @@ show_limits_conf() {
 edit_sysctl_conf() {
     echo -e "\033[1;32mOpening sysctl.conf for editing...\033[0m"
     nano $SYSCTL_CONF
-     echo -e "\033[1;32mreload\033[0m"# Apply the updated sysctl settings
+    echo -e "\033[1;32mReloading sysctl settings...\033[0m"
     sysctl -p
 }
 
@@ -711,10 +737,9 @@ edit_sysctl_conf() {
 edit_limits_conf() {
     echo -e "\033[1;32mOpening limits.conf for editing...\033[0m"
     nano $LIMITS_CONF
-     echo -e "\033[1;32mreload\033[0m"# Apply the updated sysctl settings
-    sysctl -p
-
+    echo -e "\033[1;32mChanges to limits.conf will take effect after next login.\033[0m"
 }
+
 tc() {
     cat <<'EOF' > /root/tc_optimize.sh
 #!/bin/bash
@@ -773,23 +798,59 @@ EOF
     fi
 }
 
+# Function to display a header
+display_header() {
+    clear
+    echo -e "\033[1;36m==============================================\033[0m"
+    echo -e "\033[1;36m            Network Optimizer Tool            \033[0m"
+    echo -e "\033[1;36m==============================================\033[0m"
+    echo
+}
+
+# Function to display a footer
+display_footer() {
+    echo -e "\033[1;36m==============================================\033[0m"
+    echo
+}
+
+# Function to display a menu with options
+display_menu() {
+    local title="$1"
+    shift
+    local options=("$@")
+    
+    display_header
+    echo -e "\033[1;33m$title\033[0m"
+    echo
+    
+    for i in "${!options[@]}"; do
+        if [ $((i % 2)) -eq 0 ]; then
+            echo -e "\033[1;32m$((i+1)).\033[0m ${options[$i]}"
+        else
+            echo -e "\033[1;34m$((i+1)).\033[0m ${options[$i]}"
+        fi
+    done
+    
+    echo -e "\033[1;31m0.\033[0m Return to previous menu"
+    echo
+    display_footer
+}
+
 # Submenu for Optimize options
 Optimize_Menu() {
+    local options=(
+        "Apply light optimizations"
+        "Disable light optimizations"
+        "Apply full optimizations"
+        "Remove full optimizations"
+        "TC Optimize"
+        "Optimize fast TCP"
+        "Disable fast TCP"
+    )
+    
     while true; do
-        clear
-        echo -e "\033[1;32m=======================\033[0m"
-        echo -e "\033[1;32m Optimize Options \033[0m"
-        echo -e "\033[1;32m=======================\033[0m"
-        echo -e "\033[1;32m1.\033[0m Apply light optimizations"
-        echo -e "\033[1;32m2.\033[0m Disable light optimizations"
-        echo -e "\033[1;32m3.\033[0m Apply full optimizations"
-        echo -e "\033[1;32m4.\033[0m Remove full optimizations"
-        echo -e "\033[1;32m5.\033[0m tc Optimize"
-        echo -e "\033[1;32m6.\033[0m Optimize fast TCP"
-        echo -e "\033[1;32m7.\033[0m Disable fast TCP"
-        echo -e "\033[1;32m0.\033[0m Return to Optimizer menu"
-        echo -e "\nSelect an option: "
-        read opt_choice
+        display_menu "Optimize Options" "${options[@]}"
+        read -p "Select an option: " opt_choice
 
         case $opt_choice in
             1) apply_optimizations ;;
@@ -803,30 +864,28 @@ Optimize_Menu() {
             *) echo -e "\033[1;31mInvalid option. Please select a valid number.\033[0m" ;;
         esac
 
-        echo -e "\n\033[1;34mPress Enter to return to the Optimize submenu...\033[0m"
+        echo -e "\n\033[1;34mPress Enter to continue...\033[0m"
         read
     done
 }
 
 # Main menu for optimizer
 Optimizer() {
+    local options=(
+        "Backup (sysctl.conf & limits.conf)"
+        "Optimize"
+        "Set BBR by LightKnight"
+        "Show sysctl.conf"
+        "Show limits.conf"
+        "Edit sysctl.conf"
+        "Edit limits.conf"
+        "Apply changes (sysctl -p)"
+        "Disable log (rsyslog)"
+    )
+    
     while true; do
-        clear
-        echo -e "\033[1;32m=======================\033[0m"
-        echo -e "\033[1;32m Network Optimizer \033[0m"
-        echo -e "\033[1;32m=======================\033[0m"
-        echo -e "\033[1;32m1.\033[0m Backup (sysctl.conf & limits.conf)"
-        echo -e "\033[1;32m2.\033[0m Optimize "
-        echo -e "\033[1;32m3.\033[0m Set BBR by LightKnight"
-        echo -e "\033[1;32m4.\033[0m Show sysctl.conf"
-        echo -e "\033[1;32m5.\033[0m Show limits.conf"
-        echo -e "\033[1;32m6.\033[0m Edit sysctl.conf"
-        echo -e "\033[1;32m7.\033[0m Edit limits.conf"
-        echo -e "\033[1;32m8.\033[0m Apply changes (sysctl -p)"
-        echo -e "\033[1;32m9.\033[0m Disable log (rsyslog)"
-        echo -e "\033[1;32m0.\033[0m Main menu"
-        echo -e "\nSelect an option: "
-        read choice
+        display_menu "Network Optimizer" "${options[@]}"
+        read -p "Select an option: " choice
 
         case $choice in
             1) backup_configs ;;
@@ -836,21 +895,23 @@ Optimizer() {
             5) show_limits_conf ;;
             6) edit_sysctl_conf ;;
             7) edit_limits_conf ;;
-            8) sysctl -p ;;
+            8) reload_sysctl ;;
             9)
                 sudo systemctl stop rsyslog
                 sudo systemctl disable rsyslog
+                echo -e "\033[1;32mRsyslog disabled successfully.\033[0m"
                 ;;
             0)
                 echo -e "\033[1;34mReturning to main menu...\033[0m"
-                break ;;
+                break 
+                ;;
             *) echo -e "\033[1;31mInvalid option. Please select a valid number.\033[0m" ;;
         esac
 
-        echo -e "\n\033[1;34mPress Enter to return to the Optimizer menu...\033[0m"
+        echo -e "\n\033[1;34mPress Enter to continue...\033[0m"
         read
     done
 }
 
-
+# Start the optimizer
 Optimizer
