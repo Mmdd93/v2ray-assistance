@@ -764,15 +764,16 @@ xui() {
     esac
 
     echo -e "\033[1;33mSelect installation type:\033[0m"
-    echo -e "\033[1;32m1.\033[0m Latest version"
+    echo -e "\033[1;32m1.\033[0m Latest version (default)"
     echo -e "\033[1;32m2.\033[0m Select a specific version"
     
-    read -p "Select an option: " install_option
+    read -p "Select an option [1]: " install_option
+    install_option=${install_option:-1}  # Set default to 1 if empty
 
     if [[ "$install_option" == "2" ]]; then
         echo -e "\033[1;33mFetching the list of available versions...\033[0m"
 
-        # Fetch latest 15 versions from GitHub API
+        # Fetch latest 30 versions from GitHub API
         versions_file=$(mktemp)
         curl -s "https://api.github.com/repos/$repo/releases?per_page=30" | grep -oP '"tag_name": "\K(.*?)(?=")' > "$versions_file"
 
@@ -796,17 +797,20 @@ xui() {
         echo -e "\033[1;34m========================\033[0m\n"
 
         local version_choice
-        version_choice=$(prompt_input "Enter the number of the version you want to install" "")
+        read -p "Enter the number of the version you want to install: " version_choice
 
         local selected_version
         selected_version=$(sed -n "${version_choice}p" "$versions_file")
 
         if [ -z "$selected_version" ]; then
-            echo -e "\033[1;31mInvalid selection.\033[0m"
-            return 1
+            echo -e "\033[1;31mInvalid selection. Using latest version instead.\033[0m"
+            script="bash <(curl -Ls https://raw.githubusercontent.com/$repo/master/install.sh)"
+        else
+            script="VERSION=$selected_version && bash <(curl -Ls \"https://raw.githubusercontent.com/$repo/\$VERSION/install.sh\") \$VERSION"
         fi
-
-        script="VERSION=$selected_version && bash <(curl -Ls \"https://raw.githubusercontent.com/$repo/\$VERSION/install.sh\") \$VERSION"
+        
+        # Clean up
+        rm -f "$versions_file"
     else
         script="bash <(curl -Ls https://raw.githubusercontent.com/$repo/master/install.sh)"
     fi
