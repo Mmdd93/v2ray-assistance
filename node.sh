@@ -3441,6 +3441,7 @@ main_menu() {
         # Panel section
         section_header "PANEL MANAGEMENT"
         menu_option "38" "X-UI panels (x-ui, 3x-ui, tx-ui)"
+		menu_option "74" "Sing-box/SagerNet panel (s-ui) by github.com/alireza0/s-ui"
 		menu_option "73" "X-UI panel multi node location by (github.com/azavaxhuman/Nodex/)"
         separator
         menu_option "39" "Marzban panel"
