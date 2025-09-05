@@ -3149,6 +3149,7 @@ fix_update_issues() {
 
 # Additional specialized fix functions
 fix_specific_issues() {
+while true; do
     echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
     echo -e "\033[1;36m║                 SPECIFIC PROBLEM SOLVER                     ║\033[0m"
     echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
@@ -3179,6 +3180,7 @@ fix_specific_issues() {
         0) return ;;
         *) echo -e "\033[1;31m❌ Invalid option\033[0m" ;;
     esac
+	done
 }
 
 fix_held_packages() {
@@ -3255,40 +3257,6 @@ clean_package_cache() {
 
 
 
-# Function to run selected scripts
-run_6to4_scripts() {
-clear
-    echo -e "\033[1;34mSelect a method to run:\033[0m"
-    echo "1. Services (recommendation)"
-    echo "2. Netplan"
-    echo "0. Return"
-
-    read -p "Enter your choice: " choice
-
-    case $choice in
-        1)
-            echo -e "\033[1;32m6to4-service-method.sh\033[0m"
-            # Command to run Script 1
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/6to4-service-method.sh -o 6to4-service-method.sh
-		sudo bash 6to4-service-method.sh
-            ;;
-        2)
-            echo -e "\033[1;32mRunning 6to4.sh\033[0m"
-            # Command to run Script 2
-            curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/6to4.sh -o 6to4.sh
-		sudo bash 6to4.sh
-            ;;
-       
-        0)
-            echo -e "\033[1;31mExiting...\033[0m"
-            exit 0
-            ;;
-        *)
-            echo -e "\033[1;31mInvalid choice, please try again.\033[0m"
-            ;;
-    esac
-}
-
 display_system_info() {
 SERVER_IP=$(curl -4 -s https://icanhazip.com)
     echo -e "\n\033[1;31mOS info:\033[0m"
@@ -3302,7 +3270,7 @@ SERVER_IP=$(curl -4 -s https://icanhazip.com)
     echo -e "\033[1;32mCPU Frequency:\033[0m $(grep 'MHz' /proc/cpuinfo | awk '{print $4 " MHz"}' | head -n 1)"
     echo -e "\033[1;32mRAM:\033[0m $(free -h | awk '/^Mem:/ {print $3 "/" $2}')"
     echo -e "\033[1;32mTime:\033[0m $(date +"%T %Z")"
-    show_usage
+    
     
 }
 fix_timezone() {
