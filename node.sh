@@ -3445,6 +3445,7 @@ main_menu() {
 		menu_option "74" "Sing-box/SagerNet panel (s-ui) by github.com/alireza0/s-ui"
 		menu_option "73" "X-UI panel multi node location by (github.com/azavaxhuman/Nodex/)"
         menu_option "75" "Mirza (telegram bot for sale) (github.com/mahdiMGF2/botmirzapanel)"
+		menu_option "77" "mtproto proxy (github.com/seriyps/mtproto_proxy)"
         separator
         menu_option "39" "Marzban panel"
         menu_option "40" "Marzban node by v2"
@@ -3716,52 +3717,65 @@ main_menu() {
                 ;;
             67) 
                 echo -e "${YELLOW}Setting up FRP Tunnel...${NC}"
+				sleep 1
                 curl -Ls https://raw.githubusercontent.com/mmdbay/frp-manager/main/frp.sh -o frp.sh
                 sudo bash frp.sh 
                 ;;
             68) 
                 echo -e "${YELLOW}Setting up Phantom Tunnel...${NC}"
+				sleep 1
                 curl -Ls https://raw.githubusercontent.com/webwizards-team/Phantom-Tunnel/main/install.sh -o Phantom-Tunnel.sh
                 sudo bash Phantom-Tunnel.sh && phantom 
                 ;;
             69) 
                 echo -e "${YELLOW}Setting up FRPulse Tunnel...${NC}"
+				sleep 1
                 curl -Ls https://raw.githubusercontent.com/Erfan-XRay/FRPulse/main/FRPulse.sh -o FRPulse.sh
                 sudo bash FRPulse.sh 
                 ;;
             70) 
                 echo -e "${YELLOW}Setting up FRP Tunnel by Mehrad...${NC}"
+				sleep 1
                 curl -Ls https://raw.githubusercontent.com/mikeesierrah/frp-script/main/frp-setup.sh -o frp-setup.sh
                 sudo bash frp-setup.sh 
                 ;;
             71) 
                 echo -e "${YELLOW}Running Abuse Defender...${NC}"
+				sleep 1
                 curl -Ls https://raw.githubusercontent.com/Kiya6955/Abuse-Defender/main/abuse-defender.sh -o abuse-defender.sh
                 sudo bash abuse-defender.sh 
                 ;;
             72) 
                 echo -e "${YELLOW}Managing MTU settings...${NC}"
+				sleep 1
                 curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/mtu.sh -o mtu.sh
                 sudo bash mtu.sh 
                 ;;
 			73) 
-                echo -e "${YELLOW}Managing MTU settings...${NC}"
+                echo -e "${YELLOW}Running Nodex...${NC}"
+				sleep 1
                 curl -Ls https://raw.githubusercontent.com/azavaxhuman/Nodex/refs/heads/main/main.sh -o Nodex.sh
                 sudo bash Nodex.sh 
                 ;;
 			74) 
+   echo -e "${YELLOW}Running sui...${NC}"
+				sleep 1
                 sui ;;
 			75) 
-                echo -e "${YELLOW}Managing MTU settings...${NC}"
+                echo -e "${YELLOW}Running mirza.sh...${NC}"
                 curl -Ls https://raw.githubusercontent.com/mahdiMGF2/botmirzapanel/main/install.sh -o mirza.sh
                 sudo bash mirza.sh 
                 ;;
 			76) 
-                echo -e "${YELLOW}Managing MTU settings...${NC}"
+                echo -e "${YELLOW}Running ZEX-Tunnel...${NC}"
                 git clone https://github.com/izex/ZEX-Tunnel.git
 cd ZEX-Tunnel
 chmod +x *
 sudo bash zex-tunnel-install.sh
+                ;;
+			77) 
+                echo -e "${YELLOW}Running mtp_install.sh...${NC}"
+                curl -L -o mtp_install.sh https://git.io/fj5ru && bash mtp_install.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
