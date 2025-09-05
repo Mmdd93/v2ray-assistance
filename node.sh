@@ -2346,7 +2346,6 @@ ip_quality_check() {
 
 change_sources_list() {
     while true; do
-	clear
         # Detect codename and distribution with better error handling
         if [ -f /etc/os-release ]; then
             . /etc/os-release
@@ -2357,13 +2356,22 @@ change_sources_list() {
             distro_codename="jammy"
         fi
 
+        # Check for new Ubuntu sources location
+        local sources_file="/etc/apt/sources.list"
+        local ubuntu_sources_file="/etc/apt/sources.list.d/ubuntu.sources"
+        
+        if [ -f "$ubuntu_sources_file" ]; then
+            sources_file="$ubuntu_sources_file"
+            echo -e "\033[1;33mℹ️  Detected new Ubuntu sources format at $ubuntu_sources_file\033[0m"
+        fi
+
         # Create backup with better error handling
         timestamp=$(date +"%Y%m%d_%H%M%S")
-        if [ -f /etc/apt/sources.list ]; then
-            sudo cp /etc/apt/sources.list "/etc/apt/sources.list.bak.$timestamp" 2>/dev/null
-            echo -e "\033[1;32m✓ Backup created: /etc/apt/sources.list.bak.$timestamp\033[0m"
+        if [ -f "$sources_file" ]; then
+            sudo cp "$sources_file" "${sources_file}.bak.$timestamp" 2>/dev/null
+            echo -e "\033[1;32m✓ Backup created: ${sources_file}.bak.$timestamp\033[0m"
         else
-            echo -e "\033[1;33m⚠️  No sources.list found, creating new one\033[0m"
+            echo -e "\033[1;33m⚠️  No sources file found, will create new one\033[0m"
         fi
 
         echo -e "\n\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
@@ -2375,7 +2383,7 @@ change_sources_list() {
         echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
         echo -e "\033[1;32m│  1. Test and select fastest mirror (ping + download)       │\033[0m"
         echo -e "\033[1;34m│  2. Set mirror manually (offline selection)                 │\033[0m"
-        echo -e "\033[1;33m│  3. View current sources.list                               │\033[0m"
+        echo -e "\033[1;33m│  3. View current sources                                    │\033[0m"
         echo -e "\033[1;35m│  4. Restore from backup                                     │\033[0m"
         echo -e "\033[1;36m│  5. Test specific mirror                                    │\033[0m"
         echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
@@ -2383,15 +2391,16 @@ change_sources_list() {
         echo -e "\033[1;33m└──────────────────────────────────────────────────────────────┘\033[0m"
         echo
         echo -e "\033[1;35m📋 Detected: $distro_id $distro_codename\033[0m"
+        echo -e "\033[1;35m📁 Using: $sources_file\033[0m"
 
         read -p "$(echo -e '\033[1;32mSelect an option [0-5]: \033[0m')" main_choice
 
         case $main_choice in
-            1) test_and_select_fastest_mirror ;;
-            2) set_mirror_manually ;;
-            3) view_current_sources ;;
-            4) restore_from_backup ;;
-            5) test_specific_mirror ;;
+            1) test_and_select_fastest_mirror "$sources_file" ;;
+            2) set_mirror_manually "$sources_file" ;;
+            3) view_current_sources "$sources_file" ;;
+            4) restore_from_backup "$sources_file" ;;
+            5) test_specific_mirror "$sources_file" ;;
             0) echo -e "\033[1;33mReturning to main menu...\033[0m"; return ;;
             *) echo -e "\033[1;31m❌ Invalid option. Please try again.\033[0m"; continue ;;
         esac
@@ -2402,6 +2411,8 @@ change_sources_list() {
 }
 
 test_and_select_fastest_mirror() {
+    local sources_file="$1"
+    
     echo -e "\n\033[1;36m🔄 Testing mirror availability and speed...\033[0m"
     
     # Comprehensive mirror list with global options
@@ -2523,13 +2534,160 @@ test_and_select_fastest_mirror() {
         return
     elif [[ $choice -ge 1 && $choice -le ${#sorted_by_ping[@]} ]]; then
         selected_mirror="${sorted_by_ping[$((choice - 1))]}"
-        apply_mirror "$selected_mirror"
+        apply_mirror "$selected_mirror" "$sources_file"
     else
         echo -e "\033[1;31m❌ Invalid option. Using fastest mirror.\033[0m"
         selected_mirror="${sorted_by_ping[0]}"
-        apply_mirror "$selected_mirror"
+        apply_mirror "$selected_mirror" "$sources_file"
     fi
 }
+
+apply_mirror() {
+    local selected_mirror="$1"
+    local sources_file="$2"
+    
+    # Clean up mirror URL
+    selected_mirror=$(echo "$selected_mirror" | sed 's/\/$//')
+    
+    echo -e "\n\033[1;32m✅ Selected: $selected_mirror\033[0m"
+    echo -e "\033[1;32m📁 Updating: $sources_file\033[0m"
+
+    # Determine repository components based on distribution
+    local main_components="main"
+    local extra_components="restricted universe multiverse"
+    
+    if [[ "$distro_id" == "debian" ]]; then
+        main_components="main contrib non-free"
+        extra_components="non-free-firmware"
+    fi
+
+    # Check if using new Ubuntu sources format
+    if [[ "$sources_file" == "/etc/apt/sources.list.d/ubuntu.sources" ]]; then
+        # Create new Ubuntu sources format
+        sudo bash -c "cat > '$sources_file' <<EOF
+# Generated by Network Optimizer Tool - $(date)
+# See https://manpages.ubuntu.com/manpages/noble/man5/sources.list.5.html for details
+
+Types: deb
+URIs: $selected_mirror
+Suites: $distro_codename $distro_codename-updates $distro_codename-security $distro_codename-backports
+Components: $main_components $extra_components
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+# Additional security updates
+Types: deb
+URIs: $selected_mirror
+Suites: $distro_codename-security
+Components: $main_components $extra_components
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+EOF"
+        echo -e "\033[1;32m✓ Updated new Ubuntu sources format!\033[0m"
+        
+    else
+        # Create traditional sources.list format
+        sudo bash -c "cat > '$sources_file' <<EOF
+# Generated by Network Optimizer Tool - $(date)
+deb $selected_mirror $distro_codename $main_components $extra_components
+deb $selected_mirror $distro_codename-updates $main_components $extra_components
+deb $selected_mirror $distro_codename-security $main_components $extra_components
+deb $selected_mirror $distro_codename-backports $main_components $extra_components
+EOF"
+        echo -e "\033[1;32m✓ Updated traditional sources.list format!\033[0m"
+    fi
+
+    read -p "$(echo -e '\033[1;32mRun apt update now? (Y/n): \033[0m')" update_now
+    if [[ "$update_now" != "n" && "$update_now" != "N" ]]; then
+        echo -e "\033[1;33m🔄 Running apt update...\033[0m"
+        sudo apt update
+    fi
+}
+
+view_current_sources() {
+    local sources_file="$1"
+    
+    echo -e "\n\033[1;36m📄 CURRENT SOURCES ($sources_file):\033[0m"
+    echo -e "\033[1;33m┌──────────────────────────────────────────────────────────────┐\033[0m"
+    
+    if [ -f "$sources_file" ]; then
+        if [[ "$sources_file" == "/etc/apt/sources.list.d/ubuntu.sources" ]]; then
+            # Pretty print for new format
+            cat "$sources_file" | while read -r line; do
+                if [[ "$line" =~ ^# ]]; then
+                    echo -e "\033[1;90m│ $line\033[0m"
+                elif [[ "$line" =~ ^Types: ]]; then
+                    echo -e "\033[1;36m│ $line\033[0m"
+                elif [[ "$line" =~ ^URIs: ]]; then
+                    echo -e "\033[1;32m│ $line\033[0m"
+                elif [[ "$line" =~ ^Suites: ]]; then
+                    echo -e "\033[1;33m│ $line\033[0m"
+                elif [[ "$line" =~ ^Components: ]]; then
+                    echo -e "\033[1;35m│ $line\033[0m"
+                else
+                    echo -e "\033[1;37m│ $line\033[0m"
+                fi
+            done
+        else
+            # Traditional format
+            cat "$sources_file" | while read -r line; do
+                echo -e "\033[1;37m│ $line\033[0m"
+            done
+        fi
+    else
+        echo -e "\033[1;31m│ No sources file found at $sources_file!\033[0m"
+    fi
+    
+    echo -e "\033[1;33m└──────────────────────────────────────────────────────────────┘\033[0m"
+}
+
+restore_from_backup() {
+    local sources_file="$1"
+    local backup_pattern="${sources_file}.bak.*"
+    
+    local backups=($(ls -t $backup_pattern 2>/dev/null))
+    
+    if [ ${#backups[@]} -eq 0 ]; then
+        echo -e "\033[1;31m❌ No backups found for $sources_file!\033[0m"
+        echo -e "\033[1;33mℹ️  Looking for backups in alternative locations...\033[0m"
+        
+        # Check for backups in other possible locations
+        if [ "$sources_file" == "/etc/apt/sources.list.d/ubuntu.sources" ]; then
+            backups=($(ls -t /etc/apt/sources.list.bak.* 2>/dev/null))
+        else
+            backups=($(ls -t /etc/apt/sources.list.d/ubuntu.sources.bak.* 2>/dev/null))
+        fi
+        
+        if [ ${#backups[@]} -eq 0 ]; then
+            echo -e "\033[1;31m❌ No backups found anywhere!\033[0m"
+            return
+        fi
+    fi
+
+    echo -e "\n\033[1;36m📦 Available Backups:\033[0m"
+    for i in "${!backups[@]}"; do
+        backup_date=$(echo "${backups[i]}" | grep -oE '[0-9]{8}_[0-9]{6}')
+        human_date=$(echo "$backup_date" | sed 's/\(....\)\(..\)\(..\)_\(..\)\(..\)\(..\)/\1-\2-\3 \4:\5:\6/')
+        echo -e "\033[1;32m$((i+1)). ${backups[i]} ($human_date)\033[0m"
+    done
+
+    read -p "$(echo -e '\033[1;32mSelect backup to restore (1-${#backups[@]}, 0 to cancel): \033[0m')" choice
+
+    if [[ $choice -eq 0 ]]; then
+        echo -e "\033[1;33mCancelled.\033[0m"
+        return
+    elif [[ $choice -ge 1 && $choice -le ${#backups[@]} ]]; then
+        selected_backup="${backups[$((choice - 1))]}"
+        sudo cp "$selected_backup" "$sources_file"
+        echo -e "\033[1;32m✓ Restored from $selected_backup\033[0m"
+        
+        read -p "$(echo -e '\033[1;32mRun apt update now? (Y/n): \033[0m')" update_now
+        if [[ "$update_now" != "n" && "$update_now" != "N" ]]; then
+            sudo apt update
+        fi
+    else
+        echo -e "\033[1;31m❌ Invalid option.\033[0m"
+    fi
+}
+
 
 test_specific_mirror() {
     read -p "$(echo -e '\033[1;32mEnter mirror URL to test: \033[0m')" test_mirror
@@ -2629,91 +2787,6 @@ set_mirror_manually() {
             ;;
     esac
 }
-
-apply_mirror() {
-    local selected_mirror="$1"
-    
-    # Clean up mirror URL
-    selected_mirror=$(echo "$selected_mirror" | sed 's/\/$//')
-    
-    echo -e "\n\033[1;32m✅ Selected: $selected_mirror\033[0m"
-
-    # Determine repository components based on distribution
-    local main_components="main"
-    local extra_components="restricted universe multiverse"
-    
-    if [[ "$distro_id" == "debian" ]]; then
-        main_components="main contrib non-free"
-        extra_components="non-free-firmware"
-    fi
-
-    # Create sources.list with proper components
-    sudo bash -c "cat > /etc/apt/sources.list <<EOF
-# Generated by Network Optimizer Tool - $(date)
-deb $selected_mirror $distro_codename $main_components $extra_components
-deb $selected_mirror $distro_codename-updates $main_components $extra_components
-deb $selected_mirror $distro_codename-security $main_components $extra_components
-deb $selected_mirror $distro_codename-backports $main_components $extra_components
-EOF"
-
-    echo -e "\033[1;32m✓ Sources list updated successfully!\033[0m"
-    
-    read -p "$(echo -e '\033[1;32mRun apt update now? (Y/n): \033[0m')" update_now
-    if [[ "$update_now" != "n" && "$update_now" != "N" ]]; then
-        echo -e "\033[1;33m🔄 Running apt update...\033[0m"
-        sudo apt update
-    fi
-}
-
-view_current_sources() {
-    echo -e "\n\033[1;36m📄 CURRENT SOURCES.LIST:\033[0m"
-    echo -e "\033[1;33m┌──────────────────────────────────────────────────────────────┐\033[0m"
-    
-    if [ -f /etc/apt/sources.list ]; then
-        cat /etc/apt/sources.list | while read -r line; do
-            echo -e "\033[1;37m│ $line\033[0m"
-        done
-    else
-        echo -e "\033[1;31m│ No sources.list file found!\033[0m"
-    fi
-    
-    echo -e "\033[1;33m└──────────────────────────────────────────────────────────────┘\033[0m"
-}
-
-restore_from_backup() {
-    local backups=($(ls -t /etc/apt/sources.list.bak.* 2>/dev/null))
-    
-    if [ ${#backups[@]} -eq 0 ]; then
-        echo -e "\033[1;31m❌ No backups found!\033[0m"
-        return
-    fi
-
-    echo -e "\n\033[1;36m📦 Available Backups:\033[0m"
-    for i in "${!backups[@]}"; do
-        backup_date=$(echo "${backups[i]}" | grep -oE '[0-9]{8}_[0-9]{6}')
-        human_date=$(echo "$backup_date" | sed 's/\(....\)\(..\)\(..\)_\(..\)\(..\)\(..\)/\1-\2-\3 \4:\5:\6/')
-        echo -e "\033[1;32m$((i+1)). ${backups[i]} ($human_date)\033[0m"
-    done
-
-    read -p "$(echo -e '\033[1;32mSelect backup to restore (1-${#backups[@]}, 0 to cancel): \033[0m')" choice
-
-    if [[ $choice -eq 0 ]]; then
-        echo -e "\033[1;33mCancelled.\033[0m"
-        return
-    elif [[ $choice -ge 1 && $choice -le ${#backups[@]} ]]; then
-        selected_backup="${backups[$((choice - 1))]}"
-        sudo cp "$selected_backup" /etc/apt/sources.list
-        echo -e "\033[1;32m✓ Restored from $selected_backup\033[0m"
-        
-        read -p "$(echo -e '\033[1;32mRun apt update now? (Y/n): \033[0m')" update_now
-        if [[ "$update_now" != "n" && "$update_now" != "N" ]]; then
-            sudo apt update
-        fi
-    else
-        echo -e "\033[1;31m❌ Invalid option.\033[0m"
-    fi
-}
-
 
 manage_ipv6() {
     while true; do
