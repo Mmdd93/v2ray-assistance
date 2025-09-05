@@ -3443,6 +3443,7 @@ main_menu() {
         menu_option "38" "X-UI panels (x-ui, 3x-ui, tx-ui)"
 		menu_option "74" "Sing-box/SagerNet panel (s-ui) by github.com/alireza0/s-ui"
 		menu_option "73" "X-UI panel multi node location by (github.com/azavaxhuman/Nodex/)"
+        menu_option "75" "Mirza (telegram bot for sale) (github.com/mahdiMGF2/botmirzapanel)"
         separator
         menu_option "39" "Marzban panel"
         menu_option "40" "Marzban node by v2"
@@ -3749,6 +3750,11 @@ main_menu() {
                 ;;
 			74) 
                 sui ;;
+			75) 
+                echo -e "${YELLOW}Managing MTU settings...${NC}"
+                curl -Ls https://raw.githubusercontent.com/mahdiMGF2/botmirzapanel/main/install.sh -o mirza.sh
+                sudo bash mirza.sh 
+                ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
                 update 
