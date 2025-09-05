@@ -839,13 +839,13 @@ display_menu() {
 # Submenu for Optimize options
 Optimize_Menu() {
     local options=(
-        "Apply light optimizations"
-        "Disable light optimizations"
-        "Apply full optimizations"
-        "Remove full optimizations"
-        "TC Optimize"
-        "Optimize fast TCP"
-        "Disable fast TCP"
+        "Apply normal TCP optimizations"
+        "Remove normal TCP optimizations"
+        "Apply full TCP optimizations"
+        "Remove full TCP optimizations"
+        "Apply interfaces (TC) Optimize"
+        "Apply fast TCP optimizations"
+        "Remove fast TCP"
     )
     
     while true; do
