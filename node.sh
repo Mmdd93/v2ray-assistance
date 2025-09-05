@@ -3144,6 +3144,7 @@ fix_update_issues() {
     if [[ "$run_upgrade" =~ ^[Yy]$ ]]; then
         echo -e "\033[1;33m🔄 Running apt upgrade...\033[0m"
         sudo apt upgrade -y
+		read -p "Press Enter to continue..."
     fi
 }
 
@@ -3197,6 +3198,7 @@ fix_held_packages() {
         fi
     else
         echo -e "\033[1;32m✅ No held packages found\033[0m"
+		read -p "Press Enter to continue..."
     fi
 }
 
@@ -3212,6 +3214,7 @@ fix_repository_errors() {
     # Clean and update
     sudo apt-get clean
     sudo apt-get update --fix-missing
+	read -p "Press Enter to continue..."
 }
 
 fix_gpg_errors() {
@@ -3222,6 +3225,7 @@ fix_gpg_errors() {
     # Fix common GPG errors
     sudo rm -f /etc/apt/trusted.gpg.d/*.gpg~
     sudo rm -f /etc/apt/trusted.gpg.d/*.gpg.*
+	read -p "Press Enter to continue..."
 }
 
 fix_dependency_hell() {
@@ -3236,6 +3240,7 @@ fix_dependency_hell() {
         if [[ "$dist_upgrade_choice" =~ ^[Yy]$ ]]; then
             sudo apt-get dist-upgrade -y
         fi
+		read -p "Press Enter to continue..."
     fi
 }
 
@@ -3253,6 +3258,7 @@ clean_package_cache() {
     sudo chmod 755 /var/lib/apt/lists/partial
     # Update
     sudo apt-get update
+	read -p "Press Enter to continue..."
 }
 
 
