@@ -3340,31 +3340,32 @@ main_menu() {
         echo -e "${CYAN}Combine local tunnels (SIT, GRE, GENEVE, VXLAN) with:${NC}"
         echo -e "${CYAN}Backhaul, GOST, WSS, etc., for enhanced stealth${NC}"
         separator
-        menu_option "26" "SIT tunnel 6to4 (IPv6 local)"
-        menu_option "28" "GRE tunnel (IPv4/IPv6 local)"
-        menu_option "45" "GENEVE tunnel (IPv4 local)"
-        menu_option "46" "VXLAN tunnel (IPv4 local)"
-        menu_option "31" "HAProxy tunnel"
-        menu_option "27" "Backhaul tunnel"
-        menu_option "44" "GOST tunnel"
-        menu_option "55" "GOST Reverse tunnel"
-        menu_option "47" "WSS/WS tunnel (CDN support)"
-        menu_option "56" "WireGuard Reverse Tunnel (EYLAN)"
-        menu_option "58" "WireGuard/Hysteria Tunnel (TAQ-BOSTAN)"
-        menu_option "61" "Backhaul premium tunnel"
-        menu_option "62" "Rathole tunnel v2"
-        menu_option "63" "Trust Tunnel (TCP/UDP over QUIC)"
-        menu_option "64" "HPulse Tunnel (TCP/UDP over Hysteria 2)"
-        menu_option "66" "DNS Tunnel (tunnel over DNS)"
-        menu_option "67" "FRP Tunnel (Fast Reverse Proxy)"
-        menu_option "68" "Phantom Tunnel (Reverse)"
-        menu_option "69" "FRPulse Tunnel (Fast Reverse Proxy)"
-        menu_option "70" "FRP Tunnel by Mehrad"
+        menu_option "26" "SIT tunnel 6to4 (IPv6 local) by (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "28" "GRE tunnel (IPv4/IPv6 local) by (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "45" "GENEVE tunnel (IPv4 local) by (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "46" "VXLAN tunnel (IPv4 local) by (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "31" "HAProxy tunnel by (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "27" "Backhaul tunnel by (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "44" "GOST tunnel by (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "55" "GOST Reverse tunnel by (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "47" "WSS/WS tunnel (CDN support) by (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "56" "WireGuard Reverse Tunnel by (EYLAN)"
+        menu_option "58" "WireGuard/Hysteria Tunnel (TAQ-BOSTAN) by (github.com/ParsaKSH/TAQ-BOSTAN)"
+        menu_option "61" "Backhaul premium tunnel (cracked by t.me/anony_identity)"
+        menu_option "62" "Rathole tunnel v2 by (github.com/Musixal)"
+        menu_option "63" "Trust Tunnel (TCP/UDP over QUIC) by (github.com/Erfan-XRay)"
+        menu_option "64" "HPulse Tunnel (TCP/UDP over Hysteria 2) by (github.com/Erfan-XRay)"
+        menu_option "66" "DNS Tunnel (tunnel over DNS) by (github.com/IRSupp/DnsTunnel)"
+        menu_option "67" "FRP Tunnel (Fast Reverse Proxy) by (github.com/MmdBay/frp-manager)"
+        menu_option "68" "Phantom Tunnel (Reverse) by (github.com/webwizards-team/Phantom-Tunnel/)"
+        menu_option "69" "FRPulse Tunnel (Fast Reverse Proxy) by (github.com/Erfan-XRay/FRPulse)" 
+        menu_option "70" "FRP Tunnel by Mehrad (github.com/mikeesierrah/frp-script)" 
         separator
         
         # Panel section
         section_header "PANEL MANAGEMENT"
         menu_option "38" "X-UI panels (x-ui, 3x-ui, tx-ui)"
+		menu_option "73" "X-UI panel multi node location by (github.com/azavaxhuman/Nodex/)"
         separator
         menu_option "39" "Marzban panel"
         menu_option "40" "Marzban node by v2"
@@ -3663,6 +3664,11 @@ main_menu() {
                 echo -e "${YELLOW}Managing MTU settings...${NC}"
                 curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/mtu.sh -o mtu.sh
                 sudo bash mtu.sh 
+                ;;
+			73) 
+                echo -e "${YELLOW}Managing MTU settings...${NC}"
+                curl -Ls https://raw.githubusercontent.com/azavaxhuman/Nodex/refs/heads/main/main.sh -o Nodex.sh
+                sudo bash Nodex.sh 
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
