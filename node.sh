@@ -2346,6 +2346,7 @@ ip_quality_check() {
 
 change_sources_list() {
     while true; do
+	clear
         # Detect codename and distribution with better error handling
         if [ -f /etc/os-release ]; then
             . /etc/os-release
