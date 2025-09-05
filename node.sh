@@ -3162,6 +3162,7 @@ fix_specific_issues() {
     echo -e "\033[1;35m│  3. Fix GPG key errors                                     │\033[0m"
     echo -e "\033[1;36m│  4. Fix dependency hell                                    │\033[0m"
     echo -e "\033[1;33m│  5. Clean package cache completely                         │\033[0m"
+	echo -e "\033[1;33m│  6. Auto fix                                               │\033[0m"
     echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
     echo -e "\033[1;31m│  0. Return to main menu                                    │\033[0m"
     echo -e "\033[1;33m└──────────────────────────────────────────────────────────────┘\033[0m"
@@ -3174,6 +3175,7 @@ fix_specific_issues() {
         3) fix_gpg_errors ;;
         4) fix_dependency_hell ;;
         5) clean_package_cache ;;
+		6) cfix_update_issues ;;
         0) return ;;
         *) echo -e "\033[1;31m❌ Invalid option\033[0m" ;;
     esac
@@ -4013,7 +4015,8 @@ main_menu() {
                 ;;
             2) 
                 if confirm_action "Fix update issues?"; then
-                    fix_update_issues
+				fix_specific_issues
+                    
                 fi
                 ;;
             3) 
