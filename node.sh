@@ -3712,7 +3712,7 @@ main_menu() {
         section_header "SYSTEM MANAGEMENT"
         menu_option "1" "Update and upgrade system + install packages"
         menu_option "2" "Fix update issues (broken apt/dependencies)"
-        menu_option "3" "Change update sources to Iran"
+        menu_option "3" "Change update and package sources to Iran or global"
         menu_option "4" "System information"
         menu_option "5" "Install Docker and Docker Compose"
         menu_option "6" "Install Docker on Iran servers"
