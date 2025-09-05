@@ -700,6 +700,7 @@ remove_full_optimizations() {
 }
 
 # Function to manage TCP congestion control and qdisc
+# Function to manage TCP congestion control and qdisc
 network_tuning_menu() {
     while true; do
         display_header
@@ -719,92 +720,169 @@ network_tuning_menu() {
         echo -e "\033[1;35m└──────────────────────────────────────────────────────────────┘\033[0m"
         echo
         
-        local options=(
-            "Set Custom Congestion Control"    "Set Custom Queue Discipline"
-            "BBR (Google - High BW/Low Latency)" "BBR2 (Improved BBR - Better Fairness)"
-            "CUBIC (Default - General Purpose)"  "Reno (Traditional - Basic TCP)"
-            "Vegas (Delay-Based - Low Latency)"  "Westwood (Loss-Based - Wireless)"
-            "Westwood+ (Enhanced Westwood)"    "Hybla (Satellite/High RTT)"
-            "Highspeed (High-Speed Networks)"  "HTCP (Hamilton TCP - High Speed)"
-            "Illinois (Delay+Loss Hybrid)"     "Yeah (Yet Another Highspeed)"
-            "Veno (Wireless Optimization)"     "Scalable (High-Scale Networks)"
-            "LP (Loss Priority)"               "Compound (Delay+Loss Combination)"
-            "CDG (CAIA Delay-Gradient)"        "DCTCP (Data Center TCP)"
-            "BIC (Binary Increase)"            "NCR (Non-Congestion Robustness)"
-            "OLI (Open-Loop Increase)"         "List All Available Algorithms"
-            "List All Queue Disciplines"       "Test Network Performance"
+        # Congestion Control Section
+        echo -e "\033[1;33m┌──────────────────────────────────────────────────────────────┐\033[0m"
+        echo -e "\033[1;33m│                  CONGESTION CONTROL OPTIONS                 │\033[0m"
+        echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
+        
+        local cc_options=(
+            "BBR (Google - High BW/Low Latency)"
+            "BBR2 (Improved BBR - Better Fairness)"
+            "CUBIC (Default - General Purpose)"
+            "Reno (Traditional - Basic TCP)"
+            "Vegas (Delay-Based - Low Latency)"
+            "Westwood (Loss-Based - Wireless)"
+            "Westwood+ (Enhanced Westwood)"
+            "Hybla (Satellite/High RTT)"
+            "Highspeed (High-Speed Networks)"
+            "HTCP (Hamilton TCP - High Speed)"
+            "Illinois (Delay+Loss Hybrid)"
+            "Yeah (Yet Another Highspeed)"
+            "Veno (Wireless Optimization)"
+            "Scalable (High-Scale Networks)"
+            "LP (Loss Priority)"
+            "Compound (Delay+Loss Combination)"
+            "CDG (CAIA Delay-Gradient)"
+            "DCTCP (Data Center TCP)"
+            "BIC (Binary Increase)"
+            "NCR (Non-Congestion Robustness)"
+            "OLI (Open-Loop Increase)"
+            "Set Custom Congestion Control"
+            "List All Available Algorithms"
+        )
+        
+        for i in "${!cc_options[@]}"; do
+            printf "\033[1;32m│ %2d. %-57s\033[0m │\n" $((i+1)) "${cc_options[i]}"
+        done
+        echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
+        
+        # Queue Discipline Section
+        echo -e "\033[1;33m│                  QUEUE DISCIPLINE OPTIONS                  │\033[0m"
+        echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
+        
+        local qdisc_options=(
+            "fq (Fair Queue - Default for BBR)"
+            "fq_codel (Fair Queue Codel - Recommended)"
+            "pfifo_fast (Priority FIFO - Traditional)"
+            "cake (Common Applications Kept Enhanced)"
+            "sfq (Stochastic Fair Queue)"
+            "htb (Hierarchical Token Bucket)"
+            "Set Custom Queue Discipline"
+            "List All Available QDiscs"
+        )
+        
+        for i in "${!qdisc_options[@]}"; do
+            printf "\033[1;34m│ %2d. %-57s\033[0m │\n" $((i+24)) "${qdisc_options[i]}"
+        done
+        echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
+        
+        # System Options Section
+        echo -e "\033[1;33m│                   SYSTEM OPTIONS                          │\033[0m"
+        echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
+        
+        local system_options=(
+            "Test Network Performance"
             "Reset to System Defaults"
         )
         
-        echo -e "\033[1;33m┌──────────────────────────────────────────────────────────────┐\033[0m"
-        echo -e "\033[1;33m│                     AVAILABLE OPTIONS                       │\033[0m"
-        echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
-        
-        # Display two columns with better formatting
-        for i in $(seq 0 2 $((${#options[@]} - 1))); do
-            if [ $i -lt 18 ]; then
-                printf "\033[1;32m│ %2d. %-30s \033[1;34m%2d. %-30s\033[0m │\n" \
-                       $((i+1)) "${options[i]}" $((i+2)) "${options[i+1]}"
-            else
-                # Single column for the last few options
-                if [ -n "${options[i]}" ]; then
-                    printf "\033[1;32m│ %2d. %-63s\033[0m │\n" \
-                           $((i+1)) "${options[i]}"
-                fi
-            fi
+        for i in "${!system_options[@]}"; do
+            printf "\033[1;35m│ %2d. %-57s\033[0m │\n" $((i+32)) "${system_options[i]}"
         done
-        
         echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
         echo -e "\033[1;31m│  0. Return to Main Menu                                      │\033[0m"
         echo -e "\033[1;33m└──────────────────────────────────────────────────────────────┘\033[0m"
         echo
         
-        # Add quick tips
-        echo -e "\033[1;36m💡 Quick Tips:\033[0m"
-        echo -e "\033[1;35m• BBR: Best for high bandwidth, low latency (Recommended)\033[0m"
-        echo -e "\033[1;35m• CUBIC: Good general purpose default\033[0m"
-        echo -e "\033[1;35m• Vegas: Good for low latency applications\033[0m"
-        echo -e "\033[1;35m• Westwood: Good for wireless networks\033[0m"
+        # Quick tips
+        echo -e "\033[1;36m💡 Quick Recommendations:\033[0m"
+        echo -e "\033[1;35m• BBR + fq: Best for most use cases (High performance)\033[0m"
+        echo -e "\033[1;35m• CUBIC + fq_codel: Good general purpose setup\033[0m"
+        echo -e "\033[1;35m• Vegas + fq: Excellent for low latency applications\033[0m"
         echo
         
-        read -p "$(echo -e '\033[1;32mSelect an option [0-27]: \033[0m')" choice
+        read -p "$(echo -e '\033[1;32mSelect an option [0-33]: \033[0m')" choice
         echo
 
         case $choice in
-            1) set_congestion_control ;;
-            2) set_qdisc ;;
-            3) apply_cc "bbr" "Google's BBR" "fq" "Optimizes for high bandwidth and low latency" ;;
-            4) apply_cc "bbr2" "BBR v2" "fq" "Improved version with better fairness and performance" ;;
-            5) apply_cc "cubic" "CUBIC" "fq_codel" "Default Linux algorithm, good for general use" ;;
-            6) apply_cc "reno" "Reno" "pfifo_fast" "Traditional TCP congestion control algorithm" ;;
-            7) apply_cc "vegas" "Vegas" "fq" "Delay-based algorithm for low latency applications" ;;
-            8) apply_cc "westwood" "Westwood" "fq_codel" "Loss-based with bandwidth estimation, good for wireless" ;;
-            9) apply_cc "westwood" "Westwood+" "fq_codel" "Enhanced version of Westwood algorithm" ;;
-            10) apply_cc "hybla" "Hybla" "fq" "Designed for satellite and wireless networks with high RTT" ;;
-            11) apply_cc "highspeed" "Highspeed" "fq" "Optimized for high-speed network environments" ;;
-            12) apply_cc "htcp" "HTCP" "fq_codel" "Hamilton TCP, designed for high-speed networks" ;;
-            13) apply_cc "illinois" "Illinois" "fq" "Hybrid delay and loss based congestion control" ;;
-            14) apply_cc "yeah" "Yeah" "fq" "Yet Another Highspeed TCP for high-speed networks" ;;
-            15) apply_cc "veno" "Veno" "fq_codel" "Optimized for wireless network environments" ;;
-            16) apply_cc "scalable" "Scalable" "fq" "Designed for high-scale network environments" ;;
-            17) apply_cc "lp" "LP" "fq" "Loss Priority congestion control algorithm" ;;
-            18) apply_cc "compound" "Compound" "fq" "Combination of delay and loss based approaches" ;;
-            19) apply_cc "cdg" "CDG" "fq" "CAIA Delay-Gradient congestion control" ;;
-            20) apply_cc "dctcp" "DCTCP" "fq" "Data Center TCP, optimized for data center environments" ;;
-            21) apply_cc "bic" "BIC" "fq" "Binary Increase Congestion for high-speed networks" ;;
-            22) apply_cc "ncr" "NCR" "fq" "Non-Congestion Robustness algorithm" ;;
-            23) apply_cc "oli" "OLI" "fq" "Open-Loop Increase congestion control" ;;
-            24) list_all_congestion_controls ;;
-            25) list_qdiscs ;;
-            26) test_network_performance ;;
-            27) reset_network_settings ;;
+            # Congestion Control Options (1-23)
+            1) apply_cc "bbr" "Google's BBR" "fq" "Optimizes for high bandwidth and low latency" ;;
+            2) apply_cc "bbr2" "BBR v2" "fq" "Improved version with better fairness and performance" ;;
+            3) apply_cc "cubic" "CUBIC" "fq_codel" "Default Linux algorithm, good for general use" ;;
+            4) apply_cc "reno" "Reno" "pfifo_fast" "Traditional TCP congestion control algorithm" ;;
+            5) apply_cc "vegas" "Vegas" "fq" "Delay-based algorithm for low latency applications" ;;
+            6) apply_cc "westwood" "Westwood" "fq_codel" "Loss-based with bandwidth estimation, good for wireless" ;;
+            7) apply_cc "westwood" "Westwood+" "fq_codel" "Enhanced version of Westwood algorithm" ;;
+            8) apply_cc "hybla" "Hybla" "fq" "Designed for satellite and wireless networks with high RTT" ;;
+            9) apply_cc "highspeed" "Highspeed" "fq" "Optimized for high-speed network environments" ;;
+            10) apply_cc "htcp" "HTCP" "fq_codel" "Hamilton TCP, designed for high-speed networks" ;;
+            11) apply_cc "illinois" "Illinois" "fq" "Hybrid delay and loss based congestion control" ;;
+            12) apply_cc "yeah" "Yeah" "fq" "Yet Another Highspeed TCP for high-speed networks" ;;
+            13) apply_cc "veno" "Veno" "fq_codel" "Optimized for wireless network environments" ;;
+            14) apply_cc "scalable" "Scalable" "fq" "Designed for high-scale network environments" ;;
+            15) apply_cc "lp" "LP" "fq" "Loss Priority congestion control algorithm" ;;
+            16) apply_cc "compound" "Compound" "fq" "Combination of delay and loss based approaches" ;;
+            17) apply_cc "cdg" "CDG" "fq" "CAIA Delay-Gradient congestion control" ;;
+            18) apply_cc "dctcp" "DCTCP" "fq" "Data Center TCP, optimized for data center environments" ;;
+            19) apply_cc "bic" "BIC" "fq" "Binary Increase Congestion for high-speed networks" ;;
+            20) apply_cc "ncr" "NCR" "fq" "Non-Congestion Robustness algorithm" ;;
+            21) apply_cc "oli" "OLI" "fq" "Open-Loop Increase congestion control" ;;
+            22) set_congestion_control ;;
+            23) list_all_congestion_controls ;;
+            
+            # Queue Discipline Options (24-31)
+            24) apply_qdisc "fq" "Fair Queue" "Default queue discipline for BBR" ;;
+            25) apply_qdisc "fq_codel" "Fair Queue Codel" "Recommended for most use cases" ;;
+            26) apply_qdisc "pfifo_fast" "Priority FIFO Fast" "Traditional Linux queue discipline" ;;
+            27) apply_qdisc "cake" "Common Applications Kept Enhanced" "Advanced queue discipline" ;;
+            28) apply_qdisc "sfq" "Stochastic Fair Queue" "Simple fair queuing" ;;
+            29) apply_qdisc "htb" "Hierarchical Token Bucket" "Advanced traffic shaping" ;;
+            30) set_qdisc ;;
+            31) list_qdiscs ;;
+            
+            # System Options (32-33)
+            32) test_network_performance ;;
+            33) reset_network_settings ;;
+            
             0) break ;;
-            *) echo -e "\033[1;31m❌ Invalid option. Please select a number between 0-27.\033[0m" ;;
+            *) echo -e "\033[1;31m❌ Invalid option. Please select a number between 0-33.\033[0m" ;;
         esac
 
         echo -e "\n\033[1;34m⏎ Press Enter to continue...\033[0m"
         read
     done
+}
+
+# Function to apply queue discipline
+apply_qdisc() {
+    local qdisc="$1"
+    local qdisc_name="$2"
+    local description="$3"
+    
+    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
+    echo -e "\033[1;36m║                   APPLYING QUEUE DISCIPLINE                  ║\033[0m"
+    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
+    echo
+    echo -e "\033[1;32m🔧 Queue Discipline: \033[1;34m${qdisc_name} (${qdisc})\033[0m"
+    echo -e "\033[1;32m📋 Description: \033[1;33m${description}\033[0m"
+    echo
+    
+    # Apply setting
+    if sysctl -w "net.core.default_qdisc=${qdisc}" 2>/dev/null; then
+        echo -e "\033[1;32m✅ Queue discipline set to: ${qdisc}\033[0m"
+    else
+        echo -e "\033[1;31m❌ Failed to set ${qdisc}\033[0m"
+        return 1
+    fi
+    
+    # Update config file
+    update_config "$SYSCTL_CONF" "net.core.default_qdisc" "$qdisc"
+    
+    echo
+    echo -e "\033[1;32m🎉 ${qdisc_name} applied successfully!\033[0m"
+    echo -e "\033[1;33m📊 Current QDisc: \033[1;34m$(sysctl -n net.core.default_qdisc)\033[0m"
+    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
+    echo -e "\033[1;36m║                     APPLY COMPLETE                           ║\033[0m"
+    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
 }
 
 # Enhanced generic function to apply congestion control
@@ -839,6 +917,7 @@ apply_cc() {
         cc_algo="cubic"
     fi
     
+    # Also set the recommended qdisc
     if sysctl -w "net.core.default_qdisc=${qdisc}" 2>/dev/null; then
         echo -e "\033[1;32m✅ Queue discipline set to: ${qdisc}\033[0m"
     else
@@ -861,70 +940,111 @@ apply_cc() {
 
 # Function to set TCP congestion control
 set_congestion_control() {
+    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
+    echo -e "\033[1;36m║                 SET CUSTOM CONGESTION CONTROL               ║\033[0m"
+    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
+    echo
     echo -e "\033[1;32mAvailable TCP Congestion Controls:\033[0m"
     list_all_congestion_controls | grep -v "Available" | sed '/^$/d'
     echo
-    read -p "Enter congestion control algorithm: " cc_algo
+    read -p "$(echo -e '\033[1;32mEnter congestion control algorithm: \033[0m')" cc_algo
     
     if ls /lib/modules/$(uname -r)/kernel/net/ipv4/ | grep -q "tcp_${cc_algo}.ko"; then
         modprobe "tcp_${cc_algo}" 2>/dev/null
         sysctl -w "net.ipv4.tcp_congestion_control=${cc_algo}"
         update_config "$SYSCTL_CONF" "net.ipv4.tcp_congestion_control" "$cc_algo"
-        echo -e "\033[1;32mSet to: ${cc_algo}\033[0m"
+        echo -e "\033[1;32m✅ Congestion control set to: ${cc_algo}\033[0m"
     else
-        echo -e "\033[1;31mAlgorithm '${cc_algo}' not found.\033[0m"
+        echo -e "\033[1;31m❌ Algorithm '${cc_algo}' not found.\033[0m"
+        echo -e "\033[1;33mAvailable algorithms:\033[0m"
+        ls /lib/modules/$(uname -r)/kernel/net/ipv4/ | grep tcp_ | sed 's/\.ko$//' | sed 's/tcp_//' | head -10
     fi
 }
 
 # Function to set queue discipline
 set_qdisc() {
-    echo -e "\033[1;32mAvailable Queue Disciplines:\033[0m"
-    tc qdisc list | grep -o '^[^ ]*' | sort | uniq | head -10
+    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
+    echo -e "\033[1;36m║                 SET CUSTOM QUEUE DISCIPLINE                 ║\033[0m"
+    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
     echo
-    read -p "Enter queue discipline: " qdisc
+    echo -e "\033[1;32mAvailable Queue Disciplines:\033[0m"
+    tc qdisc list | grep -o '^[^ ]*' | sort | uniq | head -15
+    echo
+    read -p "$(echo -e '\033[1;32mEnter queue discipline: \033[0m')" qdisc
     
     sysctl -w "net.core.default_qdisc=${qdisc}"
     update_config "$SYSCTL_CONF" "net.core.default_qdisc" "$qdisc"
-    echo -e "\033[1;32mQDISC set to: ${qdisc}\033[0m"
+    echo -e "\033[1;32m✅ Queue discipline set to: ${qdisc}\033[0m"
 }
 
 # Function to list all available congestion controls
 list_all_congestion_controls() {
-    echo -e "\033[1;32mAvailable TCP CC Algorithms:\033[0m"
-    echo -e "\033[1;34mLoaded:\033[0m"
-    sysctl -n net.ipv4.tcp_available_congestion_control 2>/dev/null | tr ' ' '\n'
-    echo -e "\033[1;34mModules:\033[0m"
-    ls /lib/modules/$(uname -r)/kernel/net/ipv4/ | grep tcp_ | sed 's/\.ko$//;s/tcp_//' | head -15
+    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
+    echo -e "\033[1;36m║               AVAILABLE CONGESTION CONTROLS                 ║\033[0m"
+    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
+    echo
+    echo -e "\033[1;32mCurrently Loaded:\033[0m"
+    sysctl -n net.ipv4.tcp_available_congestion_control 2>/dev/null | tr ' ' '\n' | while read algo; do
+        echo -e "  \033[1;34m${algo}\033[0m"
+    done
+    echo
+    echo -e "\033[1;32mAvailable Modules:\033[0m"
+    ls /lib/modules/$(uname -r)/kernel/net/ipv4/ | grep tcp_ | sed 's/\.ko$//;s/tcp_//' | while read algo; do
+        echo -e "  \033[1;33m${algo}\033[0m"
+    done
 }
 
 # Function to list available queue disciplines
 list_qdiscs() {
+    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
+    echo -e "\033[1;36m║               AVAILABLE QUEUE DISCIPLINES                   ║\033[0m"
+    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
+    echo
     echo -e "\033[1;32mAvailable Queue Disciplines:\033[0m"
-    tc qdisc list | grep -o '^[^ ]*' | sort | uniq | head -15
+    tc qdisc list | grep -o '^[^ ]*' | sort | uniq | while read qdisc; do
+        echo -e "  \033[1;34m${qdisc}\033[0m"
+    done
 }
 
 # Function to test network performance
 test_network_performance() {
-    echo -e "\033[1;32mTesting network...\033[0m"
-    echo -e "CC: $(sysctl -n net.ipv4.tcp_congestion_control)"
-    echo -e "QDISC: $(sysctl -n net.core.default_qdisc)"
-    echo -e "rmem: $(sysctl -n net.ipv4.tcp_rmem)"
-    echo -e "wmem: $(sysctl -n net.ipv4.tcp_wmem)"
+    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
+    echo -e "\033[1;36m║                 NETWORK PERFORMANCE TEST                    ║\033[0m"
+    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
+    echo
+    echo -e "\033[1;33mCurrent Network Settings:\033[0m"
+    echo -e "\033[1;32m• Congestion Control: \033[1;34m$(sysctl -n net.ipv4.tcp_congestion_control)\033[0m"
+    echo -e "\033[1;32m• Queue Discipline:   \033[1;34m$(sysctl -n net.core.default_qdisc)\033[0m"
+    echo -e "\033[1;32m• TCP rmem:           \033[1;34m$(sysctl -n net.ipv4.tcp_rmem)\033[0m"
+    echo -e "\033[1;32m• TCP wmem:           \033[1;34m$(sysctl -n net.ipv4.tcp_wmem)\033[0m"
+    echo
     
     if command -v ping &> /dev/null; then
-        echo -e "\033[1;34mPing test:\033[0m"
-        ping -c 2 8.8.8.8 | tail -1
+        echo -e "\033[1;33mPing Test (8.8.8.8):\033[0m"
+        ping -c 4 8.8.8.8 | tail -2
+        echo
     fi
 }
 
 # Function to reset network settings to defaults
 reset_network_settings() {
-    echo -e "\033[1;32mResetting to defaults...\033[0m"
+    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
+    echo -e "\033[1;36m║                 RESET NETWORK SETTINGS                      ║\033[0m"
+    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
+    echo
+    echo -e "\033[1;33mResetting to system defaults...\033[0m"
+    
+    # Remove congestion control and qdisc settings
     sed -i '/^net.ipv4.tcp_congestion_control/d; /^net.core.default_qdisc/d' "$SYSCTL_CONF"
+    
+    # Reload sysctl
     sysctl -p
-    echo -e "\033[1;32mReset complete.\033[0m"
+    
+    echo -e "\033[1;32m✅ Network settings reset to system defaults.\033[0m"
+    echo -e "\033[1;33mCurrent settings:\033[0m"
+    echo -e "\033[1;34m• CC: $(sysctl -n net.ipv4.tcp_congestion_control)\033[0m"
+    echo -e "\033[1;34m• QDISC: $(sysctl -n net.core.default_qdisc)\033[0m"
 }
-
 # Function to show contents of sysctl.conf
 show_sysctl_conf() {
     echo -e "\033[1;34mContents of sysctl.conf:\033[0m"
@@ -1086,7 +1206,7 @@ Optimizer() {
     local options=(
         "Backup (sysctl.conf & limits.conf)"
         "Optimize"
-        "Set BBR by LightKnight"
+        "BBR TCP CONGESTION CONTROL & QDISC MANAGER"
         "Show sysctl.conf"
         "Show limits.conf"
         "Edit sysctl.conf"
