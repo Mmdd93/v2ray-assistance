@@ -1042,7 +1042,7 @@ Optimizer() {
         case $choice in
             1) backup_configs ;;
             2) Optimize_Menu ;;
-            3) apply_cc ;;
+            3) network_tuning_menu ;;
             4) show_sysctl_conf ;;
             5) show_limits_conf ;;
             6) edit_sysctl_conf ;;
