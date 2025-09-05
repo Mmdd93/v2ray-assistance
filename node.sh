@@ -3445,7 +3445,9 @@ main_menu() {
 		menu_option "74" "Sing-box/SagerNet panel (s-ui) by github.com/alireza0/s-ui"
 		menu_option "73" "X-UI panel multi node location by (github.com/azavaxhuman/Nodex/)"
         menu_option "75" "Mirza (telegram bot for sale) (github.com/mahdiMGF2/botmirzapanel)"
-		menu_option "77" "mtproto proxy (github.com/seriyps/mtproto_proxy)"
+		menu_option "77" "mtproto proxy (telegram proxy) (github.com/seriyps/mtproto_proxy)"
+        menu_option "78" "OpenVPN panel (github.com/palark/ovpn-admin)"
+  
         separator
         menu_option "39" "Marzban panel"
         menu_option "40" "Marzban node by v2"
@@ -3776,6 +3778,12 @@ sudo bash zex-tunnel-install.sh
 			77) 
                 echo -e "${YELLOW}Running mtp_install.sh...${NC}"
                 curl -L -o mtp_install.sh https://git.io/fj5ru && bash mtp_install.sh
+                ;;
+			78) 
+                echo -e "${YELLOW}Running ovpn-admin...${NC}"
+                git clone https://github.com/palark/ovpn-admin.git
+cd ovpn-admin
+./start.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
