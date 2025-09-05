@@ -699,18 +699,170 @@ remove_full_optimizations() {
     echo -e "\033[1;32mOptimizations removed and sysctl reloaded.\033[0m"
 }
 
-# Function to install BBR via LightKnight
-bbr_script() {
-    echo -e "\033[1;32mUpdating system and installing necessary packages...\033[0m"
-    sudo apt update && sudo apt install -y python3 python3-pip
-    echo -e "\033[1;32mFetching and running the Python script...\033[0m"
-    python3 <(curl -Ls https://raw.githubusercontent.com/kalilovers/LightKnightBBR/main/bbr.py --ipv4)
+# Function to manage TCP congestion control and qdisc
+network_tuning_menu() {
+    while true; do
+        display_header
+        echo -e "\033[1;33mTCP Congestion Control & Queue Discipline Manager\033[0m"
+        echo
+        echo -e "\033[1;32mCurrent: CC: \033[1;34m$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null || echo "Not set")\033[0m"
+        echo -e "\033[1;32mCurrent: QDISC: \033[1;34m$(sysctl -n net.core.default_qdisc 2>/dev/null || echo "Not set")\033[0m"
+        echo
+        
+        local options=(
+            "Set TCP Congestion Control"          "Set Queue Discipline (qdisc)"
+            "Apply BBR (Google)"                  "Apply BBR2 (Improved BBR)"
+            "Apply CUBIC (Default)"               "Apply Reno (Traditional)"
+            "Apply Vegas (Delay-based)"           "Apply Westwood (Loss-based)"
+            "Apply Westwood+ (Enhanced)"          "Apply Hybla (Satellite/Wireless)"
+            "Apply Highspeed (High-speed)"        "Apply HTCP (Hamilton TCP)"
+            "Apply Illinois (Delay+Loss)"         "Apply Yeah (Highspeed)"
+            "Apply Veno (Wireless)"               "Apply Scalable (High-speed)"
+            "Apply LP (Loss Priority)"            "Apply Compound (Delay+Loss)"
+            "Apply CDG (Delay-Gradient)"          "Apply DCTCP (Data Center)"
+            "Apply BIC (Binary Increase)"         "Apply NCR (Non-Congestion)"
+            "Apply OLI (Open-Loop)"               "List all CC algorithms"
+            "List queue disciplines"              "Test network performance"
+            "Reset to defaults"
+        )
+        
+        # Display two columns
+        for i in $(seq 0 2 $((${#options[@]} - 1))); do
+            printf "\033[1;32m%2d.\033[0m %-25s \033[1;34m%2d.\033[0m %-25s\n" \
+                   $((i+1)) "${options[i]}" $((i+2)) "${options[i+1]}"
+        done
+        
+        echo -e "\033[1;31m 0.\033[0m Return to main menu"
+        echo
+        display_footer
+        
+        read -p "Select an option: " choice
+        echo
 
-    if [ $? -eq 0 ]; then
-        echo -e "\033[1;32mPython script executed successfully.\033[0m"
+        case $choice in
+            1) set_congestion_control ;;
+            2) set_qdisc ;;
+            3) apply_cc "bbr" "Google's BBR" "fq" ;;
+            4) apply_cc "bbr2" "BBR v2" "fq" ;;
+            5) apply_cc "cubic" "CUBIC" "fq_codel" ;;
+            6) apply_cc "reno" "Reno" "pfifo_fast" ;;
+            7) apply_cc "vegas" "Vegas" "fq" ;;
+            8) apply_cc "westwood" "Westwood" "fq_codel" ;;
+            9) apply_cc "westwood" "Westwood+" "fq_codel" ;;
+            10) apply_cc "hybla" "Hybla" "fq" ;;
+            11) apply_cc "highspeed" "Highspeed" "fq" ;;
+            12) apply_cc "htcp" "HTCP" "fq_codel" ;;
+            13) apply_cc "illinois" "Illinois" "fq" ;;
+            14) apply_cc "yeah" "Yeah" "fq" ;;
+            15) apply_cc "veno" "Veno" "fq_codel" ;;
+            16) apply_cc "scalable" "Scalable" "fq" ;;
+            17) apply_cc "lp" "LP" "fq" ;;
+            18) apply_cc "compound" "Compound" "fq" ;;
+            19) apply_cc "cdg" "CDG" "fq" ;;
+            20) apply_cc "dctcp" "DCTCP" "fq" ;;
+            21) apply_cc "bic" "BIC" "fq" ;;
+            22) apply_cc "ncr" "NCR" "fq" ;;
+            23) apply_cc "oli" "OLI" "fq" ;;
+            24) list_all_congestion_controls ;;
+            25) list_qdiscs ;;
+            26) test_network_performance ;;
+            27) reset_network_settings ;;
+            0) break ;;
+            *) echo -e "\033[1;31mInvalid option.\033[0m" ;;
+        esac
+
+        echo -e "\n\033[1;34mPress Enter to continue...\033[0m"
+        read
+    done
+}
+
+# Generic function to apply congestion control
+apply_cc() {
+    local cc_algo="$1"
+    local cc_name="$2"
+    local qdisc="${3:-fq}"
+    
+    echo -e "\033[1;32mApplying $cc_name ($cc_algo)...\033[0m"
+    
+    # Load module if available
+    modprobe "tcp_${cc_algo}" 2>/dev/null
+    
+    # Apply settings
+    sysctl -w "net.ipv4.tcp_congestion_control=${cc_algo}" 2>/dev/null || \
+    sysctl -w "net.ipv4.tcp_congestion_control=cubic"
+    
+    sysctl -w "net.core.default_qdisc=${qdisc}"
+    
+    update_config "$SYSCTL_CONF" "net.ipv4.tcp_congestion_control" "$cc_algo"
+    update_config "$SYSCTL_CONF" "net.core.default_qdisc" "$qdisc"
+    
+    echo -e "\033[1;32m${cc_name} applied successfully!\033[0m"
+}
+
+# Function to set TCP congestion control
+set_congestion_control() {
+    echo -e "\033[1;32mAvailable TCP Congestion Controls:\033[0m"
+    list_all_congestion_controls | grep -v "Available" | sed '/^$/d'
+    echo
+    read -p "Enter congestion control algorithm: " cc_algo
+    
+    if ls /lib/modules/$(uname -r)/kernel/net/ipv4/ | grep -q "tcp_${cc_algo}.ko"; then
+        modprobe "tcp_${cc_algo}" 2>/dev/null
+        sysctl -w "net.ipv4.tcp_congestion_control=${cc_algo}"
+        update_config "$SYSCTL_CONF" "net.ipv4.tcp_congestion_control" "$cc_algo"
+        echo -e "\033[1;32mSet to: ${cc_algo}\033[0m"
     else
-        echo -e "\033[1;31mFailed to execute the Python script.\033[0m"
+        echo -e "\033[1;31mAlgorithm '${cc_algo}' not found.\033[0m"
     fi
+}
+
+# Function to set queue discipline
+set_qdisc() {
+    echo -e "\033[1;32mAvailable Queue Disciplines:\033[0m"
+    tc qdisc list | grep -o '^[^ ]*' | sort | uniq | head -10
+    echo
+    read -p "Enter queue discipline: " qdisc
+    
+    sysctl -w "net.core.default_qdisc=${qdisc}"
+    update_config "$SYSCTL_CONF" "net.core.default_qdisc" "$qdisc"
+    echo -e "\033[1;32mQDISC set to: ${qdisc}\033[0m"
+}
+
+# Function to list all available congestion controls
+list_all_congestion_controls() {
+    echo -e "\033[1;32mAvailable TCP CC Algorithms:\033[0m"
+    echo -e "\033[1;34mLoaded:\033[0m"
+    sysctl -n net.ipv4.tcp_available_congestion_control 2>/dev/null | tr ' ' '\n'
+    echo -e "\033[1;34mModules:\033[0m"
+    ls /lib/modules/$(uname -r)/kernel/net/ipv4/ | grep tcp_ | sed 's/\.ko$//;s/tcp_//' | head -15
+}
+
+# Function to list available queue disciplines
+list_qdiscs() {
+    echo -e "\033[1;32mAvailable Queue Disciplines:\033[0m"
+    tc qdisc list | grep -o '^[^ ]*' | sort | uniq | head -15
+}
+
+# Function to test network performance
+test_network_performance() {
+    echo -e "\033[1;32mTesting network...\033[0m"
+    echo -e "CC: $(sysctl -n net.ipv4.tcp_congestion_control)"
+    echo -e "QDISC: $(sysctl -n net.core.default_qdisc)"
+    echo -e "rmem: $(sysctl -n net.ipv4.tcp_rmem)"
+    echo -e "wmem: $(sysctl -n net.ipv4.tcp_wmem)"
+    
+    if command -v ping &> /dev/null; then
+        echo -e "\033[1;34mPing test:\033[0m"
+        ping -c 2 8.8.8.8 | tail -1
+    fi
+}
+
+# Function to reset network settings to defaults
+reset_network_settings() {
+    echo -e "\033[1;32mResetting to defaults...\033[0m"
+    sed -i '/^net.ipv4.tcp_congestion_control/d; /^net.core.default_qdisc/d' "$SYSCTL_CONF"
+    sysctl -p
+    echo -e "\033[1;32mReset complete.\033[0m"
 }
 
 # Function to show contents of sysctl.conf
@@ -890,7 +1042,7 @@ Optimizer() {
         case $choice in
             1) backup_configs ;;
             2) Optimize_Menu ;;
-            3) bbr_script ;;
+            3) apply_cc ;;
             4) show_sysctl_conf ;;
             5) show_limits_conf ;;
             6) edit_sysctl_conf ;;
