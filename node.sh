@@ -3471,7 +3471,7 @@ main_menu() {
         menu_option "0" "Exit"
         echo ""
         
-        read -p "$(echo -e ${GREEN}"Enter your choice [0-72]: "${NC})" choice
+        read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
         
         case $choice in
             1) 
