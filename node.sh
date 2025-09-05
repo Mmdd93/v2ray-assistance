@@ -3141,6 +3141,78 @@ change_timezone() {
         read -p "Press Enter to continue..."
     done
 }
+sui() {
+    echo -e "\033[1;36m============================================\033[0m"
+    echo -e "\033[1;33m         S-UI Panel Installation\033[0m"
+    echo -e "\033[1;36m============================================\033[0m"
+
+    repo="alireza0/s-ui"
+
+    echo -e "\033[1;33mSelect installation type:\033[0m"
+    echo -e "\033[1;32m1.\033[0m Latest version (default)"
+    echo -e "\033[1;32m2.\033[0m Select a specific version"
+    
+    read -p "Select an option [1]: " install_option
+    install_option=${install_option:-1}  # Set default to 1 if empty
+
+    if [[ "$install_option" == "2" ]]; then
+        echo -e "\033[1;33mFetching the list of available versions...\033[0m"
+
+        # Fetch latest 30 versions from GitHub API
+        versions_file=$(mktemp)
+        curl -s "https://api.github.com/repos/$repo/releases?per_page=30" | grep -oP '"tag_name": "\K(.*?)(?=")' > "$versions_file"
+
+        if [ ! -s "$versions_file" ]; then
+            echo -e "\033[1;31mFailed to fetch available versions. Using latest version instead.\033[0m"
+            script="bash <(curl -Ls https://raw.githubusercontent.com/$repo/master/install.sh)"
+        else
+            # Display the list of versions
+            echo -e "\n\033[1;36mAvailable Versions:\033[0m"
+            echo -e "\033[1;34m========================\033[0m"
+
+            cat -n "$versions_file" | while read -r line_number line_content; do
+                if (( line_number % 2 == 0 )); then
+                    echo -e "\033[1;32m$line_number: $line_content\033[0m"
+                else
+                    echo -e "$line_number: $line_content"
+                fi
+            done
+
+            echo -e "\033[1;34m========================\033[0m\n"
+
+            local version_choice
+            read -p "Enter the number of the version you want to install: " version_choice
+
+            local selected_version
+            selected_version=$(sed -n "${version_choice}p" "$versions_file")
+
+            if [ -z "$selected_version" ]; then
+                echo -e "\033[1;31mInvalid selection. Using latest version instead.\033[0m"
+                script="bash <(curl -Ls https://raw.githubusercontent.com/$repo/master/install.sh)"
+            else
+                script="VERSION=$selected_version && bash <(curl -Ls \"https://raw.githubusercontent.com/$repo/\$VERSION/install.sh\") \$VERSION"
+            fi
+            
+            # Clean up
+            rm -f "$versions_file"
+        fi
+    else
+        script="bash <(curl -Ls https://raw.githubusercontent.com/$repo/master/install.sh)"
+    fi
+
+    echo -e "\033[1;32mRunning command: $script...\033[0m"
+    eval "$script"
+    
+    if [[ $? -eq 0 ]]; then
+        echo -e "\033[1;32mCommand completed successfully.\033[0m"
+    else
+        echo -e "\033[1;31mCommand encountered an error.\033[0m"
+    fi
+
+    echo -e "\033[1;36m============================================\033[0m"
+    echo -e "\nPress Enter to return to the main menu."
+    read
+}
 update() {
     echo -e "${YELLOW}Updating v2ray Assistant scripts...${NC}"
     
@@ -3674,6 +3746,8 @@ main_menu() {
                 curl -Ls https://raw.githubusercontent.com/azavaxhuman/Nodex/refs/heads/main/main.sh -o Nodex.sh
                 sudo bash Nodex.sh 
                 ;;
+			74) 
+                sui ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
                 update 
