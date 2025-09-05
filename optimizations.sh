@@ -104,84 +104,212 @@ disable_optimizations() {
     echo -e "\033[1;32mDisabling all optimizations...\033[0m"
 
     # Remove specific optimization settings from /etc/sysctl.conf
-    for setting in "${!sysctl_settings[@]}"; do
-        sed -i "/^$setting/d" "$SYSCTL_CONF"
+    SYSCTL_KEYS=(
+        "vm.swappiness"
+        "vm.dirty_ratio"
+        "vm.dirty_background_ratio"
+        "fs.file-max"
+        "net.core.somaxconn"
+        "net.core.netdev_max_backlog"
+        "net.ipv4.ip_local_port_range"
+        "net.ipv4.ip_nonlocal_bind"
+        "net.ipv4.tcp_fin_timeout"
+        "net.ipv4.tcp_keepalive_time"
+        "net.ipv4.tcp_syncookies"
+        "net.ipv4.tcp_max_orphans"
+        "net.ipv4.tcp_max_syn_backlog"
+        "net.ipv4.tcp_max_tw_buckets"
+        "net.ipv4.tcp_reordering"
+        "net.ipv4.tcp_mem"
+        "net.ipv4.tcp_rmem"
+        "net.ipv4.tcp_wmem"
+        "net.ipv4.tcp_syn_retries"
+        "net.ipv4.tcp_tw_reuse"
+        "net.ipv4.tcp_keepalive_intvl"
+        "net.ipv4.tcp_keepalive_probes"
+        "net.ipv4.tcp_mtu_probing"
+        "net.ipv4.tcp_congestion_control"
+        "net.ipv4.tcp_sack"
+        "net.ipv4.conf.all.rp_filter"
+        "net.ipv4.conf.default.rp_filter"
+        "net.ipv4.ip_no_pmtu_disc"
+        "vm.vfs_cache_pressure"
+        "net.ipv4.tcp_fastopen"
+        "net.ipv4.tcp_ecn"
+        "net.ipv4.tcp_retries2"
+        "net.ipv6.conf.all.forwarding"
+        "net.ipv4.conf.all.forwarding"
+        "net.ipv4.tcp_low_latency"
+        "net.ipv4.tcp_window_scaling"
+        "net.core.default_qdisc"
+        "net.netfilter.nf_conntrack_max"
+        "net.netfilter.nf_conntrack_log_invalid"
+        "net.ipv4.conf.all.log_martians"
+        "net.ipv4.conf.default.log_martians"
+    )
+
+    for key in "${SYSCTL_KEYS[@]}"; do
+        sed -i "/^$key/d" "$SYSCTL_CONF"
     done
 
     # Remove specific limits from /etc/security/limits.conf
-    for limit in "${!limits_settings[@]}"; do
-        sed -i "/^$limit/d" "$LIMITS_CONF"
+    LIMIT_KEYS=(
+        "* soft nproc"
+        "* hard nproc"
+        "* soft nofile"
+        "* hard nofile"
+        "root soft nproc"
+        "root hard nproc"
+        "root soft nofile"
+        "root hard nofile"
+    )
+
+    for key in "${LIMIT_KEYS[@]}"; do
+        sed -i "/^$key/d" "$LIMITS_CONF"
     done
 
-    reload_sysctl
-    echo -e "\033[1;32mAll Optimizations Disabled!\033[0m"
-}
-
-# Function to disable all optimizations (remove specific entries)
-disable_optimizations() {
-    echo -e "\033[1;32mDisabling all optimizations...\033[0m"
-
-    # Directly remove specific optimization settings from /etc/sysctl.conf
-    sed -i '/^vm.swappiness/d' "$SYSCTL_CONF"
-    sed -i '/^vm.dirty_ratio/d' "$SYSCTL_CONF"
-    sed -i '/^vm.dirty_background_ratio/d' "$SYSCTL_CONF"
-    sed -i '/^fs.file-max/d' "$SYSCTL_CONF"
-    sed -i '/^net.core.somaxconn/d' "$SYSCTL_CONF"
-    sed -i '/^net.core.netdev_max_backlog/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.ip_local_port_range/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.ip_nonlocal_bind/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_fin_timeout/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_keepalive_time/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_syncookies/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_max_orphans/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_max_syn_backlog/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_max_tw_buckets/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_reordering/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_mem/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_rmem/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_wmem/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_syn_retries/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_tw_reuse/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_keepalive_intvl/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_keepalive_probes/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_mtu_probing/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_congestion_control/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_sack/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.conf.all.rp_filter/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.conf.default.rp_filter/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.ip_no_pmtu_disc/d' "$SYSCTL_CONF"
-    sed -i '/^vm.vfs_cache_pressure/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_fastopen/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_ecn/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_retries2/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv6.conf.all.forwarding/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.conf.all.forwarding/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_low_latency/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_window_scaling/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_congestion_control/d' "$SYSCTL_CONF"
-    sed -i '/^net.core.default_qdisc/d' "$SYSCTL_CONF"
-    sed -i '/^net.netfilter.nf_conntrack_max/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.tcp_fin_timeout/d' "$SYSCTL_CONF"
-    sed -i '/^net.netfilter.nf_conntrack_log_invalid/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.conf.all.log_martians/d' "$SYSCTL_CONF"
-    sed -i '/^net.ipv4.conf.default.log_martians/d' "$SYSCTL_CONF"
-
-    # Directly remove specific limits from /etc/security/limits.conf
-    sed -i '/^\* soft nproc/d' "$LIMITS_CONF"
-    sed -i '/^\* hard nproc/d' "$LIMITS_CONF"
-    sed -i '/^\* soft nofile/d' "$LIMITS_CONF"
-    sed -i '/^\* hard nofile/d' "$LIMITS_CONF"
-    sed -i '/^root soft nproc/d' "$LIMITS_CONF"
-    sed -i '/^root hard nproc/d' "$LIMITS_CONF"
-    sed -i '/^root soft nofile/d' "$LIMITS_CONF"
-    sed -i '/^root hard nofile/d' "$LIMITS_CONF"
-
-    # Apply the updated sysctl settings
+    # Reload sysctl
     echo -e "\033[1;32mReloading sysctl settings...\033[0m"
     sysctl -p
 
     echo -e "\033[1;32mAll optimizations have been disabled!\033[0m"
 }
+apply_fast_tcp() {
+    echo -e "\033[1;32mApplying VERY FAST TCP optimizations...\033[0m"
+
+    # Sysctl settings for very fast TCP (UDP-like behavior)
+    declare -A sysctl_settings=(
+        ["net.core.rmem_max"]="134217728"
+        ["net.core.wmem_max"]="134217728"
+        ["net.core.rmem_default"]="16777216"
+        ["net.core.wmem_default"]="16777216"
+        ["net.core.netdev_max_backlog"]="30000"
+        ["net.core.somaxconn"]="32768"
+        ["net.ipv4.ip_local_port_range"]="1024 65000"
+        ["net.ipv4.tcp_congestion_control"]="bbr"
+        ["net.core.default_qdisc"]="fq"
+        ["net.ipv4.tcp_fastopen"]="3"
+        ["net.ipv4.tcp_fin_timeout"]="5"
+        ["net.ipv4.tcp_tw_reuse"]="1"
+        ["net.ipv4.tcp_keepalive_time"]="120"
+        ["net.ipv4.tcp_keepalive_intvl"]="20"
+        ["net.ipv4.tcp_keepalive_probes"]="3"
+        ["net.ipv4.tcp_syn_retries"]="2"
+        ["net.ipv4.tcp_retries1"]="1"
+        ["net.ipv4.tcp_retries2"]="3"
+        ["net.ipv4.tcp_orphan_retries"]="0"
+        ["net.ipv4.tcp_mtu_probing"]="1"
+        ["net.ipv4.tcp_sack"]="0"
+        ["net.ipv4.tcp_dsack"]="0"
+        ["net.ipv4.tcp_low_latency"]="1"
+        ["net.ipv4.tcp_window_scaling"]="1"
+        ["net.ipv4.tcp_no_metrics_save"]="1"
+        ["net.ipv4.tcp_syncookies"]="1"
+        ["net.netfilter.nf_conntrack_max"]="524288"
+        ["net.netfilter.nf_conntrack_tcp_timeout_time_wait"]="30"
+        ["net.netfilter.nf_conntrack_tcp_timeout_established"]="300000"
+    )
+
+    # Apply sysctl settings
+    for key in "${!sysctl_settings[@]}"; do
+        if grep -q "^$key" "$SYSCTL_CONF"; then
+            sed -i "s|^$key.*|$key = ${sysctl_settings[$key]}|" "$SYSCTL_CONF"
+        else
+            echo "$key = ${sysctl_settings[$key]}" >> "$SYSCTL_CONF"
+        fi
+    done
+
+    # Limits for fast connections
+    declare -A limits_settings=(
+        ["* soft nproc"]="65535"
+        ["* hard nproc"]="65535"
+        ["* soft nofile"]="1048576"
+        ["* hard nofile"]="1048576"
+        ["root soft nproc"]="65535"
+        ["root hard nproc"]="65535"
+        ["root soft nofile"]="1048576"
+        ["root hard nofile"]="1048576"
+    )
+
+    for key in "${!limits_settings[@]}"; do
+        if grep -q "^$key" "$LIMITS_CONF"; then
+            sed -i "s|^$key.*|$key ${limits_settings[$key]}|" "$LIMITS_CONF"
+        else
+            echo "$key ${limits_settings[$key]}" >> "$LIMITS_CONF"
+        fi
+    done
+
+    # Load BBR module if available
+    if modprobe tcp_bbr 2>/dev/null; then
+        echo "Loaded tcp_bbr module."
+    fi
+
+    reload_sysctl
+    echo -e "\033[1;32mVERY FAST TCP optimizations applied!\033[0m"
+}
+disable_fast_tcp() {
+    echo -e "\033[1;32mDisabling VERY FAST TCP optimizations...\033[0m"
+
+    # Sysctl keys to remove
+    SYSCTL_KEYS=(
+        "net.core.rmem_max"
+        "net.core.wmem_max"
+        "net.core.rmem_default"
+        "net.core.wmem_default"
+        "net.core.netdev_max_backlog"
+        "net.core.somaxconn"
+        "net.ipv4.ip_local_port_range"
+        "net.ipv4.tcp_congestion_control"
+        "net.core.default_qdisc"
+        "net.ipv4.tcp_fastopen"
+        "net.ipv4.tcp_fin_timeout"
+        "net.ipv4.tcp_tw_reuse"
+        "net.ipv4.tcp_keepalive_time"
+        "net.ipv4.tcp_keepalive_intvl"
+        "net.ipv4.tcp_keepalive_probes"
+        "net.ipv4.tcp_syn_retries"
+        "net.ipv4.tcp_retries1"
+        "net.ipv4.tcp_retries2"
+        "net.ipv4.tcp_orphan_retries"
+        "net.ipv4.tcp_mtu_probing"
+        "net.ipv4.tcp_sack"
+        "net.ipv4.tcp_dsack"
+        "net.ipv4.tcp_low_latency"
+        "net.ipv4.tcp_window_scaling"
+        "net.ipv4.tcp_no_metrics_save"
+        "net.ipv4.tcp_syncookies"
+        "net.netfilter.nf_conntrack_max"
+        "net.netfilter.nf_conntrack_tcp_timeout_time_wait"
+        "net.netfilter.nf_conntrack_tcp_timeout_established"
+    )
+
+    for key in "${SYSCTL_KEYS[@]}"; do
+        sed -i "/^$key/d" "$SYSCTL_CONF"
+    done
+
+    # Limits to remove
+    LIMIT_KEYS=(
+        "* soft nproc"
+        "* hard nproc"
+        "* soft nofile"
+        "* hard nofile"
+        "root soft nproc"
+        "root hard nproc"
+        "root soft nofile"
+        "root hard nofile"
+    )
+
+    for key in "${LIMIT_KEYS[@]}"; do
+        sed -i "/^$key/d" "$LIMITS_CONF"
+    done
+
+    # Reload sysctl
+    echo -e "\033[1;32mReloading sysctl settings...\033[0m"
+    sysctl -p
+
+    echo -e "\033[1;32mVERY FAST TCP optimizations removed!\033[0m"
+}
+
 apply_full_optimizations() {
     echo -e "\033[1;32mApplying optimizations...\033[0m"
 
@@ -645,6 +773,41 @@ EOF
     fi
 }
 
+# Submenu for Optimize options
+Optimize_Menu() {
+    while true; do
+        clear
+        echo -e "\033[1;32m=======================\033[0m"
+        echo -e "\033[1;32m Optimize Options \033[0m"
+        echo -e "\033[1;32m=======================\033[0m"
+        echo -e "\033[1;32m1.\033[0m Apply light optimizations"
+        echo -e "\033[1;32m2.\033[0m Disable light optimizations"
+        echo -e "\033[1;32m3.\033[0m Apply full optimizations"
+        echo -e "\033[1;32m4.\033[0m Remove full optimizations"
+        echo -e "\033[1;32m5.\033[0m tc Optimize"
+        echo -e "\033[1;32m6.\033[0m Optimize fast TCP"
+        echo -e "\033[1;32m7.\033[0m Disable fast TCP"
+        echo -e "\033[1;32m0.\033[0m Return to Optimizer menu"
+        echo -e "\nSelect an option: "
+        read opt_choice
+
+        case $opt_choice in
+            1) apply_optimizations ;;
+            2) disable_optimizations ;;
+            3) apply_full_optimizations ;;
+            4) remove_full_optimizations ;;
+            5) tc ;;
+            6) apply_fast_tcp ;;
+            7) disable_fast_tcp ;;
+            0) break ;;
+            *) echo -e "\033[1;31mInvalid option. Please select a valid number.\033[0m" ;;
+        esac
+
+        echo -e "\n\033[1;34mPress Enter to return to the Optimize submenu...\033[0m"
+        read
+    done
+}
+
 # Main menu for optimizer
 Optimizer() {
     while true; do
@@ -653,48 +816,37 @@ Optimizer() {
         echo -e "\033[1;32m Network Optimizer \033[0m"
         echo -e "\033[1;32m=======================\033[0m"
         echo -e "\033[1;32m1.\033[0m Backup (sysctl.conf & limits.conf)"
-        echo -e "\033[1;32m2.\033[0m Optimize (backup and apply optimizations)"
-        echo -e "\033[1;32m3.\033[0m Disable all optimizations"
-        echo -e "\033[1;32m4.\033[0m Set BBR by LightKnight"
-        echo -e "\033[1;32m5.\033[0m Show sysctl.conf"
-        echo -e "\033[1;32m6.\033[0m Show limits.conf"
-        echo -e "\033[1;32m7.\033[0m Edit sysctl.conf"
-        echo -e "\033[1;32m8.\033[0m Edit limits.conf"
-		echo -e "\033[1;32m9.\033[0m Apply changes"
-		echo -e "\033[1;32m10.\033[0m Disable log"
-		echo -e "\033[1;32m11.\033[0m full Optimize"
-		echo -e "\033[1;32m12.\033[0m Disable full Optimize"
-		echo -e "\033[1;32m13.\033[0m tc Optimize"
+        echo -e "\033[1;32m2.\033[0m Optimize "
+        echo -e "\033[1;32m3.\033[0m Set BBR by LightKnight"
+        echo -e "\033[1;32m4.\033[0m Show sysctl.conf"
+        echo -e "\033[1;32m5.\033[0m Show limits.conf"
+        echo -e "\033[1;32m6.\033[0m Edit sysctl.conf"
+        echo -e "\033[1;32m7.\033[0m Edit limits.conf"
+        echo -e "\033[1;32m8.\033[0m Apply changes (sysctl -p)"
+        echo -e "\033[1;32m9.\033[0m Disable log (rsyslog)"
         echo -e "\033[1;32m0.\033[0m Main menu"
         echo -e "\nSelect an option: "
         read choice
 
         case $choice in
             1) backup_configs ;;
-            2) 
-                backup_configs # Backup before applying optimizations
-                apply_optimizations 
+            2) Optimize_Menu ;;
+            3) bbr_script ;;
+            4) show_sysctl_conf ;;
+            5) show_limits_conf ;;
+            6) edit_sysctl_conf ;;
+            7) edit_limits_conf ;;
+            8) sysctl -p ;;
+            9)
+                sudo systemctl stop rsyslog
+                sudo systemctl disable rsyslog
                 ;;
-            3) disable_optimizations ;;
-            4) bbr_script ;;
-            5) show_sysctl_conf ;;
-            6) show_limits_conf ;;
-            7) edit_sysctl_conf ;;
-            8) edit_limits_conf ;;
-	    9) sysctl -p ;;
-	    10) sudo systemctl stop rsyslog
-			sudo systemctl disable rsyslog ;;
-			11) apply_full_optimizations ;;
-			12) remove_full_optimizations ;;
-			13) tc ;;
             0)
                 echo -e "\033[1;34mReturning to main menu...\033[0m"
                 break ;;
-               
             *) echo -e "\033[1;31mInvalid option. Please select a valid number.\033[0m" ;;
         esac
 
-        # Wait for user to press enter to continue
         echo -e "\n\033[1;34mPress Enter to return to the Optimizer menu...\033[0m"
         read
     done
