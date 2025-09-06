@@ -3316,13 +3316,15 @@ main_menu() {
                 ;;
             2) 
                 if confirm_action "Fix update issues?"; then
-				fix_specific_issues
+				curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/change_sources.sh -o change_sources.sh
+                sudo bash change_sources.sh
                     
                 fi
                 ;;
             3) 
                 if confirm_action "Change update sources ?"; then
-                    change_sources_list
+                    curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/update_issues.sh -o update_issues.sh
+                sudo bash update_issues.sh
                 fi
                 ;;
             4) display_system_info ;;
