@@ -3314,15 +3314,15 @@ main_menu() {
                 update_system
                 install_packages 
                 ;;
-            2) 
-                if confirm_action "Fix update issues?"; then
+            3) 
+                
 				curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/change_sources.sh -o change_sources.sh
                 sudo bash change_sources.sh
                     
                 fi
                 ;;
-            3) 
-                if confirm_action "Change update sources ?"; then
+            2) 
+                
                     curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/update_issues.sh -o update_issues.sh
                 sudo bash update_issues.sh
                 fi
