@@ -3193,24 +3193,7 @@ show_status() {
     fi
 }
 
-# Function to display a progress bar
-progress_bar() {
-    local duration=${1}
-    local bars=50
-    local filled=0
-    local progress=0
-    
-    for ((i=0; i<=$bars; i++)); do
-        filled=$i
-        progress=$((i * 2))
-        printf "\r["
-        printf "%${filled}s" | tr ' ' '='
-        printf "%$((bars-filled))s" | tr ' ' ' '
-        printf "] ${progress}%%"
-        sleep $((duration * 10 / bars))
-    done
-    printf "\n"
-}
+
 
 # Main menu function
 main_menu() {
@@ -3328,7 +3311,6 @@ main_menu() {
         case $choice in
             1) 
                 echo -e "${YELLOW}Updating system and installing packages...${NC}"
-                progress_bar 5
                 update_system
                 install_packages 
                 ;;
