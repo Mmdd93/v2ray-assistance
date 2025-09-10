@@ -679,5 +679,7 @@ main() {
     local files_copied=$?
     set_secure_permissions
     show_summary "${files_copied}"
+	echo -e "\033[1;34mPress Enter to return to the SSL menu...\033[0m"
+    read -r
 }
 ssl
