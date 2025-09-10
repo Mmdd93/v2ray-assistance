@@ -11,7 +11,7 @@ echo -e "1.\033[1;34m acme script. New single/multi-domain (Let's Encrypt, Buypa
 echo -e "2.\033[1;34m Certbot. New single/multi-domain ssl\033[0m"
 echo -e "3.\033[1;34m Certbot. New wildcard ssl (*.domain.com)\033[0m"
 echo -e "4.\033[1;34m Easy mode. (ESSL) script \033[0m"
-    
+echo -e "5.\033[1;34m Copy certs \033[0m"    
     echo -e "0. Return"
     echo -e "\033[1;32mEnter your choice:\033[0m"
     
@@ -30,6 +30,7 @@ echo -e "4.\033[1;34m Easy mode. (ESSL) script \033[0m"
 	
 	4) curl -Ls https://github.com/azavaxhuman/ESSL/raw/main/essl.sh -o essl.sh
             sudo bash essl.sh  ;;
+	5) main  ;;
         0)
             echo -e "\033[1;32mReturning to the previous menu.\033[0m"
             return
@@ -457,5 +458,226 @@ sleep 1
     ssl
 }
 
+# --- Configuration ---
+# Default directories to search for certificates
+declare -a CERT_SOURCES=(
+    "/etc/letsencrypt/live"
+    "/etc/letsencrypt/archive"
+    "/var/lib/letsencrypt"
+    "/opt/certbot"
+    "$HOME/.acme.sh"
+)
 
+# Default destination for copied certificates
+DEFAULT_DEST="/root/certs"
+
+# --- Style and Utility Functions ---
+# Colors for status messages
+declare -A COLORS
+COLORS[RED]='\033[0;31m'
+COLORS[GREEN]='\033[0;32m'
+COLORS[YELLOW]='\033[1;33m'
+COLORS[BLUE]='\033[0;34m'
+COLORS[CYAN]='\033[0;36m'
+COLORS[NC]='\033[0m'
+
+# Prints a colored status message to the console
+print_status() {
+    local message="$1"
+    local color="${COLORS[$2]}"
+    echo -e "${color}${message}${COLORS[NC]}"
+}
+
+# --- Core Functions ---
+
+# Discovers certificate directories and prints them as a null-delimited list.
+# This is a helper function for select_certificates.
+discover_certificates() {
+    local temp_cert_paths=()
+    
+    # Find directories with certificate files
+    for source_dir in "${CERT_SOURCES[@]}"; do
+        if [[ -d "$source_dir" && -r "$source_dir" ]]; then
+            while IFS= read -r -d '' file_path; do
+                local parent_dir=$(dirname "$file_path")
+                temp_cert_paths+=("$parent_dir")
+            done < <(find "$source_dir" -mindepth 1 -type f \( -name "*.pem" -o -name "*.crt" -o -name "*.key" \) -print0 2>/dev/null)
+        fi
+    done
+
+    local unique_cert_paths=()
+    if [[ ${#temp_cert_paths[@]} -gt 0 ]]; then
+        readarray -t unique_cert_paths < <(printf '%s\n' "${temp_cert_paths[@]}" | sort -u)
+    fi
+
+    # Fallback using certbot command if no certificates were found
+    if [[ ${#unique_cert_paths[@]} -eq 0 && $(command -v certbot >/dev/null 2>&1) ]]; then
+        while read -r domain; do
+            local domain_path="/etc/letsencrypt/live/${domain}"
+            if [[ -d "$domain_path" ]]; then
+                unique_cert_paths+=("$domain_path")
+            fi
+        done < <(certbot certificates 2>/dev/null | grep "Certificate Name:" | awk '{print $3}')
+    fi
+
+    # Print the null-delimited list for mapfile to read
+    if [[ ${#unique_cert_paths[@]} -gt 0 ]]; then
+        printf '%s\0' "${unique_cert_paths[@]}"
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Prompts the user for a destination directory
+ask_destination() {
+    echo
+    print_status "=== SSL Certificate Copier ===" "BLUE"
+    echo "Enter destination directory (default: ${DEFAULT_DEST})"
+
+    read -p "Destination directory [${DEFAULT_DEST}]: " dest_input
+
+    if [[ -z "$dest_input" ]]; then
+        DEST_DIR="$DEFAULT_DEST"
+    else
+        DEST_DIR="${dest_input%/}"
+    fi
+
+    print_status "Using destination: ${DEST_DIR}" "YELLOW"
+    echo
+}
+
+# Creates the destination directory with secure permissions
+create_dest_dir() {
+    if [[ ! -d "$DEST_DIR" ]]; then
+        mkdir -p "$DEST_DIR" || { print_status "Failed to create ${DEST_DIR}" "RED"; exit 1; }
+    fi
+    chmod 700 "$DEST_DIR"
+    print_status "Destination ready: ${DEST_DIR}" "GREEN"
+}
+
+# Copies the selected certificates
+copy_selected_certs() {
+    local selected_certs=("$@")
+    local files_copied=0
+
+    print_status "Copying certificates..." "BLUE"
+
+    for cert_path in "${selected_certs[@]}"; do
+        local base_name=$(basename "$cert_path")
+        local dest_path="${DEST_DIR}/${base_name}"
+        if [[ -d "$cert_path" ]]; then
+            mkdir -p "$dest_path"
+            cp -p "${cert_path}"/* "$dest_path/" && files_copied=$((files_copied + $(ls "${cert_path}"/* 2>/dev/null | wc -l)))
+            print_status "✓ Copied domain directory: ${base_name}" "GREEN"
+        elif [[ -f "$cert_path" ]]; then
+            cp -p "$cert_path" "$dest_path" && files_copied=$((files_copied + 1))
+            print_status "✓ Copied file: ${base_name}" "GREEN"
+        fi
+    done
+
+    return $files_copied
+}
+
+# Sets secure file permissions on the copied certificates
+set_secure_permissions() {
+    find "$DEST_DIR" -type f \( -name "*.key" -o -name "*.pem" -o -name "*.crt" \) -exec chmod 600 {} \;
+    find "$DEST_DIR" -type d -exec chmod 700 {} \;
+    print_status "Permissions secured" "GREEN"
+}
+
+# Displays a summary of the copy operation
+show_summary() {
+    local files_copied=$1
+    echo
+    echo "====================================="
+    print_status "COPY COMPLETE" "GREEN"
+    echo "Destination: ${DEST_DIR}"
+    echo "Files copied: ${files_copied}"
+    echo "====================================="
+    if [[ $files_copied -gt 0 ]]; then
+        if command -v tree >/dev/null 2>&1; then
+            tree "$DEST_DIR"
+        else
+            ls -R "$DEST_DIR"
+        fi
+    fi
+}
+
+# --- Main Logic ---
+main() {
+    ask_destination
+    create_dest_dir
+    
+    print_status "Searching for available certificates..." "CYAN"
+    echo
+
+    local cert_paths=()
+    mapfile -d '' cert_paths < <(discover_certificates)
+
+    if [[ ${#cert_paths[@]} -eq 0 ]]; then
+        print_status "⚠ No certificates discovered. Exiting." "RED"
+        exit 1
+    fi
+    
+    local selected_certs=()
+    echo
+    print_status "=== SELECT CERTIFICATES TO COPY ===" "BLUE"
+
+    for i in "${!cert_paths[@]}"; do
+        domain=$(basename "${cert_paths[$i]}")
+        file_count=$(ls "${cert_paths[$i]}"/* 2>/dev/null | wc -l)
+        printf "  [%2d] %-40s (%d files)\n" "$((i+1))" "$domain" "$file_count"
+    done
+
+    echo
+    echo "  [ a ] SELECT ALL"
+    echo "  [ q ] QUIT"
+    echo
+
+    while true; do
+        read -p "Enter numbers (e.g., 1 3 5) or 'a' for all: " selection
+        if [[ "$selection" =~ ^[Qq]$ ]]; then
+            print_status "Cancelled." "YELLOW"
+            exit 0
+        elif [[ "$selection" =~ ^[Aa]$ ]]; then
+            selected_certs=("${cert_paths[@]}")
+            break
+        else
+            selected_certs=()
+            for num in $selection; do
+                if [[ "$num" =~ ^[0-9]+$ ]]; then
+                    index=$((num-1))
+                    if [[ $index -ge 0 && $index -lt ${#cert_paths[@]} ]]; then
+                        selected_certs+=("${cert_paths[$index]}")
+                    else
+                        print_status "Invalid selection: $num" "RED"
+                    fi
+                fi
+            done
+            if [[ ${#selected_certs[@]} -gt 0 ]]; then
+                break
+            fi
+        fi
+    done
+
+    echo
+    print_status "Selected certificates:" "CYAN"
+    for cert in "${selected_certs[@]}"; do
+        echo "  📁 $(basename "$cert")"
+    done
+    echo
+
+    read -p "Confirm? (y/n): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        print_status "Cancelled." "YELLOW"
+        exit 0
+    fi
+    
+    copy_selected_certs "${selected_certs[@]}"
+    local files_copied=$?
+    set_secure_permissions
+    show_summary "${files_copied}"
+}
 ssl
