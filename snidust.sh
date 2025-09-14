@@ -165,7 +165,7 @@ select_allowed_clients
     read -p " > " external_ip
     external_ip=${external_ip:-$(curl -4 -s https://icanhazip.com)} # Use public IP as default
 
-    # Prompt for using custom domains with default set to 'yes'
+        # Prompt for using custom domains with default set to 'yes'
 echo -e "\033[1;33mDo you have custom domains (/root/99-custom.lst)? (yes/no) [yes]:\033[0m"
 echo -e "\033[1;32mSelect no to spoof all domains (Not recommended.)\033[0m"
 read -p " > " custom_domains_input
@@ -177,27 +177,29 @@ if [[ -z "$custom_domains_input" ]]; then
 fi
 
 if [[ "$custom_domains_input" == "yes" ]]; then
-    # Prompt to download the domain list file
-    echo -e "\033[1;33mDo you want to download the domain list file from the server? (yes/no) [no]:\033[0m"
-    read -p " > " download_choice
-    download_choice=${download_choice,,} # Convert to lowercase
+    if [[ -f /root/99-custom.lst ]]; then
+        echo -e "\033[1;32mDomain list already exists at /root/99-custom.lst.\033[0m"
+    else
+        echo -e "\033[1;33mNo domain list found. Let's create one.\033[0m"
+        echo -e "\033[1;33mEnter your domains one by one. When finished, just press Enter on an empty line.\033[0m"
 
-    if [[ "$download_choice" == "yes" ]]; then
-        # Download the custom domains file
-        echo -e "\033[1;33mDownloading the custom domains file...\033[0m"
-        wget -O /root/99-custom.lst https://sub-s3.s3.eu-central-1.amazonaws.com/99-custom.lst
-        if [[ $? -eq 0 ]]; then
-            echo -e "\033[1;32mDownload successful! The file has been saved to /root/99-custom.lst.\033[0m"
-        else
-            echo -e "\033[1;31mDownload failed. Please check your connection or URL.\033[0m"
-        fi
+        > /root/99-custom.lst
+        while true; do
+            read -p "Enter domain (leave blank to finish): " domain
+            if [[ -z "$domain" ]]; then
+                break
+            fi
+            echo "$domain" >> /root/99-custom.lst
+        done
+        echo "" >> /root/99-custom.lst
+        echo -e "\033[1;32mCustom domain list created at /root/99-custom.lst.\033[0m"
     fi
 
     custom_domains="-v /root/99-custom.lst:/etc/snidust/domains.d/99-custom.lst:ro"
-    spoof_domains="false" # Disable spoofing if custom domains are used
+    spoof_domains="false"
 else
     custom_domains=""
-    spoof_domains="true" # Set to true if no custom domains are provided
+    spoof_domains="true"
     echo -e "\033[1;32mSelected all domains for spoofing.\033[0m"
 fi
 echo -e "\033[1;33mDo you want to use custom RAM and swap? (yes/no) [no]:\033[0m"
