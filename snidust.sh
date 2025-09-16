@@ -303,7 +303,7 @@ if [[ "$use_custom_upstream" == "yes" ]]; then
     echo -e "\033[1;32mCustom upstream config created at: $custom_upstream_file\033[0m"
 
     # Add environment variable and volume mount
-    custom_upstream_env="-e DNSDIST_UPSTREAM_POOL_NAME=\"$custom_upstream_name\""
+    custom_upstream_env="-e DNSDIST_UPSTREAM_POOL_NAME=$custom_upstream_name"
     custom_upstream_volume="-v $custom_upstream_file:/etc/dnsdist/conf.d/99-customUpstream.conf:ro"
 fi
 # Prepare the Docker command
