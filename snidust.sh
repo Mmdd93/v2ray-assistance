@@ -345,30 +345,35 @@ eval "$docker_command"
 manage_container() {
 
     while true; do
-    clear
+        clear
         echo -e "\033[1;36m=========Manage Docker Container==========\033[0m"
         echo -e "\033[1;32m1. Start Container\033[0m"
         echo -e "\033[1;32m2. Stop Container\033[0m"
         echo -e "\033[1;32m3. Restart Container\033[0m"
         echo -e "\033[1;32m4. Remove Container\033[0m"
         echo -e "\033[1;32m5. Check Status\033[0m"
+        echo -e "\033[1;32m6. Show Environment Variables\033[0m"
+        echo -e "\033[1;32m7. Show Volumes\033[0m"
+        echo -e "\033[1;32m8. Show Logs\033[0m"
+        echo -e "\033[1;32m9. Execute Shell in Container\033[0m"
+        echo -e "\033[1;32m10. Inspect Container Info\033[0m"
         echo -e "\033[1;32m0. Return to Main Menu\033[0m"
         read -p "> " choice
 
         case $choice in
-            1) 
+            1)
                 echo -e "\033[1;32mStarting Docker container 'snidust'...\033[0m"
                 docker start snidust
                 ;;
-            2) 
+            2)
                 echo -e "\033[1;32mStopping Docker container 'snidust'...\033[0m"
                 docker stop snidust
                 ;;
-            3) 
+            3)
                 echo -e "\033[1;32mRestarting Docker container 'snidust'...\033[0m"
                 docker restart snidust
                 ;;
-            4) 
+            4)
                 echo -e "\033[1;32mRemoving Docker container 'snidust'...\033[0m"
                 docker rm -f snidust
                 ;;
@@ -382,11 +387,31 @@ manage_container() {
                     echo -e "\033[1;31mThe container 'snidust' does not exist.\033[0m"
                 fi
                 ;;
-            0) 
+            6)
+                echo -e "\033[1;32mEnvironment variables of 'snidust':\033[0m"
+                docker exec snidust printenv
+                ;;
+            7)
+                echo -e "\033[1;32mVolumes used by 'snidust':\033[0m"
+                docker inspect -f '{{json .Mounts}}' snidust | jq
+                ;;
+            8)
+                echo -e "\033[1;32mLogs of 'snidust':\033[0m"
+                docker logs -f snidust
+                ;;
+            9)
+                echo -e "\033[1;32mStarting interactive shell in 'snidust'...\033[0m"
+                docker exec -it snidust /bin/bash
+                ;;
+            10)
+                echo -e "\033[1;32mInspecting container 'snidust':\033[0m"
+                docker inspect snidust | jq
+                ;;
+            0)
                 echo -e "\033[1;34mReturning to Main Menu...\033[0m"
                 return
                 ;;
-            *) 
+            *)
                 echo -e "\033[1;31mInvalid option. Please try again.\033[0m"
                 ;;
         esac
