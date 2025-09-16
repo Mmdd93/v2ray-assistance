@@ -266,7 +266,46 @@ else
     # If 'no', set log_driver_option to '--log-driver=none'
     log_driver_option="--log-driver=none"
 fi
+# Ask for custom upstream configuration
+read -p "Do you want to use a custom upstream pool? (yes/no) [no]: " use_custom_upstream
+use_custom_upstream=${use_custom_upstream:-no}
 
+custom_upstream_env=""
+custom_upstream_volume=""
+
+if [[ "$use_custom_upstream" == "yes" ]]; then
+    read -p "Enter the name of your custom upstream pool [myUpstream]: " custom_upstream_name
+    custom_upstream_name=${custom_upstream_name:-myUpstream}
+
+    read -p "Enter the path where you want to save the config file [/root]: " custom_upstream_dir
+    custom_upstream_dir=${custom_upstream_dir:-/root}
+
+    # Ensure directory exists
+    mkdir -p "$custom_upstream_dir"
+
+    # Set config file path
+    custom_upstream_file="$custom_upstream_dir/99-customUpstream.conf"
+
+    # Ask for upstream DNS servers
+    read -p "Enter your upstream DNS servers (comma-separated) [1.1.1.1,8.8.8.8]: " upstream_servers
+    upstream_servers=${upstream_servers:-1.1.1.1,8.8.8.8}
+
+    # Convert to array
+    IFS=',' read -ra servers <<< "$upstream_servers"
+
+    # Create config file
+    echo "-- Auto-generated Custom Upstream config for SniDust" > "$custom_upstream_file"
+    for i in "${!servers[@]}"; do
+        srv="${servers[$i]}"
+        echo "newServer({ address = \"$srv\", name = \"custom$i\", pool = \"$custom_upstream_name\" })" >> "$custom_upstream_file"
+    done
+
+    echo -e "\033[1;32mCustom upstream config created at: $custom_upstream_file\033[0m"
+
+    # Add environment variable and volume mount
+    custom_upstream_env="-e DNSDIST_UPSTREAM_POOL_NAME=\"$custom_upstream_name\""
+    custom_upstream_volume="-v $custom_upstream_file:/etc/dnsdist/conf.d/99-customUpstream.conf:ro"
+fi
 # Prepare the Docker command
 docker_command="docker run -d \
     --name \"$container_name\" \
@@ -283,6 +322,8 @@ docker_command="docker run -d \
     $log_driver_option \
     $memory_flags \
     $allowed_clients_volume \
+    $custom_upstream_env \
+    $custom_upstream_volume \
     ghcr.io/seji64/snidust:1.0.15"
 
 echo -e "\033[1;32mRunning Docker with the following command:\033[0m"
