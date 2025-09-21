@@ -3269,6 +3269,7 @@ main_menu() {
         menu_option "69" "FRPulse Tunnel (Fast Reverse Proxy) by (github.com/Erfan-XRay/FRPulse)" 
         menu_option "70" "FRP Tunnel by Mehrad (github.com/mikeesierrah/frp-script)" 
 		menu_option "76" "ZEX Tunnel Waterwall (github.com/izex/ZEX-Tunnel)"
+  		menu_option "79" "Pingtunnel Manager (github.com/hoseinlolready/Pingtunnel_manager)"
         separator
         
         # Panel section
@@ -3614,6 +3615,12 @@ sudo bash zex-tunnel-install.sh
                 git clone https://github.com/palark/ovpn-admin.git
 cd ovpn-admin
 ./start.sh
+79) 
+                echo -e "${YELLOW}Running Pingtunnel Manager...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/hoseinlolready/Pingtunnel_manager/refs/heads/main/Source/bash.sh -o Pingtunnel_manager.sh
+                sudo bash Pingtunnel_manager 
+                ;;
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
