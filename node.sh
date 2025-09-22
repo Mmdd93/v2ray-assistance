@@ -3621,7 +3621,7 @@ cd ovpn-admin
                 curl -Ls https://raw.githubusercontent.com/hoseinlolready/Pingtunnel_manager/refs/heads/main/Source/bash.sh -o Pingtunnel_manager.sh
                 sudo bash Pingtunnel_manager 
                 ;;
-                ;;
+               
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
                 update 
