@@ -3620,7 +3620,7 @@ sudo bash zex-tunnel-install.sh
                 echo -e "${YELLOW}Running Pingtunnel Manager...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/hoseinlolready/Pingtunnel_manager/refs/heads/main/Source/bash.sh -o Pingtunnel_manager.sh
-                sudo bash Pingtunnel_manager 
+                sudo bash Pingtunnel_manager.sh
                 ;;
                
             00) 
