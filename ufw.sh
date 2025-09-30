@@ -866,7 +866,7 @@ ufw_menu() {
         echo -e "\033[1;32m 18. \033[0m Deny ip"
 		echo -e "\033[1;32m 19. \033[0m Disable logs (better performance)"
 		echo -e "\033[1;32m 20. \033[0m stop port scanning"
-		echo -e "${GREEN}21.${NC} 🎮 Gaming Ports${NC}"
+		echo -e "\033[1;32m 21. \033[0m 🎮 Gaming Ports"
         echo -e "\033[1;32m 0. \033[0m Return to main menu"
         echo -e "\033[1;36m===============================================\033[0m"
         echo -n "Select an option : "
