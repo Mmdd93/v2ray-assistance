@@ -1,3 +1,4 @@
+# UFW Operations
 #!/bin/bash
 # Function to list used ports with color-coded visibility
 used_ports() {
@@ -26,6 +27,7 @@ used_ports() {
     echo -e "\nPress Enter to return..."
     read
 }
+
 install_ufw() {
     echo -e "\033[1;34mChecking if UFW is installed...\033[0m"
     if ! command -v ufw >/dev/null 2>&1; then
@@ -33,19 +35,18 @@ install_ufw() {
         sudo apt install -y ufw
         if [ $? -eq 0 ]; then
             echo -e "\033[1;32mUFW successfully installed.\033[0m"
-	    return_to_menu
+            return_to_menu
         else
             echo -e "\033[1;31mFailed to install UFW. Please check your system and try again.\033[0m"
             return_to_menu
         fi
     else
         echo -e "\033[1;32mUFW is already installed.\033[0m"
-	read -p "Enter to continue... "
+        read -p "Enter to continue... "
     fi
 }
 
 find_and_allow_ports() {
-    # Display used ports
     echo -e "\033[1;34mFinding all used ports...\033[0m"
     used_ports=$(sudo lsof -i -P -n | grep LISTEN | awk '{print $9}' | awk -F ':' '{print $NF}' | sort -u)
 
@@ -54,7 +55,6 @@ find_and_allow_ports() {
         return_to_menu
     fi
 
-    # Convert ports to an indexed array
     ports_array=($used_ports)
 
     echo -e "\033[1;32mUsed Ports Found:\033[0m"
@@ -62,7 +62,6 @@ find_and_allow_ports() {
         echo -e "\033[1;33m$((i+1)).\033[0m ${ports_array[i]}"
     done
 
-    # Prompt for action
     echo -e "\033[1;33mHow would you like to proceed?\033[0m"
     echo -e "\033[1;32m1.\033[0m Allow all ports"
     echo -e "\033[1;33m2.\033[0m Select ports to allow"
@@ -87,7 +86,7 @@ find_and_allow_ports() {
             return_to_menu
             ;;
         2)
-            echo -e "\033[1;34mEnter the numbers of the ports (separate with commas, e.g., 1,3,5).\033[0m"
+            echo -e "\033[1;34mEnter the numbers of the ports (comma-separated, e.g., 1,3,5).\033[0m"
             echo -e "\033[1;34m[ENTER blank to return...]\033[0m"
             read -r selected_numbers
 
@@ -96,13 +95,13 @@ find_and_allow_ports() {
                 return_to_menu
             fi
 
-            IFS=',' read -ra selected_array <<< "$selected_numbers"
+            echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b) for selected ports?\033[0m"
+            read -r direction
 
+            IFS=',' read -ra selected_array <<< "$selected_numbers"
             for num in "${selected_array[@]}"; do
                 if [[ "$num" =~ ^[0-9]+$ ]] && [ "$num" -ge 1 ] && [ "$num" -le "${#ports_array[@]}" ]; then
                     port="${ports_array[$((num-1))]}"
-                    echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b) for port $port?\033[0m"
-                    read -r direction
                     case "$direction" in
                         in)  sudo ufw allow "$port" ;;
                         out) sudo ufw allow out "$port" ;;
@@ -120,17 +119,80 @@ find_and_allow_ports() {
             ;;
     esac
 
-    # Reload UFW to apply changes
     echo -e "\033[1;34mReloading UFW to apply changes...\033[0m"
     sudo ufw reload
     echo -e "\033[1;32mUFW configuration updated.\033[0m"
     return_to_menu
 }
 
+allow_ports() {
+    read -p "Enter the port numbers to allow (comma-separated, e.g., 80,443,2052): " ports
+    echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b)?\033[0m"
+    read -r direction
 
+    IFS=',' read -ra PORTS <<< "$ports"
+    for port in "${PORTS[@]}"; do
+        case "$direction" in
+            in)  sudo ufw allow "$port" && echo -e "\033[0;32mAllowed incoming port $port.\033[0m" ;;
+            out) sudo ufw allow out "$port" && echo -e "\033[0;32mAllowed outgoing port $port.\033[0m" ;;
+            b)   sudo ufw allow "$port"; sudo ufw allow out "$port"; echo -e "\033[0;32mAllowed both directions for port $port.\033[0m" ;;
+            *)   echo -e "\033[0;31mInvalid choice. Skipping port $port.\033[0m" ;;
+        esac
+    done
+    return_to_menu
+}
 
+deny_ports() {
+    read -p "Enter the port numbers to deny (comma-separated, e.g., 80,443,2052): " ports
+    echo -e "\033[1;36mDeny incoming (in), outgoing (out), or both (b)?\033[0m"
+    read -r direction
 
-# UFW Operations
+    IFS=',' read -ra PORTS <<< "$ports"
+    for port in "${PORTS[@]}"; do
+        case "$direction" in
+            in)  sudo ufw deny "$port" && echo -e "\033[0;31mDenied incoming port $port.\033[0m" ;;
+            out) sudo ufw deny out "$port" && echo -e "\033[0;31mDenied outgoing port $port.\033[0m" ;;
+            b)   sudo ufw deny "$port"; sudo ufw deny out "$port"; echo -e "\033[0;31mDenied both directions for port $port.\033[0m" ;;
+            *)   echo -e "\033[0;31mInvalid choice. Skipping port $port.\033[0m" ;;
+        esac
+    done
+    return_to_menu
+}
+
+allow_services() {
+    read -p "Enter the service names to allow (comma-separated, e.g., ssh,http,https): " services
+    echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b)?\033[0m"
+    read -r direction
+
+    IFS=',' read -ra SERVICES <<< "$services"
+    for service in "${SERVICES[@]}"; do
+        case "$direction" in
+            in)  sudo ufw allow "$service" && echo -e "\033[0;32mAllowed incoming service $service.\033[0m" ;;
+            out) sudo ufw allow out "$service" && echo -e "\033[0;32mAllowed outgoing service $service.\033[0m" ;;
+            b)   sudo ufw allow "$service"; sudo ufw allow out "$service"; echo -e "\033[0;32mAllowed both directions for service $service.\033[0m" ;;
+            *)   echo -e "\033[0;31mInvalid choice. Skipping service $service.\033[0m" ;;
+        esac
+    done
+    return_to_menu
+}
+
+deny_services() {
+    read -p "Enter the service names to deny (comma-separated, e.g., ssh,http,https): " services
+    echo -e "\033[1;36mDeny incoming (in), outgoing (out), or both (b)?\033[0m"
+    read -r direction
+
+    IFS=',' read -ra SERVICES <<< "$services"
+    for service in "${SERVICES[@]}"; do
+        case "$direction" in
+            in)  sudo ufw deny "$service" && echo -e "\033[0;31mDenied incoming service $service.\033[0m" ;;
+            out) sudo ufw deny out "$service" && echo -e "\033[0;31mDenied outgoing service $service.\033[0m" ;;
+            b)   sudo ufw deny "$service"; sudo ufw deny out "$service"; echo -e "\033[0;31mDenied both directions for service $service.\033[0m" ;;
+            *)   echo -e "\033[0;31mInvalid choice. Skipping service $service.\033[0m" ;;
+        esac
+    done
+    return_to_menu
+}
+
 disable_log() {
     sudo ufw logging off
     echo -e "\033[0;32mUFW logs has been disabled.\033[0m"
@@ -152,62 +214,37 @@ disable_ufw() {
 }
 deny_ip() {
     read -p "Enter the IP address(es) to deny (comma-separated, e.g., 192.168.1.1,10.0.0.2): " ips
+    echo -e "\033[1;36mDeny incoming (in), outgoing (out), or both (b)?\033[0m"
+    read -r direction
     IFS=',' read -ra IPS <<< "$ips"
     for ip in "${IPS[@]}"; do
-        sudo ufw deny from "$ip"
-        echo -e "\033[0;31mDenied IP $ip.\033[0m"
+        case "$direction" in
+            in)  sudo ufw deny from "$ip" && echo -e "\033[0;31mDenied incoming IP $ip.\033[0m" ;;
+            out) sudo ufw deny out to "$ip" && echo -e "\033[0;31mDenied outgoing IP $ip.\033[0m" ;;
+            b)   sudo ufw deny from "$ip"; sudo ufw deny out to "$ip"; echo -e "\033[0;31mDenied both directions for IP $ip.\033[0m" ;;
+            *)   echo -e "\033[0;31mInvalid choice. Skipping IP $ip.\033[0m" ;;
+        esac
     done
     return_to_menu
 }
+
 allow_ip() {
     read -p "Enter the IP address(es) to allow (comma-separated, e.g., 192.168.1.1,10.0.0.2): " ips
+    echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b)?\033[0m"
+    read -r direction
     IFS=',' read -ra IPS <<< "$ips"
     for ip in "${IPS[@]}"; do
-        sudo ufw allow from "$ip"
-        echo -e "\033[0;32mAllowed IP $ip.\033[0m"
+        case "$direction" in
+            in)  sudo ufw allow from "$ip" && echo -e "\033[0;32mAllowed incoming IP $ip.\033[0m" ;;
+            out) sudo ufw allow out to "$ip" && echo -e "\033[0;32mAllowed outgoing IP $ip.\033[0m" ;;
+            b)   sudo ufw allow from "$ip"; sudo ufw allow out to "$ip"; echo -e "\033[0;32mAllowed both directions for IP $ip.\033[0m" ;;
+            *)   echo -e "\033[0;31mInvalid choice. Skipping IP $ip.\033[0m" ;;
+        esac
     done
     return_to_menu
 }
 
-allow_ports() {
-    read -p "Enter the port numbers to allow (comma-separated, e.g., 80,443,2052): " ports
-    IFS=',' read -ra PORTS <<< "$ports"
-    for port in "${PORTS[@]}"; do
-        sudo ufw allow "$port"
-        echo -e "\033[0;32mAllowed port $port.\033[0m"
-    done
-    return_to_menu
-}
 
-deny_ports() {
-    read -p "Enter the port numbers to deny (comma-separated, e.g., 80,443,2052): " ports
-    IFS=',' read -ra PORTS <<< "$ports"
-    for port in "${PORTS[@]}"; do
-        sudo ufw deny "$port"
-        echo -e "\033[0;31mDenied port $port.\033[0m"
-    done
-    return_to_menu
-}
-
-allow_services() {
-    read -p "Enter the service names to allow (comma-separated, e.g., ssh,http,https): " services
-    IFS=',' read -ra SERVICES <<< "$services"
-    for service in "${SERVICES[@]}"; do
-        sudo ufw allow "$service"
-        echo -e "\033[0;32mAllowed service $service.\033[0m"
-    done
-    return_to_menu
-}
-
-deny_services() {
-    read -p "Enter the service names to deny (comma-separated, e.g., ssh,http,https): " services
-    IFS=',' read -ra SERVICES <<< "$services"
-    for service in "${SERVICES[@]}"; do
-        sudo ufw deny "$service"
-        echo -e "\033[0;31mDenied service $service.\033[0m"
-    done
-    return_to_menu
-}
 
 # Updated delete_rule function with option 0 to delete all rules
 delete_rule() {
@@ -239,9 +276,6 @@ delete_rule() {
 
     return_to_menu
 }
-
-
-
 
 view_status() {
     echo -e "\033[1;36mUFW Status:\033[0m"
