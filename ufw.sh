@@ -504,9 +504,32 @@ stop_port_scanning() {
     return_to_menu
 
 }
+# Function to check UFW status
+get_ufw_status() {
+    if ! command -v ufw >/dev/null 2>&1; then
+        echo -e "${RED}NOT INSTALLED${NC}"
+        return
+    fi
+    
+    ufw_status=$(sudo ufw status 2>/dev/null | grep -i status | awk '{print $2}')
+    case $ufw_status in
+        "active") echo -e "${GREEN}ENABLED${NC}" ;;
+        "inactive") echo -e "${RED}DISABLED${NC}" ;;
+        *) echo -e "${YELLOW}UNKNOWN${NC}" ;;
+    esac
+}
+
+# Function to display status bar
+show_status_bar() {
+    local status=$(get_ufw_status)
+    echo -e "\n${BLUE}┌─────────────────────────────────────────────────────────┐${NC}"
+    echo -e "${BLUE}│${NC}    UFW STATUS: $status                                  ${BLUE}│${NC}"
+    echo -e "${BLUE}└─────────────────────────────────────────────────────────┘${NC}"
+}
 ufw_menu() {
     while true; do
         clear
+		show_status_bar
         echo -e "\n\033[1;36m================= UFW MENU ===================\033[0m"
         echo -e "\033[15;32m 15. \033[0m Install UFW"
         echo -e "\033[1;32m  1. \033[0m Enable UFW"
