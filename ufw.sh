@@ -122,7 +122,7 @@ find_and_allow_ports() {
     echo -e "\033[1;34mReloading UFW to apply changes...\033[0m"
     sudo ufw reload
     echo -e "\033[1;32mUFW configuration updated.\033[0m"
-    return_to_menu
+    
 }
 
 allow_ports() {
