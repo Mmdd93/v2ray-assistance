@@ -51,8 +51,7 @@ find_and_allow_ports() {
 
     if [ -z "$used_ports" ]; then
         echo -e "\033[1;31mNo used ports found.\033[0m"
-	return_to_menu
-        
+        return_to_menu
     fi
 
     # Convert ports to an indexed array
@@ -66,30 +65,36 @@ find_and_allow_ports() {
     # Prompt for action
     echo -e "\033[1;33mHow would you like to proceed?\033[0m"
     echo -e "\033[1;32m1.\033[0m Allow all ports"
-    echo -e "\033[1;33m2.\033[0m Select ports to allowing"
-    echo -e "\033[1;34m0.\033[0m return"
+    echo -e "\033[1;33m2.\033[0m Select ports to allow"
+    echo -e "\033[1;34m0.\033[0m Return"
     read -r action
 
     case "$action" in
         1)
             echo -e "\033[1;32mAllowing all ports on UFW...\033[0m"
             for port in "${ports_array[@]}"; do
-                sudo ufw allow "$port"
+                echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b) for port $port?\033[0m"
+                read -r direction
+                case "$direction" in
+                    in)  sudo ufw allow "$port" ;;
+                    out) sudo ufw allow out "$port" ;;
+                    b)   sudo ufw allow "$port"; sudo ufw allow out "$port" ;;
+                    *)   echo -e "\033[1;31mInvalid choice for port $port. Skipping.\033[0m" ;;
+                esac
             done
             ;;
         0)
             echo -e "\033[1;31mReturn\033[0m"
-	    return_to_menu
-            
+            return_to_menu
             ;;
         2)
-            echo -e "\033[1;34mEnter the numbers of the ports(separate with commas, e.g., 1,3,5).\033[0m"
+            echo -e "\033[1;34mEnter the numbers of the ports (separate with commas, e.g., 1,3,5).\033[0m"
             echo -e "\033[1;34m[ENTER blank to return...]\033[0m"
             read -r selected_numbers
 
             if [ -z "$selected_numbers" ]; then
                 echo -e "\033[1;31mNo ports selected. Exiting.\033[0m"
-		return_to_menu
+                return_to_menu
             fi
 
             # Split input into an array using ',' as a delimiter
@@ -98,19 +103,22 @@ find_and_allow_ports() {
             for num in "${selected_array[@]}"; do
                 if [[ "$num" =~ ^[0-9]+$ ]] && [ "$num" -ge 1 ] && [ "$num" -le "${#ports_array[@]}" ]; then
                     port="${ports_array[$((num-1))]}"
-                    echo -e "\033[1;33mAllowing port $port on UFW...\033[0m"
-                    sudo ufw allow "$port"
-		    
+                    echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b) for port $port?\033[0m"
+                    read -r direction
+                    case "$direction" in
+                        in)  sudo ufw allow "$port" ;;
+                        out) sudo ufw allow out "$port" ;;
+                        b)   sudo ufw allow "$port"; sudo ufw allow out "$port" ;;
+                        *)   echo -e "\033[1;31mInvalid choice for port $port. Skipping.\033[0m" ;;
+                    esac
                 else
                     echo -e "\033[1;31mInvalid selection: $num. Skipping.\033[0m"
-		    return_to_menu
                 fi
-		
             done
             ;;
         *)
             echo -e "\033[1;31mInvalid option.\033[0m"
-	    return_to_menu
+            return_to_menu
             ;;
     esac
 
@@ -120,6 +128,7 @@ find_and_allow_ports() {
     echo -e "\033[1;32mUFW configuration updated.\033[0m"
     return_to_menu
 }
+
 
 
 # UFW Operations
