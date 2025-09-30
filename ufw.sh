@@ -71,15 +71,14 @@ find_and_allow_ports() {
 
     case "$action" in
         1)
-            echo -e "\033[1;32mAllowing all ports on UFW...\033[0m"
+            echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b) for ALL ports?\033[0m"
+            read -r direction
             for port in "${ports_array[@]}"; do
-                echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b) for port $port?\033[0m"
-                read -r direction
                 case "$direction" in
                     in)  sudo ufw allow "$port" ;;
                     out) sudo ufw allow out "$port" ;;
                     b)   sudo ufw allow "$port"; sudo ufw allow out "$port" ;;
-                    *)   echo -e "\033[1;31mInvalid choice for port $port. Skipping.\033[0m" ;;
+                    *)   echo -e "\033[1;31mInvalid choice. Skipping all.\033[0m"; break ;;
                 esac
             done
             ;;
@@ -97,7 +96,6 @@ find_and_allow_ports() {
                 return_to_menu
             fi
 
-            # Split input into an array using ',' as a delimiter
             IFS=',' read -ra selected_array <<< "$selected_numbers"
 
             for num in "${selected_array[@]}"; do
@@ -128,6 +126,7 @@ find_and_allow_ports() {
     echo -e "\033[1;32mUFW configuration updated.\033[0m"
     return_to_menu
 }
+
 
 
 
