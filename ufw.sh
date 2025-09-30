@@ -339,10 +339,10 @@ stop_port_scanning() {
     
     # Essential ports (always allowed)
     sudo ufw allow out 53 comment 'DNS'
-    sudo ufw allow out 80/tcp comment 'HTTP'
-    sudo ufw allow out 443/tcp comment 'HTTPS'
-    sudo ufw allow out 123/udp comment 'NTP'
-    sudo ufw allow in 22/tcp comment 'SSH'
+    sudo ufw allow out 80 comment 'HTTP'
+    sudo ufw allow out 443 comment 'HTTPS'
+    sudo ufw allow out 123 comment 'NTP'
+    sudo ufw allow in 22 comment 'SSH'
     
     echo -e "${YELLOW}Do you want to add more OUTBOUND ports?${NC}"
     echo "Current allowed: 53, 80, 443, 123/udp (out) + 22 (in)"
@@ -351,64 +351,24 @@ stop_port_scanning() {
     # Ask for additional OUTBOUND ports
     echo ""
     echo -e "${YELLOW}Add multiple OUTBOUND ports (comma-separated)${NC}"
-    echo "Examples:"
-    echo "  - Single port: 993"
-    echo "  - Multiple: 993,465,995,587"
-    echo "  - Range: 8000-8010"
-    echo ""
+    echo "Example: 993,465,995,587,8000,9000"
     
-    while true; do
-        read -p "Enter ports (or press Enter to finish): " port_input
-        if [[ -z "$port_input" ]]; then
-            break
-        fi
-        
-        # Process comma-separated ports
+    read -p "Enter ports (or press Enter to skip): " port_input
+    
+    if [[ -n "$port_input" ]]; then
         IFS=',' read -ra ports <<< "$port_input"
         
         for port in "${ports[@]}"; do
             port=$(echo "$port" | tr -d ' ')  # Remove spaces
             
-            # Check if it's a range (e.g., 8000-8010)
-            if [[ "$port" =~ ^([0-9]+)-([0-9]+)$ ]]; then
-                start_port="${BASH_REMATCH[1]}"
-                end_port="${BASH_REMATCH[2]}"
-                
-                if [[ $start_port -le $end_port ]] && [[ $start_port -ge 1 ]] && [[ $end_port -le 65535 ]]; then
-                    read -p "Allow TCP range $start_port-$end_port? (y/N): " confirm_range
-                    if [[ $confirm_range =~ ^[Yy]$ ]]; then
-                        for ((p=start_port; p<=end_port; p++)); do
-                            sudo ufw allow out $p/tcp comment "Range $start_port-$end_port"
-                        done
-                        echo -e "${GREEN}✅ Added OUTBOUND range $start_port-$end_port (TCP)${NC}"
-                    fi
-                else
-                    echo -e "${RED}Invalid range: $port${NC}"
-                fi
-            
-            # Single port
-            elif [[ "$port" =~ ^[0-9]+$ ]] && [[ "$port" -ge 1 ]] && [[ "$port" -le 65535 ]]; then
-                read -p "Protocol for port $port? (tcp/udp/both, default=tcp): " protocol
-                case $protocol in
-                    "udp")
-                        sudo ufw allow out $port/udp comment "Custom UDP port"
-                        echo -e "${GREEN}✅ Added OUTBOUND UDP port $port${NC}"
-                        ;;
-                    "both")
-                        sudo ufw allow out $port/tcp comment "Custom TCP port"
-                        sudo ufw allow out $port/udp comment "Custom UDP port"
-                        echo -e "${GREEN}✅ Added OUTBOUND port $port (TCP+UDP)${NC}"
-                        ;;
-                    *)
-                        sudo ufw allow out $port/tcp comment "Custom TCP port"
-                        echo -e "${GREEN}✅ Added OUTBOUND TCP port $port${NC}"
-                        ;;
-                esac
+            if [[ "$port" =~ ^[0-9]+$ ]] && [[ "$port" -ge 1 ]] && [[ "$port" -le 65535 ]]; then
+                sudo ufw allow out $port
+                echo -e "${GREEN}✅ Added OUTBOUND port $port${NC}"
             else
                 echo -e "${RED}Invalid port: $port${NC}"
             fi
         done
-    done
+    fi
     
     # ASK before auto-detecting services
     echo ""
