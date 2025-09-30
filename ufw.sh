@@ -329,7 +329,108 @@ return_to_menu() {
     read -p "Enter to continue... "
     ufw_menu  # Call the main menu function to return
 }
+stop_port_scanning() {
+    echo -e "${BLUE}🔒 BLOCKING PORT SCANNING CAPABILITY${NC}"
+    echo ""
+    
+    # Reset to safe defaults
+    sudo ufw default deny incoming
+    sudo ufw default deny outgoing
+    
+    # Essential ports (always allowed)
+    sudo ufw allow out 53 comment 'DNS'
+    sudo ufw allow out 80/tcp comment 'HTTP'
+    sudo ufw allow out 443/tcp comment 'HTTPS'
+    sudo ufw allow out 123/udp comment 'NTP'
+    sudo ufw allow in 22/tcp comment 'SSH'
+    
+    echo -e "${YELLOW}Do you want to add more OUTBOUND ports?${NC}"
+    echo "Current allowed: 53, 80, 443, 123/udp (out) + 22 (in)"
+    echo ""
+    
+    # Ask for additional OUTBOUND ports
+    echo ""
+    echo -e "${YELLOW}Add multiple OUTBOUND ports (comma-separated)${NC}"
+    echo "Examples:"
+    echo "  - Single port: 993"
+    echo "  - Multiple: 993,465,995,587"
+    echo "  - Range: 8000-8010"
+    echo ""
+    
+    while true; do
+        read -p "Enter ports (or press Enter to finish): " port_input
+        if [[ -z "$port_input" ]]; then
+            break
+        fi
+        
+        # Process comma-separated ports
+        IFS=',' read -ra ports <<< "$port_input"
+        
+        for port in "${ports[@]}"; do
+            port=$(echo "$port" | tr -d ' ')  # Remove spaces
+            
+            # Check if it's a range (e.g., 8000-8010)
+            if [[ "$port" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+                start_port="${BASH_REMATCH[1]}"
+                end_port="${BASH_REMATCH[2]}"
+                
+                if [[ $start_port -le $end_port ]] && [[ $start_port -ge 1 ]] && [[ $end_port -le 65535 ]]; then
+                    read -p "Allow TCP range $start_port-$end_port? (y/N): " confirm_range
+                    if [[ $confirm_range =~ ^[Yy]$ ]]; then
+                        for ((p=start_port; p<=end_port; p++)); do
+                            sudo ufw allow out $p/tcp comment "Range $start_port-$end_port"
+                        done
+                        echo -e "${GREEN}✅ Added OUTBOUND range $start_port-$end_port (TCP)${NC}"
+                    fi
+                else
+                    echo -e "${RED}Invalid range: $port${NC}"
+                fi
+            
+            # Single port
+            elif [[ "$port" =~ ^[0-9]+$ ]] && [[ "$port" -ge 1 ]] && [[ "$port" -le 65535 ]]; then
+                read -p "Protocol for port $port? (tcp/udp/both, default=tcp): " protocol
+                case $protocol in
+                    "udp")
+                        sudo ufw allow out $port/udp comment "Custom UDP port"
+                        echo -e "${GREEN}✅ Added OUTBOUND UDP port $port${NC}"
+                        ;;
+                    "both")
+                        sudo ufw allow out $port/tcp comment "Custom TCP port"
+                        sudo ufw allow out $port/udp comment "Custom UDP port"
+                        echo -e "${GREEN}✅ Added OUTBOUND port $port (TCP+UDP)${NC}"
+                        ;;
+                    *)
+                        sudo ufw allow out $port/tcp comment "Custom TCP port"
+                        echo -e "${GREEN}✅ Added OUTBOUND TCP port $port${NC}"
+                        ;;
+                esac
+            else
+                echo -e "${RED}Invalid port: $port${NC}"
+            fi
+        done
+    done
+    
+    # ASK before auto-detecting services
+    echo ""
+    read -p "Do you want to auto-detect and allow running services? (y/N): " detect_services
+    if [[ $detect_services =~ ^[Yy]$ ]]; then
+        echo -e "${YELLOW}🔍 Auto-detecting running services...${NC}"
+        find_and_allow_ports
+    else
+        echo -e "${YELLOW}⚠️  Skipping service detection${NC}"
+    fi
+    
+    # Enable firewall
+    sudo ufw --force enable
+    
+    echo ""
+    echo -e "${GREEN}✅ PORT SCANNING COMPLETELY BLOCKED${NC}"
+    echo ""
+    sudo ufw status numbered
+    echo ""
+    
 
+}
 ufw_menu() {
     while true; do
         clear
@@ -353,6 +454,7 @@ ufw_menu() {
         echo -e "\033[1;32m 17. \033[0m Allow ip"
         echo -e "\033[1;32m 18. \033[0m Deny ip"
 	echo -e "\033[1;32m 19. \033[0m Disable logs (better performance)"
+	echo -e "\033[1;32m 20. \033[0m stop port scanning"
         echo -e "\033[1;32m 0. \033[0m Return to main menu"
         echo -e "\033[1;36m===============================================\033[0m"
         echo -n "Select an option : "
@@ -378,6 +480,7 @@ ufw_menu() {
             17) allow_ip ;;
             18) deny_ip ;;
 	    19) disable_log ;;
+		20) stop_port_scanning ;;
             0) exit ;;  # Return to main menu
             *) echo -e "\033[0;31mInvalid option. Please select between 0-18.\033[0m"
 	    return_to_menu ;;
