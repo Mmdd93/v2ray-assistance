@@ -428,7 +428,7 @@ stop_port_scanning() {
     echo ""
     sudo ufw status numbered
     echo ""
-    
+    return_to_menu
 
 }
 ufw_menu() {
