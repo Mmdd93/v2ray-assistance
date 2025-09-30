@@ -344,13 +344,12 @@ stop_port_scanning() {
     sudo ufw allow out 123 comment 'NTP'
     sudo ufw allow in 22 comment 'SSH'
     
-    echo -e "${YELLOW}Do you want to add more OUTBOUND ports?${NC}"
     echo "Current allowed: 53, 80, 443, 123/udp (out) + 22 (in)"
     echo ""
     
     # Ask for additional OUTBOUND ports
     echo ""
-    echo -e "${YELLOW}Add multiple OUTBOUND ports (comma-separated)${NC}"
+    echo -e "${YELLOW}Add more multiple OUTBOUND ports (comma-separated)${NC}"
     echo "Example: 993,465,995,587,8000,9000"
     
     read -p "Enter ports (or press Enter to skip): " port_input
@@ -372,7 +371,7 @@ stop_port_scanning() {
     
     # ASK before auto-detecting services
     echo ""
-    read -p "Do you want to auto-detect and allow running services? (y/N): " detect_services
+    read -p "Do you want to auto-detect and allow running services ports? (y/N): " detect_services
     if [[ $detect_services =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW}🔍 Auto-detecting running services...${NC}"
         find_and_allow_ports
