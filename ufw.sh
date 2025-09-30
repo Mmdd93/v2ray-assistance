@@ -115,7 +115,7 @@ find_and_allow_ports() {
             ;;
         *)
             echo -e "\033[1;31mInvalid option.\033[0m"
-            return_to_menu
+            return
             ;;
     esac
 
