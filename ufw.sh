@@ -70,16 +70,38 @@ find_and_allow_ports() {
 
     case "$action" in
         1)
-            echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b) for ALL ports?\033[0m"
+            echo -e "\033[1;36mSelect direction for ALL ports:\033[0m"
+            echo -e "\033[1;32m1.\033[0m Incoming only"
+            echo -e "\033[1;33m2.\033[0m Outgoing only"
+            echo -e "\033[1;34m3.\033[0m Both directions"
+            echo -e "\033[1;31m0.\033[0m Return"
             read -r direction
-            for port in "${ports_array[@]}"; do
-                case "$direction" in
-                    in)  sudo ufw allow "$port" ;;
-                    out) sudo ufw allow out "$port" ;;
-                    b)   sudo ufw allow "$port"; sudo ufw allow out "$port" ;;
-                    *)   echo -e "\033[1;31mInvalid choice. Skipping all.\033[0m"; break ;;
-                esac
-            done
+            
+            case "$direction" in
+                1) 
+                    for port in "${ports_array[@]}"; do
+                        sudo ufw allow "$port"
+                    done
+                    ;;
+                2)
+                    for port in "${ports_array[@]}"; do
+                        sudo ufw allow out "$port"
+                    done
+                    ;;
+                3)
+                    for port in "${ports_array[@]}"; do
+                        sudo ufw allow "$port"
+                        sudo ufw allow out "$port"
+                    done
+                    ;;
+                0) 
+                    echo -e "\033[1;31mReturn\033[0m"
+                    return_to_menu
+                    ;;
+                *) 
+                    echo -e "\033[1;31mInvalid choice. Skipping all.\033[0m"
+                    ;;
+            esac
             ;;
         0)
             echo -e "\033[1;31mReturn\033[0m"
@@ -95,7 +117,11 @@ find_and_allow_ports() {
                 return_to_menu
             fi
 
-            echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b) for selected ports?\033[0m"
+            echo -e "\033[1;36mSelect direction for selected ports:\033[0m"
+            echo -e "\033[1;32m1.\033[0m Incoming only"
+            echo -e "\033[1;33m2.\033[0m Outgoing only"
+            echo -e "\033[1;34m3.\033[0m Both directions"
+            echo -e "\033[1;31m0.\033[0m Return"
             read -r direction
 
             IFS=',' read -ra selected_array <<< "$selected_numbers"
@@ -103,10 +129,17 @@ find_and_allow_ports() {
                 if [[ "$num" =~ ^[0-9]+$ ]] && [ "$num" -ge 1 ] && [ "$num" -le "${#ports_array[@]}" ]; then
                     port="${ports_array[$((num-1))]}"
                     case "$direction" in
-                        in)  sudo ufw allow "$port" ;;
-                        out) sudo ufw allow out "$port" ;;
-                        b)   sudo ufw allow "$port"; sudo ufw allow out "$port" ;;
-                        *)   echo -e "\033[1;31mInvalid choice for port $port. Skipping.\033[0m" ;;
+                        1) sudo ufw allow "$port" ;;
+                        2) sudo ufw allow out "$port" ;;
+                        3) 
+                            sudo ufw allow "$port"
+                            sudo ufw allow out "$port"
+                            ;;
+                        0) 
+                            echo -e "\033[1;31mReturn\033[0m"
+                            break
+                            ;;
+                        *) echo -e "\033[1;31mInvalid choice for port $port. Skipping.\033[0m" ;;
                     esac
                 else
                     echo -e "\033[1;31mInvalid selection: $num. Skipping.\033[0m"
@@ -127,16 +160,29 @@ find_and_allow_ports() {
 
 allow_ports() {
     read -p "Enter the port numbers to allow (comma-separated, e.g., 80,443,53,123): " ports
-    echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b)?\033[0m"
+    
+    echo -e "\033[1;36mSelect direction:\033[0m"
+    echo -e "\033[1;32m1.\033[0m Incoming only"
+    echo -e "\033[1;33m2.\033[0m Outgoing only"
+    echo -e "\033[1;34m3.\033[0m Both directions"
+    echo -e "\033[1;31m0.\033[0m Return"
     read -r direction
 
     IFS=',' read -ra PORTS <<< "$ports"
     for port in "${PORTS[@]}"; do
         case "$direction" in
-            in)  sudo ufw allow "$port" && echo -e "\033[0;32mAllowed incoming port $port.\033[0m" ;;
-            out) sudo ufw allow out "$port" && echo -e "\033[0;32mAllowed outgoing port $port.\033[0m" ;;
-            b)   sudo ufw allow "$port"; sudo ufw allow out "$port"; echo -e "\033[0;32mAllowed both directions for port $port.\033[0m" ;;
-            *)   echo -e "\033[0;31mInvalid choice. Skipping port $port.\033[0m" ;;
+            1) sudo ufw allow "$port" && echo -e "\033[0;32mAllowed incoming port $port.\033[0m" ;;
+            2) sudo ufw allow out "$port" && echo -e "\033[0;32mAllowed outgoing port $port.\033[0m" ;;
+            3) 
+                sudo ufw allow "$port"
+                sudo ufw allow out "$port"
+                echo -e "\033[0;32mAllowed both directions for port $port.\033[0m"
+                ;;
+            0) 
+                echo -e "\033[1;31mReturn\033[0m"
+                return_to_menu
+                ;;
+            *) echo -e "\033[0;31mInvalid choice. Skipping port $port.\033[0m" ;;
         esac
     done
     return_to_menu
@@ -144,16 +190,29 @@ allow_ports() {
 
 deny_ports() {
     read -p "Enter the port numbers to deny (comma-separated, e.g., 80,443,2052): " ports
-    echo -e "\033[1;36mDeny incoming (in), outgoing (out), or both (b)?\033[0m"
+    
+    echo -e "\033[1;36mSelect direction:\033[0m"
+    echo -e "\033[1;32m1.\033[0m Incoming only"
+    echo -e "\033[1;33m2.\033[0m Outgoing only"
+    echo -e "\033[1;34m3.\033[0m Both directions"
+    echo -e "\033[1;31m0.\033[0m Return"
     read -r direction
 
     IFS=',' read -ra PORTS <<< "$ports"
     for port in "${PORTS[@]}"; do
         case "$direction" in
-            in)  sudo ufw deny "$port" && echo -e "\033[0;31mDenied incoming port $port.\033[0m" ;;
-            out) sudo ufw deny out "$port" && echo -e "\033[0;31mDenied outgoing port $port.\033[0m" ;;
-            b)   sudo ufw deny "$port"; sudo ufw deny out "$port"; echo -e "\033[0;31mDenied both directions for port $port.\033[0m" ;;
-            *)   echo -e "\033[0;31mInvalid choice. Skipping port $port.\033[0m" ;;
+            1) sudo ufw deny "$port" && echo -e "\033[0;31mDenied incoming port $port.\033[0m" ;;
+            2) sudo ufw deny out "$port" && echo -e "\033[0;31mDenied outgoing port $port.\033[0m" ;;
+            3) 
+                sudo ufw deny "$port"
+                sudo ufw deny out "$port"
+                echo -e "\033[0;31mDenied both directions for port $port.\033[0m"
+                ;;
+            0) 
+                echo -e "\033[1;31mReturn\033[0m"
+                return_to_menu
+                ;;
+            *) echo -e "\033[0;31mInvalid choice. Skipping port $port.\033[0m" ;;
         esac
     done
     return_to_menu
@@ -161,16 +220,29 @@ deny_ports() {
 
 allow_services() {
     read -p "Enter the service names to allow (comma-separated, e.g., ssh,http,https): " services
-    echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b)?\033[0m"
+    
+    echo -e "\033[1;36mSelect direction:\033[0m"
+    echo -e "\033[1;32m1.\033[0m Incoming only"
+    echo -e "\033[1;33m2.\033[0m Outgoing only"
+    echo -e "\033[1;34m3.\033[0m Both directions"
+    echo -e "\033[1;31m0.\033[0m Return"
     read -r direction
 
     IFS=',' read -ra SERVICES <<< "$services"
     for service in "${SERVICES[@]}"; do
         case "$direction" in
-            in)  sudo ufw allow "$service" && echo -e "\033[0;32mAllowed incoming service $service.\033[0m" ;;
-            out) sudo ufw allow out "$service" && echo -e "\033[0;32mAllowed outgoing service $service.\033[0m" ;;
-            b)   sudo ufw allow "$service"; sudo ufw allow out "$service"; echo -e "\033[0;32mAllowed both directions for service $service.\033[0m" ;;
-            *)   echo -e "\033[0;31mInvalid choice. Skipping service $service.\033[0m" ;;
+            1) sudo ufw allow "$service" && echo -e "\033[0;32mAllowed incoming service $service.\033[0m" ;;
+            2) sudo ufw allow out "$service" && echo -e "\033[0;32mAllowed outgoing service $service.\033[0m" ;;
+            3) 
+                sudo ufw allow "$service"
+                sudo ufw allow out "$service"
+                echo -e "\033[0;32mAllowed both directions for service $service.\033[0m"
+                ;;
+            0) 
+                echo -e "\033[1;31mReturn\033[0m"
+                return_to_menu
+                ;;
+            *) echo -e "\033[0;31mInvalid choice. Skipping service $service.\033[0m" ;;
         esac
     done
     return_to_menu
@@ -178,16 +250,29 @@ allow_services() {
 
 deny_services() {
     read -p "Enter the service names to deny (comma-separated, e.g., ssh,http,https): " services
-    echo -e "\033[1;36mDeny incoming (in), outgoing (out), or both (b)?\033[0m"
+    
+    echo -e "\033[1;36mSelect direction:\033[0m"
+    echo -e "\033[1;32m1.\033[0m Incoming only"
+    echo -e "\033[1;33m2.\033[0m Outgoing only"
+    echo -e "\033[1;34m3.\033[0m Both directions"
+    echo -e "\033[1;31m0.\033[0m Return"
     read -r direction
 
     IFS=',' read -ra SERVICES <<< "$services"
     for service in "${SERVICES[@]}"; do
         case "$direction" in
-            in)  sudo ufw deny "$service" && echo -e "\033[0;31mDenied incoming service $service.\033[0m" ;;
-            out) sudo ufw deny out "$service" && echo -e "\033[0;31mDenied outgoing service $service.\033[0m" ;;
-            b)   sudo ufw deny "$service"; sudo ufw deny out "$service"; echo -e "\033[0;31mDenied both directions for service $service.\033[0m" ;;
-            *)   echo -e "\033[0;31mInvalid choice. Skipping service $service.\033[0m" ;;
+            1) sudo ufw deny "$service" && echo -e "\033[0;31mDenied incoming service $service.\033[0m" ;;
+            2) sudo ufw deny out "$service" && echo -e "\033[0;31mDenied outgoing service $service.\033[0m" ;;
+            3) 
+                sudo ufw deny "$service"
+                sudo ufw deny out "$service"
+                echo -e "\033[0;31mDenied both directions for service $service.\033[0m"
+                ;;
+            0) 
+                echo -e "\033[1;31mReturn\033[0m"
+                return_to_menu
+                ;;
+            *) echo -e "\033[0;31mInvalid choice. Skipping service $service.\033[0m" ;;
         esac
     done
     return_to_menu
@@ -214,15 +299,29 @@ disable_ufw() {
 }
 deny_ip() {
     read -p "Enter the IP address(es) to deny (comma-separated, e.g., 192.168.1.1,10.0.0.2): " ips
-    echo -e "\033[1;36mDeny incoming (in), outgoing (out), or both (b)?\033[0m"
+    
+    echo -e "\033[1;36mSelect direction:\033[0m"
+    echo -e "\033[1;32m1.\033[0m Incoming only"
+    echo -e "\033[1;33m2.\033[0m Outgoing only"
+    echo -e "\033[1;34m3.\033[0m Both directions"
+    echo -e "\033[1;31m0.\033[0m Return"
     read -r direction
+    
     IFS=',' read -ra IPS <<< "$ips"
     for ip in "${IPS[@]}"; do
         case "$direction" in
-            in)  sudo ufw deny from "$ip" && echo -e "\033[0;31mDenied incoming IP $ip.\033[0m" ;;
-            out) sudo ufw deny out to "$ip" && echo -e "\033[0;31mDenied outgoing IP $ip.\033[0m" ;;
-            b)   sudo ufw deny from "$ip"; sudo ufw deny out to "$ip"; echo -e "\033[0;31mDenied both directions for IP $ip.\033[0m" ;;
-            *)   echo -e "\033[0;31mInvalid choice. Skipping IP $ip.\033[0m" ;;
+            1) sudo ufw deny from "$ip" && echo -e "\033[0;31mDenied incoming IP $ip.\033[0m" ;;
+            2) sudo ufw deny out to "$ip" && echo -e "\033[0;31mDenied outgoing IP $ip.\033[0m" ;;
+            3) 
+                sudo ufw deny from "$ip"
+                sudo ufw deny out to "$ip"
+                echo -e "\033[0;31mDenied both directions for IP $ip.\033[0m"
+                ;;
+            0) 
+                echo -e "\033[1;31mReturn\033[0m"
+                return_to_menu
+                ;;
+            *) echo -e "\033[0;31mInvalid choice. Skipping IP $ip.\033[0m" ;;
         esac
     done
     return_to_menu
@@ -230,15 +329,29 @@ deny_ip() {
 
 allow_ip() {
     read -p "Enter the IP address(es) to allow (comma-separated, e.g., 192.168.1.1,10.0.0.2): " ips
-    echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b)?\033[0m"
+    
+    echo -e "\033[1;36mSelect direction:\033[0m"
+    echo -e "\033[1;32m1.\033[0m Incoming only"
+    echo -e "\033[1;33m2.\033[0m Outgoing only"
+    echo -e "\033[1;34m3.\033[0m Both directions"
+    echo -e "\033[1;31m0.\033[0m Return"
     read -r direction
+    
     IFS=',' read -ra IPS <<< "$ips"
     for ip in "${IPS[@]}"; do
         case "$direction" in
-            in)  sudo ufw allow from "$ip" && echo -e "\033[0;32mAllowed incoming IP $ip.\033[0m" ;;
-            out) sudo ufw allow out to "$ip" && echo -e "\033[0;32mAllowed outgoing IP $ip.\033[0m" ;;
-            b)   sudo ufw allow from "$ip"; sudo ufw allow out to "$ip"; echo -e "\033[0;32mAllowed both directions for IP $ip.\033[0m" ;;
-            *)   echo -e "\033[0;31mInvalid choice. Skipping IP $ip.\033[0m" ;;
+            1) sudo ufw allow from "$ip" && echo -e "\033[0;32mAllowed incoming IP $ip.\033[0m" ;;
+            2) sudo ufw allow out to "$ip" && echo -e "\033[0;32mAllowed outgoing IP $ip.\033[0m" ;;
+            3) 
+                sudo ufw allow from "$ip"
+                sudo ufw allow out to "$ip"
+                echo -e "\033[0;32mAllowed both directions for IP $ip.\033[0m"
+                ;;
+            0) 
+                echo -e "\033[1;31mReturn\033[0m"
+                return_to_menu
+                ;;
+            *) echo -e "\033[0;31mInvalid choice. Skipping IP $ip.\033[0m" ;;
         esac
     done
     return_to_menu
@@ -334,6 +447,7 @@ stop_port_scanning() {
     echo ""
     
     # Reset to safe defaults
+    sudo ufw --force reset
     sudo ufw default deny incoming
     sudo ufw default deny outgoing
     
