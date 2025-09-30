@@ -126,7 +126,7 @@ find_and_allow_ports() {
 }
 
 allow_ports() {
-    read -p "Enter the port numbers to allow (comma-separated, e.g., 80,443,2052): " ports
+    read -p "Enter the port numbers to allow (comma-separated, e.g., 80,443,53,123): " ports
     echo -e "\033[1;36mAllow incoming (in), outgoing (out), or both (b)?\033[0m"
     read -r direction
 
