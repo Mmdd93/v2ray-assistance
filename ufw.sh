@@ -421,7 +421,7 @@ stop_port_scanning() {
     fi
     
     # Enable firewall
-    sudo ufw --force enable
+    sudo ufw enable
     
     echo ""
     echo -e "${GREEN}✅ PORT SCANNING COMPLETELY BLOCKED${NC}"
