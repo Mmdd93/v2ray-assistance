@@ -776,19 +776,16 @@ gaming_ports() {
                 ;;
             13)
                 echo -e "${YELLOW}Adding Xbox Live ports...${NC}"
-                sudo ufw allow out 3074/tcp
-                sudo ufw allow out 3074/udp
+                sudo ufw allow out 3074
                 echo -e "${GREEN}✅ Xbox Live ports added${NC}"
                 ;;
             14)
                 echo -e "${YELLOW}Adding Minimal Gaming Setup...${NC}"
                 sudo ufw allow out 53
-                sudo ufw allow out 80/tcp
-                sudo ufw allow out 443/tcp
-                sudo ufw allow out 3074/tcp
-                sudo ufw allow out 3074/udp
-                sudo ufw allow out 27015:27030/tcp
-                sudo ufw allow out 27015:27030/udp
+                sudo ufw allow out 80
+                sudo ufw allow out 443
+                sudo ufw allow out 3074
+                sudo ufw allow out 27015:27030
                 echo -e "${GREEN}✅ Minimal gaming ports added${NC}"
                 ;;
             15)
