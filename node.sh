@@ -3248,25 +3248,25 @@ main_menu() {
         echo -e "${CYAN}Combine local tunnels (SIT, GRE, GENEVE, VXLAN) with:${NC}"
         echo -e "${CYAN}Backhaul, GOST, WSS, etc., for enhanced stealth${NC}"
         separator
-        menu_option "26" "SIT tunnel 6to4 (IPv6 local) by (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "28" "GRE tunnel (IPv4/IPv6 local) by (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "45" "GENEVE tunnel (IPv4 local) by (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "46" "VXLAN tunnel (IPv4 local) by (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "31" "HAProxy tunnel by (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "27" "Backhaul tunnel by (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "26" "SIT tunnel 6to4 (IPv6 local) (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "28" "GRE tunnel (IPv4/IPv6 local) (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "45" "GENEVE tunnel (IPv4 local) (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "46" "VXLAN tunnel (IPv4 local) (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "31" "HAProxy tunnel (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "27" "Backhaul tunnel (github.com/Mmdd93/v2ray-assistance/)"
         menu_option "44" "GOST tunnel by (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "55" "GOST Reverse tunnel by (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "47" "WSS/WS tunnel (CDN support) by (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "55" "GOST Reverse tunnel (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "47" "WSS/WS tunnel (CDN support) (github.com/Mmdd93/v2ray-assistance/)"
         menu_option "56" "WireGuard Reverse Tunnel by (EYLAN)"
-        menu_option "58" "WireGuard/Hysteria Tunnel (TAQ-BOSTAN) by (github.com/ParsaKSH/TAQ-BOSTAN)"
-        menu_option "61" "Backhaul premium tunnel (cracked by t.me/anony_identity)"
+        menu_option "58" "WireGuard/Hysteria Tunnel (TAQ-BOSTAN) (github.com/ParsaKSH/TAQ-BOSTAN)"
+        menu_option "61" "Backhaul premium tunnel cracked by (t.me/anony_identity)"
         menu_option "62" "Rathole tunnel v2 by (github.com/Musixal)"
-        menu_option "63" "Trust Tunnel (TCP/UDP over QUIC) by (github.com/Erfan-XRay)"
-        menu_option "64" "HPulse Tunnel (TCP/UDP over Hysteria 2) by (github.com/Erfan-XRay)"
-        menu_option "66" "DNS Tunnel (tunnel over DNS) by (github.com/IRSupp/DnsTunnel)"
-        menu_option "67" "FRP Tunnel (Fast Reverse Proxy) by (github.com/MmdBay/frp-manager)"
+        menu_option "63" "Trust Tunnel (TCP/UDP over QUIC) (github.com/Erfan-XRay)"
+        menu_option "64" "HPulse Tunnel (TCP/UDP over Hysteria 2) (github.com/Erfan-XRay)"
+        menu_option "66" "DNS Tunnel (tunnel over DNS) (github.com/IRSupp/DnsTunnel)"
+        menu_option "67" "FRP Tunnel (Fast Reverse Proxy) (github.com/MmdBay/frp-manager)"
         menu_option "68" "Phantom Tunnel (Reverse) by (github.com/webwizards-team/Phantom-Tunnel/)"
-        menu_option "69" "FRPulse Tunnel (Fast Reverse Proxy) by (github.com/Erfan-XRay/FRPulse)" 
+        menu_option "69" "FRPulse Tunnel (Fast Reverse Proxy) (github.com/Erfan-XRay/FRPulse)" 
         menu_option "70" "FRP Tunnel by Mehrad (github.com/mikeesierrah/frp-script)" 
 		menu_option "76" "ZEX Tunnel Waterwall (github.com/izex/ZEX-Tunnel)"
   		menu_option "79" "Pingtunnel Manager (github.com/hoseinlolready/Pingtunnel_manager)"
@@ -3275,8 +3275,9 @@ main_menu() {
         # Panel section
         section_header "PANEL MANAGEMENT"
         menu_option "38" "X-UI panels (x-ui, 3x-ui, tx-ui)"
-		menu_option "74" "Sing-box/SagerNet panel (s-ui) by github.com/alireza0/s-ui"
-		menu_option "73" "X-UI panel multi node location by (github.com/azavaxhuman/Nodex/)"
+		menu_option "74" "Sing-box/SagerNet panel (s-ui) (github.com/alireza0/s-ui)"
+		menu_option "73" "X-UI panel multi node location (github.com/azavaxhuman/Nodex)"
+		menu_option "80" "Hysteria2 Blitz Panel (github.com/ReturnFI/Blitz)"
         menu_option "75" "Mirza (telegram bot for sale) (github.com/mahdiMGF2/botmirzapanel)"
 		menu_option "77" "mtproto proxy (telegram proxy) (github.com/seriyps/mtproto_proxy)"
         #menu_option "78" "OpenVPN panel (github.com/palark/ovpn-admin)"
@@ -3622,7 +3623,12 @@ sudo bash zex-tunnel-install.sh
                 curl -Ls https://raw.githubusercontent.com/hoseinlolready/Pingtunnel_manager/refs/heads/main/Source/bash.sh -o Pingtunnel_manager.sh
                 sudo bash Pingtunnel_manager.sh
                 ;;
-               
+               80)
+                echo -e "${YELLOW}Running Blitz Panel...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/ReturnFI/Blitz/main/install.sh -o Blitz.sh
+                sudo bash Blitz.sh
+                ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
                 update 
