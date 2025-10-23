@@ -3597,7 +3597,7 @@ main_menu() {
                 sui ;;
 			75) 
                 echo -e "${YELLOW}Running mirza.sh...${NC}"
-                curl -Ls https://raw.githubusercontent.com/mahdiMGF2/botmirzapanel/main/install.sh -o mirza.sh
+                curl -Ls https://github.com/Mmdd93/mirza_pro/raw/refs/heads/main/install.sh -o mirza.sh
                 sudo bash mirza.sh 
                 ;;
 			76) 
