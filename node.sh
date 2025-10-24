@@ -422,6 +422,7 @@ validate_port() {
 update_system() {
     echo_yellow "Updating package lists..."
     sudo apt-get update
+	sudo apt install -y software-properties-common
 
     echo_yellow "Upgrading installed packages..."
     sudo apt-get upgrade -y
