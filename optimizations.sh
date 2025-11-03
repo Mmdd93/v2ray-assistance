@@ -50,203 +50,148 @@ update_config() {
     fi
 }
 
-# Function to apply optimizations (overwrite existing values only)
-apply_optimizations() {
-    echo -e "\033[1;32mApplying optimizations...\033[0m"
+# =============================================================================
+# GAMING OPTIMIZATIONS (Low Latency Focus)
+# =============================================================================
+apply_gaming_optimizations() {
+    echo -e "\033[1;36m?? Applying GAMING Optimizations (Low Latency Focus)...\033[0m"
 
-    # Update /etc/sysctl.conf with new configurations
-    declare -A sysctl_settings=(
-        # Gaming-optimized sysctl settings
-        ["vm.swappiness"]="10"
-        ["vm.dirty_ratio"]="30"
-        ["vm.dirty_background_ratio"]="10"
-        ["fs.file-max"]="2097152"
-        ["net.core.somaxconn"]="1024"
-        ["net.core.netdev_max_backlog"]="4096"
-        ["net.ipv4.ip_local_port_range"]="1024 65535"
-        ["net.ipv4.ip_nonlocal_bind"]="1"
-        ["net.ipv4.tcp_keepalive_time"]="300"
-        ["net.ipv4.tcp_keepalive_intvl"]="30"
-        ["net.ipv4.tcp_keepalive_probes"]="5"
-        ["net.ipv4.tcp_syncookies"]="1"
-        ["net.ipv4.tcp_max_orphans"]="65536"
-        ["net.ipv4.tcp_max_syn_backlog"]="2048"
-        ["net.ipv4.tcp_max_tw_buckets"]="1048576"
-        ["net.ipv4.tcp_reordering"]="3"
-        ["net.ipv4.tcp_mem"]="786432 1697152 1945728"
-        ["net.ipv4.tcp_rmem"]="4096 262144 16777216"
-        ["net.ipv4.tcp_wmem"]="4096 65536 16777216"
-        ["net.ipv4.tcp_syn_retries"]="3"
-        ["net.ipv4.tcp_tw_reuse"]="1"
-        ["net.ipv4.tcp_mtu_probing"]="1"
-        ["net.ipv4.tcp_congestion_control"]="bbr"
-        ["net.ipv4.tcp_sack"]="1"
-        ["net.ipv4.conf.all.rp_filter"]="1"
-        ["net.ipv4.conf.default.rp_filter"]="1"
-        ["net.ipv4.ip_no_pmtu_disc"]="0"
+    declare -A gaming_settings=(
+        # Memory and swap
+        ["vm.swappiness"]="30"
+        ["vm.dirty_ratio"]="15"
+        ["vm.dirty_background_ratio"]="5"
+        ["vm.dirty_expire_centisecs"]="1000"
+        ["vm.dirty_writeback_centisecs"]="500"
         ["vm.vfs_cache_pressure"]="50"
-        ["net.ipv4.tcp_fastopen"]="0"
-        ["net.ipv4.tcp_ecn"]="0"
-        ["net.ipv4.tcp_retries2"]="5"
-        ["net.ipv6.conf.all.forwarding"]="1"
-        ["net.ipv4.conf.all.forwarding"]="1"
-        ["net.ipv4.tcp_low_latency"]="0"
-        ["net.ipv4.tcp_window_scaling"]="1"
-        ["net.core.default_qdisc"]="fq_codel"
-        ["net.netfilter.nf_conntrack_max"]="65536"
-        ["net.ipv4.tcp_fin_timeout"]="15"
-        ["net.netfilter.nf_conntrack_log_invalid"]="0"
-        ["net.ipv4.conf.all.log_martians"]="0"
-        ["net.ipv4.conf.default.log_martians"]="0"
-    )
-
-    for key in "${!sysctl_settings[@]}"; do
-        update_config "$SYSCTL_CONF" "$key" "${sysctl_settings[$key]}"
-    done
-
-    # Update /etc/security/limits.conf with new limits
-    declare -A limits_settings=(
-        ["* soft nproc"]="65535"
-        ["* hard nproc"]="65535"
-        ["* soft nofile"]="1048576"
-        ["* hard nofile"]="1048576"
-        ["root soft nproc"]="65535"
-        ["root hard nproc"]="65535"
-        ["root soft nofile"]="1048576"
-        ["root hard nofile"]="1048576"
-    )
-
-    for key in "${!limits_settings[@]}"; do
-        if grep -q "^$key" "$LIMITS_CONF"; then
-            sed -i "s|^$key.*|$key ${limits_settings[$key]}|" "$LIMITS_CONF"
-        else
-            echo "$key ${limits_settings[$key]}" >> "$LIMITS_CONF"
-        fi
-    done
-
-    reload_sysctl
-    echo -e "\033[1;32mOptimization Complete!\033[0m"
-}
-
-# Function to disable all optimizations (remove specific entries)
-disable_optimizations() {
-    echo -e "\033[1;32mDisabling all optimizations...\033[0m"
-
-    # Remove specific optimization settings from /etc/sysctl.conf
-    SYSCTL_KEYS=(
-        "vm.swappiness"
-        "vm.dirty_ratio"
-        "vm.dirty_background_ratio"
-        "fs.file-max"
-        "net.core.somaxconn"
-        "net.core.netdev_max_backlog"
-        "net.ipv4.ip_local_port_range"
-        "net.ipv4.ip_nonlocal_bind"
-        "net.ipv4.tcp_fin_timeout"
-        "net.ipv4.tcp_keepalive_time"
-        "net.ipv4.tcp_syncookies"
-        "net.ipv4.tcp_max_orphans"
-        "net.ipv4.tcp_max_syn_backlog"
-        "net.ipv4.tcp_max_tw_buckets"
-        "net.ipv4.tcp_reordering"
-        "net.ipv4.tcp_mem"
-        "net.ipv4.tcp_rmem"
-        "net.ipv4.tcp_wmem"
-        "net.ipv4.tcp_syn_retries"
-        "net.ipv4.tcp_tw_reuse"
-        "net.ipv4.tcp_keepalive_intvl"
-        "net.ipv4.tcp_keepalive_probes"
-        "net.ipv4.tcp_mtu_probing"
-        "net.ipv4.tcp_congestion_control"
-        "net.ipv4.tcp_sack"
-        "net.ipv4.conf.all.rp_filter"
-        "net.ipv4.conf.default.rp_filter"
-        "net.ipv4.ip_no_pmtu_disc"
-        "vm.vfs_cache_pressure"
-        "net.ipv4.tcp_fastopen"
-        "net.ipv4.tcp_ecn"
-        "net.ipv4.tcp_retries2"
-        "net.ipv6.conf.all.forwarding"
-        "net.ipv4.conf.all.forwarding"
-        "net.ipv4.tcp_low_latency"
-        "net.ipv4.tcp_window_scaling"
-        "net.core.default_qdisc"
-        "net.netfilter.nf_conntrack_max"
-        "net.netfilter.nf_conntrack_log_invalid"
-        "net.ipv4.conf.all.log_martians"
-        "net.ipv4.conf.default.log_martians"
-    )
-
-    for key in "${SYSCTL_KEYS[@]}"; do
-        sed -i "/^$key/d" "$SYSCTL_CONF"
-    done
-
-    # Remove specific limits from /etc/security/limits.conf
-    LIMIT_KEYS=(
-        "* soft nproc"
-        "* hard nproc"
-        "* soft nofile"
-        "* hard nofile"
-        "root soft nproc"
-        "root hard nproc"
-        "root soft nofile"
-        "root hard nofile"
-    )
-
-    for key in "${LIMIT_KEYS[@]}"; do
-        sed -i "/^$key/d" "$LIMITS_CONF"
-    done
-
-    # Reload sysctl
-    echo -e "\033[1;32mReloading sysctl settings...\033[0m"
-    sysctl -p
-
-    echo -e "\033[1;32mAll optimizations have been disabled!\033[0m"
-}
-
-apply_fast_tcp() {
-    echo -e "\033[1;32mApplying VERY FAST TCP optimizations...\033[0m"
-
-    # Sysctl settings for very fast TCP (UDP-like behavior)
-    declare -A sysctl_settings=(
-        ["net.core.rmem_max"]="134217728"
-        ["net.core.wmem_max"]="134217728"
-        ["net.core.rmem_default"]="16777216"
-        ["net.core.wmem_default"]="16777216"
-        ["net.core.netdev_max_backlog"]="30000"
-        ["net.core.somaxconn"]="32768"
-        ["net.ipv4.ip_local_port_range"]="1024 65000"
+        ["vm.min_free_kbytes"]="65536"
+        
+        # Core networking
+        ["net.core.rmem_max"]="33554432"
+        ["net.core.wmem_max"]="33554432"
+        ["net.core.rmem_default"]="262144"
+        ["net.core.wmem_default"]="262144"
+        ["net.core.netdev_max_backlog"]="2000"
+        ["net.core.netdev_budget"]="600"
+        ["net.core.somaxconn"]="65535"
+        ["net.core.optmem_max"]="65536"
+        
+        # TCP tuning for low latency
+        ["net.ipv4.tcp_rmem"]="4096 87380 33554432"
+        ["net.ipv4.tcp_wmem"]="4096 16384 33554432"
         ["net.ipv4.tcp_congestion_control"]="bbr"
         ["net.core.default_qdisc"]="fq"
         ["net.ipv4.tcp_fastopen"]="3"
-        ["net.ipv4.tcp_fin_timeout"]="5"
-        ["net.ipv4.tcp_tw_reuse"]="1"
-        ["net.ipv4.tcp_keepalive_time"]="120"
-        ["net.ipv4.tcp_keepalive_intvl"]="20"
-        ["net.ipv4.tcp_keepalive_probes"]="3"
-        ["net.ipv4.tcp_syn_retries"]="2"
-        ["net.ipv4.tcp_retries1"]="1"
-        ["net.ipv4.tcp_retries2"]="3"
-        ["net.ipv4.tcp_orphan_retries"]="0"
-        ["net.ipv4.tcp_mtu_probing"]="1"
-        ["net.ipv4.tcp_sack"]="0"
-        ["net.ipv4.tcp_dsack"]="0"
+        ["net.ipv4.tcp_slow_start_after_idle"]="0"
         ["net.ipv4.tcp_low_latency"]="1"
-        ["net.ipv4.tcp_window_scaling"]="1"
-        ["net.ipv4.tcp_no_metrics_save"]="1"
+        
+        # Connection handling
+        ["net.ipv4.tcp_max_syn_backlog"]="8192"
+        ["net.ipv4.tcp_max_tw_buckets"]="2000000"
+        ["net.ipv4.tcp_tw_reuse"]="1"
+        ["net.ipv4.tcp_fin_timeout"]="10"
+        ["net.ipv4.tcp_keepalive_time"]="300"
+        ["net.ipv4.tcp_keepalive_intvl"]="30"
+        ["net.ipv4.tcp_keepalive_probes"]="3"
+        
+        # UDP optimization (important for games)
+        ["net.ipv4.udp_rmem_min"]="8192"
+        ["net.ipv4.udp_wmem_min"]="8192"
+        
+        # Security (gaming servers need security too)
         ["net.ipv4.tcp_syncookies"]="1"
-        ["net.netfilter.nf_conntrack_max"]="524288"
-        ["net.netfilter.nf_conntrack_tcp_timeout_time_wait"]="30"
-        ["net.netfilter.nf_conntrack_tcp_timeout_established"]="300000"
+        ["net.ipv4.conf.all.accept_redirects"]="0"
+        ["net.ipv4.conf.default.accept_redirects"]="0"
+        ["net.ipv4.conf.all.accept_source_route"]="0"
+        ["net.ipv4.conf.default.accept_source_route"]="0"
+        
+        # File handles
+        ["fs.file-max"]="2097152"
     )
 
-    # Apply sysctl settings
-    for key in "${!sysctl_settings[@]}"; do
-        update_config "$SYSCTL_CONF" "$key" "${sysctl_settings[$key]}"
+    for key in "${!gaming_settings[@]}"; do
+        update_config "$SYSCTL_CONF" "$key" "${gaming_settings[$key]}"
     done
 
-    # Limits for fast connections
-    declare -A limits_settings=(
+    # Apply gaming-specific limits
+    declare -A gaming_limits=(
+        ["* soft nproc"]="65535"
+        ["* hard nproc"]="65535"
+        ["* soft nofile"]="524288"
+        ["* hard nofile"]="524288"
+        ["root soft nproc"]="65535"
+        ["root hard nproc"]="65535"
+        ["root soft nofile"]="524288"
+        ["root hard nofile"]="524288"
+    )
+
+    for key in "${!gaming_limits[@]}"; do
+        if grep -q "^$key" "$LIMITS_CONF"; then
+            sed -i "s|^$key.*|$key ${gaming_limits[$key]}|" "$LIMITS_CONF"
+        else
+            echo "$key ${gaming_limits[$key]}" >> "$LIMITS_CONF"
+        fi
+    done
+
+    reload_sysctl
+    echo -e "\033[1;32m?? GAMING optimizations applied successfully!\033[0m"
+    echo -e "\033[1;33m?? Optimized for: Low latency, fast response times, UDP performance\033[0m"
+}
+
+# =============================================================================
+# STREAMING OPTIMIZATIONS (High Throughput Focus)
+# =============================================================================
+apply_streaming_optimizations() {
+    echo -e "\033[1;36m?? Applying STREAMING Optimizations (High Throughput Focus)...\033[0m"
+
+    declare -A streaming_settings=(
+        # Memory and swap
+        ["vm.swappiness"]="10"
+        ["vm.dirty_ratio"]="20"
+        ["vm.dirty_background_ratio"]="10"
+        ["vm.dirty_expire_centisecs"]="3000"
+        ["vm.dirty_writeback_centisecs"]="500"
+        ["vm.vfs_cache_pressure"]="100"
+        
+        # Core networking (larger buffers for streaming)
+        ["net.core.rmem_max"]="67108864"
+        ["net.core.wmem_max"]="67108864"
+        ["net.core.rmem_default"]="4194304"
+        ["net.core.wmem_default"]="4194304"
+        ["net.core.netdev_max_backlog"]="5000"
+        ["net.core.somaxconn"]="65535"
+        
+        # TCP tuning for high throughput
+        ["net.ipv4.tcp_rmem"]="8192 87380 67108864"
+        ["net.ipv4.tcp_wmem"]="8192 65536 67108864"
+        ["net.ipv4.tcp_congestion_control"]="bbr"
+        ["net.core.default_qdisc"]="fq_codel"
+        ["net.ipv4.tcp_fastopen"]="3"
+        ["net.ipv4.tcp_slow_start_after_idle"]="0"
+        ["net.ipv4.tcp_notsent_lowat"]="16384"
+        
+        # Connection handling
+        ["net.ipv4.tcp_max_syn_backlog"]="16384"
+        ["net.ipv4.tcp_max_tw_buckets"]="4000000"
+        ["net.ipv4.tcp_tw_reuse"]="1"
+        ["net.ipv4.tcp_fin_timeout"]="15"
+        ["net.ipv4.tcp_keepalive_time"]="600"
+        
+        # File handles
+        ["fs.file-max"]="4194304"
+        ["fs.nr_open"]="4194304"
+        
+        # Conntrack for many connections
+        ["net.netfilter.nf_conntrack_max"]="262144"
+        ["net.netfilter.nf_conntrack_tcp_timeout_established"]="86400"
+    )
+
+    for key in "${!streaming_settings[@]}"; do
+        update_config "$SYSCTL_CONF" "$key" "${streaming_settings[$key]}"
+    done
+
+    # Apply streaming-specific limits
+    declare -A streaming_limits=(
         ["* soft nproc"]="65535"
         ["* hard nproc"]="65535"
         ["* soft nofile"]="1048576"
@@ -257,943 +202,405 @@ apply_fast_tcp() {
         ["root hard nofile"]="1048576"
     )
 
-    for key in "${!limits_settings[@]}"; do
+    for key in "${!streaming_limits[@]}"; do
         if grep -q "^$key" "$LIMITS_CONF"; then
-            sed -i "s|^$key.*|$key ${limits_settings[$key]}|" "$LIMITS_CONF"
+            sed -i "s|^$key.*|$key ${streaming_limits[$key]}|" "$LIMITS_CONF"
         else
-            echo "$key ${limits_settings[$key]}" >> "$LIMITS_CONF"
+            echo "$key ${streaming_limits[$key]}" >> "$LIMITS_CONF"
         fi
     done
 
-    # Load BBR module if available
-    if modprobe tcp_bbr 2>/dev/null; then
-        echo "Loaded tcp_bbr module."
-    fi
-
     reload_sysctl
-    echo -e "\033[1;32mVERY FAST TCP optimizations applied!\033[0m"
+    echo -e "\033[1;32m?? STREAMING optimizations applied successfully!\033[0m"
+    echo -e "\033[1;33m?? Optimized for: High bandwidth, stable connections, large file transfers\033[0m"
 }
 
-disable_fast_tcp() {
-    echo -e "\033[1;32mDisabling VERY FAST TCP optimizations...\033[0m"
+# =============================================================================
+# GENERAL PURPOSE OPTIMIZATIONS (Balanced)
+# =============================================================================
+apply_general_optimizations() {
+    echo -e "\033[1;36m?? Applying GENERAL PURPOSE Optimizations (Balanced)...\033[0m"
 
-    # Sysctl keys to remove
-    SYSCTL_KEYS=(
-        "net.core.rmem_max"
-        "net.core.wmem_max"
-        "net.core.rmem_default"
-        "net.core.wmem_default"
-        "net.core.netdev_max_backlog"
-        "net.core.somaxconn"
-        "net.ipv4.ip_local_port_range"
-        "net.ipv4.tcp_congestion_control"
-        "net.core.default_qdisc"
-        "net.ipv4.tcp_fastopen"
-        "net.ipv4.tcp_fin_timeout"
-        "net.ipv4.tcp_tw_reuse"
-        "net.ipv4.tcp_keepalive_time"
-        "net.ipv4.tcp_keepalive_intvl"
-        "net.ipv4.tcp_keepalive_probes"
-        "net.ipv4.tcp_syn_retries"
-        "net.ipv4.tcp_retries1"
-        "net.ipv4.tcp_retries2"
-        "net.ipv4.tcp_orphan_retries"
-        "net.ipv4.tcp_mtu_probing"
-        "net.ipv4.tcp_sack"
-        "net.ipv4.tcp_dsack"
-        "net.ipv4.tcp_low_latency"
-        "net.ipv4.tcp_window_scaling"
-        "net.ipv4.tcp_no_metrics_save"
-        "net.ipv4.tcp_syncookies"
-        "net.netfilter.nf_conntrack_max"
-        "net.netfilter.nf_conntrack_tcp_timeout_time_wait"
-        "net.netfilter.nf_conntrack_tcp_timeout_established"
+    declare -A general_settings=(
+        # Memory and swap
+        ["vm.swappiness"]="60"
+        ["vm.dirty_ratio"]="20"
+        ["vm.dirty_background_ratio"]="10"
+        ["vm.dirty_expire_centisecs"]="3000"
+        ["vm.dirty_writeback_centisecs"]="500"
+        ["vm.vfs_cache_pressure"]="100"
+        
+        # Core networking
+        ["net.core.rmem_max"]="16777216"
+        ["net.core.wmem_max"]="16777216"
+        ["net.core.rmem_default"]="262144"
+        ["net.core.wmem_default"]="262144"
+        ["net.core.netdev_max_backlog"]="3000"
+        ["net.core.somaxconn"]="4096"
+        
+        # TCP tuning (balanced)
+        ["net.ipv4.tcp_rmem"]="4096 87380 16777216"
+        ["net.ipv4.tcp_wmem"]="4096 16384 16777216"
+        ["net.ipv4.tcp_congestion_control"]="cubic"
+        ["net.core.default_qdisc"]="fq_codel"
+        ["net.ipv4.tcp_fastopen"]="3"
+        
+        # Connection handling
+        ["net.ipv4.tcp_max_syn_backlog"]="1024"
+        ["net.ipv4.tcp_max_tw_buckets"]="262144"
+        ["net.ipv4.tcp_tw_reuse"]="1"
+        ["net.ipv4.tcp_fin_timeout"]="30"
+        ["net.ipv4.tcp_keepalive_time"]="7200"
+        
+        # Security
+        ["net.ipv4.tcp_syncookies"]="1"
+        ["net.ipv4.conf.all.rp_filter"]="1"
+        ["net.ipv4.conf.default.rp_filter"]="1"
+        
+        # File handles
+        ["fs.file-max"]="65536"
     )
 
-    for key in "${SYSCTL_KEYS[@]}"; do
-        sed -i "/^$key/d" "$SYSCTL_CONF"
+    for key in "${!general_settings[@]}"; do
+        update_config "$SYSCTL_CONF" "$key" "${general_settings[$key]}"
     done
 
-    # Limits to remove
-    LIMIT_KEYS=(
-        "* soft nproc"
-        "* hard nproc"
-        "* soft nofile"
-        "* hard nofile"
-        "root soft nproc"
-        "root hard nproc"
-        "root soft nofile"
-        "root hard nofile"
+    # Apply general-purpose limits
+    declare -A general_limits=(
+        ["* soft nproc"]="10240"
+        ["* hard nproc"]="10240"
+        ["* soft nofile"]="65536"
+        ["* hard nofile"]="65536"
+        ["root soft nproc"]="10240"
+        ["root hard nproc"]="10240"
+        ["root soft nofile"]="65536"
+        ["root hard nofile"]="65536"
     )
 
-    for key in "${LIMIT_KEYS[@]}"; do
+    for key in "${!general_limits[@]}"; do
+        if grep -q "^$key" "$LIMITS_CONF"; then
+            sed -i "s|^$key.*|$key ${general_limits[$key]}|" "$LIMITS_CONF"
+        else
+            echo "$key ${general_limits[$key]}" >> "$LIMITS_CONF"
+        fi
+    done
+
+    reload_sysctl
+    echo -e "\033[1;32m?? GENERAL PURPOSE optimizations applied successfully!\033[0m"
+    echo -e "\033[1;33m?? Optimized for: Balanced performance, stability, everyday use\033[0m"
+}
+
+# =============================================================================
+# COMPETITIVE GAMING OPTIMIZATIONS (Extreme Low Latency)
+# =============================================================================
+apply_competitive_gaming_optimizations() {
+    echo -e "\033[1;36m?? Applying COMPETITIVE GAMING Optimizations (Extreme Low Latency)...\033[0m"
+
+    declare -A comp_settings=(
+        # Memory and swap (aggressive)
+        ["vm.swappiness"]="1"
+        ["vm.dirty_ratio"]="5"
+        ["vm.dirty_background_ratio"]="3"
+        ["vm.dirty_expire_centisecs"]="500"
+        ["vm.dirty_writeback_centisecs"]="100"
+        ["vm.vfs_cache_pressure"]="25"
+        ["vm.min_free_kbytes"]="131072"
+        
+        # Core networking (minimal buffers)
+        ["net.core.rmem_max"]="16777216"
+        ["net.core.wmem_max"]="16777216"
+        ["net.core.rmem_default"]="131072"
+        ["net.core.wmem_default"]="131072"
+        ["net.core.netdev_max_backlog"]="1000"
+        ["net.core.netdev_budget"]="300"
+        ["net.core.somaxconn"]="65535"
+        ["net.core.optmem_max"]="65536"
+        
+        # TCP tuning (ultra low latency)
+        ["net.ipv4.tcp_rmem"]="4096 65536 16777216"
+        ["net.ipv4.tcp_wmem"]="4096 16384 16777216"
+        ["net.ipv4.tcp_congestion_control"]="bbr"
+        ["net.core.default_qdisc"]="fq"
+        ["net.ipv4.tcp_fastopen"]="3"
+        ["net.ipv4.tcp_slow_start_after_idle"]="0"
+        ["net.ipv4.tcp_low_latency"]="1"
+        ["net.ipv4.tcp_no_metrics_save"]="1"
+        ["net.ipv4.tcp_timestamps"]="0"
+        ["net.ipv4.tcp_sack"]="0"
+        ["net.ipv4.tcp_dsack"]="0"
+        ["net.ipv4.tcp_fack"]="0"
+        
+        # Connection handling (fast cleanup)
+        ["net.ipv4.tcp_max_syn_backlog"]="4096"
+        ["net.ipv4.tcp_max_tw_buckets"]="1800000"
+        ["net.ipv4.tcp_tw_reuse"]="1"
+        ["net.ipv4.tcp_fin_timeout"]="5"
+        ["net.ipv4.tcp_keepalive_time"]="1800"
+        ["net.ipv4.tcp_keepalive_intvl"]="15"
+        ["net.ipv4.tcp_keepalive_probes"]="3"
+        
+        # UDP optimization
+        ["net.ipv4.udp_rmem_min"]="4096"
+        ["net.ipv4.udp_wmem_min"]="4096"
+        
+        # File handles
+        ["fs.file-max"]="1048576"
+    )
+
+    for key in "${!comp_settings[@]}"; do
+        update_config "$SYSCTL_CONF" "$key" "${comp_settings[$key]}"
+    done
+
+    reload_sysctl
+    echo -e "\033[1;32m?? COMPETITIVE GAMING optimizations applied successfully!\033[0m"
+    echo -e "\033[1;33m??  WARNING: Very aggressive settings - may affect stability\033[0m"
+    echo -e "\033[1;33m?? Optimized for: Extreme low latency, competitive gaming\033[0m"
+}
+
+
+# =============================================================================
+# REMOVE ALL OPTIMIZATIONS (Complete Reset)
+# =============================================================================
+remove_all_optimizations() {
+    echo -e "\033[1;31m??? Removing ALL optimizations and restoring defaults...\033[0m"
+    
+    # Create comprehensive backup before removal
+    backup_configs
+    
+    # Remove ALL custom settings from sysctl.conf
+    local sysctl_keys=(
+        # Memory settings
+        "vm.swappiness" "vm.dirty_ratio" "vm.dirty_background_ratio"
+        "vm.dirty_expire_centisecs" "vm.dirty_writeback_centisecs"
+        "vm.vfs_cache_pressure" "vm.min_free_kbytes" "vm.max_map_count"
+        "vm.overcommit_memory" "vm.overcommit_ratio" "vm.page_cluster"
+        "vm.zone_reclaim_mode" "vm.stat_interval" "vm.mmap_min_addr"
+        
+        # Core networking
+        "net.core.rmem_max" "net.core.wmem_max" "net.core.rmem_default"
+        "net.core.wmem_default" "net.core.netdev_max_backlog"
+        "net.core.netdev_budget" "net.core.somaxconn" "net.core.optmem_max"
+        "net.core.dev_weight" "net.core.dev_weight_rx_bias" "net.core.dev_weight_tx_bias"
+        "net.core.message_cost" "net.core.message_burst" "net.core.bpf_jit_enable"
+        "net.core.default_qdisc" "net.unix.max_dgram_qlen"
+        
+        # TCP settings
+        "net.ipv4.tcp_rmem" "net.ipv4.tcp_wmem" "net.ipv4.tcp_congestion_control"
+        "net.ipv4.tcp_fastopen" "net.ipv4.tcp_slow_start_after_idle"
+        "net.ipv4.tcp_low_latency" "net.ipv4.tcp_no_metrics_save" "net.ipv4.tcp_timestamps"
+        "net.ipv4.tcp_sack" "net.ipv4.tcp_dsack" "net.ipv4.tcp_fack"
+        "net.ipv4.tcp_max_syn_backlog" "net.ipv4.tcp_max_tw_buckets" "net.ipv4.tcp_tw_reuse"
+        "net.ipv4.tcp_fin_timeout" "net.ipv4.tcp_keepalive_time" "net.ipv4.tcp_keepalive_intvl"
+        "net.ipv4.tcp_keepalive_probes" "net.ipv4.tcp_notsent_lowat" "net.ipv4.tcp_syncookies"
+        "net.ipv4.tcp_rfc1337" "net.ipv4.tcp_abort_on_overflow" "net.ipv4.tcp_adv_win_scale"
+        "net.ipv4.tcp_app_win" "net.ipv4.tcp_base_mss" "net.ipv4.tcp_comp_sack_delay_ns"
+        "net.ipv4.tcp_comp_sack_nr" "net.ipv4.tcp_comp_sack_slack_ns" "net.ipv4.tcp_ecn"
+        "net.ipv4.tcp_frto" "net.ipv4.tcp_limit_output_bytes" "net.ipv4.tcp_mtu_probe_floor"
+        "net.ipv4.tcp_mtu_probing" "net.ipv4.tcp_probe_interval" "net.ipv4.tcp_probe_threshold"
+        "net.ipv4.tcp_recovery" "net.ipv4.tcp_reordering" "net.ipv4.tcp_max_reordering"
+        "net.ipv4.tcp_retries1" "net.ipv4.tcp_retries2" "net.ipv4.tcp_orphan_retries"
+        "net.ipv4.tcp_syn_retries" "net.ipv4.tcp_synack_retries" "net.ipv4.tcp_thin_linear_timeouts"
+        "net.ipv4.tcp_tso_win_divisor" "net.ipv4.tcp_min_tso_segs" "net.ipv4.tcp_min_snd_mss"
+        "net.ipv4.tcp_min_rtt_wlen" "net.ipv4.tcp_moderate_rcvbuf" "net.ipv4.tcp_autocorking"
+        "net.ipv4.tcp_reflect_tos" "net.ipv4.tcp_shrink_window" "net.ipv4.tcp_workaround_signed_windows"
+        "net.ipv4.tcp_migrate_req" "net.ipv4.tcp_l3mdev_accept" "net.ipv4.tcp_fwmark_accept"
+        "net.ipv4.tcp_syn_linear_timeouts" "net.ipv4.tcp_pacing_ss_ratio" "net.ipv4.tcp_pacing_ca_ratio"
+        "net.ipv4.tcp_early_retrans" "net.ipv4.tcp_invalid_ratelimit" "net.ipv4.tcp_challenge_ack_limit"
+        "net.ipv4.tcp_tw_reuse_delay" "net.ipv4.tcp_tso_rtt_log"
+        
+        # UDP settings
+        "net.ipv4.udp_rmem_min" "net.ipv4.udp_wmem_min"
+        
+        # IPv4 general settings
+        "net.ipv4.ip_forward" "net.ipv4.ip_default_ttl" "net.ipv4.ip_no_pmtu_disc"
+        "net.ipv4.ip_forward_use_pmtu" "net.ipv4.fwmark_reflect" "net.ipv4.fib_multipath_use_neigh"
+        "net.ipv4.fib_multipath_hash_policy"
+        
+        # IPv4 security
+        "net.ipv4.conf.all.rp_filter" "net.ipv4.conf.default.rp_filter"
+        "net.ipv4.conf.all.accept_source_route" "net.ipv4.conf.default.accept_source_route"
+        "net.ipv4.conf.all.accept_redirects" "net.ipv4.conf.default.accept_redirects"
+        "net.ipv4.conf.all.secure_redirects" "net.ipv4.conf.default.secure_redirects"
+        "net.ipv4.conf.all.send_redirects" "net.ipv4.conf.default.send_redirects"
+        "net.ipv4.conf.all.log_martians" "net.ipv4.conf.default.log_martians"
+        
+        # ICMP settings
+        "net.ipv4.icmp_echo_ignore_all" "net.ipv4.icmp_echo_ignore_broadcasts"
+        "net.ipv4.icmp_ignore_bogus_error_responses" "net.ipv4.icmp_ratelimit"
+        "net.ipv4.icmp_ratemask"
+        
+        # Conntrack settings
+        "net.netfilter.nf_conntrack_max" "net.netfilter.nf_conntrack_tcp_timeout_established"
+        "net.netfilter.nf_conntrack_tcp_timeout_time_wait" "net.netfilter.nf_conntrack_tcp_timeout_close_wait"
+        "net.netfilter.nf_conntrack_tcp_timeout_fin_wait" "net.netfilter.nf_conntrack_tcp_timeout_syn_sent"
+        "net.netfilter.nf_conntrack_tcp_timeout_syn_recv" "net.netfilter.nf_conntrack_udp_timeout"
+        "net.netfilter.nf_conntrack_udp_timeout_stream" "net.netfilter.nf_conntrack_icmp_timeout"
+        "net.netfilter.nf_conntrack_generic_timeout" "net.netfilter.nf_conntrack_buckets"
+        "net.netfilter.nf_conntrack_checksum" "net.netfilter.nf_conntrack_tcp_be_liberal"
+        "net.netfilter.nf_conntrack_tcp_loose" "net.netfilter.nf_conntrack_log_invalid"
+        
+        # File system settings
+        "fs.file-max" "fs.nr_open" "fs.inotify.max_user_watches"
+        "fs.inotify.max_user_instances" "fs.inotify.max_queued_events"
+        "fs.aio-max-nr" "fs.pipe-max-size"
+        
+        # Kernel scheduler settings
+        "kernel.sched_latency_ns" "kernel.sched_min_granularity_ns" "kernel.sched_wakeup_granularity_ns"
+        "kernel.sched_migration_cost_ns" "kernel.sched_nr_migrate" "kernel.sched_tunable_scaling"
+        "kernel.sched_child_runs_first" "kernel.sched_energy_aware" "kernel.sched_schedstats"
+        "kernel.sched_rr_timeslice_ms" "kernel.sched_rt_period_us" "kernel.sched_rt_runtime_us"
+        "kernel.sched_cfs_bandwidth_slice_us" "kernel.sched_autogroup_enabled"
+    )
+
+    # Remove all custom settings from sysctl.conf
+    for key in "${sysctl_keys[@]}"; do
+        sed -i "/^\s*${key}\s*=/d" "$SYSCTL_CONF"
+    done
+
+    # Remove all custom limits from limits.conf
+    local limit_keys=(
+        "* soft nproc" "* hard nproc" "* soft nofile" "* hard nofile"
+        "root soft nproc" "root hard nproc" "root soft nofile" "root hard nofile"
+    )
+
+    for key in "${limit_keys[@]}"; do
         sed -i "/^$key/d" "$LIMITS_CONF"
     done
 
-    # Reload sysctl
-    echo -e "\033[1;32mReloading sysctl settings...\033[0m"
-    sysctl -p
+    # Reload sysctl to apply default settings
+    echo -e "\033[1;33m?? Reloading system defaults...\033[0m"
+    sysctl -p > /dev/null 2>&1
+    sysctl --system > /dev/null 2>&1
 
-    echo -e "\033[1;32mVERY FAST TCP optimizations removed!\033[0m"
+    # Reset network interfaces to defaults
+    echo -e "\033[1;33m?? Resetting network settings...\033[0m"
+    
+    # Remove any custom TC configurations
+    for interface in $(ls /sys/class/net/ | grep -v lo); do
+        tc qdisc del dev "$interface" root 2>/dev/null
+        tc qdisc del dev "$interface" ingress 2>/dev/null
+    done
+
+    # Reset congestion control to default
+    echo "cubic" > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null
+    
+    # Reset queue discipline to default
+    echo "fq_codel" > /proc/sys/net/core/default_qdisc 2>/dev/null
+
+    echo -e "\033[1;32m? ALL optimizations removed successfully!\033[0m"
+    echo -e "\033[1;33m?? System restored to default settings:\033[0m"
+    echo -e "   • Congestion Control: \033[1;34m$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null || echo 'cubic')\033[0m"
+    echo -e "   • Queue Discipline:   \033[1;34m$(sysctl -n net.core.default_qdisc 2>/dev/null || echo 'fq_codel')\033[0m"
+    echo -e "   • File Limits:        \033[1;34mRestored to system defaults\033[0m"
+    echo -e "   • Network Settings:   \033[1;34mRestored to kernel defaults\033[0m"
 }
 
-apply_full_optimizations() {
-    echo -e "\033[1;32mApplying optimizations...\033[0m"
-
-    declare -A sysctl_settings=(
-        # Memory and swap
-        ["vm.swappiness"]="10"
-        ["vm.dirty_ratio"]="10"
-        ["vm.dirty_background_ratio"]="5"
-        ["vm.dirty_expire_centisecs"]="1500"
-        ["vm.dirty_writeback_centisecs"]="500"
-        ["vm.vfs_cache_pressure"]="50"
-        ["vm.min_free_kbytes"]="131072"
-        ["vm.page_cluster"]="0"
-        ["vm.overcommit_memory"]="1"
-        ["vm.overcommit_ratio"]="80"
-        ["vm.max_map_count"]="262144"
-        ["vm.mmap_min_addr"]="65536"
-        ["vm.zone_reclaim_mode"]="0"
-        ["vm.stat_interval"]="1"
-
-        # Kernel scheduler
-        ["kernel.sched_latitude_ns"]="6000000"
-        ["kernel.sched_min_granularity_ns"]="1500000"
-        ["kernel.sched_wakeup_granularity_ns"]="2000000"
-        ["kernel.sched_migration_cost_ns"]="500000"
-        ["kernel.sched_nr_migrate"]="64"
-        ["kernel.sched_tunable_scaling"]="0"
-        ["kernel.sched_child_runs_first"]="0"
-        ["kernel.sched_energy_aware"]="1"
-        ["kernel.sched_schedstats"]="0"
-        ["kernel.sched_rr_timeslice_ms"]="25"
-        ["kernel.sched_rt_period_us"]="1000000"
-        ["kernel.sched_rt_runtime_us"]="950000"
-        ["kernel.sched_cfs_bandwidth_slice_us"]="5000"
-        ["kernel.sched_autogroup_enabled"]="1"
-
-        # File system
-        ["fs.file-max"]="2097152"
-        ["fs.nr_open"]="2097152"
-        ["fs.inotify.max_user_watches"]="524288"
-        ["fs.inotify.max_user_instances"]="256"
-        ["fs.inotify.max_queued_events"]="32768"
-        ["fs.aio-max-nr"]="1048576"
-        ["fs.pipe-max-size"]="4194304"
-
-        # Core networking
-        ["net.core.rmem_max"]="134217728"
-        ["net.core.wmem_max"]="134217728"
-        ["net.core.rmem_default"]="16777216"
-        ["net.core.wmem_default"]="16777216"
-        ["net.core.netdev_max_backlog"]="30000"
-        ["net.core.netdev_budget"]="600"
-        ["net.core.netdev_budget_usecs"]="8000"
-        ["net.core.somaxconn"]="32768"
-        ["net.core.dev_weight"]="128"
-        ["net.core.dev_weight_rx_bias"]="1"
-        ["net.core.dev_weight_tx_bias"]="1"
-        ["net.core.bpf_jit_enable"]="1"
-        ["net.core.bpf_jit_kallsyms"]="1"
-        ["net.core.bpf_jit_harden"]="0"
-        ["net.core.flow_limit_cpu_bitmap"]="255"
-        ["net.core.flow_limit_table_len"]="8192"
-        ["net.core.default_qdisc"]="fq_codel"
-        ["net.unix.max_dgram_qlen"]="512"
-
-        # TCP tuning
-        ["net.ipv4.tcp_rmem"]="8192 131072 134217728"
-        ["net.ipv4.tcp_wmem"]="8192 131072 134217728"
-        ["net.ipv4.tcp_congestion_control"]="bbr"
-        ["net.ipv4.tcp_fastopen"]="3"
-        ["net.ipv4.tcp_fastopen_blackhole_timeout_sec"]="0"
-        ["net.ipv4.tcp_fin_timeout"]="10"
-        ["net.ipv4.tcp_keepalive_time"]="600"
-        ["net.ipv4.tcp_keepalive_intvl"]="30"
-        ["net.ipv4.tcp_keepalive_probes"]="3"
-        ["net.ipv4.tcp_max_syn_backlog"]="8192"
-        ["net.ipv4.tcp_max_tw_buckets"]="2000000"
-        ["net.ipv4.tcp_tw_reuse"]="1"
-        ["net.ipv4.tcp_tw_reuse_delay"]="100"
-        ["net.ipv4.tcp_window_scaling"]="1"
-        ["net.ipv4.tcp_timestamps"]="1"
-        ["net.ipv4.tcp_sack"]="1"
-        ["net.ipv4.tcp_dsack"]="1"
-        ["net.ipv4.tcp_fack"]="1"
-        ["net.ipv4.tcp_ecn"]="2"
-        ["net.ipv4.tcp_syn_retries"]="3"
-        ["net.ipv4.tcp_synack_retries"]="3"
-        ["net.ipv4.tcp_retries1"]="3"
-        ["net.ipv4.tcp_retries2"]="8"
-        ["net.ipv4.tcp_orphan_retries"]="1"
-        ["net.ipv4.tcp_syncookies"]="1"
-        ["net.ipv4.tcp_rfc1337"]="1"
-        ["net.ipv4.tcp_slow_start_after_idle"]="0"
-        ["net.ipv4.tcp_no_metrics_save"]="1"
-        ["net.ipv4.tcp_moderate_rcvbuf"]="1"
-        ["net.ipv4.tcp_mtu_probing"]="2"
-        ["net.ipv4.tcp_base_mss"]="1024"
-        ["net.ipv4.tcp_min_snd_mss"]="48"
-        ["net.ipv4.tcp_mtu_probe_floor"]="48"
-        ["net.ipv4.tcp_probe_threshold"]="8"
-        ["net.ipv4.tcp_probe_interval"]="600"
-        ["net.ipv4.tcp_adv_win_scale"]="2"
-        ["net.ipv4.tcp_app_win"]="31"
-        ["net.ipv4.tcp_tso_win_divisor"]="8"
-        ["net.ipv4.tcp_limit_output_bytes"]="1048576"
-        ["net.ipv4.tcp_challenge_ack_limit"]="1000"
-        ["net.ipv4.tcp_autocorking"]="1"
-        ["net.ipv4.tcp_min_tso_segs"]="8"
-        ["net.ipv4.tcp_tso_rtt_log"]="9"
-        ["net.ipv4.tcp_pacing_ss_ratio"]="120"
-        ["net.ipv4.tcp_pacing_ca_ratio"]="110"
-        ["net.ipv4.tcp_reordering"]="3"
-        ["net.ipv4.tcp_max_reordering"]="32"
-        ["net.ipv4.tcp_recovery"]="1"
-        ["net.ipv4.tcp_early_retrans"]="3"
-        ["net.ipv4.tcp_frto"]="2"
-        ["net.ipv4.tcp_thin_linear_timeouts"]="1"
-        ["net.ipv4.tcp_min_rtt_wlen"]="300"
-        ["net.ipv4.tcp_comp_sack_delay_ns"]="500000"
-        ["net.ipv4.tcp_comp_sack_slack_ns"]="50000"
-        ["net.ipv4.tcp_comp_sack_nr"]="44"
-        ["net.ipv4.tcp_notsent_lowat"]="131072"
-        ["net.ipv4.tcp_invalid_ratelimit"]="250"
-        ["net.ipv4.tcp_reflect_tos"]="1"
-        ["net.ipv4.tcp_abort_on_overflow"]="0"
-        ["net.ipv4.tcp_fwmark_accept"]="1"
-        ["net.ipv4.tcp_l3mdev_accept"]="1"
-        ["net.ipv4.tcp_migrate_req"]="1"
-        ["net.ipv4.tcp_syn_linear_timeouts"]="4"
-        ["net.ipv4.tcp_shrink_window"]="0"
-        ["net.ipv4.tcp_workaround_signed_windows"]="0"
-
-        # IPv4 general
-        ["net.ipv4.ip_forward"]="1"
-        ["net.ipv4.ip_default_ttl"]="64"
-        ["net.ipv4.ip_no_pmtu_disc"]="0"
-        ["net.ipv4.ip_forward_use_pmtu"]="1"
-        ["net.ipv4.fwmark_reflect"]="1"
-        ["net.ipv4.fib_multipath_use_neigh"]="1"
-        ["net.ipv4.fib_multipath_hash_policy"]="1"
-        ["net.ipv4.conf.all.rp_filter"]="1"
-        ["net.ipv4.conf.default.rp_filter"]="1"
-        ["net.ipv4.conf.all.accept_source_route"]="0"
-        ["net.ipv4.conf.default.accept_source_route"]="0"
-        ["net.ipv4.conf.all.accept_redirects"]="0"
-        ["net.ipv4.conf.default.accept_redirects"]="0"
-        ["net.ipv4.conf.all.secure_redirects"]="0"
-        ["net.ipv4.conf.default.secure_redirects"]="0"
-        ["net.ipv4.conf.all.send_redirects"]="0"
-        ["net.ipv4.conf.default.send_redirects"]="0"
-        ["net.ipv4.conf.all.log_martians"]="0"
-        ["net.ipv4.conf.default.log_martians"]="0"
-        ["net.ipv4.icmp_echo_ignore_all"]="0"
-        ["net.ipv4.icmp_echo_ignore_broadcasts"]="1"
-        ["net.ipv4.icmp_ignore_bogus_error_responses"]="1"
-        ["net.ipv4.icmp_ratelimit"]="100"
-        ["net.ipv4.icmp_ratemask"]="6168"
-
-        # Conntrack settings
-        ["net.netfilter.nf_conntrack_max"]="1048576"
-        ["net.netfilter.nf_conntrack_tcp_timeout_established"]="432000"
-        ["net.netfilter.nf_conntrack_tcp_timeout_time_wait"]="60"
-        ["net.netfilter.nf_conntrack_tcp_timeout_close_wait"]="30"
-        ["net.netfilter.nf_conntrack_tcp_timeout_fin_wait"]="60"
-        ["net.netfilter.nf_conntrack_tcp_timeout_syn_sent"]="60"
-        ["net.netfilter.nf_conntrack_tcp_timeout_syn_recv"]="30"
-        ["net.netfilter.nf_conntrack_udp_timeout"]="30"
-        ["net.netfilter.nf_conntrack_udp_timeout_stream"]="120"
-        ["net.netfilter.nf_conntrack_icmp_timeout"]="30"
-        ["net.netfilter.nf_conntrack_generic_timeout"]="120"
-        ["net.netfilter.nf_conntrack_buckets"]="262144"
-        ["net.netfilter.nf_conntrack_checksum"]="0"
-        ["net.netfilter.nf_conntrack_tcp_be_liberal"]="1"
-        ["net.netfilter.nf_conntrack_tcp_loose"]="1"
+# =============================================================================
+# QUICK RESET (Remove only main optimizations)
+# =============================================================================
+quick_reset_optimizations() {
+    echo -e "\033[1;33m? Quick reset of main optimizations...\033[0m"
+    
+    # Remove only the main optimization settings
+    local main_keys=(
+        "vm.swappiness" "vm.dirty_ratio" "vm.dirty_background_ratio"
+        "net.core.rmem_max" "net.core.wmem_max" "net.core.rmem_default" "net.core.wmem_default"
+        "net.core.netdev_max_backlog" "net.core.somaxconn"
+        "net.ipv4.tcp_rmem" "net.ipv4.tcp_wmem" "net.ipv4.tcp_congestion_control"
+        "net.core.default_qdisc" "net.ipv4.tcp_fastopen" "net.ipv4.tcp_slow_start_after_idle"
+        "net.ipv4.tcp_max_syn_backlog" "net.ipv4.tcp_max_tw_buckets" "fs.file-max"
     )
 
-    for key in "${!sysctl_settings[@]}"; do
-        update_config "$SYSCTL_CONF" "$key" "${sysctl_settings[$key]}"
+    for key in "${main_keys[@]}"; do
+        sed -i "/^\s*${key}\s*=/d" "$SYSCTL_CONF"
     done
+
+    # Remove main limits
+    sed -i "/^* soft nofile/d; /^* hard nofile/d; /^root soft nofile/d; /^root hard nofile/d" "$LIMITS_CONF"
 
     reload_sysctl
-    echo -e "\033[1;32mAll optimizations have been applied successfully.\033[0m"
+    echo -e "\033[1;32m? Quick reset completed!\033[0m"
 }
 
-remove_full_optimizations() {
-    echo -e "\033[1;31mRemoving optimizations...\033[0m"
-
-    # List of keys to remove
-    local keys=(
-        net.core.rmem_max
-        net.core.wmem_max
-        net.core.rmem_default
-        net.core.wmem_default
-        net.core.netdev_max_backlog
-        net.core.netdev_budget
-        net.core.netdev_budget_usecs
-        net.core.somaxconn
-        net.core.dev_weight
-        net.core.dev_weight_rx_bias
-        net.core.dev_weight_tx_bias
-        net.core.bpf_jit_enable
-        net.core.bpf_jit_kallsyms
-        net.core.bpf_jit_harden
-        net.core.flow_limit_cpu_bitmap
-        net.core.flow_limit_table_len
-        net.ipv4.tcp_rmem
-        net.ipv4.tcp_wmem
-        net.ipv4.tcp_congestion_control
-        net.ipv4.tcp_fastopen
-        net.ipv4.tcp_fastopen_blackhole_timeout_sec
-        net.ipv4.tcp_fin_timeout
-        net.ipv4.tcp_keepalive_time
-        net.ipv4.tcp_keepalive_intvl
-        net.ipv4.tcp_keepalive_probes
-        net.ipv4.tcp_max_syn_backlog
-        net.ipv4.tcp_max_tw_buckets
-        net.ipv4.tcp_tw_reuse
-        net.ipv4.tcp_tw_reuse_delay
-        net.ipv4.tcp_window_scaling
-        net.ipv4.tcp_timestamps
-        net.ipv4.tcp_sack
-        net.ipv4.tcp_dsack
-        net.ipv4.tcp_fack
-        net.ipv4.tcp_ecn
-        net.ipv4.tcp_syn_retries
-        net.ipv4.tcp_synack_retries
-        net.ipv4.tcp_retries1
-        net.ipv4.tcp_retries2
-        net.ipv4.tcp_orphan_retries
-        net.ipv4.tcp_syncookies
-        net.ipv4.tcp_rfc1337
-        net.ipv4.tcp_slow_start_after_idle
-        net.ipv4.tcp_no_metrics_save
-        net.ipv4.tcp_moderate_rcvbuf
-        net.ipv4.tcp_mtu_probing
-        net.ipv4.tcp_base_mss
-        net.ipv4.tcp_min_snd_mss
-        net.ipv4.tcp_mtu_probe_floor
-        net.ipv4.tcp_probe_threshold
-        net.ipv4.tcp_probe_interval
-        net.ipv4.tcp_adv_win_scale
-        net.ipv4.tcp_app_win
-        net.ipv4.tcp_tso_win_divisor
-        net.ipv4.tcp_limit_output_bytes
-        net.ipv4.tcp_challenge_ack_limit
-        net.ipv4.tcp_autocorking
-        net.ipv4.tcp_min_tso_segs
-        net.ipv4.tcp_tso_rtt_log
-        net.ipv4.tcp_pacing_ss_ratio
-        net.ipv4.tcp_pacing_ca_ratio
-        net.ipv4.tcp_reordering
-        net.ipv4.tcp_max_reordering
-        net.ipv4.tcp_recovery
-        net.ipv4.tcp_early_retrans
-        net.ipv4.tcp_frto
-        net.ipv4.tcp_thin_linear_timeouts
-        net.ipv4.tcp_min_rtt_wlen
-        net.ipv4.tcp_comp_sack_delay_ns
-        net.ipv4.tcp_comp_sack_slack_ns
-        net.ipv4.tcp_comp_sack_nr
-        net.ipv4.tcp_notsent_lowat
-        net.ipv4.tcp_invalid_ratelimit
-        net.ipv4.tcp_reflect_tos
-        net.ipv4.tcp_abort_on_overflow
-        net.ipv4.tcp_fwmark_accept
-        net.ipv4.tcp_l3mdev_accept
-        net.ipv4.tcp_migrate_req
-        net.ipv4.tcp_syn_linear_timeouts
-        net.ipv4.tcp_shrink_window
-        net.ipv4.tcp_workaround_signed_windows
-        net.ipv4.ip_forward
-        net.ipv4.ip_default_ttl
-        net.ipv4.ip_no_pmtu_disc
-        net.ipv4.ip_forward_use_pmtu
-        net.ipv4.fwmark_reflect
-        net.ipv4.fib_multipath_use_neigh
-        net.ipv4.fib_multipath_hash_policy
-        net.ipv4.conf.all.rp_filter
-        net.ipv4.conf.default.rp_filter
-        net.ipv4.conf.all.accept_source_route
-        net.ipv4.conf.default.accept_source_route
-        net.ipv4.conf.all.accept_redirects
-        net.ipv4.conf.default.accept_redirects
-        net.ipv4.conf.all.secure_redirects
-        net.ipv4.conf.default.secure_redirects
-        net.ipv4.conf.all.send_redirects
-        net.ipv4.conf.default.send_redirects
-        net.ipv4.conf.all.log_martians
-        net.ipv4.conf.default.log_martians
-        net.ipv4.icmp_echo_ignore_all
-        net.ipv4.icmp_echo_ignore_broadcasts
-        net.ipv4.icmp_ignore_bogus_error_responses
-        net.ipv4.icmp_ratelimit
-        net.ipv4.icmp_ratemask
-        net.netfilter.nf_conntrack_max
-        net.netfilter.nf_conntrack_tcp_timeout_established
-        net.netfilter.nf_conntrack_tcp_timeout_time_wait
-        net.netfilter.nf_conntrack_tcp_timeout_close_wait
-        net.netfilter.nf_conntrack_tcp_timeout_fin_wait
-        net.netfilter.nf_conntrack_tcp_timeout_syn_sent
-        net.netfilter.nf_conntrack_tcp_timeout_syn_recv
-        net.netfilter.nf_conntrack_udp_timeout
-        net.netfilter.nf_conntrack_udp_timeout_stream
-        net.netfilter.nf_conntrack_icmp_timeout
-        net.netfilter.nf_conntrack_generic_timeout
-        net.netfilter.nf_conntrack_buckets
-        net.netfilter.nf_conntrack_checksum
-        net.netfilter.nf_conntrack_tcp_be_liberal
-        net.netfilter.nf_conntrack_tcp_loose
-        vm.swappiness
-        vm.dirty_ratio
-        vm.dirty_background_ratio
-        vm.dirty_expire_centisecs
-        vm.dirty_writeback_centisecs
-        vm.vfs_cache_pressure
-        vm.min_free_kbytes
-        vm.page_cluster
-        vm.overcommit_memory
-        vm.overcommit_ratio
-        vm.max_map_count
-        vm.mmap_min_addr
-        vm.zone_reclaim_mode
-        vm.stat_interval
-        kernel.sched_latency_ns
-        kernel.sched_min_granularity_ns
-        kernel.sched_wakeup_granularity_ns
-        kernel.sched_migration_cost_ns
-        kernel.sched_nr_migrate
-        kernel.sched_tunable_scaling
-        kernel.sched_child_runs_first
-        kernel.sched_energy_aware
-        kernel.sched_schedstats
-        kernel.sched_rr_timeslice_ms
-        kernel.sched_rt_period_us
-        kernel.sched_rt_runtime_us
-        kernel.sched_cfs_bandwidth_slice_us
-        kernel.sched_autogroup_enabled
-        fs.file-max
-        fs.nr_open
-        fs.inotify.max_user_watches
-        fs.inotify.max_user_instances
-        fs.inotify.max_queued_events
-        fs.aio-max-nr
-        fs.pipe-max-size
-        net.core.default_qdisc
-        net.unix.max_dgram_qlen
-    )
-
-    # Backup original file before modifying
-    cp /etc/sysctl.conf /etc/sysctl.conf.bak.$(date +%F_%T)
-
-    for key in "${keys[@]}"; do
-        # Delete lines starting with the key, optionally with spaces, ignoring comments
-        sed -i "/^\s*${key}\s*=/d" /etc/sysctl.conf
-    done
-
-    # Reload sysctl settings
-    sysctl -p
-
-    echo -e "\033[1;32mOptimizations removed and sysctl reloaded.\033[0m"
-}
-
-# Function to manage TCP congestion control and qdisc
-# Function to manage TCP congestion control and qdisc
+# =============================================================================
+# NETWORK TUNING MENU (BBR & QDisc Manager)
+# =============================================================================
 network_tuning_menu() {
     while true; do
-        display_header
-        echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
-        echo -e "\033[1;36m║           TCP CONGESTION CONTROL & QDISC MANAGER             ║\033[0m"
-        echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
+        clear
+        echo -e "\033[1;36m==============================================\033[0m"
+        echo -e "\033[1;36m           NETWORK TUNING MANAGER            \033[0m"
+        echo -e "\033[1;36m==============================================\033[0m"
         echo
         
-        # Current settings with better formatting
-        echo -e "\033[1;35m┌──────────────────────────────────────────────────────────────┐\033[0m"
-        echo -e "\033[1;35m│                     CURRENT SETTINGS                        │\033[0m"
-        echo -e "\033[1;35m├──────────────────────────────────────────────────────────────┤\033[0m"
-        echo -e "\033[1;32m│ Congestion Control: \033[1;34m$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null || echo "Not set")\033[0m"
-        echo -e "\033[1;32m│ Queue Discipline:   \033[1;34m$(sysctl -n net.core.default_qdisc 2>/dev/null || echo "Not set")\033[0m"
-        echo -e "\033[1;32m│ TCP Memory (rmem):  \033[1;34m$(sysctl -n net.ipv4.tcp_rmem 2>/dev/null || echo "Not set")\033[0m"
-        echo -e "\033[1;32m│ TCP Memory (wmem):  \033[1;34m$(sysctl -n net.ipv4.tcp_wmem 2>/dev/null || echo "Not set")\033[0m"
-        echo -e "\033[1;35m└──────────────────────────────────────────────────────────────┘\033[0m"
+        # Current settings
+        echo -e "\033[1;35mCURRENT SETTINGS:\033[0m"
+        echo -e "  Congestion Control: \033[1;34m$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null || echo "Not set")\033[0m"
+        echo -e "  Queue Discipline:   \033[1;34m$(sysctl -n net.core.default_qdisc 2>/dev/null || echo "Not set")\033[0m"
         echo
         
-        # Congestion Control Section
-        echo -e "\033[1;33m┌──────────────────────────────────────────────────────────────┐\033[0m"
-        echo -e "\033[1;33m│                  CONGESTION CONTROL OPTIONS                 │\033[0m"
-        echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
-        
-        local cc_options=(
-            "BBR (Google - High BW/Low Latency)"
-            "BBR2 (Improved BBR - Better Fairness)"
-            "CUBIC (Default - General Purpose)"
-            "Reno (Traditional - Basic TCP)"
-            "Vegas (Delay-Based - Low Latency)"
-            "Westwood (Loss-Based - Wireless)"
-            "Westwood+ (Enhanced Westwood)"
-            "Hybla (Satellite/High RTT)"
-            "Highspeed (High-Speed Networks)"
-            "HTCP (Hamilton TCP - High Speed)"
-            "Illinois (Delay+Loss Hybrid)"
-            "Yeah (Yet Another Highspeed)"
-            "Veno (Wireless Optimization)"
-            "Scalable (High-Scale Networks)"
-            "LP (Loss Priority)"
-            "Compound (Delay+Loss Combination)"
-            "CDG (CAIA Delay-Gradient)"
-            "DCTCP (Data Center TCP)"
-            "BIC (Binary Increase)"
-            "NCR (Non-Congestion Robustness)"
-            "OLI (Open-Loop Increase)"
-            "Set Custom Congestion Control"
-            "List All Available Algorithms"
-        )
-        
-        for i in "${!cc_options[@]}"; do
-            printf "\033[1;32m│ %2d. %-57s\033[0m │\n" $((i+1)) "${cc_options[i]}"
-        done
-        echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
-        
-        # Queue Discipline Section
-        echo -e "\033[1;33m│                  QUEUE DISCIPLINE OPTIONS                  │\033[0m"
-        echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
-        
-        local qdisc_options=(
-            "fq (Fair Queue - Default for BBR)"
-            "fq_codel (Fair Queue Codel - Recommended)"
-            "pfifo_fast (Priority FIFO - Traditional)"
-            "cake (Common Applications Kept Enhanced)"
-            "sfq (Stochastic Fair Queue)"
-            "htb (Hierarchical Token Bucket)"
-            "Set Custom Queue Discipline"
-            "List All Available QDiscs"
-        )
-        
-        for i in "${!qdisc_options[@]}"; do
-            printf "\033[1;34m│ %2d. %-57s\033[0m │\n" $((i+24)) "${qdisc_options[i]}"
-        done
-        echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
-        
-        # System Options Section
-        echo -e "\033[1;33m│                   SYSTEM OPTIONS                          │\033[0m"
-        echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
-        
-        local system_options=(
-            "Test Network Performance"
-            "Reset to System Defaults"
-        )
-        
-        for i in "${!system_options[@]}"; do
-            printf "\033[1;35m│ %2d. %-57s\033[0m │\n" $((i+32)) "${system_options[i]}"
-        done
-        echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
-        echo -e "\033[1;31m│  0. Return to Main Menu                                      │\033[0m"
-        echo -e "\033[1;33m└──────────────────────────────────────────────────────────────┘\033[0m"
+        # Quick apply presets
+        echo -e "\033[1;33m?? QUICK PRESETS:\033[0m"
+        echo -e "  1. ?? Gaming Preset (BBR + fq)"
+        echo -e "  2. ?? Streaming Preset (BBR + fq_codel)" 
+        echo -e "  3. ?? General Preset (CUBIC + fq_codel)"
+        echo -e "  4. ?? Competitive Preset (BBR + fq, aggressive)"
         echo
         
-        # Quick tips
-        echo -e "\033[1;36m💡 Quick Recommendations:\033[0m"
-        echo -e "\033[1;35m• BBR + fq: Best for most use cases (High performance)\033[0m"
-        echo -e "\033[1;35m• CUBIC + fq_codel: Good general purpose setup\033[0m"
-        echo -e "\033[1;35m• Vegas + fq: Excellent for low latency applications\033[0m"
+        # Manual tuning
+        echo -e "\033[1;33mMANUAL TUNING:\033[0m"
+        echo -e "  5. Set Custom Congestion Control"
+        echo -e "  6. Set Custom Queue Discipline"
+        echo -e "  7. List Available Algorithms"
+        echo -e "  8. Test Network Performance"
+        echo -e "  9. Reset to System Defaults"
         echo
-        
-        read -p "$(echo -e '\033[1;32mSelect an option [0-33]: \033[0m')" choice
+        echo -e "  0. ?? Return to Main Menu"
         echo
+        echo -e "\033[1;36m==============================================\033[0m"
+
+        read -p "$(echo -e '\033[1;32mSelect an option [0-9]: \033[0m')" choice
 
         case $choice in
-            # Congestion Control Options (1-23)
-            1) apply_cc "bbr" "Google's BBR" "fq" "Optimizes for high bandwidth and low latency" ;;
-            2) apply_cc "bbr2" "BBR v2" "fq" "Improved version with better fairness and performance" ;;
-            3) apply_cc "cubic" "CUBIC" "fq_codel" "Default Linux algorithm, good for general use" ;;
-            4) apply_cc "reno" "Reno" "pfifo_fast" "Traditional TCP congestion control algorithm" ;;
-            5) apply_cc "vegas" "Vegas" "fq" "Delay-based algorithm for low latency applications" ;;
-            6) apply_cc "westwood" "Westwood" "fq_codel" "Loss-based with bandwidth estimation, good for wireless" ;;
-            7) apply_cc "westwood" "Westwood+" "fq_codel" "Enhanced version of Westwood algorithm" ;;
-            8) apply_cc "hybla" "Hybla" "fq" "Designed for satellite and wireless networks with high RTT" ;;
-            9) apply_cc "highspeed" "Highspeed" "fq" "Optimized for high-speed network environments" ;;
-            10) apply_cc "htcp" "HTCP" "fq_codel" "Hamilton TCP, designed for high-speed networks" ;;
-            11) apply_cc "illinois" "Illinois" "fq" "Hybrid delay and loss based congestion control" ;;
-            12) apply_cc "yeah" "Yeah" "fq" "Yet Another Highspeed TCP for high-speed networks" ;;
-            13) apply_cc "veno" "Veno" "fq_codel" "Optimized for wireless network environments" ;;
-            14) apply_cc "scalable" "Scalable" "fq" "Designed for high-scale network environments" ;;
-            15) apply_cc "lp" "LP" "fq" "Loss Priority congestion control algorithm" ;;
-            16) apply_cc "compound" "Compound" "fq" "Combination of delay and loss based approaches" ;;
-            17) apply_cc "cdg" "CDG" "fq" "CAIA Delay-Gradient congestion control" ;;
-            18) apply_cc "dctcp" "DCTCP" "fq" "Data Center TCP, optimized for data center environments" ;;
-            19) apply_cc "bic" "BIC" "fq" "Binary Increase Congestion for high-speed networks" ;;
-            20) apply_cc "ncr" "NCR" "fq" "Non-Congestion Robustness algorithm" ;;
-            21) apply_cc "oli" "OLI" "fq" "Open-Loop Increase congestion control" ;;
-            22) set_congestion_control ;;
-            23) list_all_congestion_controls ;;
-            
-            # Queue Discipline Options (24-31)
-            24) apply_qdisc "fq" "Fair Queue" "Default queue discipline for BBR" ;;
-            25) apply_qdisc "fq_codel" "Fair Queue Codel" "Recommended for most use cases" ;;
-            26) apply_qdisc "pfifo_fast" "Priority FIFO Fast" "Traditional Linux queue discipline" ;;
-            27) apply_qdisc "cake" "Common Applications Kept Enhanced" "Advanced queue discipline" ;;
-            28) apply_qdisc "sfq" "Stochastic Fair Queue" "Simple fair queuing" ;;
-            29) apply_qdisc "htb" "Hierarchical Token Bucket" "Advanced traffic shaping" ;;
-            30) set_qdisc ;;
-            31) list_qdiscs ;;
-            
-            # System Options (32-33)
-            32) test_network_performance ;;
-            33) reset_network_settings ;;
-            
+            1)
+                sysctl -w net.ipv4.tcp_congestion_control=bbr
+                sysctl -w net.core.default_qdisc=fq
+                update_config "$SYSCTL_CONF" "net.ipv4.tcp_congestion_control" "bbr"
+                update_config "$SYSCTL_CONF" "net.core.default_qdisc" "fq"
+                echo -e "\033[1;32m? Gaming preset applied: BBR + fq\033[0m"
+                ;;
+            2)
+                sysctl -w net.ipv4.tcp_congestion_control=bbr
+                sysctl -w net.core.default_qdisc=fq_codel
+                update_config "$SYSCTL_CONF" "net.ipv4.tcp_congestion_control" "bbr"
+                update_config "$SYSCTL_CONF" "net.core.default_qdisc" "fq_codel"
+                echo -e "\033[1;32m? Streaming preset applied: BBR + fq_codel\033[0m"
+                ;;
+            3)
+                sysctl -w net.ipv4.tcp_congestion_control=cubic
+                sysctl -w net.core.default_qdisc=fq_codel
+                update_config "$SYSCTL_CONF" "net.ipv4.tcp_congestion_control" "cubic"
+                update_config "$SYSCTL_CONF" "net.core.default_qdisc" "fq_codel"
+                echo -e "\033[1;32m? General preset applied: CUBIC + fq_codel\033[0m"
+                ;;
+            4)
+                sysctl -w net.ipv4.tcp_congestion_control=bbr
+                sysctl -w net.core.default_qdisc=fq
+                sysctl -w net.ipv4.tcp_low_latency=1
+                sysctl -w net.ipv4.tcp_no_metrics_save=1
+                update_config "$SYSCTL_CONF" "net.ipv4.tcp_congestion_control" "bbr"
+                update_config "$SYSCTL_CONF" "net.core.default_qdisc" "fq"
+                update_config "$SYSCTL_CONF" "net.ipv4.tcp_low_latency" "1"
+                update_config "$SYSCTL_CONF" "net.ipv4.tcp_no_metrics_save" "1"
+                echo -e "\033[1;32m? Competitive preset applied: BBR + fq (aggressive)\033[0m"
+                ;;
+            5) set_custom_cc ;;
+            6) set_custom_qdisc ;;
+            7) list_algorithms ;;
+            8) test_network_performance ;;
+            9) reset_network_tuning ;;
             0) break ;;
-            *) echo -e "\033[1;31m❌ Invalid option. Please select a number between 0-33.\033[0m" ;;
-        esac
-
-        echo -e "\n\033[1;34m⏎ Press Enter to continue...\033[0m"
-        read
-    done
-}
-
-# Function to apply queue discipline
-apply_qdisc() {
-    local qdisc="$1"
-    local qdisc_name="$2"
-    local description="$3"
-    
-    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
-    echo -e "\033[1;36m║                   APPLYING QUEUE DISCIPLINE                  ║\033[0m"
-    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
-    echo
-    echo -e "\033[1;32m🔧 Queue Discipline: \033[1;34m${qdisc_name} (${qdisc})\033[0m"
-    echo -e "\033[1;32m📋 Description: \033[1;33m${description}\033[0m"
-    echo
-    
-    # Apply setting
-    if sysctl -w "net.core.default_qdisc=${qdisc}" 2>/dev/null; then
-        echo -e "\033[1;32m✅ Queue discipline set to: ${qdisc}\033[0m"
-    else
-        echo -e "\033[1;31m❌ Failed to set ${qdisc}\033[0m"
-        return 1
-    fi
-    
-    # Update config file
-    update_config "$SYSCTL_CONF" "net.core.default_qdisc" "$qdisc"
-    
-    echo
-    echo -e "\033[1;32m🎉 ${qdisc_name} applied successfully!\033[0m"
-    echo -e "\033[1;33m📊 Current QDisc: \033[1;34m$(sysctl -n net.core.default_qdisc)\033[0m"
-    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
-    echo -e "\033[1;36m║                     APPLY COMPLETE                           ║\033[0m"
-    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
-}
-
-# Enhanced generic function to apply congestion control
-apply_cc() {
-    local cc_algo="$1"
-    local cc_name="$2"
-    local qdisc="${3:-fq}"
-    local description="$4"
-    
-    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
-    echo -e "\033[1;36m║                   APPLYING CONGESTION CONTROL                ║\033[0m"
-    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
-    echo
-    echo -e "\033[1;32m🔧 Algorithm: \033[1;34m${cc_name} (${cc_algo})\033[0m"
-    echo -e "\033[1;32m📋 Description: \033[1;33m${description}\033[0m"
-    echo -e "\033[1;32m🎯 Queue Discipline: \033[1;35m${qdisc}\033[0m"
-    echo
-    
-    # Load module if available
-    if modprobe "tcp_${cc_algo}" 2>/dev/null; then
-        echo -e "\033[1;32m✅ Module loaded successfully\033[0m"
-    else
-        echo -e "\033[1;33m⚠️  Module not available, using existing implementation\033[0m"
-    fi
-    
-    # Apply settings
-    if sysctl -w "net.ipv4.tcp_congestion_control=${cc_algo}" 2>/dev/null; then
-        echo -e "\033[1;32m✅ Congestion control set to: ${cc_algo}\033[0m"
-    else
-        echo -e "\033[1;31m❌ Failed to set ${cc_algo}, falling back to cubic\033[0m"
-        sysctl -w "net.ipv4.tcp_congestion_control=cubic"
-        cc_algo="cubic"
-    fi
-    
-    # Also set the recommended qdisc
-    if sysctl -w "net.core.default_qdisc=${qdisc}" 2>/dev/null; then
-        echo -e "\033[1;32m✅ Queue discipline set to: ${qdisc}\033[0m"
-    else
-        echo -e "\033[1;33m⚠️  Failed to set ${qdisc}, using default\033[0m"
-    fi
-    
-    # Update config files
-    update_config "$SYSCTL_CONF" "net.ipv4.tcp_congestion_control" "$cc_algo"
-    update_config "$SYSCTL_CONF" "net.core.default_qdisc" "$qdisc"
-    
-    echo
-    echo -e "\033[1;32m🎉 ${cc_name} applied successfully!\033[0m"
-    echo -e "\033[1;33m📊 Current settings:\033[0m"
-    echo -e "\033[1;34m   CC: $(sysctl -n net.ipv4.tcp_congestion_control)\033[0m"
-    echo -e "\033[1;34m   QDISC: $(sysctl -n net.core.default_qdisc)\033[0m"
-    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
-    echo -e "\033[1;36m║                     APPLY COMPLETE                           ║\033[0m"
-    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
-}
-
-# Function to set TCP congestion control
-set_congestion_control() {
-    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
-    echo -e "\033[1;36m║                 SET CUSTOM CONGESTION CONTROL               ║\033[0m"
-    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
-    echo
-    echo -e "\033[1;32mAvailable TCP Congestion Controls:\033[0m"
-    list_all_congestion_controls | grep -v "Available" | sed '/^$/d'
-    echo
-    read -p "$(echo -e '\033[1;32mEnter congestion control algorithm: \033[0m')" cc_algo
-    
-    if ls /lib/modules/$(uname -r)/kernel/net/ipv4/ | grep -q "tcp_${cc_algo}.ko"; then
-        modprobe "tcp_${cc_algo}" 2>/dev/null
-        sysctl -w "net.ipv4.tcp_congestion_control=${cc_algo}"
-        update_config "$SYSCTL_CONF" "net.ipv4.tcp_congestion_control" "$cc_algo"
-        echo -e "\033[1;32m✅ Congestion control set to: ${cc_algo}\033[0m"
-    else
-        echo -e "\033[1;31m❌ Algorithm '${cc_algo}' not found.\033[0m"
-        echo -e "\033[1;33mAvailable algorithms:\033[0m"
-        ls /lib/modules/$(uname -r)/kernel/net/ipv4/ | grep tcp_ | sed 's/\.ko$//' | sed 's/tcp_//' | head -10
-    fi
-}
-
-# Function to set queue discipline
-set_qdisc() {
-    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
-    echo -e "\033[1;36m║                 SET CUSTOM QUEUE DISCIPLINE                 ║\033[0m"
-    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
-    echo
-    echo -e "\033[1;32mAvailable Queue Disciplines:\033[0m"
-    tc qdisc list | grep -o '^[^ ]*' | sort | uniq | head -15
-    echo
-    read -p "$(echo -e '\033[1;32mEnter queue discipline: \033[0m')" qdisc
-    
-    sysctl -w "net.core.default_qdisc=${qdisc}"
-    update_config "$SYSCTL_CONF" "net.core.default_qdisc" "$qdisc"
-    echo -e "\033[1;32m✅ Queue discipline set to: ${qdisc}\033[0m"
-}
-
-# Function to list all available congestion controls
-list_all_congestion_controls() {
-    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
-    echo -e "\033[1;36m║               AVAILABLE CONGESTION CONTROLS                 ║\033[0m"
-    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
-    echo
-    echo -e "\033[1;32mCurrently Loaded:\033[0m"
-    sysctl -n net.ipv4.tcp_available_congestion_control 2>/dev/null | tr ' ' '\n' | while read algo; do
-        echo -e "  \033[1;34m${algo}\033[0m"
-    done
-    echo
-    echo -e "\033[1;32mAvailable Modules:\033[0m"
-    ls /lib/modules/$(uname -r)/kernel/net/ipv4/ | grep tcp_ | sed 's/\.ko$//;s/tcp_//' | while read algo; do
-        echo -e "  \033[1;33m${algo}\033[0m"
-    done
-}
-
-# Function to list available queue disciplines
-list_qdiscs() {
-    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
-    echo -e "\033[1;36m║               AVAILABLE QUEUE DISCIPLINES                   ║\033[0m"
-    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
-    echo
-    echo -e "\033[1;32mAvailable Queue Disciplines:\033[0m"
-    tc qdisc list | grep -o '^[^ ]*' | sort | uniq | while read qdisc; do
-        echo -e "  \033[1;34m${qdisc}\033[0m"
-    done
-}
-
-# Function to test network performance
-test_network_performance() {
-    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
-    echo -e "\033[1;36m║                 NETWORK PERFORMANCE TEST                    ║\033[0m"
-    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
-    echo
-    echo -e "\033[1;33mCurrent Network Settings:\033[0m"
-    echo -e "\033[1;32m• Congestion Control: \033[1;34m$(sysctl -n net.ipv4.tcp_congestion_control)\033[0m"
-    echo -e "\033[1;32m• Queue Discipline:   \033[1;34m$(sysctl -n net.core.default_qdisc)\033[0m"
-    echo -e "\033[1;32m• TCP rmem:           \033[1;34m$(sysctl -n net.ipv4.tcp_rmem)\033[0m"
-    echo -e "\033[1;32m• TCP wmem:           \033[1;34m$(sysctl -n net.ipv4.tcp_wmem)\033[0m"
-    echo
-    
-    if command -v ping &> /dev/null; then
-        echo -e "\033[1;33mPing Test (8.8.8.8):\033[0m"
-        ping -c 4 8.8.8.8 | tail -2
-        echo
-    fi
-}
-
-# Function to reset network settings to defaults
-reset_network_settings() {
-    echo -e "\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
-    echo -e "\033[1;36m║                 RESET NETWORK SETTINGS                      ║\033[0m"
-    echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
-    echo
-    echo -e "\033[1;33mResetting to system defaults...\033[0m"
-    
-    # Remove congestion control and qdisc settings
-    sed -i '/^net.ipv4.tcp_congestion_control/d; /^net.core.default_qdisc/d' "$SYSCTL_CONF"
-    
-    # Reload sysctl
-    sysctl -p
-    
-    echo -e "\033[1;32m✅ Network settings reset to system defaults.\033[0m"
-    echo -e "\033[1;33mCurrent settings:\033[0m"
-    echo -e "\033[1;34m• CC: $(sysctl -n net.ipv4.tcp_congestion_control)\033[0m"
-    echo -e "\033[1;34m• QDISC: $(sysctl -n net.core.default_qdisc)\033[0m"
-}
-# Function to show contents of sysctl.conf
-show_sysctl_conf() {
-    echo -e "\033[1;34mContents of sysctl.conf:\033[0m"
-    cat $SYSCTL_CONF
-}
-
-# Function to show contents of limits.conf
-show_limits_conf() {
-    echo -e "\033[1;34mContents of limits.conf:\033[0m"
-    cat $LIMITS_CONF
-}
-
-# Function to edit sysctl.conf
-edit_sysctl_conf() {
-    echo -e "\033[1;32mOpening sysctl.conf for editing...\033[0m"
-    nano $SYSCTL_CONF
-    echo -e "\033[1;32mReloading sysctl settings...\033[0m"
-    sysctl -p
-}
-
-# Function to edit limits.conf
-edit_limits_conf() {
-    echo -e "\033[1;32mOpening limits.conf for editing...\033[0m"
-    nano $LIMITS_CONF
-    echo -e "\033[1;32mChanges to limits.conf will take effect after next login.\033[0m"
-}
-
-tc() {
-    cat <<'EOF' > /root/tc_optimize.sh
-#!/bin/bash
-
-tc_optimize() {
-    # Detect default interface
-    INTERFACE=$(ip route get 8.8.8.8 | awk '/dev/ {print $5; exit}')
-    
-    # Clear old configurations
-    tc qdisc del dev "$INTERFACE" root 2>/dev/null
-    tc qdisc del dev "$INTERFACE" ingress 2>/dev/null
-    ip link set dev "$INTERFACE" mtu 1500 2>/dev/null
-    echo 1000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
-
-    # Try CAKE
-    if tc qdisc add dev "$INTERFACE" root handle 1: cake bandwidth 1000mbit rtt 20ms 2>/dev/null &&
-       tc qdisc add dev "$INTERFACE" parent 1: handle 10: netem delay 1ms loss 0.005% duplicate 0.05% reorder 0.5% 2>/dev/null; then
-        echo "$(date): CAKE+Netem optimization complete on $INTERFACE"
-
-    # Try FQ_CoDel
-    elif tc qdisc add dev "$INTERFACE" root handle 1: fq_codel limit 10240 flows 1024 target 5ms interval 100ms 2>/dev/null &&
-         tc qdisc add dev "$INTERFACE" parent 1: handle 10: netem delay 1ms loss 0.005% duplicate 0.05% reorder 0.5% 2>/dev/null; then
-        echo "$(date): FQ_CoDel+Netem optimization complete on $INTERFACE"
-
-    # Try HTB
-    elif tc qdisc add dev "$INTERFACE" root handle 1: htb default 11 2>/dev/null &&
-         tc class add dev "$INTERFACE" parent 1: classid 1:1 htb rate 1000mbit ceil 1000mbit 2>/dev/null &&
-         tc class add dev "$INTERFACE" parent 1:1 classid 1:11 htb rate 1000mbit ceil 1000mbit 2>/dev/null &&
-         tc qdisc add dev "$INTERFACE" parent 1:11 handle 10: netem delay 1ms loss 0.005% duplicate 0.05% reorder 0.5% 2>/dev/null; then
-        echo "$(date): HTB+Netem optimization complete on $INTERFACE"
-
-    # Try PFIFO
-    elif tc qdisc add dev "$INTERFACE" root handle 1: pfifo_fast 2>/dev/null &&
-         tc qdisc add dev "$INTERFACE" parent 1: handle 10: netem delay 1ms loss 0.005% 2>/dev/null; then
-        echo "$(date): Basic PFIFO+Netem optimization complete on $INTERFACE"
-
-    # Fallback Netem only
-    else
-        tc qdisc add dev "$INTERFACE" root netem delay 1ms loss 0.005% 2>/dev/null
-        echo "$(date): Fallback Netem optimization complete on $INTERFACE"
-    fi >> /var/log/tc_smart.log 2>&1
-}
-
-tc_optimize
-EOF
-
-    chmod +x /root/tc_optimize.sh
-
-    # Add to crontab if not present
-    local cron_job="@reboot /root/tc_optimize.sh >> /var/log/tc_smart.log 2>&1"
-    if crontab -l 2>/dev/null | grep -Fq "/root/tc_optimize.sh"; then
-        echo -e "\033[1;33mCron job already exists, skipping...\033[0m"
-    else
-        (crontab -l 2>/dev/null; echo "$cron_job") | crontab -
-        echo -e "\033[1;32mCron job added successfully!\033[0m"
-    fi
-}
-
-# Function to display a header
-display_header() {
-    clear
-    echo -e "\033[1;36m==============================================\033[0m"
-    echo -e "\033[1;36m            Network Optimizer Tool            \033[0m"
-    echo -e "\033[1;36m==============================================\033[0m"
-    echo
-}
-
-# Function to display a footer
-display_footer() {
-    echo -e "\033[1;36m==============================================\033[0m"
-    echo
-}
-
-# Function to display a menu with options
-display_menu() {
-    local title="$1"
-    shift
-    local options=("$@")
-    
-    display_header
-    echo -e "\033[1;33m$title\033[0m"
-    echo
-    
-    for i in "${!options[@]}"; do
-        if [ $((i % 2)) -eq 0 ]; then
-            echo -e "\033[1;32m$((i+1)).\033[0m ${options[$i]}"
-        else
-            echo -e "\033[1;34m$((i+1)).\033[0m ${options[$i]}"
-        fi
-    done
-    
-    echo -e "\033[1;31m0.\033[0m Return to previous menu"
-    echo
-    display_footer
-}
-
-# Submenu for Optimize options
-Optimize_Menu() {
-    local options=(
-        "Apply normal TCP optimizations"
-        "Remove normal TCP optimizations"
-        "Apply full TCP optimizations"
-        "Remove full TCP optimizations"
-        "Apply interfaces (TC) Optimize"
-        "Apply fast TCP optimizations"
-        "Remove fast TCP"
-    )
-    
-    while true; do
-        display_menu "Optimize Options" "${options[@]}"
-        read -p "Select an option: " opt_choice
-
-        case $opt_choice in
-            1) apply_optimizations ;;
-            2) disable_optimizations ;;
-            3) apply_full_optimizations ;;
-            4) remove_full_optimizations ;;
-            5) tc ;;
-            6) apply_fast_tcp ;;
-            7) disable_fast_tcp ;;
-            0) break ;;
-            *) echo -e "\033[1;31mInvalid option. Please select a valid number.\033[0m" ;;
+            *) echo -e "\033[1;31m? Invalid option\033[0m" ;;
         esac
 
         echo -e "\n\033[1;34mPress Enter to continue...\033[0m"
@@ -1201,43 +608,171 @@ Optimize_Menu() {
     done
 }
 
-# Main menu for optimizer
-Optimizer() {
-    local options=(
-        "Backup (sysctl.conf & limits.conf)"
-        "Optimize"
-        "BBR TCP CONGESTION CONTROL & QDISC MANAGER"
-        "Show sysctl.conf"
-        "Show limits.conf"
-        "Edit sysctl.conf"
-        "Edit limits.conf"
-        "Apply changes (sysctl -p)"
-        "Disable log (rsyslog)"
-    )
-    
+# =============================================================================
+# SUPPORTING FUNCTIONS
+# =============================================================================
+set_custom_cc() {
+    echo -e "\033[1;36mAvailable Congestion Controls:\033[0m"
+    sysctl -n net.ipv4.tcp_available_congestion_control 2>/dev/null | tr ' ' '\n'
+    echo
+    read -p "Enter congestion control algorithm: " cc_algo
+    sysctl -w net.ipv4.tcp_congestion_control=$cc_algo
+    update_config "$SYSCTL_CONF" "net.ipv4.tcp_congestion_control" "$cc_algo"
+    echo -e "\033[1;32m? Congestion control set to: $cc_algo\033[0m"
+}
+
+set_custom_qdisc() {
+    echo -e "\033[1;36mAvailable Queue Disciplines:\033[0m"
+    tc qdisc list | grep -o '^[^ ]*' | sort | uniq
+    echo
+    read -p "Enter queue discipline: " qdisc
+    sysctl -w net.core.default_qdisc=$qdisc
+    update_config "$SYSCTL_CONF" "net.core.default_qdisc" "$qdisc"
+    echo -e "\033[1;32m? Queue discipline set to: $qdisc\033[0m"
+}
+
+list_algorithms() {
+    echo -e "\033[1;36m?? Available Congestion Control Algorithms:\033[0m"
+    sysctl -n net.ipv4.tcp_available_congestion_control 2>/dev/null | tr ' ' '\n' | while read algo; do
+        echo -e "  \033[1;34m$algo\033[0m"
+    done
+}
+
+test_network_performance() {
+    echo -e "\033[1;36m?? Testing Network Performance...\033[0m"
+    if command -v ping &> /dev/null; then
+        echo -e "\033[1;33mPing Test (Google DNS):\033[0m"
+        ping -c 4 8.8.8.8 | tail -2
+    fi
+}
+
+reset_network_tuning() {
+    sed -i '/^net.ipv4.tcp_congestion_control/d; /^net.core.default_qdisc/d; /^net.ipv4.tcp_low_latency/d; /^net.ipv4.tcp_no_metrics_save/d' "$SYSCTL_CONF"
+    sysctl -p
+    echo -e "\033[1;32m? Network tuning reset to system defaults\033[0m"
+}
+
+# =============================================================================
+# MAIN MENU
+# =============================================================================
+main_menu() {
     while true; do
-        display_menu "Network Optimizer" "${options[@]}"
-        read -p "Select an option: " choice
+        clear
+        echo -e "\033[1;36m==============================================\033[0m"
+        echo -e "\033[1;36m           NETWORK OPTIMIZER TOOL            \033[0m"
+        echo -e "\033[1;36m==============================================\033[0m"
+        echo
+        echo -e "\033[1;33mMAIN MENU:\033[0m"
+        echo
+        echo -e "\033[1;32mCONFIGURATION MANAGEMENT:\033[0m"
+        echo -e "  1. Backup Current Configuration"
+        echo -e "  2. Show Current sysctl Settings"
+        echo -e "  3. Edit sysctl.conf Manually"
+        echo -e "  4. Apply Changes (sysctl -p)"
+        echo
+        echo -e "\033[1;34mOPTIMIZATION PROFILES:\033[0m"
+        echo -e "  5. Apply GAMING Optimizations"
+        echo -e "  6. Apply STREAMING Optimizations" 
+        echo -e "  7. Apply GENERAL PURPOSE Optimizations"
+        echo -e "  8. Apply COMPETITIVE GAMING Optimizations"
+        echo
+        echo -e "\033[1;35mADVANCED TOOLS:\033[0m"
+        echo -e "  9. Network Tuning Manager (BBR/QDisc)"
+        echo -e "  10. Remove All Optimizations"
+        echo -e "  11. Disable System Logging (rsyslog)"
+        echo -e "  12. Remove Optimizations (Reset to defaults)"
+        echo -e "  0. ?? Exit"
+        echo
+        echo -e "\033[1;36m==============================================\033[0m"
+
+        read -p "$(echo -e '\033[1;32mSelect an option [0-11]: \033[0m')" choice
 
         case $choice in
             1) backup_configs ;;
-            2) Optimize_Menu ;;
-            3) network_tuning_menu ;;
-            4) show_sysctl_conf ;;
-            5) show_limits_conf ;;
-            6) edit_sysctl_conf ;;
-            7) edit_limits_conf ;;
-            8) reload_sysctl ;;
-            9)
-                sudo systemctl stop rsyslog
-                sudo systemctl disable rsyslog
-                echo -e "\033[1;32mRsyslog disabled successfully.\033[0m"
+            2) show_sysctl_conf ;;
+            3) edit_sysctl_conf ;;
+            4) reload_sysctl ;;
+            5) apply_gaming_optimizations ;;
+            6) apply_streaming_optimizations ;;
+            7) apply_general_optimizations ;;
+            8) apply_competitive_gaming_optimizations ;;
+            9) network_tuning_menu ;;
+            10) remove_all_optimizations ;;
+            11) 
+                systemctl stop rsyslog 2>/dev/null
+                systemctl disable rsyslog 2>/dev/null
+                echo -e "\033[1;32m? System logging disabled\033[0m"
+                ;;
+            12) remove_optimizations_menu ;;
+            
+            0)
+                echo -e "\033[1;36mGoodbye!\033[0m"
+                exit 0
+                ;;
+            *) echo -e "\033[1;31m? Invalid option\033[0m" ;;
+        esac
+
+        echo -e "\n\033[1;34mPress Enter to continue...\033[0m"
+        read
+    done
+}
+# =============================================================================
+# REMOVE OPTIMIZATIONS SUBMENU
+# =============================================================================
+remove_optimizations_menu() {
+    while true; do
+        clear
+        echo -e "\033[1;36m==============================================\033[0m"
+        echo -e "\033[1;36m           REMOVE OPTIMIZATIONS              \033[0m"
+        echo -e "\033[1;36m==============================================\033[0m"
+        echo
+        echo -e "\033[1;31m??  WARNING: This will remove optimizations\033[0m"
+        echo
+        echo -e "\033[1;33m?? REMOVAL OPTIONS:\033[0m"
+        echo -e "  1. Remove ALL optimizations (Complete reset)"
+        echo -e "  2. Quick reset (Main settings only)"
+        echo -e "  3. Remove specific profile"
+        echo -e "  4. Show current optimizations"
+        echo
+        echo -e "  0. Back to Main Menu"
+        echo
+        echo -e "\033[1;36m==============================================\033[0m"
+
+        read -p "$(echo -e '\033[1;32mSelect removal option [0-4]: \033[0m')" choice
+
+        case $choice in
+            1)
+                echo -e "\033[1;31mAre you sure you want to remove ALL optimizations? [y/N]: \033[0m"
+                read -n 1 confirm
+                echo
+                if [[ $confirm =~ [yY] ]]; then
+                    remove_all_optimizations
+                else
+                    echo -e "\033[1;33m? Removal cancelled\033[0m"
+                fi
+                ;;
+            2)
+                echo -e "\033[1;33mQuick reset main optimizations? [y/N]: \033[0m"
+                read -n 1 confirm
+                echo
+                if [[ $confirm =~ [yY] ]]; then
+                    quick_reset_optimizations
+                else
+                    echo -e "\033[1;33m? Reset cancelled\033[0m"
+                fi
+                ;;
+            3)
+                remove_specific_profile
+                ;;
+            4)
+                show_current_optimizations
                 ;;
             0)
-                echo -e "\033[1;34mReturning to main menu...\033[0m"
-                break 
+                break
                 ;;
-            *) echo -e "\033[1;31mInvalid option. Please select a valid number.\033[0m" ;;
+            *)
+                echo -e "\033[1;31m? Invalid option\033[0m"
+                ;;
         esac
 
         echo -e "\n\033[1;34mPress Enter to continue...\033[0m"
@@ -1245,5 +780,139 @@ Optimizer() {
     done
 }
 
-# Start the optimizer
-Optimizer
+# =============================================================================
+# REMOVE SPECIFIC PROFILE
+# =============================================================================
+remove_specific_profile() {
+    echo -e "\033[1;36mSelect profile to remove:\033[0m"
+    echo -e "  1. ?? Gaming optimizations"
+    echo -e "  2. ?? Streaming optimizations" 
+    echo -e "  3. ?? General purpose optimizations"
+    echo -e "  4. ?? Competitive gaming optimizations"
+    echo -e "  5. ?? Network tuning only"
+    echo
+    read -p "$(echo -e '\033[1;32mSelect profile [1-5]: \033[0m')" profile_choice
+
+    case $profile_choice in
+        1) remove_gaming_optimizations ;;
+        2) remove_streaming_optimizations ;;
+        3) remove_general_optimizations ;;
+        4) remove_competitive_optimizations ;;
+        5) reset_network_tuning ;;
+        *) echo -e "\033[1;31m? Invalid choice\033[0m" ; return ;;
+    esac
+}
+
+# =============================================================================
+# PROFILE-SPECIFIC REMOVAL FUNCTIONS
+# =============================================================================
+remove_gaming_optimizations() {
+    echo -e "\033[1;33mRemoving gaming optimizations...\033[0m"
+    local gaming_keys=(
+        "vm.swappiness=30" "vm.dirty_ratio=15" "vm.dirty_background_ratio=5"
+        "net.core.rmem_max=33554432" "net.core.wmem_max=33554432"
+        "net.ipv4.tcp_rmem=4096 87380 33554432" "net.ipv4.tcp_wmem=4096 16384 33554432"
+        "net.ipv4.tcp_low_latency=1" "net.ipv4.udp_rmem_min=8192" "net.ipv4.udp_wmem_min=8192"
+    )
+    remove_specific_settings "${gaming_keys[@]}"
+}
+
+remove_streaming_optimizations() {
+    echo -e "\033[1;33mRemoving streaming optimizations...\033[0m"
+    local streaming_keys=(
+        "vm.swappiness=10" "vm.dirty_ratio=20" "vm.dirty_background_ratio=10"
+        "net.core.rmem_max=67108864" "net.core.wmem_max=67108864"
+        "net.ipv4.tcp_rmem=8192 87380 67108864" "net.ipv4.tcp_wmem=8192 65536 67108864"
+        "net.ipv4.tcp_notsent_lowat=16384" "net.netfilter.nf_conntrack_max=262144"
+    )
+    remove_specific_settings "${streaming_keys[@]}"
+}
+
+remove_general_optimizations() {
+    echo -e "\033[1;33mRemoving general optimizations...\033[0m"
+    local general_keys=(
+        "vm.swappiness=60" "vm.dirty_ratio=20" "vm.dirty_background_ratio=10"
+        "net.core.rmem_max=16777216" "net.core.wmem_max=16777216"
+        "net.ipv4.tcp_rmem=4096 87380 16777216" "net.ipv4.tcp_wmem=4096 16384 16777216"
+    )
+    remove_specific_settings "${general_keys[@]}"
+}
+
+remove_competitive_optimizations() {
+    echo -e "\033[1;33mRemoving competitive gaming optimizations...\033[0m"
+    local competitive_keys=(
+        "vm.swappiness=1" "vm.dirty_ratio=5" "vm.dirty_background_ratio=3"
+        "net.ipv4.tcp_no_metrics_save=1" "net.ipv4.tcp_timestamps=0"
+        "net.ipv4.tcp_sack=0" "net.ipv4.tcp_dsack=0" "net.ipv4.tcp_fack=0"
+    )
+    remove_specific_settings "${competitive_keys[@]}"
+}
+
+# =============================================================================
+# GENERIC SETTING REMOVAL FUNCTION
+# =============================================================================
+remove_specific_settings() {
+    local settings=("$@")
+    for setting in "${settings[@]}"; do
+        local key="${setting%=*}"
+        sed -i "/^\s*${key}\s*=/d" "$SYSCTL_CONF"
+    done
+    reload_sysctl
+    echo -e "\033[1;32m? Specific optimizations removed!\033[0m"
+}
+
+# =============================================================================
+# SHOW CURRENT OPTIMIZATIONS
+# =============================================================================
+show_current_optimizations() {
+    echo -e "\033[1;36m?? CURRENT OPTIMIZATIONS:\033[0m"
+    echo
+    echo -e "\033[1;33mKey Settings:\033[0m"
+    echo -e "  Congestion Control: \033[1;34m$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)\033[0m"
+    echo -e "  Queue Discipline:   \033[1;34m$(sysctl -n net.core.default_qdisc 2>/dev/null)\033[0m"
+    echo -e "  TCP rmem:           \033[1;34m$(sysctl -n net.ipv4.tcp_rmem 2>/dev/null)\033[0m"
+    echo -e "  TCP wmem:           \033[1;34m$(sysctl -n net.ipv4.tcp_wmem 2>/dev/null)\033[0m"
+    echo -e "  File max:           \033[1;34m$(sysctl -n fs.file-max 2>/dev/null)\033[0m"
+    echo
+    echo -e "\033[1;33mCustom settings in sysctl.conf:\033[0m"
+    grep -v "^#" "$SYSCTL_CONF" | grep -v "^$" | head -20
+}
+# =============================================================================
+# SUPPORTING FUNCTIONS FOR MAIN MENU
+# =============================================================================
+show_sysctl_conf() {
+    echo -e "\033[1;34m?? Current sysctl.conf:\033[0m"
+    if [ -f "$SYSCTL_CONF" ]; then
+        cat "$SYSCTL_CONF"
+    else
+        echo -e "\033[1;31m? sysctl.conf not found\033[0m"
+    fi
+}
+
+edit_sysctl_conf() {
+    if command -v nano &> /dev/null; then
+        nano "$SYSCTL_CONF"
+    elif command -v vim &> /dev/null; then
+        vim "$SYSCTL_CONF"
+    elif command -v vi &> /dev/null; then
+        vi "$SYSCTL_CONF"
+    else
+        echo -e "\033[1;31m? No text editor found. Install nano, vim, or vi.\033[0m"
+    fi
+}
+
+# =============================================================================
+# INITIALIZATION
+# =============================================================================
+
+# Check if running as root
+if [ "$EUID" -ne 0 ]; then
+    echo -e "\033[1;31m? Please run as root: sudo $0\033[0m"
+    exit 1
+fi
+
+# Create backup directory
+create_backup_dir
+
+# Start the main menu
+main_menu
