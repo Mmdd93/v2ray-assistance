@@ -9,6 +9,7 @@ CYAN="\033[1;36m"
 RESET="\033[0m"
 
 # Function to display system status
+# Function to display system status
 show_status() {
     echo -e "\033[1;36m============================================\033[0m"
     echo -e "\033[1;33m           DNS MANAGER - SYSTEM STATUS\033[0m"
@@ -51,11 +52,65 @@ show_status() {
         echo -e "  ${RED}  No DNS servers configured${RESET}"
     fi
     
+    # Port 53 usage
+    echo -e "\033[1;35mPORT 53 USAGE (DNS PORT):\033[0m"
+    if command -v ss &>/dev/null; then
+        port_53_users=$(ss -lptn 'sport = :53' 2>/dev/null | grep -v "State\|LISTEN")
+    elif command -v netstat &>/dev/null; then
+        port_53_users=$(netstat -tlnp 2>/dev/null | grep ':53 ')
+    else
+        port_53_users=$(lsof -i :53 2>/dev/null | grep LISTEN)
+    fi
+    
+    if [ -n "$port_53_users" ]; then
+        echo -e "  ${YELLOW}⚠ Port 53 is in use by:${RESET}"
+        while IFS= read -r line; do
+            if [ -n "$line" ]; then
+                # Extract process name and PID
+                if command -v ss &>/dev/null; then
+                    pid=$(echo "$line" | grep -o 'pid=[0-9]*' | cut -d= -f2)
+                    process=$(ps -p "$pid" -o comm= 2>/dev/null || echo "unknown")
+                    echo -e "  ${RED}  → $process (PID: $pid)${RESET}"
+                else
+                    echo -e "  ${RED}  → $line${RESET}"
+                fi
+            fi
+        done <<< "$port_53_users"
+    else
+        echo -e "  ${GREEN}✓ Port 53: Available${RESET}"
+    fi
+    
+    # Additional DNS service detection
+    echo -e "\033[1;35mDNS SERVICES DETECTION:\033[0m"
+    dns_services=("systemd-resolved" "dnsmasq" "named" "bind9" "unbound" "NetworkManager")
+    for service in "${dns_services[@]}"; do
+        if systemctl is-active "$service" &>/dev/null 2>&1 || pgrep "$service" &>/dev/null; then
+            if [ "$service" = "systemd-resolved" ]; then
+                echo -e "  ${GREEN}✓ $service: RUNNING${RESET}"
+            else
+                echo -e "  ${YELLOW}⚠ $service: RUNNING (potential conflict)${RESET}"
+            fi
+        else
+            echo -e "  ${CYAN}  $service: Not running${RESET}"
+        fi
+    done
+    
+    # Check for DNS stub listener conflicts
+    echo -e "\033[1;35mDNS STUB LISTENER:\033[0m"
+    if ss -lptn | grep -q ':53' && systemctl is-active systemd-resolved &>/dev/null; then
+        stub_listener=$(grep "DNSStubListener" /etc/systemd/resolved.conf 2>/dev/null | tail -1)
+        if [[ "$stub_listener" == *"=no"* ]]; then
+            echo -e "  ${GREEN}✓ Stub listener: DISABLED${RESET}"
+        else
+            echo -e "  ${YELLOW}⚠ Stub listener: ENABLED (check conflicts)${RESET}"
+        fi
+    fi
+    
     echo -e "\033[1;36m============================================\033[0m"
     echo ""
 }
 
-# Troubleshooting function
+# Enhanced troubleshooting function with port 53 conflict resolution
 troubleshoot_dns() {
     echo -e "\033[1;36m============================================\033[0m"
     echo -e "\033[1;33m           DNS TROUBLESHOOTING\033[0m"
@@ -76,13 +131,30 @@ troubleshoot_dns() {
         echo -e "   ${GREEN}✓ systemd-resolved: ACTIVE${RESET}"
     else
         echo -e "   ${RED}✗ systemd-resolved: $resolved_status${RESET}"
-        echo -e "   ${YELLOW}  Attempting to start service...${RESET}"
-        sudo systemctl start systemd-resolved
-        sleep 2
     fi
     
-    # Test 3: Check resolv.conf
-    echo -e "\033[1;35m3. Checking /etc/resolv.conf:\033[0m"
+    # Test 3: Check port 53 conflicts
+    echo -e "\033[1;35m3. Checking Port 53 conflicts:\033[0m"
+    port_53_info=""
+    if command -v ss &>/dev/null; then
+        port_53_info=$(ss -lptn 'sport = :53' 2>/dev/null | grep -v "State\|LISTEN")
+    elif command -v netstat &>/dev/null; then
+        port_53_info=$(netstat -tlnp 2>/dev/null | grep ':53 ')
+    fi
+    
+    if [ -n "$port_53_info" ]; then
+        echo -e "   ${RED}✗ Port 53 conflict detected:${RESET}"
+        while IFS= read -r line; do
+            if [ -n "$line" ]; then
+                echo -e "   ${RED}   $line${RESET}"
+            fi
+        done <<< "$port_53_info"
+    else
+        echo -e "   ${GREEN}✓ Port 53: No conflicts${RESET}"
+    fi
+    
+    # Test 4: Check resolv.conf
+    echo -e "\033[1;35m4. Checking /etc/resolv.conf:\033[0m"
     if [ -e "/etc/resolv.conf" ]; then
         echo -e "   ${GREEN}✓ File exists${RESET}"
         echo -e "   ${CYAN}  Content:${RESET}"
@@ -91,14 +163,6 @@ troubleshoot_dns() {
         done
     else
         echo -e "   ${RED}✗ File missing${RESET}"
-    fi
-    
-    # Test 4: Check for conflicts
-    echo -e "\033[1;35m4. Checking for DNS conflicts:\033[0m"
-    if pgrep dnsmasq >/dev/null; then
-        echo -e "   ${YELLOW}⚠ dnsmasq is running (potential conflict)${RESET}"
-    else
-        echo -e "   ${GREEN}✓ No dnsmasq conflict${RESET}"
     fi
     
     # Test 5: Network connectivity
@@ -128,9 +192,10 @@ troubleshoot_dns() {
     echo -e "   ${CYAN}a) Reset to default DNS${RESET}"
     echo -e "   ${CYAN}b) Create basic resolv.conf${RESET}"
     echo -e "   ${CYAN}c) Restart network services${RESET}"
-    echo -e "   ${CYAN}d) Return to menu${RESET}"
+    echo -e "   ${CYAN}d) Fix Port 53 conflicts${RESET}"
+    echo -e "   ${CYAN}e) Return to menu${RESET}"
     
-    read -p "Select option (a/b/c/d): " fix_choice
+    read -p "Select option (a/b/c/d/e): " fix_choice
     
     case "$fix_choice" in
         a)
@@ -158,6 +223,24 @@ EOF
             echo -e "${GREEN}Network services restarted${RESET}"
             ;;
         d)
+            echo -e "\033[1;33mFixing Port 53 conflicts...${RESET}"
+            # Stop common services that use port 53
+            sudo systemctl stop dnsmasq 2>/dev/null
+            sudo systemctl stop bind9 2>/dev/null
+            sudo systemctl stop named 2>/dev/null
+            sudo systemctl stop unbound 2>/dev/null
+            
+            # Kill any processes using port 53
+            sudo fuser -k 53/udp 2>/dev/null
+            sudo fuser -k 53/tcp 2>/dev/null
+            
+            # Disable DNSStubListener to free port 53
+            sudo sed -i 's/^#*DNSStubListener=.*/DNSStubListener=no/' /etc/systemd/resolved.conf
+            sudo systemctl restart systemd-resolved
+            
+            echo -e "${GREEN}Port 53 conflicts resolved${RESET}"
+            ;;
+        e)
             return
             ;;
         *)
@@ -175,7 +258,6 @@ EOF
         echo -e "${YELLOW}More advanced troubleshooting may be needed${RESET}"
     fi
 }
-
 change_dns() {
     while true; do
         # Show status header
