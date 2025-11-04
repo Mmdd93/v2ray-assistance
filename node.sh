@@ -3178,14 +3178,14 @@ NC='\033[0m' # No Color
 display_header() {
     clear
     echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║${NC}${CYAN}              v2ray ASSISTANT MANAGEMENT TOOL              ${NC}${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}${YELLOW}           Telegram: @tlgrmv2 | Version: 25.11.4           ${NC}${GREEN}║${NC}"
+    echo -e "${NC}${CYAN}              v2ray ASSISTANT MANAGEMENT TOOL              ${NC}${NC}"
+    echo -e "${NC}${YELLOW}           Telegram: @tlgrmv2 | Version: 25.11.4           ${NC}${NC}"
     echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
 }
 # Function to display section headers
 section_header() {
     echo -e "${BLUE}╔══════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║${NC} $1 ${BLUE}║${NC}"
+    echo -e "${NC} $1 ${NC}"
     echo -e "${BLUE}╚══════════════════════════════════════════════════════════╝${NC}"
 }
 
