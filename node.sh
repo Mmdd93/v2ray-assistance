@@ -3337,32 +3337,40 @@ main_menu() {
         separator
         
         # Panel section
-        section_header "PANEL MANAGEMENT"
+        section_header "XUI"
         menu_option "38" "X-UI panels (x-ui, 3x-ui, tx-ui)"
 		menu_option "74" "Sing-box/SagerNet panel (s-ui) (github.com/alireza0/s-ui)"
 		menu_option "73" "X-UI panel multi node location (github.com/azavaxhuman/Nodex)"
 		menu_option "80" "Hysteria2 Blitz Panel (github.com/ReturnFI/Blitz)"
-        menu_option "75" "Mirza (telegram bot for sale) (github.com/mahdiMGF2/botmirzapanel)"
+		separator
+        menu_option "75" "Mirza Bot pro (telegram bot for sale) (github.com/mahdiMGF2/botmirzapanel)"
 		menu_option "77" "mtproto proxy (telegram proxy) (github.com/seriyps/mtproto_proxy)"
         #menu_option "78" "OpenVPN panel (github.com/palark/ovpn-admin)"
   
-        separator
+        section_header "Marzban"
         menu_option "39" "Marzban panel"
         menu_option "40" "Marzban node by v2"
         menu_option "53" "Marzban node official script"
         menu_option "52" "Marzban node by Mehrdad"
-        separator
+        section_header "Remnawave"
         menu_option "48" "Remnawave"
-        separator
+        section_header "Marzneshin"
         menu_option "49" "Marzneshin"
         menu_option "50" "Marzneshin node by ErfJab"
         menu_option "51" "Marzneshin node by Mehrdad"
-        separator
+		
+        section_header "WireGuard - OPENVPN "
         menu_option "60" "WGDashboard (WireGuard management)"
         menu_option "54" "SoftEther by RTX-VPN v2 (L2TP, OpenVPN, SSTP)"
         menu_option "57" "OPENVPN Webpanel (Multi node location)"
+		menu_option "81" "OV-Panel (Multi node location)  by github.com/primeZdev/ov-panel"
+		menu_option "82" "IranGate-OV  by github.com/amiridev-org/irangate-ov"
+		
+		section_header "Panel Backup "
         menu_option "41" "Panel Backup (Marzban, X-UI, Hiddify)"
         menu_option "42" "Auto panel restart"
+		
+		section_header "Monitoring"
         menu_option "59" "Uptime Kuma monitoring"
         separator
         # Footer options
@@ -3689,6 +3697,19 @@ sudo bash zex-tunnel-install.sh
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/ReturnFI/Blitz/main/install.sh -o Blitz.sh
                 sudo bash Blitz.sh
+                ;;
+				81)
+                echo -e "${YELLOW}Running OV-Panel...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/primeZdev/ov-panel/refs/heads/main/install.sh -o OV-Panel.sh
+                sudo bash OV-Panel.sh
+                ;;
+				82)
+                echo -e "${YELLOW}Running OV-Panel...${NC}"
+				sleep 1
+				git clone https://github.com/AmiriDev-ORG/IranGate-OV.git
+                curl -Ls https://raw.githubusercontent.com/AmiriDev-ORG/IranGate-OV/refs/heads/CyrusTheGreat/install.sh -o IranGate-OV.sh
+                sudo bash IranGate-OV.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
