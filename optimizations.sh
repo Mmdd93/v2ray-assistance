@@ -6,6 +6,8 @@
 SYSCTL_CONF="/etc/sysctl.conf"
 LIMITS_CONF="/etc/security/limits.conf"
 BACKUP_DIR="/etc/optimizer_backups"
+TC_SCRIPT_NAME="tc_optimizer.sh"
+TC_SCRIPT_PATH="/usr/local/bin/$TC_SCRIPT_NAME"
 
 # =============================================================================
 # COLOR DEFINITIONS
@@ -304,8 +306,258 @@ apply_competitive_gaming_optimizations() {
 # TC OPTIMIZATION FUNCTIONS (NO LOGGING)
 # =============================================================================
 
+# Create TC optimizer script
+create_tc_optimizer_script() {
+    cat > "$TC_SCRIPT_PATH" << 'EOF'
+#!/bin/bash
+# Auto-generated TC Optimizer Script
+# This script is called by cron at startup
+
+SYSCTL_CONF="/etc/sysctl.conf"
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log_message() {
+    echo "$(date): $1" >> /var/log/tc_optimizer.log
+}
+
 tc_optimize_by_category() {
     local category="${1:-general}"
+    
+    log_message "Starting TC optimization for category: $category"
+    
+    INTERFACE=$(ip route get 8.8.8.8 2>/dev/null | awk '/dev/ {print $5; exit}')
+    
+    if [ -z "$INTERFACE" ]; then
+        log_message "ERROR: Could not detect network interface"
+        return 1
+    fi
+    
+    detect_link_speed() {
+        local speed
+        if command -v ethtool >/dev/null 2>&1; then
+            speed=$(ethtool "$INTERFACE" 2>/dev/null | grep -oP 'Speed: \K[0-9]+')
+            if [ -n "$speed" ]; then
+                echo "$speed"
+                return
+            fi
+        fi
+        
+        if [ -f "/sys/class/net/$INTERFACE/speed" ]; then
+            speed=$(cat "/sys/class/net/$INTERFACE/speed" 2>/dev/null)
+            if [ "$speed" -gt 0 ] 2>/dev/null; then
+                echo "$speed"
+                return
+            fi
+        fi
+        
+        case "$INTERFACE" in
+            eth*|en*) echo "1000" ;;
+            wlan*|wlp*) echo "300" ;;
+            *) echo "1000" ;;
+        esac
+    }
+    
+    LINK_SPEED=$(detect_link_speed)
+    BANDWIDTH=$((LINK_SPEED * 85 / 100))
+    
+    # Cleanup existing rules
+    tc qdisc del dev "$INTERFACE" root 2>/dev/null
+    tc qdisc del dev "$INTERFACE" ingress 2>/dev/null
+    
+    # Apply optimizations based on category
+    case "$category" in
+        "gaming")
+            echo 256 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
+            if tc qdisc add dev "$INTERFACE" root cake bandwidth ${BANDWIDTH}mbit besteffort dual-dsthost 2>/dev/null; then
+                log_message "Applied CAKE for gaming on $INTERFACE"
+            elif tc qdisc add dev "$INTERFACE" root fq_codel limit 1000 flows 512 target 3ms interval 50ms quantum 300 noecn 2>/dev/null; then
+                log_message "Applied FQ_Codel for gaming on $INTERFACE"
+            else
+                tc qdisc add dev "$INTERFACE" root pfifo_fast
+                log_message "Applied PFIFO_FAST for gaming on $INTERFACE"
+            fi
+            ;;
+        "high-loss")
+            echo 4000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
+            if tc qdisc add dev "$INTERFACE" root cake bandwidth ${BANDWIDTH}mbit besteffort ack-filter 2>/dev/null; then
+                log_message "Applied CAKE for high-loss on $INTERFACE"
+            elif tc qdisc add dev "$INTERFACE" root fq_codel limit 20000 flows 2048 target 10ms interval 200ms memory_limit 64Mb ecn 2>/dev/null; then
+                log_message "Applied FQ_Codel for high-loss on $INTERFACE"
+            else
+                tc qdisc add dev "$INTERFACE" root pfifo_fast
+                log_message "Applied PFIFO_FAST for high-loss on $INTERFACE"
+            fi
+            ;;
+        "general")
+            echo 1000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
+            if tc qdisc add dev "$INTERFACE" root cake bandwidth ${BANDWIDTH}mbit besteffort 2>/dev/null; then
+                log_message "Applied CAKE for general on $INTERFACE"
+            elif tc qdisc add dev "$INTERFACE" root fq_codel limit 10240 flows 1024 target 5ms interval 100ms memory_limit 32Mb 2>/dev/null; then
+                log_message "Applied FQ_Codel for general on $INTERFACE"
+            else
+                tc qdisc add dev "$INTERFACE" root pfifo_fast
+                log_message "Applied PFIFO_FAST for general on $INTERFACE"
+            fi
+            ;;
+    esac
+    
+    log_message "TC optimization completed for $INTERFACE with $category settings"
+}
+
+# Main execution
+main() {
+    # Wait for network to be ready
+    sleep 30
+    
+    # Determine optimization category from sysctl settings
+    if grep -q "net.ipv4.tcp_low_latency.*=.*1" "$SYSCTL_CONF" 2>/dev/null; then
+        category="gaming"
+    else
+        category="general"
+    fi
+    
+    tc_optimize_by_category "$category"
+}
+
+# Run main function if script is executed directly
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+    main "$@"
+fi
+EOF
+
+    chmod +x "$TC_SCRIPT_PATH"
+    echo -e "${GREEN}TC optimizer script created at: $TC_SCRIPT_PATH${NC}"
+}
+
+# Check if optimizations are enabled at startup
+check_startup_status() {
+    echo -e "${YELLOW}Checking startup status...${NC}"
+    
+    if crontab -l 2>/dev/null | grep -q "$TC_SCRIPT_NAME"; then
+        echo -e "${GREEN}✓ TC optimizations are enabled at startup${NC}"
+        echo -e "${WHITE}Cron entry:${NC}"
+        crontab -l | grep "$TC_SCRIPT_NAME"
+        return 0
+    else
+        echo -e "${YELLOW}⚠ TC optimizations are NOT enabled at startup${NC}"
+        return 1
+    fi
+}
+
+# Enable optimizations at system startup
+enable_startup_optimizations() {
+    local category="${1:-general}"
+    
+    echo -e "${YELLOW}Enabling TC optimizations at startup...${NC}"
+    
+    # Create the TC optimizer script first
+    create_tc_optimizer_script
+    
+    # Create a temporary crontab
+    local temp_cron=$(mktemp)
+    crontab -l 2>/dev/null | grep -v "$TC_SCRIPT_NAME" > "$temp_cron"
+    
+    # Add the startup optimization entry
+    echo "@reboot sleep 30 && $TC_SCRIPT_PATH" >> "$temp_cron"
+    
+    # Install the new crontab
+    crontab "$temp_cron"
+    rm -f "$temp_cron"
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Startup optimizations enabled for category: $category${NC}"
+        echo -e "${WHITE}Optimizations will run automatically on boot${NC}"
+        echo -e "${WHITE}Script: $TC_SCRIPT_PATH${NC}"
+        return 0
+    else
+        echo -e "${RED}✗ Failed to enable startup optimizations${NC}"
+        return 1
+    fi
+}
+
+# Disable optimizations at system startup
+disable_startup_optimizations() {
+    echo -e "${YELLOW}Disabling TC optimizations at startup...${NC}"
+    
+    # Remove any existing tc optimization entries from crontab
+    local temp_cron=$(mktemp)
+    crontab -l 2>/dev/null | grep -v "$TC_SCRIPT_NAME" > "$temp_cron"
+    
+    # Install the cleaned crontab
+    crontab "$temp_cron"
+    rm -f "$temp_cron"
+    
+    # Remove the script file
+    if [ -f "$TC_SCRIPT_PATH" ]; then
+        rm -f "$TC_SCRIPT_PATH"
+        echo -e "${GREEN}✓ Removed TC optimizer script${NC}"
+    fi
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Startup optimizations disabled${NC}"
+        echo -e "${WHITE}Optimizations will NOT run automatically on boot${NC}"
+        return 0
+    else
+        echo -e "${RED}✗ Failed to disable startup optimizations${NC}"
+        return 1
+    fi
+}
+
+# Ask user about startup configuration
+ask_startup_config() {
+    local category="$1"
+    
+    echo ""
+    echo "=============================================="
+    echo -e "${CYAN}STARTUP CONFIGURATION${NC}"
+    echo "=============================================="
+    echo -e "${WHITE}Do you want to run TC optimizations automatically at system startup?${NC}"
+    echo ""
+    echo -e "${GREEN}Y${NC} - Yes, enable on startup"
+    echo -e "${YELLOW}N${NC} - No, run only once"
+    echo -e "${BLUE}S${NC} - Show current startup status"
+    echo -e "${RED}D${NC} - Disable startup optimizations"
+    echo ""
+    echo -n "Your choice [Y/n/S/d]: "
+    
+    read -r choice
+    case "${choice:-y}" in
+        [Yy]*)
+            enable_startup_optimizations "$category"
+            ;;
+        [Nn]*)
+            echo -e "${YELLOW}TC optimizations will run only once (current session)${NC}"
+            ;;
+        [Ss]*)
+            check_startup_status
+            echo ""
+            echo -n "Press Enter to continue..."
+            read -r
+            ask_startup_config "$category"
+            ;;
+        [Dd]*)
+            disable_startup_optimizations
+            ;;
+        *)
+            echo -e "${RED}Invalid choice. Please try again.${NC}"
+            ask_startup_config "$category"
+            ;;
+    esac
+}
+
+# Auto-optimize function for cron use
+tc_auto_optimize() {
+    local category="${1:-general}"
+    echo "$(date): Auto-optimizing network for $category category" >> /var/log/tc_optimizer.log
+    tc_optimize_by_category "$category" "true"
+}
+
+tc_optimize_by_category() {
+    local category="${1:-general}"
+    local auto_mode="${2:-false}"
     
     echo "=============================================="
     echo "        TC OPTIMIZER - $category MODE"
@@ -396,6 +648,11 @@ tc_optimize_by_category() {
     echo -e "${WHITE}Link Speed: ${GREEN}${LINK_SPEED}Mbps${NC}"
     echo -e "${WHITE}Configured Bandwidth: ${GREEN}${BANDWIDTH}Mbps${NC}"
     echo -e "${WHITE}Queue Discipline: ${GREEN}$(tc qdisc show dev "$INTERFACE" | head -1 | awk '{print $2}')${NC}"
+    
+    # Only ask about startup if not in auto mode
+    if [ "$auto_mode" = "false" ]; then
+        ask_startup_config "$category"
+    fi
 }
 
 apply_tc_gaming_optimizations() {
@@ -534,6 +791,10 @@ apply_netem_testing() {
 tc_remove_optimizations() {
     echo -e "${RED}Removing ALL TC optimizations...${NC}"
     
+    # Remove from startup first
+    disable_startup_optimizations
+    
+    # Remove TC rules from all interfaces
     for INTERFACE in $(ls /sys/class/net/ | grep -v lo); do
         tc qdisc del dev "$INTERFACE" root 2>/dev/null
         tc qdisc del dev "$INTERFACE" ingress 2>/dev/null
@@ -541,10 +802,12 @@ tc_remove_optimizations() {
         echo 1000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
     done
     
+    # Reset system settings
     echo 0 > /proc/sys/net/ipv4/tcp_low_latency 2>/dev/null
     echo 1 > /proc/sys/net/ipv4/tcp_slow_start_after_idle 2>/dev/null
     
     echo -e "${GREEN}All TC optimizations removed${NC}"
+    echo -e "${GREEN}Startup optimizations disabled${NC}"
 }
 
 # =============================================================================
@@ -556,6 +819,10 @@ remove_all_optimizations() {
     
     backup_configs
     
+    # Remove TC optimizations first
+    tc_remove_optimizations
+    
+    # Remove sysctl optimizations
     local sysctl_keys=(
         "vm.swappiness" "vm.dirty_ratio" "vm.dirty_background_ratio"
         "vm.dirty_expire_centisecs" "vm.dirty_writeback_centisecs"
@@ -588,11 +855,6 @@ remove_all_optimizations() {
 
     sysctl -p > /dev/null 2>&1
     sysctl --system > /dev/null 2>&1
-    
-    for interface in $(ls /sys/class/net/ | grep -v lo); do
-        tc qdisc del dev "$interface" root 2>/dev/null
-        tc qdisc del dev "$interface" ingress 2>/dev/null
-    done
 
     echo "cubic" > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null
     echo "fq_codel" > /proc/sys/net/core/default_qdisc 2>/dev/null
@@ -625,6 +887,9 @@ show_current_settings() {
         QDISC=$(tc qdisc show dev "$IFACE" 2>/dev/null | head -1 || echo "None")
         echo -e "  ${WHITE}$IFACE: ${BLUE}$QDISC${NC}"
     done
+    
+    echo -e "\n${YELLOW}STARTUP STATUS:${NC}"
+    check_startup_status
 }
 
 edit_sysctl_live() {
