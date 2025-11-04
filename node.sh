@@ -3265,7 +3265,7 @@ main_menu() {
         menu_option "5" "Install Docker and Docker Compose"
         menu_option "6" "Install Docker on Iran servers"
         menu_option "72" "MTU management"
-        separator
+        
         
         # Tools section
         section_header "TOOLS"
@@ -3297,13 +3297,12 @@ main_menu() {
         menu_option "36" "Cron job management"
         menu_option "37" "File management tools"
         menu_option "71" "Abuse Defender (Hetzner)"
-        separator
+       
         
         # Tunnel section
         section_header "TUNNEL SERVICES"
         echo -e "${CYAN}Combine local tunnels (SIT, GRE, GENEVE, VXLAN) with:${NC}"
         echo -e "${CYAN}Backhaul, GOST, WSS, etc., for enhanced stealth${NC}"
-        separator
         menu_option "26" "SIT tunnel 6to4 (IPv6 local) (github.com/Mmdd93/v2ray-assistance/)"
         menu_option "28" "GRE tunnel (IPv4/IPv6 local) (github.com/Mmdd93/v2ray-assistance/)"
         menu_option "45" "GENEVE tunnel (IPv4 local) (github.com/Mmdd93/v2ray-assistance/)"
@@ -3326,7 +3325,7 @@ main_menu() {
         menu_option "70" "FRP Tunnel by Mehrad (github.com/mikeesierrah/frp-script)" 
 		menu_option "76" "ZEX Tunnel Waterwall (github.com/izex/ZEX-Tunnel)"
   		menu_option "79" "Pingtunnel Manager (github.com/hoseinlolready/Pingtunnel_manager)"
-        separator
+        
         
         # Panel section
         section_header "XUI"
@@ -3365,7 +3364,7 @@ main_menu() {
 		
 		section_header "Monitoring"
         menu_option "59" "Uptime Kuma monitoring"
-        separator
+      
         # Footer options
         section_header "MAINTENANCE"
         menu_option "00" "Update scripts"
