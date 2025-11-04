@@ -3195,9 +3195,7 @@ menu_option() {
 }
 
 # Function to display a horizontal separator
-separator() {
-    
-}
+
 
 # Function to validate IP addresses
 validate_ip() {
