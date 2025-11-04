@@ -1048,8 +1048,9 @@ show_main_menu() {
     echo -e "${PURPLE}MAINTENANCE:${CYAN}"
     echo -e "  ${GREEN}17${NC}${WHITE}. Backup Configurations${CYAN}"
     echo -e "  ${GREEN}18${NC}${WHITE}. Remove All Optimizations${CYAN}"
-     echo -e "  ${GREEN}19${NC}${WHITE}. stop system logging${CYAN}"
-      echo -e "  ${GREEN}20${NC}${WHITE}. Restoring system logging${CYAN}"
+    echo -e "  ${GREEN}19${NC}${WHITE}. stop system logging${CYAN}"
+    echo -e "  ${GREEN}20${NC}${WHITE}. Restoring system logging${CYAN}"
+    echo -e "  ${GREEN}21${NC}${WHITE}. Remove bloatware${CYAN}"
     echo
     echo -e "  ${GREEN}0${NC}${WHITE}. Exit${CYAN}"
     echo "================================================================"
@@ -1115,6 +1116,7 @@ main_menu() {
             ;;
 
             18) remove_all_optimizations ;;
+            21) bloatware ;;
             0)
                 echo -e "${GREEN}Goodbye!${NC}"
                 exit 0
@@ -1173,7 +1175,356 @@ handle_netem_menu() {
 
 
 
+# Function to print colored output
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
 
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if running as root
+check_root() {
+    if [[ $EUID -eq 0 ]]; then
+        print_warning "Running as root user"
+    else
+        print_error "This script requires root privileges. Please run with sudo."
+        exit 1
+    fi
+}
+
+# Update system
+update_system() {
+    print_status "Updating system packages..."
+    apt update && apt upgrade -y
+    print_success "System updated successfully"
+}
+
+# Remove multipath tools
+remove_multipath() {
+    print_status "Removing multipath tools..."
+    systemctl stop multipathd 2>/dev/null
+    systemctl disable multipathd 2>/dev/null
+    apt remove -y --purge multipath-tools 2>/dev/null
+    print_success "Multipath tools removed"
+}
+
+# Remove snapd
+remove_snapd() {
+    print_status "Removing snapd..."
+    systemctl stop snapd 2>/dev/null
+    systemctl disable snapd 2>/dev/null
+    apt remove -y --purge snapd snap-confine 2>/dev/null
+    rm -rf /var/snap /snap /root/snap
+    print_success "Snapd removed"
+}
+
+# Remove fwupd
+remove_fwupd() {
+    print_status "Removing fwupd..."
+    apt remove -y --purge fwupd 2>/dev/null
+    print_success "Fwupd removed"
+}
+
+# Remove desktop components
+remove_desktop_components() {
+    print_status "Removing desktop components..."
+    local desktop_packages=(
+        ubuntu-desktop
+        gnome*
+        gdm3
+        xorg
+        lightdm
+        plymouth
+        plymouth-theme-ubuntu-text
+    )
+    
+    for pkg in "${desktop_packages[@]}"; do
+        if dpkg -l | grep -q "$pkg"; then
+            apt remove -y --purge "$pkg" 2>/dev/null
+        fi
+    done
+    print_success "Desktop components removed"
+}
+
+# Remove office software
+remove_office_software() {
+    print_status "Removing office software..."
+    local office_packages=(
+        libreoffice*
+        abiword
+        gnumeric
+    )
+    
+    for pkg in "${office_packages[@]}"; do
+        apt remove -y --purge "$pkg" 2>/dev/null
+    done
+    print_success "Office software removed"
+}
+
+# Remove games
+remove_games() {
+    print_status "Removing games..."
+    local game_packages=(
+        gnome-games*
+        sudoku
+        mines
+        aisleriot
+        mahjongg
+    )
+    
+    for pkg in "${game_packages[@]}"; do
+        apt remove -y --purge "$pkg" 2>/dev/null
+    done
+    print_success "Games removed"
+}
+
+# Remove multimedia packages
+remove_multimedia() {
+    print_status "Removing multimedia packages..."
+    local media_packages=(
+        rhythmbox
+        shotwell
+        cheese
+        vlc*
+        totem
+        brasero
+    )
+    
+    for pkg in "${media_packages[@]}"; do
+        apt remove -y --purge "$pkg" 2>/dev/null
+    done
+    print_success "Multimedia packages removed"
+}
+
+# Remove printing services
+remove_printing() {
+    print_status "Removing printing services..."
+    local printing_packages=(
+        cups*
+        printer-driver*
+        hplip
+    )
+    
+    for pkg in "${printing_packages[@]}"; do
+        systemctl stop "$pkg" 2>/dev/null
+        systemctl disable "$pkg" 2>/dev/null
+        apt remove -y --purge "$pkg" 2>/dev/null
+    done
+    print_success "Printing services removed"
+}
+
+# Remove bluetooth
+remove_bluetooth() {
+    print_status "Removing bluetooth..."
+    systemctl stop bluetooth 2>/dev/null
+    systemctl disable bluetooth 2>/dev/null
+    apt remove -y --purge bluez* 2>/dev/null
+    print_success "Bluetooth removed"
+}
+
+# Remove audio services
+remove_audio() {
+    print_status "Removing audio services..."
+    local audio_packages=(
+        pulseaudio*
+        alsa*
+        pipewire*
+    )
+    
+    for pkg in "${audio_packages[@]}"; do
+        apt remove -y --purge "$pkg" 2>/dev/null
+    done
+    print_success "Audio services removed"
+}
+
+# Remove unnecessary services
+remove_unnecessary_services() {
+    print_status "Removing unnecessary services..."
+    local services=(
+        whoopsie
+        popularity-contest
+        apport
+        avahi-daemon
+        modemmanager
+        network-manager
+        cups-browsed
+    )
+    
+    for service in "${services[@]}"; do
+        systemctl stop "$service" 2>/dev/null
+        systemctl disable "$service" 2>/dev/null
+        systemctl mask "$service" 2>/dev/null
+    done
+    print_success "Unnecessary services disabled"
+}
+
+# Clean package cache
+clean_system() {
+    print_status "Cleaning system..."
+    apt autoremove -y --purge
+    apt autoclean
+    apt clean
+    rm -rf /var/cache/apt/*
+    print_success "System cleaned"
+}
+
+# Show installed bloatware
+show_bloatware() {
+    print_status "Scanning for common bloatware packages..."
+    
+    local bloatware_list=(
+        "snapd" "fwupd" "multipath-tools"
+        "ubuntu-desktop" "gnome" "libreoffice" "cups"
+        "bluetooth" "pulseaudio" "whoopsie" "popularity-contest"
+    )
+    
+    echo -e "\n${YELLOW}Found bloatware packages:${NC}"
+    for pkg in "${bloatware_list[@]}"; do
+        if dpkg -l | grep -q "^ii  $pkg"; then
+            echo -e "  ${RED}✓${NC} $pkg"
+        fi
+    done
+    
+    echo -e "\n${YELLOW}Active unnecessary services:${NC}"
+    local unnecessary_services=(
+        "multipathd" "snapd" "cups"
+        "bluetooth" "whoopsie" "avahi-daemon" "modemmanager"
+    )
+    
+    for service in "${unnecessary_services[@]}"; do
+        if systemctl is-active "$service" 2>/dev/null | grep -q "active"; then
+            echo -e "  ${RED}✓${NC} $service"
+        fi
+    done
+}
+
+# Comprehensive bloatware removal (without containerd)
+remove_all_bloatware() {
+    print_warning "Starting comprehensive bloatware removal..."
+    
+    remove_multipath
+    remove_snapd
+    remove_fwupd
+    remove_desktop_components
+    remove_office_software
+    remove_games
+    remove_multimedia
+    remove_printing
+    remove_bluetooth
+    remove_audio
+    remove_unnecessary_services
+    clean_system
+    
+    print_success "All bloatware removed successfully!"
+}
+
+# Interactive menu
+bloatware() {
+    while true; do
+        clear
+        echo -e "${BLUE}"
+        echo "╔══════════════════════════════════════╗"
+        echo "║      Ubuntu Server Bloatware         ║"
+        echo "║            Removal Tool              ║"
+        echo "╚══════════════════════════════════════╝"
+        echo -e "${NC}"
+        echo -e "${YELLOW}Select an option:${NC}"
+        echo " 1) Show installed bloatware"
+        echo " 2) Remove multipath tools"
+        echo " 3) Remove snapd"
+        echo " 4) Remove fwupd"
+        echo " 5) Remove desktop components"
+        echo " 6) Remove office software"
+        echo " 7) Remove games"
+        echo " 8) Remove multimedia packages"
+        echo " 9) Remove printing services"
+        echo "10) Remove bluetooth"
+        echo "11) Remove audio services"
+        echo "12) Remove unnecessary services"
+        echo "13) Clean system (autoremove)"
+        echo "14) Remove ALL bloatware (Comprehensive)"
+        echo "15) Update system"
+        echo "16) Exit"
+        echo
+        
+        read -p "Enter your choice [1-16]: " choice
+        
+        case $choice in
+            1)
+                show_bloatware
+                ;;
+            2)
+                remove_multipath
+                ;;
+            3)
+                remove_snapd
+                ;;
+            4)
+                remove_fwupd
+                ;;
+            5)
+                remove_desktop_components
+                ;;
+            6)
+                remove_office_software
+                ;;
+            7)
+                remove_games
+                ;;
+            8)
+                remove_multimedia
+                ;;
+            9)
+                remove_printing
+                ;;
+            10)
+                remove_bluetooth
+                ;;
+            11)
+                remove_audio
+                ;;
+            12)
+                remove_unnecessary_services
+                ;;
+            13)
+                clean_system
+                ;;
+            14)
+                echo -e "${RED}WARNING: This will remove ALL detected bloatware!${NC}"
+                read -p "Are you sure? (y/N): " -n 1 -r
+                echo
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                    remove_all_bloatware
+                else
+                    print_status "Comprehensive removal cancelled."
+                fi
+                ;;
+            15)
+                update_system
+                ;;
+            16)
+                print_status "Exiting..."
+                exit 0
+                ;;
+            *)
+                print_error "Invalid option. Please try again."
+                ;;
+        esac
+        
+        echo
+        read -p "Press Enter to continue..."
+    done
+}
 
 # =============================================================================
 # INITIALIZATION
