@@ -3305,8 +3305,8 @@ main_menu() {
         
         # Footer options
         section_header "MAINTENANCE"
-		menu_option Status: "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}%"
-		menu_option Net: "NET: ↓$(echo "scale=1; ($rx2 - $rx1) / 1048576" | bc)MB/s ↑$(echo "scale=1; ($tx2 - $tx1) / 1048576" | bc)MB/s"
+		menu_option Status: "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}%" Net: "NET: ↓$(echo "scale=1; ($rx2 - $rx1) / 1048576" | bc)MB/s ↑$(echo "scale=1; ($tx2 - $tx1) / 1048576" | bc)MB/s"
+		
         menu_option "00" "Update scripts"
         menu_option "0" "Exit"
 
