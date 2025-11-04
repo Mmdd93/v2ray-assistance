@@ -3302,22 +3302,12 @@ main_menu() {
         menu_option "42" "Auto panel restart"
         menu_option "59" "Uptime Kuma monitoring"
         separator
-        
-
-# In your menu footer section:
         # Footer options
         section_header "MAINTENANCE"
-		
         menu_option "00" "Update scripts"
         menu_option "0" "Exit"
-        
-        # Display system status
-        echo
         echo -e "${CYAN}System Status:${NC} $(netspeed)"
-        echo
-        
         read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
-        
         case $choice in
             1) 
                 echo -e "${YELLOW}Updating system and installing packages...${NC}"
@@ -3655,11 +3645,6 @@ sudo bash zex-tunnel-install.sh
         read -p "$(echo -e ${GREEN}"Press Enter to continue..."${NC})" dummy
     done
 }
-#!/bin/bash
-
-
-
-
 
 netspeed() {
     local iface rx1 tx1 rx2 tx2 rx_speed tx_speed
