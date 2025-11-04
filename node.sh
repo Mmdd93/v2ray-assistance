@@ -3305,7 +3305,6 @@ main_menu() {
         
         # Footer options
         section_header "MAINTENANCE"
-		menu_option Status: "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}% | NET: ↓$(echo "scale=1; ($rx2 - $rx1) / 1048576" | bc)MB/s ↑$(echo "scale=1; ($tx2 - $tx1) / 1048576" | bc)MB/s"
 		
         menu_option "00" "Update scripts"
         menu_option "0" "Exit"
@@ -3654,18 +3653,40 @@ sudo bash zex-tunnel-install.sh
 #!/bin/bash
 
 
- cpu=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
+
+
+
+netspeed() {
+    local iface rx1 tx1 rx2 tx2 rx_speed tx_speed
+     cpu=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
  mem=$(free | awk '/Mem:/ {printf "%.1f", $3/$2 * 100}')
  disk=$(df / | awk 'NR==2 {print $5}' | cut -d'%' -f1)
-
-
- iface=$(ip route | grep default | awk '{print $5}'); \
-rx1=$(grep $iface /proc/net/dev | awk '{print $2}'); \
-tx1=$(grep $iface /proc/net/dev | awk '{print $10}'); \
-sleep 1; \
-rx2=$(grep $iface /proc/net/dev | awk '{print $2}'); \
-tx2=$(grep $iface /proc/net/dev | awk '{print $10}'); \
+    # Get network interface
+    iface=$(ip route | grep default | awk '{print $5}')
+    if [ -z "$iface" ]; then
+        echo "Error: No default network interface found"
+        return 1
+    fi
+    
+    # First measurement
+    rx1=$(grep "$iface" /proc/net/dev | awk '{print $2}')
+    tx1=$(grep "$iface" /proc/net/dev | awk '{print $10}')
+    
+    # Wait 1 second
+    sleep 1
+    
+    # Second measurement
+    rx2=$(grep "$iface" /proc/net/dev | awk '{print $2}')
+    tx2=$(grep "$iface" /proc/net/dev | awk '{print $10}')
+    
+    # Calculate speeds
+    rx_speed=$(echo "scale=1; ($rx2 - $rx1) / 1048576" | bc 2>/dev/null || echo "0")
+    tx_speed=$(echo "scale=1; ($tx2 - $tx1) / 1048576" | bc 2>/dev/null || echo "0")
+    
+    echo "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}% | NET: ↓$(echo "scale=1; ($rx2 - $rx1) / 1048576" | bc)MB/s ↑$(echo "scale=1; ($tx2 - $tx1) / 1048576" | bc)MB/s"
+}
 
 # Start the main menu
 main_menu
+netspeed
 
