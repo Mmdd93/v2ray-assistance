@@ -1048,12 +1048,86 @@ show_main_menu() {
     echo -e "${PURPLE}MAINTENANCE:${CYAN}"
     echo -e "  ${GREEN}17${NC}${WHITE}. Backup Configurations${CYAN}"
     echo -e "  ${GREEN}18${NC}${WHITE}. Remove All Optimizations${CYAN}"
+     echo -e "  ${GREEN}19${NC}${WHITE}. stop system logging${CYAN}"
+      echo -e "  ${GREEN}20${NC}${WHITE}. Restoring system logging${CYAN}"
     echo
     echo -e "  ${GREEN}0${NC}${WHITE}. Exit${CYAN}"
     echo "================================================================"
     echo -e "${NC}"
 }
+main_menu() {
+    while true; do
+        show_main_menu
+        echo -e "${YELLOW}Select option: ${NC}"
+        read -r choice
+        
+        case $choice in
+            1) apply_gaming_optimizations ;;
+            2) apply_streaming_optimizations ;;
+            3) apply_general_optimizations ;;
+            4) apply_competitive_gaming_optimizations ;;
+            5) tc_optimize_by_category "gaming" ;;
+            6) tc_optimize_by_category "high-loss" ;;
+            7) tc_optimize_by_category "general" ;;
+            8) handle_netem_menu ;;
+            9) show_current_settings ;;
+            10) backup_configs ;;
+            11) show_current_settings ;;
+            12) show_sysctl_file ;;
+            13) test_network_performance ;;
+            14) edit_sysctl_live ;;
+            15) edit_sysctl_conf ;;
+            16) apply_settings_immediately ;;
+            17) backup_configs ;;
+        19)
+            echo -e "\033[1;33mWarning:\033[0m Masking journald and rsyslog will stop all system logging!"
+            read -rp "Are you sure you want to continue? (yes/no): " confirm
+            if [[ "$confirm" == "yes" ]]; then
+                echo -e "\033[1;31mStopping and masking journald + rsyslog services...\033[0m"
 
+                # Stop and mask journald
+                sudo systemctl stop systemd-journald.service systemd-journald.socket systemd-journald-dev-log.socket 2>/dev/null
+                sudo systemctl mask systemd-journald.service systemd-journald.socket systemd-journald-dev-log.socket 2>/dev/null
+
+                # Stop and mask rsyslog
+                sudo systemctl stop rsyslog.service 2>/dev/null
+                sudo systemctl mask rsyslog.service 2>/dev/null
+
+                echo -e "\033[1;32mJournald and rsyslog have been stopped and masked.\033[0m"
+            else
+                echo -e "\033[1;34mOperation canceled.\033[0m"
+            fi
+            ;;
+        20)
+            echo -e "\033[1;33mRestoring journald and rsyslog services...\033[0m"
+
+            # Unmask and enable journald
+            sudo systemctl unmask systemd-journald.service systemd-journald.socket systemd-journald-dev-log.socket 2>/dev/null
+            sudo systemctl enable systemd-journald.service systemd-journald.socket systemd-journald-dev-log.socket 2>/dev/null
+            sudo systemctl start systemd-journald.service 2>/dev/null
+
+            # Unmask and enable rsyslog
+            sudo systemctl unmask rsyslog.service 2>/dev/null
+            sudo systemctl enable rsyslog.service 2>/dev/null
+            sudo systemctl start rsyslog.service 2>/dev/null
+
+            echo -e "\033[1;32mJournald and rsyslog have been unmasked and restarted.\033[0m"
+            ;;
+
+            18) remove_all_optimizations ;;
+            0)
+                echo -e "${GREEN}Goodbye!${NC}"
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}Invalid option! Please select 0-12${NC}"
+                ;;
+        esac
+        
+        echo -e "\n${CYAN}Press Enter to continue...${NC}"
+        read -r
+    done
+}
 show_netem_menu() {
     clear
     echo -e "${PURPLE}"
@@ -1099,44 +1173,7 @@ handle_netem_menu() {
 
 
 
-main_menu() {
-    while true; do
-        show_main_menu
-        echo -e "${YELLOW}Select option: ${NC}"
-        read -r choice
-        
-        case $choice in
-            1) apply_gaming_optimizations ;;
-            2) apply_streaming_optimizations ;;
-            3) apply_general_optimizations ;;
-            4) apply_competitive_gaming_optimizations ;;
-            5) tc_optimize_by_category "gaming" ;;
-            6) tc_optimize_by_category "high-loss" ;;
-            7) tc_optimize_by_category "general" ;;
-            8) handle_netem_menu ;;
-            9) show_current_settings ;;
-            10) backup_configs ;;
-            11) show_current_settings ;;
-            12) show_sysctl_file ;;
-            13) test_network_performance ;;
-            14) edit_sysctl_live ;;
-            15) edit_sysctl_conf ;;
-            16) apply_settings_immediately ;;
-            17) backup_configs ;;
-            18) remove_all_optimizations ;;
-            0)
-                echo -e "${GREEN}Goodbye!${NC}"
-                exit 0
-                ;;
-            *)
-                echo -e "${RED}Invalid option! Please select 0-12${NC}"
-                ;;
-        esac
-        
-        echo -e "\n${CYAN}Press Enter to continue...${NC}"
-        read -r
-    done
-}
+
 
 # =============================================================================
 # INITIALIZATION
