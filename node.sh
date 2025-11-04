@@ -3408,7 +3408,7 @@ main_menu() {
         
         # Footer section
         echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-		echo -e "   $(netspeed)"
+		echo -e " $(netspeed)"
         menu_option "00" "Update scripts"
         menu_option "0" "Exit"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
@@ -3795,7 +3795,7 @@ netspeed() {
     rx_speed=$(echo "scale=1; ($rx2 - $rx1) / 1048576" | bc 2>/dev/null || echo "0")
     tx_speed=$(echo "scale=1; ($tx2 - $tx1) / 1048576" | bc 2>/dev/null || echo "0")
     
-   echo -e "${GREEN}[ CPU: ${cpu}% ]${NC}  ${YELLOW}[ RAM: ${mem}% ]${NC}  ${RED}[ DISK: ${disk}% ]${NC}  ${CYAN}[ NET: ↓${rx_speed}MB/s ↑${tx_speed}MB/s ]${NC}"
+   echo -e "${GREEN}[ CPU: ${cpu}% ]${NC} ${YELLOW}[ RAM: ${mem}% ]${NC} ${RED}[ DISK: ${disk}% ]${NC} ${CYAN}[ NET: ↓${rx_speed}MB/s ↑${tx_speed}MB/s ]${NC}"
 }
 # Start the main menu
 main_menu
