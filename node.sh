@@ -3303,13 +3303,18 @@ main_menu() {
         menu_option "59" "Uptime Kuma monitoring"
         separator
         
+
+# In your menu footer section:
         # Footer options
         section_header "MAINTENANCE"
 		
         menu_option "00" "Update scripts"
         menu_option "0" "Exit"
-
-
+        
+        # Display system status
+        echo
+        echo -e "${CYAN}System Status:${NC} $(netspeed)"
+        echo
         
         read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
         
@@ -3658,9 +3663,10 @@ sudo bash zex-tunnel-install.sh
 
 netspeed() {
     local iface rx1 tx1 rx2 tx2 rx_speed tx_speed
-     cpu=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
- mem=$(free | awk '/Mem:/ {printf "%.1f", $3/$2 * 100}')
- disk=$(df / | awk 'NR==2 {print $5}' | cut -d'%' -f1)
+    cpu=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
+    mem=$(free | awk '/Mem:/ {printf "%.1f", $3/$2 * 100}')
+    disk=$(df / | awk 'NR==2 {print $5}' | cut -d'%' -f1)
+    
     # Get network interface
     iface=$(ip route | grep default | awk '{print $5}')
     if [ -z "$iface" ]; then
@@ -3683,10 +3689,9 @@ netspeed() {
     rx_speed=$(echo "scale=1; ($rx2 - $rx1) / 1048576" | bc 2>/dev/null || echo "0")
     tx_speed=$(echo "scale=1; ($tx2 - $tx1) / 1048576" | bc 2>/dev/null || echo "0")
     
-    echo "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}% | NET: ↓$(echo "scale=1; ($rx2 - $rx1) / 1048576" | bc)MB/s ↑$(echo "scale=1; ($tx2 - $tx1) / 1048576" | bc)MB/s"
+    echo "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}% | NET: ↓${rx_speed}MB/s ↑${tx_speed}MB/s"
 }
-
 # Start the main menu
 main_menu
-netspeed
+
 
