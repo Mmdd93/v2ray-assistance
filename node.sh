@@ -3295,28 +3295,28 @@ main_menu() {
         echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${CYAN}Combine local tunnels (SIT, GRE, GENEVE, VXLAN) with:${NC}"
         echo -e "${CYAN}Backhaul, GOST, WSS, etc., for enhanced stealth${NC}"
-        echo -e "${LIGHT_GREEN} 26.${NC} ${CYAN}SIT tunnel 6to4 (IPv6 local) (github.com/Mmdd93/v2ray-assistance/)${NC}"
-        echo -e "${LIGHT_GREEN} 28.${NC} ${CYAN}GRE tunnel (IPv4/IPv6 local) (github.com/Mmdd93/v2ray-assistance/)${NC}"
-        echo -e "${LIGHT_GREEN} 45.${NC} ${CYAN}GENEVE tunnel (IPv4 local) (github.com/Mmdd93/v2ray-assistance/)${NC}"
-        echo -e "${LIGHT_GREEN} 46.${NC} ${CYAN}VXLAN tunnel (IPv4 local) (github.com/Mmdd93/v2ray-assistance/)${NC}"
-        echo -e "${LIGHT_GREEN} 31.${NC} ${CYAN}HAProxy tunnel (github.com/Mmdd93/v2ray-assistance/)${NC}"
-        echo -e "${LIGHT_GREEN} 27.${NC} ${CYAN}Backhaul tunnel (github.com/Mmdd93/v2ray-assistance/)${NC}"
-        echo -e "${LIGHT_GREEN} 44.${NC} ${CYAN}GOST tunnel by (github.com/Mmdd93/v2ray-assistance/)${NC}"
-        echo -e "${LIGHT_GREEN} 55.${NC} ${CYAN}GOST Reverse tunnel (github.com/Mmdd93/v2ray-assistance/)${NC}"
-        echo -e "${LIGHT_GREEN} 47.${NC} ${CYAN}WSS/WS tunnel (CDN support) (github.com/Mmdd93/v2ray-assistance/)${NC}"
+        echo -e "${LIGHT_GREEN} 26.${NC} ${CYAN}SIT tunnel 6to4 (IPv6 local) ${WHITE}(github.com/Mmdd93/v2ray-assistance/)${NC}"
+        echo -e "${LIGHT_GREEN} 28.${NC} ${CYAN}GRE tunnel (IPv4/IPv6 local) ${WHITE}(github.com/Mmdd93/v2ray-assistance/)${NC}"
+        echo -e "${LIGHT_GREEN} 45.${NC} ${CYAN}GENEVE tunnel (IPv4 local) ${WHITE}(github.com/Mmdd93/v2ray-assistance/)${NC}"
+        echo -e "${LIGHT_GREEN} 46.${NC} ${CYAN}VXLAN tunnel (IPv4 local) ${WHITE}(github.com/Mmdd93/v2ray-assistance/)${NC}"
+        echo -e "${LIGHT_GREEN} 31.${NC} ${CYAN}HAProxy tunnel ${WHITE}(github.com/Mmdd93/v2ray-assistance/)${NC}"
+        echo -e "${LIGHT_GREEN} 27.${NC} ${CYAN}Backhaul tunnel ${WHITE}(github.com/Mmdd93/v2ray-assistance/)${NC}"
+        echo -e "${LIGHT_GREEN} 44.${NC} ${CYAN}GOST tunnel by ${WHITE}(github.com/Mmdd93/v2ray-assistance/)${NC}"
+        echo -e "${LIGHT_GREEN} 55.${NC} ${CYAN}GOST Reverse tunnel ${WHITE}(github.com/Mmdd93/v2ray-assistance/)${NC}"
+        echo -e "${LIGHT_GREEN} 47.${NC} ${CYAN}WSS/WS tunnel (CDN support) ${WHITE}(github.com/Mmdd93/v2ray-assistance/)${NC}"
         echo -e "${LIGHT_GREEN} 56.${NC} ${CYAN}WireGuard Reverse Tunnel by (EYLAN)${NC}"
-        echo -e "${LIGHT_GREEN} 58.${NC} ${CYAN}WireGuard/Hysteria Tunnel (TAQ-BOSTAN) (github.com/ParsaKSH/TAQ-BOSTAN)${NC}"
+        echo -e "${LIGHT_GREEN} 58.${NC} ${CYAN}WireGuard/Hysteria Tunnel (TAQ-BOSTAN) ${WHITE}(github.com/ParsaKSH/TAQ-BOSTAN)${NC}"
         echo -e "${LIGHT_GREEN} 61.${NC} ${CYAN}Backhaul premium tunnel cracked by (t.me/anony_identity)${NC}"
-        echo -e "${LIGHT_GREEN} 62.${NC} ${CYAN}Rathole tunnel v2 by (github.com/Musixal)${NC}"
-        echo -e "${LIGHT_GREEN} 63.${NC} ${CYAN}Trust Tunnel (TCP/UDP over QUIC) (github.com/Erfan-XRay)${NC}"
-        echo -e "${LIGHT_GREEN} 64.${NC} ${CYAN}HPulse Tunnel (TCP/UDP over Hysteria 2) (github.com/Erfan-XRay)${NC}"
-        echo -e "${LIGHT_GREEN} 66.${NC} ${CYAN}DNS Tunnel (tunnel over DNS) (github.com/IRSupp/DnsTunnel)${NC}"
-        echo -e "${LIGHT_GREEN} 67.${NC} ${CYAN}FRP Tunnel (Fast Reverse Proxy) (github.com/MmdBay/frp-manager)${NC}"
-        echo -e "${LIGHT_GREEN} 68.${NC} ${CYAN}Phantom Tunnel (Reverse) by (github.com/webwizards-team/Phantom-Tunnel/)${NC}"
-        echo -e "${LIGHT_GREEN} 69.${NC} ${CYAN}FRPulse Tunnel (Fast Reverse Proxy) (github.com/Erfan-XRay/FRPulse)${NC}" 
-        echo -e "${LIGHT_GREEN} 70.${NC} ${CYAN}FRP Tunnel by Mehrad (github.com/mikeesierrah/frp-script)${NC}" 
-        echo -e "${LIGHT_GREEN} 76.${NC} ${CYAN}ZEX Tunnel Waterwall (github.com/izex/ZEX-Tunnel)${NC}"
-        echo -e "${LIGHT_GREEN} 79.${NC} ${CYAN}Pingtunnel Manager (github.com/hoseinlolready/Pingtunnel_manager)${NC}"
+        echo -e "${LIGHT_GREEN} 62.${NC} ${CYAN}Rathole tunnel v2 by ${WHITE}(github.com/Musixal)${NC}"
+        echo -e "${LIGHT_GREEN} 63.${NC} ${CYAN}Trust Tunnel (TCP/UDP over QUIC) ${WHITE}(github.com/Erfan-XRay)${NC}"
+        echo -e "${LIGHT_GREEN} 64.${NC} ${CYAN}HPulse Tunnel (TCP/UDP over Hysteria 2) ${WHITE}(github.com/Erfan-XRay)${NC}"
+        echo -e "${LIGHT_GREEN} 66.${NC} ${CYAN}DNS Tunnel (tunnel over DNS) ${WHITE}(github.com/IRSupp/DnsTunnel)${NC}"
+        echo -e "${LIGHT_GREEN} 67.${NC} ${CYAN}FRP Tunnel (Fast Reverse Proxy) ${WHITE}(github.com/MmdBay/frp-manager)${NC}"
+        echo -e "${LIGHT_GREEN} 68.${NC} ${CYAN}Phantom Tunnel (Reverse) by ${WHITE}(github.com/webwizards-team/Phantom-Tunnel/)${NC}"
+        echo -e "${LIGHT_GREEN} 69.${NC} ${CYAN}FRPulse Tunnel (Fast Reverse Proxy) ${WHITE}(github.com/Erfan-XRay/FRPulse)${NC}" 
+        echo -e "${LIGHT_GREEN} 70.${NC} ${CYAN}FRP Tunnel by Mehrad ${WHITE}(github.com/mikeesierrah/frp-script)${NC}" 
+        echo -e "${LIGHT_GREEN} 76.${NC} ${CYAN}ZEX Tunnel Waterwall ${WHITE}(github.com/izex/ZEX-Tunnel)${NC}"
+        echo -e "${LIGHT_GREEN} 79.${NC} ${CYAN}Pingtunnel Manager ${WHITE}(github.com/hoseinlolready/Pingtunnel_manager)${NC}"
         echo
         
         # XUI section - MAGENTA
@@ -3324,16 +3324,16 @@ main_menu() {
         echo -e "${MAGENTA} XUI ${NC}"
         echo -e "${MAGENTA}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${LIGHT_GREEN} 38.${NC} ${MAGENTA}X-UI panels (x-ui, 3x-ui, tx-ui) ${GREEN}[Single]${NC}${NC}"
-        echo -e "${LIGHT_GREEN} 74.${NC} ${MAGENTA}Sing-box/SagerNet panel (s-ui) ${GREEN}[Single]${NC} by github.com/alireza0/s-ui${NC}"
-        echo -e "${LIGHT_GREEN} 73.${NC} ${MAGENTA}X-UI panel ${CYAN}[Multi]${NC} by github.com/azavaxhuman/Nodex${NC}"
-        echo -e "${LIGHT_GREEN} 80.${NC} ${MAGENTA}Hysteria2 Blitz Panel ${GREEN}[Single]${NC} by github.com/ReturnFI/Blitz${NC}"
+        echo -e "${LIGHT_GREEN} 74.${NC} ${MAGENTA}Sing-box/SagerNet panel (s-ui) ${GREEN}[Single]${NC} ${WHITE}by github.com/alireza0/s-ui${NC}"
+        echo -e "${LIGHT_GREEN} 73.${NC} ${MAGENTA}X-UI panel ${CYAN}[Multi]${NC} ${WHITE}by github.com/azavaxhuman/Nodex${NC}"
+        echo -e "${LIGHT_GREEN} 80.${NC} ${MAGENTA}Hysteria2 Blitz Panel ${GREEN}[Single]${NC} ${WHITE}by github.com/ReturnFI/Blitz${NC}"
         
         # Telegram Bot section - PURPLE
         echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${PURPLE} TELEGRAM BOT ${NC}"
         echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 75.${NC} ${PURPLE}Mirza Bot pro (telegram bot for sale) ${CYAN}[Multi]${NC} by github.com/mahdiMGF2/botmirzapanel${NC}"
-        echo -e "${LIGHT_GREEN} 77.${NC} ${PURPLE}mtproto proxy (telegram proxy) by github.com/seriyps/mtproto_proxy${NC}"
+        echo -e "${LIGHT_GREEN} 75.${NC} ${PURPLE}Mirza Bot pro (telegram bot for sale) ${CYAN}[Multi]${NC} ${WHITE}by github.com/mahdiMGF2/botmirzapanel${NC}"
+        echo -e "${LIGHT_GREEN} 77.${NC} ${PURPLE}mtproto proxy (telegram proxy) ${WHITE}by github.com/seriyps/mtproto_proxy${NC}"
         echo
         
         # Marzban section - LIGHT_BLUE
@@ -3347,10 +3347,10 @@ main_menu() {
         echo
         
         # Remnawave section - LIGHT_GREEN
-        echo -e "${LIGHT_GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${LIGHT_GREEN} REMNAWAVE ${NC}"
-        echo -e "${LIGHT_GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 48.${NC} ${LIGHT_GREEN}Remnawave ${CYAN}[Multi]${NC}${NC}"
+        echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${GREEN} REMNAWAVE ${NC}"
+        echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
+        echo -e "${LIGHT_GREEN} 48.${NC} ${GREEN}Remnawave ${CYAN}[Multi]${NC}${NC}"
         echo
         
         # Marzneshin section - ORANGE
@@ -3366,11 +3366,11 @@ main_menu() {
         echo -e "${LIGHT_CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${LIGHT_CYAN} WIREGUARD-OPENVPN-L2TP-SSTP ${NC}"
         echo -e "${LIGHT_CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 60.${NC} ${LIGHT_CYAN}WireGuard Dashboard ${GREEN}[Single]${NC} by github.com/WGDashboard/WGDashboard${NC}"
-        echo -e "${LIGHT_GREEN} 54.${NC} ${LIGHT_CYAN}SoftEther RTX-VPN ${GREEN}[Single]${NC} by github.com/Sir-MmD/RTX-VPN${NC}"
-        echo -e "${LIGHT_GREEN} 57.${NC} ${LIGHT_CYAN}OPEN VPN ${CYAN}[Multi]${NC} by github.com/eylandoo/openvpn_webpanel_manager${NC}"
-        echo -e "${LIGHT_GREEN} 81.${NC} ${LIGHT_CYAN}OV-Panel ${CYAN}[Multi]${NC} by github.com/primeZdev/ov-panel${NC}"
-        echo -e "${LIGHT_GREEN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC} by github.com/amiridev-org/irangate-ov${NC}"
+        echo -e "${LIGHT_GREEN} 60.${NC} ${LIGHT_CYAN}WireGuard Dashboard ${GREEN}[Single]${NC} ${WHITE}by github.com/WGDashboard/WGDashboard${NC}"
+        echo -e "${LIGHT_GREEN} 54.${NC} ${LIGHT_CYAN}SoftEther RTX-VPN ${GREEN}[Single]${NC} ${WHITE}by github.com/Sir-MmD/RTX-VPN${NC}"
+        echo -e "${LIGHT_GREEN} 57.${NC} ${LIGHT_CYAN}OPEN VPN ${CYAN}[Multi]${NC} ${WHITE}by github.com/eylandoo/openvpn_webpanel_manager${NC}"
+        echo -e "${LIGHT_GREEN} 81.${NC} ${LIGHT_CYAN}OV-Panel ${CYAN}[Multi]${NC} ${WHITE}by github.com/primeZdev/ov-panel${NC}"
+        echo -e "${LIGHT_GREEN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC} ${WHITE}by github.com/amiridev-org/irangate-ov${NC}"
         echo
         
         # Panel Backup section - YELLOW
@@ -3396,6 +3396,7 @@ main_menu() {
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         
         read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
+
 
         case $choice in
             1) 
