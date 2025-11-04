@@ -1269,7 +1269,7 @@ timestamp=$(date +%Y%m%d_%H%M%S)
 update_docker_compose() {
     if [[ -f "$compose_file" ]]; then
         echo -e "\033[1;34mUpdating Docker Compose configuration...\033[0m"
-        cat <<EOL > "$compose_file"
+        cat << 'EOL' > "$compose_file"
 services:
   marzban:
     image: gozargah/marzban:dev
@@ -1278,7 +1278,6 @@ services:
     network_mode: host
     volumes:
       - /var/lib/marzban:/var/lib/marzban
-
     depends_on:
       - mysql
       
@@ -2682,11 +2681,7 @@ display_system_info() {
     echo -e "\033[1;32mTime:\033[0m $(date +"%T %Z")"
     
     # System Status (assuming netspeed is a custom function)
-    if command -v netspeed >/dev/null 2>&1; then
-        echo -e "${CYAN}System Status:${NC} $(timeout 4 netspeed 2>/dev/null || echo "Unknown")"
-    else
-        echo -e "${CYAN}System Status:${NC} netspeed command not found"
-    fi
+    echo -e "${CYAN}System Status:${NC} $(netspeed)"
 }
 fix_timezone() {
     sudo timedatectl set-timezone UTC
