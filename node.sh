@@ -3193,7 +3193,7 @@ section_header() {
     local color=$1
     local title=$2
     echo -e "${color}╔══════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${color}║${NC} ${title} ${color}║${NC}"
+    echo -e "${color}║${NC} $title ${color}║${NC}"
     echo -e "${color}╚══════════════════════════════════════════════════════════════════╝${NC}"
 }
 
@@ -3260,7 +3260,9 @@ main_menu() {
         display_header
         
         # System section - BLUE
-        section_header "$BLUE" "SYSTEM MANAGEMENT"
+        echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${BLUE}║${NC} SYSTEM MANAGEMENT ${BLUE}║${NC}"
+        echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "1" "Update and upgrade system + install packages"
         menu_option "2" "Fix update issues (broken apt/dependencies)"
         menu_option "3" "Change update and package sources to Iran or global"
@@ -3268,9 +3270,12 @@ main_menu() {
         menu_option "5" "Install Docker and Docker Compose"
         menu_option "6" "Install Docker on Iran servers"
         menu_option "72" "MTU management"
+        echo
         
         # Tools section - GREEN
-        section_header "$GREEN" "TOOLS"
+        echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${GREEN}║${NC} TOOLS ${GREEN}║${NC}"
+        echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "7" "ISP defender (allow/block Iran ISPs)"
         menu_option "8" "Network Optimizer and BBR"
         menu_option "9" "Speed test and benchmark"
@@ -3299,12 +3304,14 @@ main_menu() {
         menu_option "36" "Cron job management"
         menu_option "37" "File management tools"
         menu_option "71" "Abuse Defender (Hetzner)"
+        echo
        
         # Tunnel section - CYAN
-        section_header "$CYAN" "TUNNEL SERVICES"
-        echo -e "${CYAN}║${NC} ${LIGHT_CYAN}Combine local tunnels (SIT, GRE, GENEVE, VXLAN) with:${NC} ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC} ${LIGHT_CYAN}Backhaul, GOST, WSS, etc., for enhanced stealth${NC} ${CYAN}║${NC}"
+        echo -e "${CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${CYAN}║${NC} TUNNEL SERVICES ${CYAN}║${NC}"
         echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
+        echo -e "${CYAN}Combine local tunnels (SIT, GRE, GENEVE, VXLAN) with:${NC}"
+        echo -e "${CYAN}Backhaul, GOST, WSS, etc., for enhanced stealth${NC}"
         menu_option "26" "SIT tunnel 6to4 (IPv6 local) (github.com/Mmdd93/v2ray-assistance/)"
         menu_option "28" "GRE tunnel (IPv4/IPv6 local) (github.com/Mmdd93/v2ray-assistance/)"
         menu_option "45" "GENEVE tunnel (IPv4 local) (github.com/Mmdd93/v2ray-assistance/)"
@@ -3327,62 +3334,86 @@ main_menu() {
         menu_option "70" "FRP Tunnel by Mehrad (github.com/mikeesierrah/frp-script)" 
         menu_option "76" "ZEX Tunnel Waterwall (github.com/izex/ZEX-Tunnel)"
         menu_option "79" "Pingtunnel Manager (github.com/hoseinlolready/Pingtunnel_manager)"
+        echo
         
-        # Panel section - MAGENTA
-        section_header "$MAGENTA" "XUI"
+        # XUI section - MAGENTA
+        echo -e "${MAGENTA}╔══════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${MAGENTA}║${NC} XUI ${MAGENTA}║${NC}"
+        echo -e "${MAGENTA}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "38" "X-UI panels (x-ui, 3x-ui, tx-ui)"
         menu_option "74" "Sing-box/SagerNet panel (s-ui) (github.com/alireza0/s-ui)"
         menu_option "73" "X-UI panel multi node location (github.com/azavaxhuman/Nodex)"
         menu_option "80" "Hysteria2 Blitz Panel (github.com/ReturnFI/Blitz)"
         
         # Telegram Bot section - PURPLE
-        section_header "$PURPLE" "TELEGRAM BOT"
+        echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${PURPLE}║${NC} TELEGRAM BOT ${PURPLE}║${NC}"
+        echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "75" "Mirza Bot pro (telegram bot for sale) (github.com/mahdiMGF2/botmirzapanel)"
         menu_option "77" "mtproto proxy (telegram proxy) (github.com/seriyps/mtproto_proxy)"
+        echo
         
         # Marzban section - LIGHT_BLUE
-        section_header "$LIGHT_BLUE" "MARZBAN"
+        echo -e "${LIGHT_BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${LIGHT_BLUE}║${NC} MARZBAN ${LIGHT_BLUE}║${NC}"
+        echo -e "${LIGHT_BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "39" "Marzban panel"
         menu_option "40" "Marzban node by v2"
         menu_option "53" "Marzban node official script"
         menu_option "52" "Marzban node by Mehrdad"
+        echo
         
         # Remnawave section - LIGHT_GREEN
-        section_header "$LIGHT_GREEN" "REMNAWAVE"
+        echo -e "${LIGHT_GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${LIGHT_GREEN}║${NC} REMNAWAVE ${LIGHT_GREEN}║${NC}"
+        echo -e "${LIGHT_GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "48" "Remnawave"
+        echo
         
         # Marzneshin section - ORANGE
-        section_header "$ORANGE" "MARZNESHIN"
+        echo -e "${ORANGE}╔══════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${ORANGE}║${NC} MARZNESHIN ${ORANGE}║${NC}"
+        echo -e "${ORANGE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "49" "Marzneshin"
         menu_option "50" "Marzneshin node by ErfJab"
         menu_option "51" "Marzneshin node by Mehrdad"
+        echo
         
         # WireGuard/OpenVPN section - LIGHT_CYAN
-        section_header "$LIGHT_CYAN" "WIREGUARD - OPENVPN"
+        echo -e "${LIGHT_CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${LIGHT_CYAN}║${NC} WIREGUARD - OPENVPN ${LIGHT_CYAN}║${NC}"
+        echo -e "${LIGHT_CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "60" "WGDashboard (WireGuard management)"
         menu_option "54" "SoftEther by RTX-VPN v2 (L2TP, OpenVPN, SSTP)"
         menu_option "57" "OPENVPN Webpanel (Multi node location)"
         menu_option "81" "OV-Panel (Multi node location)  by github.com/primeZdev/ov-panel"
         menu_option "82" "IranGate-OV  by github.com/amiridev-org/irangate-ov"
+        echo
         
         # Panel Backup section - YELLOW
-        section_header "$YELLOW" "PANEL BACKUP"
+        echo -e "${YELLOW}╔══════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${YELLOW}║${NC} PANEL BACKUP ${YELLOW}║${NC}"
+        echo -e "${YELLOW}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "41" "Panel Backup (Marzban, X-UI, Hiddify)"
         menu_option "42" "Auto panel restart"
+        echo
         
         # Monitoring section - WHITE
-        section_header "$WHITE" "MONITORING"
-        echo -e "${WHITE}║${NC} ${CYAN}System Status:${NC} $(netspeed) ${WHITE}║${NC}"
+        echo -e "${WHITE}╔══════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${WHITE}║${NC} MONITORING ${WHITE}║${NC}"
         echo -e "${WHITE}╚══════════════════════════════════════════════════════════════════╝${NC}"
+        echo -e "${CYAN}System Status:${NC} $(netspeed)"
         menu_option "59" "Uptime Kuma monitoring"
+        echo
         
-        # Footer section - BLUE
+        # Footer section
         echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         menu_option "00" "Update scripts"
         menu_option "0" "Exit"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         
         read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
+        
 
         case $choice in
             1) 
