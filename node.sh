@@ -3408,7 +3408,7 @@ main_menu() {
         
         # Footer section
         echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-		echo -e "$(netspeed)"
+		echo -e "   $(netspeed)"
         menu_option "00" "Update scripts"
         menu_option "0" "Exit"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
