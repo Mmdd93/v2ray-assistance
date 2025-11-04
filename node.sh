@@ -3307,7 +3307,10 @@ main_menu() {
         section_header "MAINTENANCE"
         menu_option "00" "Update scripts"
         menu_option "0" "Exit"
-        echo ""
+    cpu=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
+    mem=$(free | awk '/Mem:/ {printf "%.1f", $3/$2 * 100}')
+    disk=$(df / | awk 'NR==2 {print $5}' | cut -d'%' -f1)
+    echo "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}%"
         
         read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
         
@@ -3649,13 +3652,8 @@ sudo bash zex-tunnel-install.sh
     done
 }
 #!/bin/bash
-status() {
-    cpu=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
-    mem=$(free | awk '/Mem:/ {printf "%.1f", $3/$2 * 100}')
-    disk=$(df / | awk 'NR==2 {print $5}' | cut -d'%' -f1)
-    echo "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}%"
-}
-status
+
+
 # Start the main menu
 main_menu
 
