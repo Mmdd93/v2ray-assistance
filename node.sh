@@ -3177,8 +3177,8 @@ NC='\033[0m' # No Color
 display_header() {
     clear
     echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║${NC}${CYAN}                   v2ray ASSISTANT MANAGEMENT TOOL                   ${NC}${GREEN}║${NC}"
-    echo -e "${GREEN}║${NC}${YELLOW}              Telegram: @tlgrmv2 | Version: 25.9.5                ${NC}${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}${CYAN}   v2ray ASSISTANT MANAGEMENT TOOL      ${NC}${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}${YELLOW}   Telegram: @tlgrmv2 | Version: 25.9.5      ${NC}${GREEN}║${NC}"
     echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
 }
