@@ -3248,11 +3248,15 @@ section_header() {
 }
 
 # Function to display menu options with section color
+# Function to display menu options with section color
 menu_option() {
     local section_color=$1
     local number=$2
     local text=$3
-    printf "${GREEN}%3s${NC} ${section_color}%-55s${NC}\n" "$number" "$text"
+    # Build the formatted string
+    local formatted=$(printf "%3s %-55s" "$number" "$text")
+    # Print with colors using echo -e
+    echo -e "${GREEN}${formatted:0:3}${NC}${section_color}${formatted:3}${NC}"
 }
 
 # Main menu function
