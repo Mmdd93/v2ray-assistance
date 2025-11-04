@@ -3367,11 +3367,11 @@ main_menu() {
         echo -e "${LIGHT_CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${LIGHT_CYAN} WIREGUARD-OPENVPN-L2TP-SSTP ${NC}"
         echo -e "${LIGHT_CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 60.${NC} ${LIGHT_CYAN}WireGuard Dashboard ${GREEN}[Single]${NC} ${WHITE}by github.com/WGDashboard/WGDashboard${NC}"
-        echo -e "${LIGHT_GREEN} 54.${NC} ${LIGHT_CYAN}SoftEther RTX-VPN ${GREEN}[Single]${NC} ${WHITE}by github.com/Sir-MmD/RTX-VPN${NC}"
-        echo -e "${LIGHT_GREEN} 57.${NC} ${LIGHT_CYAN}OPEN VPN ${RED}[Multi]${NC} ${WHITE}by github.com/eylandoo/openvpn_webpanel_manager${NC}"
-        echo -e "${LIGHT_GREEN} 81.${NC} ${LIGHT_CYAN}OV-Panel ${RED}[Multi]${NC} ${WHITE}by github.com/primeZdev/ov-panel${NC}"
-        echo -e "${LIGHT_GREEN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC} ${WHITE}by github.com/amiridev-org/irangate-ov${NC}"
+        echo -e "${LIGHT_GREEN} 60.${NC} ${LIGHT_CYAN}WireGuard Dashboard ${GREEN}[Single]${NC} ${WHITE}[github.com/WGDashboard]${NC}"
+        echo -e "${LIGHT_GREEN} 54.${NC} ${LIGHT_CYAN}SoftEther RTX-VPN ${GREEN}[Single]${NC} ${WHITE}[github.com/Sir-MmD]${NC}"
+        echo -e "${LIGHT_GREEN} 57.${NC} ${LIGHT_CYAN}OPEN VPN ${RED}[Multi]${NC} ${WHITE}[github.com/eylandoo]${NC}"
+        echo -e "${LIGHT_GREEN} 81.${NC} ${LIGHT_CYAN}OV-Panel ${RED}[Multi]${NC} ${WHITE}[github.com/primeZdev/ov-panel]${NC}"
+        echo -e "${LIGHT_GREEN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC} ${WHITE}[github.com/amiridev-org]${NC}"
         echo
         
         # Panel Backup section - YELLOW
