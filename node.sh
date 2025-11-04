@@ -3308,7 +3308,7 @@ main_menu() {
         menu_option "00" "Update scripts"
         menu_option "0" "Exit"
 
-menu_option    "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}%"
+menu_option   echo "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}%"
         
         read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
         
