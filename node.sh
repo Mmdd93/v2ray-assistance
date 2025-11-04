@@ -3247,13 +3247,14 @@ main_menu() {
         echo -e "${BLUE} SYSTEM MANAGEMENT  ${NC}"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${BLUE}  1.${NC} ${BLUE}Update and upgrade system + install packages${NC}"
-        echo -e "${BLUE}  2.${NC} ${BLUE}Fix update issues (broken apt/dependencies)${NC}"
+        echo -e "${BLUE}  2.${NC} ${BLUE}Fix Update Issues (broken apt/dependencies)${NC}"
         echo -e "${BLUE}  3.${NC} ${BLUE}Change update and package sources to Iran or global${NC}"
-        echo -e "${BLUE}  4.${NC} ${BLUE}System information${NC}"
+        echo -e "${BLUE}  4.${NC} ${BLUE}System Information${NC}"
         echo -e "${BLUE}  5.${NC} ${BLUE}Install Docker and Docker Compose${NC}"
-        echo -e "${BLUE}  6.${NC} ${BLUE}Install Docker on Iran servers${NC}"
-        echo -e "${BLUE} 72.${NC} ${BLUE}MTU management${NC}"
-		echo -e "${BLUE} 83.${NC} ${BLUE}Cleanup [Advanced]${NC}"
+        echo -e "${BLUE}  6.${NC} ${BLUE}Install Docker On Iran Servers${NC}"
+		echo -e "${BLUE}  8.${NC} ${LIGHT_GREEN}System and Network Optimizer${NC}"
+        echo -e "${BLUE} 72.${NC} ${BLUE}MTU Management${NC}"
+		echo -e "${BLUE} 83.${NC} ${BLUE}Disk Cleanup [Advanced]${NC}"
         echo
         
         # Tools section - GREEN
@@ -3261,7 +3262,6 @@ main_menu() {
         echo -e "${LIGHT_GREEN} TOOLS  ${NC}"
         echo -e "${LIGHT_GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${LIGHT_GREEN}  7.${NC} ${LIGHT_GREEN}ISP defender (allow/block Iran ISPs)${NC}"
-        echo -e "${LIGHT_GREEN}  8.${NC} ${LIGHT_GREEN}Network Optimizer and BBR${NC}"
         echo -e "${LIGHT_GREEN}  9.${NC} ${LIGHT_GREEN}Speed test and benchmark${NC}"
         echo -e "${LIGHT_GREEN} 10.${NC} ${LIGHT_GREEN}Port management (in-use ports, connected IPs)${NC}"
         echo -e "${LIGHT_GREEN} 11.${NC} ${LIGHT_GREEN}Auto clear cache and server reboot${NC}"
