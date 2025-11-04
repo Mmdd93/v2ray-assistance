@@ -8,19 +8,187 @@ MAGENTA="\033[1;35m"
 CYAN="\033[1;36m"
 RESET="\033[0m"
 
+# Function to display system status
+show_status() {
+    echo -e "\033[1;36m============================================\033[0m"
+    echo -e "\033[1;33m           DNS MANAGER - SYSTEM STATUS\033[0m"
+    echo -e "\033[1;36m============================================\033[0m"
+    
+    # DNS resolution status
+    echo -e "\033[1;35mDNS RESOLUTION:\033[0m"
+    if nslookup google.com &>/dev/null; then
+        echo -e "  ${GREEN}✓ DNS Resolution: WORKING${RESET}"
+    else
+        echo -e "  ${RED}✗ DNS Resolution: BROKEN${RESET}"
+    fi
+    
+    # systemd-resolved status
+    echo -e "\033[1;35mSYSTEMD-RESOLVED:\033[0m"
+    if systemctl is-active systemd-resolved &>/dev/null; then
+        echo -e "  ${GREEN}✓ Service: ACTIVE${RESET}"
+    else
+        echo -e "  ${RED}✗ Service: INACTIVE${RESET}"
+    fi
+    
+    # resolv.conf status
+    echo -e "\033[1;35mRESOLV.CONF:\033[0m"
+    if [ -L "/etc/resolv.conf" ]; then
+        echo -e "  ${GREEN}✓ Type: SYMLINK${RESET}"
+        echo -e "  ${BLUE}  Target: $(readlink /etc/resolv.conf)${RESET}"
+    elif [ -f "/etc/resolv.conf" ]; then
+        echo -e "  ${YELLOW}⚠ Type: REGULAR FILE${RESET}"
+    else
+        echo -e "  ${RED}✗ Type: MISSING${RESET}"
+    fi
+    
+    # Current DNS servers
+    echo -e "\033[1;35mCURRENT DNS SERVERS:\033[0m"
+    grep -E "^nameserver" /etc/resolv.conf 2>/dev/null | head -3 | while read line; do
+        echo -e "  ${CYAN}  $line${RESET}"
+    done
+    
+    if [ ! -s "/etc/resolv.conf" ]; then
+        echo -e "  ${RED}  No DNS servers configured${RESET}"
+    fi
+    
+    echo -e "\033[1;36m============================================\033[0m"
+    echo ""
+}
+
+# Troubleshooting function
+troubleshoot_dns() {
+    echo -e "\033[1;36m============================================\033[0m"
+    echo -e "\033[1;33m           DNS TROUBLESHOOTING\033[0m"
+    echo -e "\033[1;36m============================================\033[0m"
+    
+    # Test 1: Basic DNS resolution
+    echo -e "\033[1;35m1. Testing DNS Resolution:\033[0m"
+    if nslookup google.com &>/dev/null; then
+        echo -e "   ${GREEN}✓ Basic DNS resolution: SUCCESS${RESET}"
+    else
+        echo -e "   ${RED}✗ Basic DNS resolution: FAILED${RESET}"
+    fi
+    
+    # Test 2: Check systemd-resolved service
+    echo -e "\033[1;35m2. Checking systemd-resolved service:\033[0m"
+    resolved_status=$(systemctl is-active systemd-resolved 2>/dev/null)
+    if [ "$resolved_status" = "active" ]; then
+        echo -e "   ${GREEN}✓ systemd-resolved: ACTIVE${RESET}"
+    else
+        echo -e "   ${RED}✗ systemd-resolved: $resolved_status${RESET}"
+        echo -e "   ${YELLOW}  Attempting to start service...${RESET}"
+        sudo systemctl start systemd-resolved
+        sleep 2
+    fi
+    
+    # Test 3: Check resolv.conf
+    echo -e "\033[1;35m3. Checking /etc/resolv.conf:\033[0m"
+    if [ -e "/etc/resolv.conf" ]; then
+        echo -e "   ${GREEN}✓ File exists${RESET}"
+        echo -e "   ${CYAN}  Content:${RESET}"
+        cat /etc/resolv.conf | while read line; do
+            echo -e "      $line"
+        done
+    else
+        echo -e "   ${RED}✗ File missing${RESET}"
+    fi
+    
+    # Test 4: Check for conflicts
+    echo -e "\033[1;35m4. Checking for DNS conflicts:\033[0m"
+    if pgrep dnsmasq >/dev/null; then
+        echo -e "   ${YELLOW}⚠ dnsmasq is running (potential conflict)${RESET}"
+    else
+        echo -e "   ${GREEN}✓ No dnsmasq conflict${RESET}"
+    fi
+    
+    # Test 5: Network connectivity
+    echo -e "\033[1;35m5. Testing network connectivity:\033[0m"
+    if ping -c 1 -W 2 8.8.8.8 &>/dev/null; then
+        echo -e "   ${GREEN}✓ Network connectivity: OK${RESET}"
+    else
+        echo -e "   ${RED}✗ Network connectivity: FAILED${RESET}"
+    fi
+    
+    # Test 6: Check DNS configuration files
+    echo -e "\033[1;35m6. Checking DNS configuration files:\033[0m"
+    if [ -f "/etc/systemd/resolved.conf" ]; then
+        echo -e "   ${GREEN}✓ /etc/systemd/resolved.conf exists${RESET}"
+        dns_configured=$(grep -c "^DNS=" /etc/systemd/resolved.conf 2>/dev/null || echo "0")
+        if [ "$dns_configured" -gt 0 ]; then
+            echo -e "   ${GREEN}✓ DNS servers configured in resolved.conf${RESET}"
+        else
+            echo -e "   ${YELLOW}⚠ No DNS servers in resolved.conf${RESET}"
+        fi
+    else
+        echo -e "   ${YELLOW}⚠ /etc/systemd/resolved.conf missing${RESET}"
+    fi
+    
+    echo ""
+    echo -e "\033[1;33mQuick Fix Options:\033[0m"
+    echo -e "   ${CYAN}a) Reset to default DNS${RESET}"
+    echo -e "   ${CYAN}b) Create basic resolv.conf${RESET}"
+    echo -e "   ${CYAN}c) Restart network services${RESET}"
+    echo -e "   ${CYAN}d) Return to menu${RESET}"
+    
+    read -p "Select option (a/b/c/d): " fix_choice
+    
+    case "$fix_choice" in
+        a)
+            echo -e "\033[1;33mResetting to default DNS...${RESET}"
+            sudo systemctl enable --now systemd-resolved.service
+            sudo rm -f /etc/resolv.conf
+            sudo ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+            sudo systemctl restart systemd-resolved.service
+            echo -e "${GREEN}DNS reset completed${RESET}"
+            ;;
+        b)
+            echo -e "\033[1;33mCreating basic resolv.conf...${RESET}"
+            sudo tee /etc/resolv.conf > /dev/null << EOF
+nameserver 8.8.8.8
+nameserver 1.1.1.1
+options timeout:2
+options attempts:2
+EOF
+            echo -e "${GREEN}Basic resolv.conf created${RESET}"
+            ;;
+        c)
+            echo -e "\033[1;33mRestarting network services...${RESET}"
+            sudo systemctl restart systemd-resolved
+            sudo systemctl restart systemd-networkd
+            echo -e "${GREEN}Network services restarted${RESET}"
+            ;;
+        d)
+            return
+            ;;
+        *)
+            echo -e "${RED}Invalid option${RESET}"
+            ;;
+    esac
+    
+    # Test again after fix
+    echo ""
+    echo -e "\033[1;33mTesting after fix...${RESET}"
+    if nslookup google.com &>/dev/null; then
+        echo -e "${GREEN}✓ DNS resolution is now working!${RESET}"
+    else
+        echo -e "${RED}✗ DNS resolution still failing${RESET}"
+        echo -e "${YELLOW}More advanced troubleshooting may be needed${RESET}"
+    fi
+}
+
 change_dns() {
     while true; do
-        echo -e "\033[1;36m============================================\033[0m"
-        echo -e "\033[1;33m           Change DNS Configuration\033[0m"
-        echo -e "\033[1;36m============================================\033[0m"
-
+        # Show status header
+        show_status
+        
         echo -e "\033[1;33mChoose the type of DNS change:\033[0m"
         echo -e "\033[1;35m1.\033[0m Change DNS"
         echo -e "\033[1;32m2.\033[0m Restore Default DNS"
         echo -e "\033[1;32m3.\033[0m Test current DNS"
-        echo -e "\033[1;32m4.\033[0m Edit /etc/systemd/resolved.conf using nano"
-        echo -e "\033[1;32m5.\033[0m Edit /etc/resolv.conf using nano"
-        echo -e "\033[1;32m6.\033[0m Restart resolv.conf"
+        echo -e "\033[1;31m4.\033[0m TROUBLESHOOT DNS Problems"
+        echo -e "\033[1;32m5.\033[0m Edit /etc/systemd/resolved.conf using nano"
+        echo -e "\033[1;32m6.\033[0m Edit /etc/resolv.conf using nano"
+        echo -e "\033[1;32m7.\033[0m Restart resolv.conf"
         echo -e "\033[1;32m0.\033[0m Return to the main menu"
 
         read -p "Enter your choice: " dns_choice
@@ -48,9 +216,8 @@ change_dns() {
 
                 for index in "${!dns_servers_list[@]}"; do
                     IFS=":" read -r dns_name dns_primary dns_secondary <<< "${dns_servers_list[$index]}"
-                    color=${colors[index % ${#colors[@]}]}  # Cycle through colors
+                    color=${colors[index % ${#colors[@]}]}
                     echo -e "\033[${color}m$index. $dns_name: Primary: [$dns_primary] Secondary: [$dns_secondary]\033[0m"
-                    
                     echo -e "\033[1;36m---------------------------------------------\033[0m"
                 done
                 
@@ -66,7 +233,6 @@ change_dns() {
                     read -p "Enter your choice: " custom_secondary_dns
                     dns_servers=("$custom_primary_dns" "$custom_secondary_dns")
                 else
-                    # Validate the input in a loop
                     while true; do
                         if ! [[ "$dns_selection" =~ ^[0-9]+$ ]] || [ "$dns_selection" -gt "${#dns_servers_list[@]}" ]; then
                             echo -e "\033[1;31mInvalid DNS selection. Please try again.\033[0m"
@@ -74,14 +240,13 @@ change_dns() {
                         else
                             IFS=":" read -r dns_name dns_primary dns_secondary <<< "${dns_servers_list[$dns_selection]}"
                             dns_servers=("$dns_primary" "$dns_secondary")
-                            break  # Valid input, exit the loop
+                            break
                         fi
                     done
                 fi
 
                 echo -e "\033[1;33mSetting up permanent DNS...\033[0m"
 
-                # Update DNS settings in /etc/systemd/resolved.conf
                 {
                     echo "[Resolve]"
                     for dns in "${dns_servers[@]}"; do
@@ -90,16 +255,11 @@ change_dns() {
                     echo "DNSStubListener=no"
                 } | sudo tee /etc/systemd/resolved.conf > /dev/null
 
-                
-
-                # Create symbolic link for /etc/resolv.conf
                 sudo ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
                 echo -e "\033[1;32mSymbolic link created: /etc/resolv.conf -> /run/systemd/resolve/resolv.conf\033[0m"
                 
-                # Restart systemd-resolved to apply changes
                 sudo systemctl restart systemd-resolved.service
 
-                # Create the DNS configuration script
                 dns_script_path="/root/configure-dns.sh"
                 echo -e "\033[1;33mCreating DNS configuration script...\033[0m"
 
@@ -112,35 +272,27 @@ change_dns() {
                     echo "# Update DNS settings in /etc/systemd/resolved.conf"
                     echo "{"
                     echo "    echo \"[Resolve]\""
-                    echo "    # Loop through each DNS server and add it to the resolved.conf"
                     echo "    for dns in \"\${dns_servers[@]}\"; do"
                     echo "        [ -n \"\$dns\" ] && echo \"DNS=\$dns\""
                     echo "    done"
-                    echo "    # Disable the DNS stub listener to avoid conflicts with /etc/resolv.conf"
                     echo "    echo \"DNSStubListener=no\""
                     echo "} | sudo tee /etc/systemd/resolved.conf > /dev/null"
                     echo ""
-                    echo "# Create symbolic link for /etc/resolv.conf to use systemd-resolved DNS settings"
                     echo "sudo ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf"
-                    echo "echo -e \"\033[1;32mSymbolic link created: /etc/resolv.conf -> /run/systemd/resolve/resolv.conf\033[0m\""
-                    echo ""
-                    echo "# Restart systemd-resolved to apply the new DNS configuration"
                     echo "sudo systemctl restart systemd-resolved.service"
-                    echo "echo -e \"\033[1;32mDNS settings updated and systemd-resolved service restarted.\033[0m\""
                 } > "$dns_script_path"
 
                 chmod +x "$dns_script_path"
                 echo -e "\033[1;32mScript created at $dns_script_path\033[0m"
 
-                # Check if the cron job already exists and overwrite if necessary
-cron_job="@reboot $dns_script_path"
-if crontab -l 2>/dev/null | grep -qF "$cron_job"; then
-    echo -e "\033[1;33mCron job already exists. Overwriting...\033[0m"
-    (crontab -l 2>/dev/null | grep -vF "$cron_job"; echo "$cron_job") | crontab -
-else
-    echo -e "\033[1;33mAdding cron job for DNS configuration script...\033[0m"
-    (crontab -l 2>/dev/null; echo "$cron_job") | crontab -
-fi
+                cron_job="@reboot $dns_script_path"
+                if crontab -l 2>/dev/null | grep -qF "$cron_job"; then
+                    echo -e "\033[1;33mCron job already exists. Overwriting...\033[0m"
+                    (crontab -l 2>/dev/null | grep -vF "$cron_job"; echo "$cron_job") | crontab -
+                else
+                    echo -e "\033[1;33mAdding cron job for DNS configuration script...\033[0m"
+                    (crontab -l 2>/dev/null; echo "$cron_job") | crontab -
+                fi
 
                 echo -e "\033[1;32mCron job added to run DNS configuration script at reboot.\033[0m"
                 ;;
@@ -160,31 +312,38 @@ fi
                 echo -e "\n\033[1;33mTesting DNS resolution by pinging domains:\033[0m"
                 for domain in "google.com" "yahoo.com" "cloudflare.com"; do
                     echo -e "\033[1;36mPinging $domain:\033[0m"
-                    ping -c 4 "$domain"
+                    ping -c 2 "$domain" 2>/dev/null && echo -e "${GREEN}Success${RESET}" || echo -e "${RED}Failed${RESET}"
                 done
                 ;;
 
             4)
-                sudo nano /etc/systemd/resolved.conf
+                troubleshoot_dns
                 ;;
 
             5)
-                sudo nano /etc/resolv.conf
+                sudo nano /etc/systemd/resolved.conf
                 ;;
 
             6)
+                sudo nano /etc/resolv.conf
+                ;;
+
+            7)
                 sudo systemctl restart systemd-resolved.service
                 echo -e "\033[1;32mresolv.conf restarted.\033[0m"
                 ;;
 
             0)
-                break  # Return to the main menu
+                break
                 ;;
 
             *)
                 echo -e "\033[1;31mInvalid choice. Please try again.\033[0m"
                 ;;
         esac
+        
+        echo ""
+        read -p "Press Enter to continue..."
     done
 }
 
