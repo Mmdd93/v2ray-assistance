@@ -3235,7 +3235,6 @@ display_header() {
     echo -e "${BLUE}                v2ray ASSISTANT MANAGEMENT TOOL               ${NC}"
     echo -e "${YELLOW}             Telegram: @tlgrmv2 | Version: 25.11.4            ${NC}"
     echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
-    echo
 }
 
 # Main menu function
