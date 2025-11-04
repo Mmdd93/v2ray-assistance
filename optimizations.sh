@@ -28,6 +28,7 @@ NC='\033[0m' # No Color
 create_backup_dir() {
     if [ ! -d "$BACKUP_DIR" ]; then
         mkdir -p "$BACKUP_DIR"
+        echo -e "${GREEN}Created backup directory: $BACKUP_DIR${NC}"
     fi
 }
 
@@ -35,19 +36,40 @@ backup_configs() {
     create_backup_dir
     echo -e "${GREEN}Backing up configuration files...${NC}"
     local timestamp=$(date +%Y%m%d_%H%M%S)
-    cp "$SYSCTL_CONF" "${BACKUP_DIR}/sysctl.conf.bak.${timestamp}"
-    cp "$LIMITS_CONF" "${BACKUP_DIR}/limits.conf.bak.${timestamp}"
+    
+    if [ -f "$SYSCTL_CONF" ]; then
+        cp "$SYSCTL_CONF" "${BACKUP_DIR}/sysctl.conf.bak.${timestamp}"
+        echo -e "${GREEN}Backed up sysctl.conf${NC}"
+    else
+        echo -e "${YELLOW}Warning: $SYSCTL_CONF not found${NC}"
+    fi
+    
+    if [ -f "$LIMITS_CONF" ]; then
+        cp "$LIMITS_CONF" "${BACKUP_DIR}/limits.conf.bak.${timestamp}"
+        echo -e "${GREEN}Backed up limits.conf${NC}"
+    else
+        echo -e "${YELLOW}Warning: $LIMITS_CONF not found${NC}"
+    fi
 }
 
 reload_sysctl() {
     echo -e "${GREEN}Reloading sysctl settings...${NC}"
-    sysctl -p > /dev/null 2>&1
+    if sysctl -p > /dev/null 2>&1; then
+        echo -e "${GREEN}Sysctl settings reloaded successfully${NC}"
+    else
+        echo -e "${RED}Warning: Some sysctl settings may not have applied${NC}"
+    fi
 }
 
 update_config() {
     local file="$1"
     local key="$2"
     local value="$3"
+    
+    # Create file if it doesn't exist
+    if [ ! -f "$file" ]; then
+        touch "$file"
+    fi
     
     if grep -q "^$key" "$file"; then
         if grep -q "^$key.*$value" "$file"; then
@@ -68,6 +90,7 @@ update_config() {
 
 apply_gaming_optimizations() {
     echo -e "${CYAN}Applying GAMING Optimizations (Low Latency Focus)...${NC}"
+    backup_configs
 
     declare -A gaming_settings=(
         ["vm.swappiness"]="30"
@@ -130,14 +153,17 @@ apply_gaming_optimizations() {
         else
             echo "$key ${gaming_limits[$key]}" >> "$LIMITS_CONF"
         fi
+        echo -e "${GREEN}Updated limit: $key ${gaming_limits[$key]}${NC}"
     done
 
     reload_sysctl
     echo -e "${GREEN}GAMING optimizations applied!${NC}"
+    echo -e "${YELLOW}Please restart your system for all changes to take effect.${NC}"
 }
 
 apply_streaming_optimizations() {
     echo -e "${CYAN}Applying STREAMING Optimizations (High Throughput Focus)...${NC}"
+    backup_configs
 
     declare -A streaming_settings=(
         ["vm.swappiness"]="10"
@@ -188,14 +214,17 @@ apply_streaming_optimizations() {
         else
             echo "$key ${streaming_limits[$key]}" >> "$LIMITS_CONF"
         fi
+        echo -e "${GREEN}Updated limit: $key ${streaming_limits[$key]}${NC}"
     done
 
     reload_sysctl
     echo -e "${GREEN}STREAMING optimizations applied!${NC}"
+    echo -e "${YELLOW}Please restart your system for all changes to take effect.${NC}"
 }
 
 apply_general_optimizations() {
     echo -e "${CYAN}Applying GENERAL PURPOSE Optimizations (Balanced)...${NC}"
+    backup_configs
 
     declare -A general_settings=(
         ["vm.swappiness"]="60"
@@ -245,14 +274,17 @@ apply_general_optimizations() {
         else
             echo "$key ${general_limits[$key]}" >> "$LIMITS_CONF"
         fi
+        echo -e "${GREEN}Updated limit: $key ${general_limits[$key]}${NC}"
     done
 
     reload_sysctl
     echo -e "${GREEN}GENERAL PURPOSE optimizations applied!${NC}"
+    echo -e "${YELLOW}Please restart your system for all changes to take effect.${NC}"
 }
 
 apply_competitive_gaming_optimizations() {
     echo -e "${CYAN}Applying COMPETITIVE GAMING Optimizations (Extreme Low Latency)...${NC}"
+    backup_configs
 
     declare -A comp_settings=(
         ["vm.swappiness"]="1"
@@ -300,136 +332,119 @@ apply_competitive_gaming_optimizations() {
 
     reload_sysctl
     echo -e "${GREEN}COMPETITIVE GAMING optimizations applied!${NC}"
+    echo -e "${YELLOW}Please restart your system for all changes to take effect.${NC}"
 }
 
 # =============================================================================
-# TC OPTIMIZATION FUNCTIONS (NO LOGGING)
+# TC OPTIMIZATION FUNCTIONS
 # =============================================================================
 
-# Create TC optimizer script
 create_tc_optimizer_script() {
-    cat > "$TC_SCRIPT_PATH" << 'EOF'
+    local category="$1"
+    
+    echo -e "${GREEN}Creating TC optimizer script for $category mode...${NC}"
+    
+    # Create the script with proper error handling
+    cat > "$TC_SCRIPT_PATH" << EOF
 #!/bin/bash
-# Auto-generated TC Optimizer Script
-# This script is called by cron at startup
+# TC Optimizer - $category Mode
+# Runs at startup via cron
 
-SYSCTL_CONF="/etc/sysctl.conf"
-RED='\033[1;31m'
-GREEN='\033[1;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
+LOG_FILE="/var/log/tc_optimizer.log"
 
-log_message() {
-    echo "$(date): $1" >> /var/log/tc_optimizer.log
+log() {
+    echo "\$(date): \$1" >> "\$LOG_FILE"
 }
 
-tc_optimize_by_category() {
-    local category="${1:-general}"
-    
-    log_message "Starting TC optimization for category: $category"
-    
-    INTERFACE=$(ip route get 8.8.8.8 2>/dev/null | awk '/dev/ {print $5; exit}')
-    
-    if [ -z "$INTERFACE" ]; then
-        log_message "ERROR: Could not detect network interface"
-        return 1
-    fi
-    
-    detect_link_speed() {
-        local speed
-        if command -v ethtool >/dev/null 2>&1; then
-            speed=$(ethtool "$INTERFACE" 2>/dev/null | grep -oP 'Speed: \K[0-9]+')
-            if [ -n "$speed" ]; then
-                echo "$speed"
-                return
-            fi
-        fi
-        
-        if [ -f "/sys/class/net/$INTERFACE/speed" ]; then
-            speed=$(cat "/sys/class/net/$INTERFACE/speed" 2>/dev/null)
-            if [ "$speed" -gt 0 ] 2>/dev/null; then
-                echo "$speed"
-                return
-            fi
-        fi
-        
-        case "$INTERFACE" in
-            eth*|en*) echo "1000" ;;
-            wlan*|wlp*) echo "300" ;;
-            *) echo "1000" ;;
-        esac
-    }
-    
-    LINK_SPEED=$(detect_link_speed)
-    BANDWIDTH=$((LINK_SPEED * 85 / 100))
-    
-    # Cleanup existing rules
-    tc qdisc del dev "$INTERFACE" root 2>/dev/null
-    tc qdisc del dev "$INTERFACE" ingress 2>/dev/null
-    
-    # Apply optimizations based on category
-    case "$category" in
-        "gaming")
-            echo 256 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
-            if tc qdisc add dev "$INTERFACE" root cake bandwidth ${BANDWIDTH}mbit besteffort dual-dsthost 2>/dev/null; then
-                log_message "Applied CAKE for gaming on $INTERFACE"
-            elif tc qdisc add dev "$INTERFACE" root fq_codel limit 1000 flows 512 target 3ms interval 50ms quantum 300 noecn 2>/dev/null; then
-                log_message "Applied FQ_Codel for gaming on $INTERFACE"
-            else
-                tc qdisc add dev "$INTERFACE" root pfifo_fast
-                log_message "Applied PFIFO_FAST for gaming on $INTERFACE"
-            fi
-            ;;
-        "high-loss")
-            echo 4000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
-            if tc qdisc add dev "$INTERFACE" root cake bandwidth ${BANDWIDTH}mbit besteffort ack-filter 2>/dev/null; then
-                log_message "Applied CAKE for high-loss on $INTERFACE"
-            elif tc qdisc add dev "$INTERFACE" root fq_codel limit 20000 flows 2048 target 10ms interval 200ms memory_limit 64Mb ecn 2>/dev/null; then
-                log_message "Applied FQ_Codel for high-loss on $INTERFACE"
-            else
-                tc qdisc add dev "$INTERFACE" root pfifo_fast
-                log_message "Applied PFIFO_FAST for high-loss on $INTERFACE"
-            fi
-            ;;
-        "general")
-            echo 1000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
-            if tc qdisc add dev "$INTERFACE" root cake bandwidth ${BANDWIDTH}mbit besteffort 2>/dev/null; then
-                log_message "Applied CAKE for general on $INTERFACE"
-            elif tc qdisc add dev "$INTERFACE" root fq_codel limit 10240 flows 1024 target 5ms interval 100ms memory_limit 32Mb 2>/dev/null; then
-                log_message "Applied FQ_Codel for general on $INTERFACE"
-            else
-                tc qdisc add dev "$INTERFACE" root pfifo_fast
-                log_message "Applied PFIFO_FAST for general on $INTERFACE"
-            fi
-            ;;
-    esac
-    
-    log_message "TC optimization completed for $INTERFACE with $category settings"
-}
+# Wait for network to be ready
+sleep 30
 
-# Main execution
-main() {
-    # Wait for network to be ready
-    sleep 30
-    
-    # Determine optimization category from sysctl settings
-    if grep -q "net.ipv4.tcp_low_latency.*=.*1" "$SYSCTL_CONF" 2>/dev/null; then
-        category="gaming"
-    else
-        category="general"
-    fi
-    
-    tc_optimize_by_category "$category"
-}
+INTERFACE=\$(ip route get 8.8.8.8 2>/dev/null | awk '/dev/ {print \$5; exit}')
 
-# Run main function if script is executed directly
-if [ "${BASH_SOURCE[0]}" = "$0" ]; then
-    main "$@"
+if [ -z "\$INTERFACE" ]; then
+    log "ERROR: No network interface found"
+    exit 1
 fi
+
+log "Starting TC $category optimization on \$INTERFACE"
+
+# Clean existing rules
+tc qdisc del dev "\$INTERFACE" root 2>/dev/null
+tc qdisc del dev "\$INTERFACE" ingress 2>/dev/null
+
+# Apply $category optimization
 EOF
 
+    # Add the specific category configuration
+    case "$category" in
+        "gaming")
+            cat >> "$TC_SCRIPT_PATH" << 'GAMING_EOF'
+echo 256 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
+ethtool -A "$INTERFACE" rx off tx off 2>/dev/null
+if tc qdisc add dev "$INTERFACE" root cake bandwidth 1000mbit besteffort dual-dsthost nat nowash no-ack-filter 2>/dev/null; then
+    log "Applied CAKE for gaming"
+elif tc qdisc add dev "$INTERFACE" root fq_codel limit 1000 flows 1024 target 2ms interval 20ms noecn 2>/dev/null; then
+    log "Applied FQ_Codel for gaming"
+else
+    tc qdisc add dev "$INTERFACE" root pfifo_fast
+    log "Applied PFIFO_FAST for gaming"
+fi
+GAMING_EOF
+            ;;
+        "high-loss")
+            cat >> "$TC_SCRIPT_PATH" << 'HIGHLOSS_EOF'
+echo 4000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
+echo 1 > /proc/sys/net/ipv4/tcp_ecn 2>/dev/null
+if tc qdisc add dev "$INTERFACE" root cake bandwidth 850mbit besteffort ack-filter nat nowash 2>/dev/null; then
+    log "Applied CAKE for high-loss"
+elif tc qdisc add dev "$INTERFACE" root fq_codel limit 30000 flows 4096 ecn ce-threshold 1ms 2>/dev/null; then
+    log "Applied FQ_Codel for high-loss"
+else
+    tc qdisc add dev "$INTERFACE" root pfifo_fast
+    log "Applied PFIFO_FAST for high-loss"
+fi
+HIGHLOSS_EOF
+            ;;
+        "general")
+            cat >> "$TC_SCRIPT_PATH" << 'GENERAL_EOF'
+echo 1000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
+if tc qdisc add dev "$INTERFACE" root cake bandwidth 1000mbit besteffort nat nowash 2>/dev/null; then
+    log "Applied CAKE for general"
+elif tc qdisc add dev "$INTERFACE" root fq_codel ecn ce-threshold 4ms 2>/dev/null; then
+    log "Applied FQ_Codel for general"
+else
+    tc qdisc add dev "$INTERFACE" root pfifo_fast
+    log "Applied PFIFO_FAST for general"
+fi
+GENERAL_EOF
+            ;;
+    esac
+
+    # Add the footer
+    cat >> "$TC_SCRIPT_PATH" << 'EOF'
+
+# Verify the qdisc was applied
+if tc qdisc show dev "$INTERFACE" | grep -q "cake\|fq_codel\|pfifo"; then
+    log "TC $category optimization completed successfully"
+else
+    log "ERROR: Failed to verify queue discipline"
+    exit 1
+fi
+
+exit 0
+EOF
+
+    # Make the script executable
     chmod +x "$TC_SCRIPT_PATH"
-    echo -e "${GREEN}TC optimizer script created at: $TC_SCRIPT_PATH${NC}"
+    
+    # Verify the script was created
+    if [ -f "$TC_SCRIPT_PATH" ] && [ -x "$TC_SCRIPT_PATH" ]; then
+        echo -e "${GREEN}✓ TC optimizer script created at: $TC_SCRIPT_PATH${NC}"
+        return 0
+    else
+        echo -e "${RED}✗ Failed to create TC optimizer script${NC}"
+        return 1
+    fi
 }
 
 # Check if optimizations are enabled at startup
@@ -453,8 +468,11 @@ enable_startup_optimizations() {
     
     echo -e "${YELLOW}Enabling TC optimizations at startup...${NC}"
     
-    # Create the TC optimizer script first
-    create_tc_optimizer_script
+    # Create the TC optimizer script with the selected category
+    if ! create_tc_optimizer_script "$category"; then
+        echo -e "${RED}Failed to create TC script${NC}"
+        return 1
+    fi
     
     # Create a temporary crontab
     local temp_cron=$(mktemp)
@@ -464,15 +482,13 @@ enable_startup_optimizations() {
     echo "@reboot sleep 30 && $TC_SCRIPT_PATH" >> "$temp_cron"
     
     # Install the new crontab
-    crontab "$temp_cron"
-    rm -f "$temp_cron"
-    
-    if [ $? -eq 0 ]; then
+    if crontab "$temp_cron"; then
+        rm -f "$temp_cron"
         echo -e "${GREEN}✓ Startup optimizations enabled for category: $category${NC}"
         echo -e "${WHITE}Optimizations will run automatically on boot${NC}"
-        echo -e "${WHITE}Script: $TC_SCRIPT_PATH${NC}"
         return 0
     else
+        rm -f "$temp_cron"
         echo -e "${RED}✗ Failed to enable startup optimizations${NC}"
         return 1
     fi
@@ -487,8 +503,14 @@ disable_startup_optimizations() {
     crontab -l 2>/dev/null | grep -v "$TC_SCRIPT_NAME" > "$temp_cron"
     
     # Install the cleaned crontab
-    crontab "$temp_cron"
-    rm -f "$temp_cron"
+    if crontab "$temp_cron"; then
+        rm -f "$temp_cron"
+        echo -e "${GREEN}✓ Removed TC optimizations from crontab${NC}"
+    else
+        rm -f "$temp_cron"
+        echo -e "${RED}✗ Failed to update crontab${NC}"
+        return 1
+    fi
     
     # Remove the script file
     if [ -f "$TC_SCRIPT_PATH" ]; then
@@ -496,14 +518,8 @@ disable_startup_optimizations() {
         echo -e "${GREEN}✓ Removed TC optimizer script${NC}"
     fi
     
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✓ Startup optimizations disabled${NC}"
-        echo -e "${WHITE}Optimizations will NOT run automatically on boot${NC}"
-        return 0
-    else
-        echo -e "${RED}✗ Failed to disable startup optimizations${NC}"
-        return 1
-    fi
+    echo -e "${GREEN}✓ Startup optimizations disabled${NC}"
+    return 0
 }
 
 # Ask user about startup configuration
@@ -548,13 +564,107 @@ ask_startup_config() {
     esac
 }
 
-# Auto-optimize function for cron use
-tc_auto_optimize() {
-    local category="${1:-general}"
-    echo "$(date): Auto-optimizing network for $category category" >> /var/log/tc_optimizer.log
-    tc_optimize_by_category "$category" "true"
+# Clean up TC rules
+cleanup_tc() {
+    local interface="$1"
+    echo -e "${YELLOW}Cleaning existing TC rules...${NC}"
+    tc qdisc del dev "$interface" root 2>/dev/null
+    tc qdisc del dev "$interface" ingress 2>/dev/null
+    echo 1000 > "/sys/class/net/$interface/tx_queue_len" 2>/dev/null
 }
 
+# Enhanced TC optimization functions
+apply_tc_gaming_optimizations() {
+    local interface="$1"
+    echo -e "${GREEN}Applying GAMING optimizations (Ultra Low Latency)...${NC}"
+    
+    # Set optimal queue length for low latency
+    echo 256 > "/sys/class/net/$interface/tx_queue_len" 2>/dev/null
+    
+    # Disable Ethernet flow control for lower latency
+    ethtool -A "$interface" rx off tx off 2>/dev/null
+    
+    if tc qdisc add dev "$interface" root cake bandwidth 1000mbit besteffort dual-dsthost nat nowash no-ack-filter 2>/dev/null; then
+        echo -e "${GREEN}Using CAKE (Optimal for gaming)${NC}"
+    elif tc qdisc add dev "$interface" root fq_codel limit 1000 flows 1024 target 2ms interval 20ms noecn 2>/dev/null; then
+        echo -e "${GREEN}Using FQ_Codel (Excellent for gaming)${NC}"
+    elif tc qdisc add dev "$interface" root pfifo_fast 2>/dev/null; then
+        echo -e "${YELLOW}Using PFIFO_Fast (Fallback)${NC}"
+    else
+        echo -e "${RED}Failed to apply any queue discipline${NC}"
+        return 1
+    fi
+    
+    # Verify the qdisc was applied
+    if tc qdisc show dev "$interface" | grep -q "cake\|fq_codel\|pfifo"; then
+        echo -e "${GREEN}✓ Gaming optimizations applied successfully${NC}"
+        return 0
+    else
+        echo -e "${RED}✗ Failed to verify queue discipline${NC}"
+        return 1
+    fi
+}
+
+apply_tc_high_loss_optimizations() {
+    local interface="$1"
+    echo -e "${YELLOW}Applying HIGH PACKET LOSS optimizations...${NC}"
+    
+    # Larger buffers for loss recovery
+    echo 4000 > "/sys/class/net/$interface/tx_queue_len" 2>/dev/null
+    
+    # Enable ECN if supported
+    echo 1 > /proc/sys/net/ipv4/tcp_ecn 2>/dev/null
+    
+    if tc qdisc add dev "$interface" root cake bandwidth 850mbit besteffort ack-filter nat nowash 2>/dev/null; then
+        echo -e "${GREEN}Using CAKE with advanced loss compensation${NC}"
+    elif tc qdisc add dev "$interface" root fq_codel limit 30000 flows 4096 ecn ce-threshold 1ms 2>/dev/null; then
+        echo -e "${GREEN}Using FQ_Codel with enhanced loss tolerance${NC}"
+    elif tc qdisc add dev "$interface" root pfifo_fast 2>/dev/null; then
+        echo -e "${YELLOW}Using PFIFO_Fast with larger buffers${NC}"
+    else
+        echo -e "${RED}Failed to apply any queue discipline${NC}"
+        return 1
+    fi
+    
+    # Verify application
+    if tc qdisc show dev "$interface" | grep -q "cake\|fq_codel\|pfifo"; then
+        echo -e "${GREEN}✓ High-loss optimizations applied successfully${NC}"
+        return 0
+    else
+        echo -e "${RED}✗ Failed to verify queue discipline${NC}"
+        return 1
+    fi
+}
+
+apply_tc_general_optimizations() {
+    local interface="$1"
+    echo -e "${BLUE}Applying GENERAL PURPOSE optimizations...${NC}"
+    
+    # Balanced queue length
+    echo 1000 > "/sys/class/net/$interface/tx_queue_len" 2>/dev/null
+    
+    if tc qdisc add dev "$interface" root cake bandwidth 1000mbit besteffort nat nowash 2>/dev/null; then
+        echo -e "${GREEN}Using CAKE (Optimal all-around)${NC}"
+    elif tc qdisc add dev "$interface" root fq_codel ecn ce-threshold 4ms 2>/dev/null; then
+        echo -e "${GREEN}Using FQ_Codel (Excellent balanced)${NC}"
+    elif tc qdisc add dev "$interface" root pfifo_fast 2>/dev/null; then
+        echo -e "${YELLOW}Using PFIFO_Fast (Compatible)${NC}"
+    else
+        echo -e "${RED}Failed to apply any queue discipline${NC}"
+        return 1
+    fi
+    
+    # Verify application
+    if tc qdisc show dev "$interface" | grep -q "cake\|fq_codel\|pfifo"; then
+        echo -e "${GREEN}✓ General optimizations applied successfully${NC}"
+        return 0
+    else
+        echo -e "${RED}✗ Failed to verify queue discipline${NC}"
+        return 1
+    fi
+}
+
+# Main TC optimization function
 tc_optimize_by_category() {
     local category="${1:-general}"
     local auto_mode="${2:-false}"
@@ -572,67 +682,19 @@ tc_optimize_by_category() {
     
     echo -e "${WHITE}Detected interface: ${GREEN}$INTERFACE${NC}"
     
-    detect_link_speed() {
-        local speed
-        if command -v ethtool >/dev/null 2>&1; then
-            speed=$(ethtool "$INTERFACE" 2>/dev/null | grep -oP 'Speed: \K[0-9]+')
-            if [ -n "$speed" ]; then
-                echo "$speed"
-                return
-            fi
-        fi
-        
-        if [ -f "/sys/class/net/$INTERFACE/speed" ]; then
-            speed=$(cat "/sys/class/net/$INTERFACE/speed" 2>/dev/null)
-            if [ "$speed" -gt 0 ] 2>/dev/null; then
-                echo "$speed"
-                return
-            fi
-        fi
-        
-        case "$INTERFACE" in
-            eth*|en*) echo "1000" ;;
-            wlan*|wlp*) echo "300" ;;
-            *) echo "1000" ;;
-        esac
-    }
-    
-    LINK_SPEED=$(detect_link_speed)
-    BANDWIDTH=$((LINK_SPEED * 85 / 100))
-    echo -e "${WHITE}Link speed: ${GREEN}${LINK_SPEED}Mbps${NC}"
-    echo -e "${WHITE}Target bandwidth: ${GREEN}${BANDWIDTH}Mbps${NC}"
-    
-    cleanup_tc() {
-        echo -e "${YELLOW}Cleaning existing TC rules...${NC}"
-        tc qdisc del dev "$INTERFACE" root 2>/dev/null
-        tc qdisc del dev "$INTERFACE" ingress 2>/dev/null
-        ip link set dev "$INTERFACE" mtu 1500 2>/dev/null
-        echo 1000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
-    }
-    
-    cleanup_tc
-    
-    test_qdisc() {
-        local qdisc=$1
-        tc qdisc add dev "$INTERFACE" root "$qdisc" 2>/dev/null
-        if [ $? -eq 0 ]; then
-            tc qdisc del dev "$INTERFACE" root 2>/dev/null
-            return 0
-        fi
-        return 1
-    }
+    cleanup_tc "$INTERFACE"
     
     echo -e "${YELLOW}Applying $category optimizations...${NC}"
     
     case "$category" in
         "gaming")
-            apply_tc_gaming_optimizations
+            apply_tc_gaming_optimizations "$INTERFACE"
             ;;
         "high-loss")
-            apply_tc_high_loss_optimizations
+            apply_tc_high_loss_optimizations "$INTERFACE"
             ;;
         "general")
-            apply_tc_general_optimizations
+            apply_tc_general_optimizations "$INTERFACE"
             ;;
         *)
             echo -e "${RED}Unknown category: $category${NC}"
@@ -640,119 +702,25 @@ tc_optimize_by_category() {
             ;;
     esac
     
+    local result=$?
+    
     echo ""
     echo "=============================================="
-    echo -e "${GREEN}$category OPTIMIZATION COMPLETE${NC}"
+    if [ $result -eq 0 ]; then
+        echo -e "${GREEN}$category OPTIMIZATION COMPLETE${NC}"
+        echo -e "${WHITE}Interface: ${GREEN}$INTERFACE${NC}"
+        echo -e "${WHITE}Queue Discipline: ${GREEN}$(tc qdisc show dev "$INTERFACE" | head -1 | awk '{print $2}')${NC}"
+    else
+        echo -e "${RED}$category OPTIMIZATION FAILED${NC}"
+    fi
     echo "=============================================="
-    echo -e "${WHITE}Interface: ${GREEN}$INTERFACE${NC}"
-    echo -e "${WHITE}Link Speed: ${GREEN}${LINK_SPEED}Mbps${NC}"
-    echo -e "${WHITE}Configured Bandwidth: ${GREEN}${BANDWIDTH}Mbps${NC}"
-    echo -e "${WHITE}Queue Discipline: ${GREEN}$(tc qdisc show dev "$INTERFACE" | head -1 | awk '{print $2}')${NC}"
     
-    # Only ask about startup if not in auto mode
-    if [ "$auto_mode" = "false" ]; then
+    # Only ask about startup if not in auto mode and optimization was successful
+    if [ "$auto_mode" = "false" ] && [ $result -eq 0 ]; then
         ask_startup_config "$category"
     fi
-}
-
-apply_tc_gaming_optimizations() {
-    echo -e "${GREEN}Applying GAMING optimizations (Ultra Low Latency)...${NC}"
     
-    echo 256 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
-    
-    if test_qdisc "cake"; then
-        echo -e "${GREEN}Using CAKE (Best for gaming)${NC}"
-        tc qdisc add dev "$INTERFACE" root cake bandwidth ${BANDWIDTH}mbit besteffort dual-dsthost
-        
-    elif test_qdisc "fq_codel"; then
-        echo -e "${GREEN}Using FQ_Codel (Excellent for gaming)${NC}"
-        tc qdisc add dev "$INTERFACE" root fq_codel \
-            limit 1000 \
-            flows 512 \
-            target 3ms \
-            interval 50ms \
-            quantum 300 \
-            noecn
-        
-    elif test_qdisc "fq"; then
-        echo -e "${GREEN}Using FQ (Good for gaming with BBR)${NC}"
-        tc qdisc add dev "$INTERFACE" root fq \
-            flow_limit 500 \
-            quantum 300 \
-            initial_quantum 10000
-        
-    else
-        echo -e "${YELLOW}Using PFIFO_Fast with gaming optimizations${NC}"
-        tc qdisc add dev "$INTERFACE" root pfifo_fast
-    fi
-    
-    echo 1 > /proc/sys/net/ipv4/tcp_low_latency 2>/dev/null
-    echo 0 > /proc/sys/net/ipv4/tcp_slow_start_after_idle 2>/dev/null
-}
-
-apply_tc_high_loss_optimizations() {
-    echo -e "${YELLOW}Applying HIGH PACKET LOSS optimizations...${NC}"
-    
-    echo 4000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
-    
-    if test_qdisc "cake"; then
-        echo -e "${GREEN}Using CAKE with loss compensation${NC}"
-        tc qdisc add dev "$INTERFACE" root cake bandwidth ${BANDWIDTH}mbit besteffort ack-filter
-        
-    elif test_qdisc "fq_codel"; then
-        echo -e "${GREEN}Using FQ_Codel with loss tolerance${NC}"
-        tc qdisc add dev "$INTERFACE" root fq_codel \
-            limit 20000 \
-            flows 2048 \
-            target 10ms \
-            interval 200ms \
-            memory_limit 64Mb \
-            ecn
-        
-    elif test_qdisc "sfq"; then
-        echo -e "${GREEN}Using SFQ with loss recovery${NC}"
-        tc qdisc add dev "$INTERFACE" root sfq \
-            perturb 120 \
-            quantum 1514 \
-            depth 127
-        
-    else
-        echo -e "${YELLOW}Using basic configuration with larger buffers${NC}"
-        tc qdisc add dev "$INTERFACE" root pfifo_fast
-    fi
-    
-    echo 2 > /proc/sys/net/ipv4/tcp_syn_retries 2>/dev/null
-    echo 2 > /proc/sys/net/ipv4/tcp_synack_retries 2>/dev/null
-    echo 5 > /proc/sys/net/ipv4/tcp_retries1 2>/dev/null
-    echo 15 > /proc/sys/net/ipv4/tcp_retries2 2>/dev/null
-}
-
-apply_tc_general_optimizations() {
-    echo -e "${BLUE}Applying GENERAL PURPOSE optimizations...${NC}"
-    
-    echo 1000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
-    
-    if test_qdisc "cake"; then
-        echo -e "${GREEN}Using CAKE (Best all-around)${NC}"
-        tc qdisc add dev "$INTERFACE" root cake bandwidth ${BANDWIDTH}mbit besteffort
-        
-    elif test_qdisc "fq_codel"; then
-        echo -e "${GREEN}Using FQ_Codel (Excellent balanced)${NC}"
-        tc qdisc add dev "$INTERFACE" root fq_codel \
-            limit 10240 \
-            flows 1024 \
-            target 5ms \
-            interval 100ms \
-            memory_limit 32Mb
-        
-    elif test_qdisc "fq"; then
-        echo -e "${GREEN}Using FQ (Good performance)${NC}"
-        tc qdisc add dev "$INTERFACE" root fq
-        
-    else
-        echo -e "${YELLOW}Using PFIFO_Fast (Compatible)${NC}"
-        tc qdisc add dev "$INTERFACE" root pfifo_fast
-    fi
+    return $result
 }
 
 apply_netem_testing() {
@@ -760,32 +728,46 @@ apply_netem_testing() {
     
     echo -e "${PURPLE}Applying NetEM for testing: $condition${NC}"
     
-    apply_tc_general_optimizations
+    INTERFACE=$(ip route get 8.8.8.8 2>/dev/null | awk '/dev/ {print $5; exit}')
+    if [ -z "$INTERFACE" ]; then
+        echo -e "${RED}ERROR: Could not detect network interface${NC}"
+        return 1
+    fi
     
-    local handle=$(tc qdisc show dev "$INTERFACE" | head -1 | awk '{print $3}')
+    # Apply general optimizations first
+    cleanup_tc "$INTERFACE"
+    apply_tc_general_optimizations "$INTERFACE"
+    
+    local handle=$(tc qdisc show dev "$INTERFACE" 2>/dev/null | head -1 | awk '{print $3}')
+    if [ -z "$handle" ]; then
+        echo -e "${RED}Failed to get qdisc handle${NC}"
+        return 1
+    fi
     
     case "$condition" in
         "gaming-latency")
-            tc qdisc add dev "$INTERFACE" parent $handle netem delay 10ms 2ms distribution normal
-            echo -e "${GREEN}Added gaming-like latency: 10ms +-2ms${NC}"
+            tc qdisc change dev "$INTERFACE" root netem delay 10ms 2ms distribution normal
+            echo -e "${GREEN}Added gaming-like latency: 10ms ±2ms${NC}"
             ;;
         "high-loss")
-            tc qdisc add dev "$INTERFACE" parent $handle netem loss 5% 25%
+            tc qdisc change dev "$INTERFACE" root netem loss 5% 25%
             echo -e "${GREEN}Added high packet loss: 5%${NC}"
             ;;
         "wireless")
-            tc qdisc add dev "$INTERFACE" parent $handle netem delay 20ms 10ms loss 2% 10% duplicate 1%
+            tc qdisc change dev "$INTERFACE" root netem delay 20ms 10ms loss 2% 10% duplicate 1%
             echo -e "${GREEN}Added wireless-like conditions${NC}"
             ;;
         "satellite")
-            tc qdisc add dev "$INTERFACE" parent $handle netem delay 600ms 100ms loss 1%
+            tc qdisc change dev "$INTERFACE" root netem delay 600ms 100ms loss 1%
             echo -e "${GREEN}Added satellite-like latency${NC}"
             ;;
         "internet-typical")
-            tc qdisc add dev "$INTERFACE" parent $handle netem delay 30ms 5ms loss 0.5% 10%
+            tc qdisc change dev "$INTERFACE" root netem delay 30ms 5ms loss 0.5% 10%
             echo -e "${GREEN}Added internet typical conditions${NC}"
             ;;
     esac
+    
+    echo -e "${GREEN}NetEM testing condition '$condition' applied${NC}"
 }
 
 tc_remove_optimizations() {
@@ -796,22 +778,17 @@ tc_remove_optimizations() {
     
     # Remove TC rules from all interfaces
     for INTERFACE in $(ls /sys/class/net/ | grep -v lo); do
+        echo -e "${YELLOW}Cleaning $INTERFACE...${NC}"
         tc qdisc del dev "$INTERFACE" root 2>/dev/null
         tc qdisc del dev "$INTERFACE" ingress 2>/dev/null
-        ip link set dev "$INTERFACE" mtu 1500 2>/dev/null
         echo 1000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
     done
     
-    # Reset system settings
-    echo 0 > /proc/sys/net/ipv4/tcp_low_latency 2>/dev/null
-    echo 1 > /proc/sys/net/ipv4/tcp_slow_start_after_idle 2>/dev/null
-    
     echo -e "${GREEN}All TC optimizations removed${NC}"
-    echo -e "${GREEN}Startup optimizations disabled${NC}"
 }
 
 # =============================================================================
-# REMOVAL FUNCTIONS (NO LOGGING)
+# REMOVAL FUNCTIONS
 # =============================================================================
 
 remove_all_optimizations() {
@@ -841,7 +818,7 @@ remove_all_optimizations() {
     )
 
     for key in "${sysctl_keys[@]}"; do
-        sed -i "/^\s*${key}\s*=/d" "$SYSCTL_CONF"
+        sed -i "/^\s*${key}\s*=/d" "$SYSCTL_CONF" 2>/dev/null
     done
 
     local limit_keys=(
@@ -850,20 +827,23 @@ remove_all_optimizations() {
     )
 
     for key in "${limit_keys[@]}"; do
-        sed -i "/^$key/d" "$LIMITS_CONF"
+        sed -i "/^$key/d" "$LIMITS_CONF" 2>/dev/null
     done
 
+    # Reload settings
     sysctl -p > /dev/null 2>&1
     sysctl --system > /dev/null 2>&1
 
+    # Reset to defaults
     echo "cubic" > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null
     echo "fq_codel" > /proc/sys/net/core/default_qdisc 2>/dev/null
 
     echo -e "${GREEN}ALL optimizations removed!${NC}"
+    echo -e "${YELLOW}Please restart your system for all changes to take effect.${NC}"
 }
 
 # =============================================================================
-# CONTROL FUNCTIONS (NO LOGGING)
+# CONTROL FUNCTIONS
 # =============================================================================
 
 show_current_settings() {
@@ -881,11 +861,14 @@ show_current_settings() {
     echo -e "\n${YELLOW}MEMORY SETTINGS:${NC}"
     echo -e "  Swappiness:         ${GREEN}$(sysctl -n vm.swappiness 2>/dev/null || echo '60')${NC}"
     echo -e "  Dirty Ratio:        ${GREEN}$(sysctl -n vm.dirty_ratio 2>/dev/null || echo '20')${NC}"
+    echo -e "  Dirty Background:   ${GREEN}$(sysctl -n vm.dirty_background_ratio 2>/dev/null || echo '10')${NC}"
     
     echo -e "\n${YELLOW}TRAFFIC CONTROL:${NC}"
     for IFACE in $(ls /sys/class/net/ | grep -v lo); do
-        QDISC=$(tc qdisc show dev "$IFACE" 2>/dev/null | head -1 || echo "None")
-        echo -e "  ${WHITE}$IFACE: ${BLUE}$QDISC${NC}"
+        if [ -d "/sys/class/net/$IFACE" ]; then
+            QDISC=$(tc qdisc show dev "$IFACE" 2>/dev/null | head -1 || echo "None")
+            echo -e "  ${WHITE}$IFACE: ${BLUE}$QDISC${NC}"
+        fi
     done
     
     echo -e "\n${YELLOW}STARTUP STATUS:${NC}"
@@ -976,6 +959,13 @@ test_network_performance() {
     if command -v ping >/dev/null 2>&1; then
         echo -e "\n${YELLOW}PING TEST (Google DNS):${NC}"
         ping -c 4 -W 2 8.8.8.8 2>/dev/null | grep -E "packets|rtt|loss" || echo -e "${RED}Ping test failed${NC}"
+    else
+        echo -e "${YELLOW}ping command not available${NC}"
+    fi
+    
+    if command -v tc >/dev/null 2>&1; then
+        echo -e "\n${YELLOW}TRAFFIC CONTROL STATUS:${NC}"
+        tc qdisc show dev "$INTERFACE"
     fi
 }
 
@@ -987,12 +977,16 @@ show_sysctl_file() {
     echo -e "${NC}"
     
     if [ -f "$SYSCTL_CONF" ]; then
-        grep -v '^#' "$SYSCTL_CONF" | grep -v '^$' | while read line; do
-            echo -e "  ${WHITE}$line${NC}"
-        done
-        
-        total_lines=$(grep -v '^#' "$SYSCTL_CONF" | grep -v '^$' | wc -l)
-        echo -e "\n${YELLOW}Total active settings: ${GREEN}$total_lines${NC}"
+        if [ -s "$SYSCTL_CONF" ]; then
+            grep -v '^#' "$SYSCTL_CONF" | grep -v '^$' | while read line; do
+                echo -e "  ${WHITE}$line${NC}"
+            done
+            
+            total_lines=$(grep -v '^#' "$SYSCTL_CONF" | grep -v '^$' | wc -l)
+            echo -e "\n${YELLOW}Total active settings: ${GREEN}$total_lines${NC}"
+        else
+            echo -e "${YELLOW}sysctl.conf is empty${NC}"
+        fi
     else
         echo -e "${RED}sysctl.conf not found${NC}"
     fi
@@ -1128,7 +1122,7 @@ handle_netem_menu() {
         esac
         
         echo -e "\n${CYAN}Press Enter to continue...${NC}"
-        read
+        read -r
     done
 }
 
@@ -1152,7 +1146,7 @@ handle_control_menu() {
         esac
         
         echo -e "\n${CYAN}Press Enter to continue...${NC}"
-        read
+        read -r
     done
 }
 
@@ -1185,7 +1179,7 @@ main_menu() {
         esac
         
         echo -e "\n${CYAN}Press Enter to continue...${NC}"
-        read
+        read -r
     done
 }
 
@@ -1198,5 +1192,15 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# Check required commands
+for cmd in sysctl tc ip; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo -e "${RED}Error: $cmd is required but not installed.${NC}"
+        exit 1
+    fi
+done
+
 create_backup_dir
+echo -e "${GREEN}Network Optimizer Tool Started${NC}"
+echo -e "${YELLOW}Running as root: $(whoami)${NC}"
 main_menu
