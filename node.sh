@@ -3366,10 +3366,10 @@ main_menu() {
         menu_option "59" "Uptime Kuma monitoring"
       
         # Footer options
-        section_header "MAINTENANCE"
+        section_header "echo -e "${CYAN}System Status:${NC} $(netspeed)""
         menu_option "00" "Update scripts"
         menu_option "0" "Exit"
-        echo -e "${CYAN}System Status:${NC} $(netspeed)"
+        
         read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
         case $choice in
             1) 
