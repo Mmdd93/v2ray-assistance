@@ -2610,20 +2610,83 @@ download_and_run_ssh_assistance() {
 
 
 display_system_info() {
-SERVER_IP=$(curl -4 -s https://icanhazip.com)
-    echo -e "\n\033[1;31mOS info:\033[0m"
-    echo -e "\033[1;32mOS:\033[0m $(lsb_release -d | cut -f2)"
-    echo -e "\033[1;32mISP:\033[0m $(curl -sS "http://ipwhois.app/json/$SERVER_IP" | jq -r '.isp')"
-    echo -e "\033[1;32mCOUNTRY:\033[0m $(curl -sS "http://ipwhois.app/json/$SERVER_IP" | jq -r '.country')"
-    echo -e "\033[1;32mPublic IPv4:\033[0m $(curl -4 -s https://icanhazip.com)"
-    echo -e "\033[1;32mPublic IPv6:\033[0m $(curl -6 -s https://icanhazip.com)"
-    echo -e "\033[1;32mUptime:\033[0m $(uptime -p)"
-    echo -e "\033[1;32mCPU Cores:\033[0m $(lscpu | grep '^CPU(s):' | awk '{print $2}')"
-    echo -e "\033[1;32mCPU Frequency:\033[0m $(grep 'MHz' /proc/cpuinfo | awk '{print $4 " MHz"}' | head -n 1)"
-    echo -e "\033[1;32mRAM:\033[0m $(free -h | awk '/^Mem:/ {print $3 "/" $2}')"
-    echo -e "\033[1;32mTime:\033[0m $(date +"%T %Z")"
-    echo -e "${CYAN}System Status:${NC} $(netspeed)"
+    local SERVER_IP
+    SERVER_IP=$(timeout 2 curl -4 -s https://icanhazip.com 2>/dev/null)
     
+    echo -e "\n\033[1;31mOS info:\033[0m"
+    
+    # OS info with timeout
+    if OS_INFO=$(timeout 2 lsb_release -d 2>/dev/null | cut -f2 2>/dev/null); then
+        echo -e "\033[1;32mOS:\033[0m $OS_INFO"
+    else
+        echo -e "\033[1;32mOS:\033[0m Unknown"
+    fi
+    
+    # ISP and location info with timeout
+    if [[ -n "$SERVER_IP" ]]; then
+        if GEO_INFO=$(timeout 2 curl -sS "http://ipwhois.app/json/$SERVER_IP" 2>/dev/null); then
+            echo -e "\033[1;32mISP:\033[0m $(echo "$GEO_INFO" | jq -r '.isp // "Unknown"')"
+            echo -e "\033[1;32mCOUNTRY:\033[0m $(echo "$GEO_INFO" | jq -r '.country // "Unknown"')"
+        else
+            echo -e "\033[1;32mISP:\033[0m Unknown"
+            echo -e "\033[1;32mCOUNTRY:\033[0m Unknown"
+        fi
+    else
+        echo -e "\033[1;32mISP:\033[0m Unknown"
+        echo -e "\033[1;32mCOUNTRY:\033[0m Unknown"
+    fi
+    
+    # IPv4 with timeout
+    if IPV4=$(timeout 2 curl -4 -s https://icanhazip.com 2>/dev/null); then
+        echo -e "\033[1;32mPublic IPv4:\033[0m $IPV4"
+    else
+        echo -e "\033[1;32mPublic IPv4:\033[0m Unknown"
+    fi
+    
+    # IPv6 with timeout
+    if IPV6=$(timeout 2 curl -6 -s https://icanhazip.com 2>/dev/null); then
+        echo -e "\033[1;32mPublic IPv6:\033[0m $IPV6"
+    else
+        echo -e "\033[1;32mPublic IPv6:\033[0m Unknown"
+    fi
+    
+    # Uptime
+    if UPTIME=$(timeout 2 uptime -p 2>/dev/null); then
+        echo -e "\033[1;32mUptime:\033[0m $UPTIME"
+    else
+        echo -e "\033[1;32mUptime:\033[0m Unknown"
+    fi
+    
+    # CPU Cores
+    if CPU_CORES=$(timeout 2 lscpu 2>/dev/null | grep '^CPU(s):' | awk '{print $2}'); then
+        echo -e "\033[1;32mCPU Cores:\033[0m $CPU_CORES"
+    else
+        echo -e "\033[1;32mCPU Cores:\033[0m Unknown"
+    fi
+    
+    # CPU Frequency
+    if CPU_FREQ=$(timeout 2 grep 'MHz' /proc/cpuinfo 2>/dev/null | awk '{print $4 " MHz"}' | head -n 1); then
+        echo -e "\033[1;32mCPU Frequency:\033[0m $CPU_FREQ"
+    else
+        echo -e "\033[1;32mCPU Frequency:\033[0m Unknown"
+    fi
+    
+    # RAM
+    if RAM_INFO=$(timeout 2 free -h 2>/dev/null | awk '/^Mem:/ {print $3 "/" $2}'); then
+        echo -e "\033[1;32mRAM:\033[0m $RAM_INFO"
+    else
+        echo -e "\033[1;32mRAM:\033[0m Unknown"
+    fi
+    
+    # Time (local command, no timeout needed)
+    echo -e "\033[1;32mTime:\033[0m $(date +"%T %Z")"
+    
+    # System Status (assuming netspeed is a custom function)
+    if command -v netspeed >/dev/null 2>&1; then
+        echo -e "${CYAN}System Status:${NC} $(timeout 2 netspeed 2>/dev/null || echo "Unknown")"
+    else
+        echo -e "${CYAN}System Status:${NC} netspeed command not found"
+    fi
 }
 fix_timezone() {
     sudo timedatectl set-timezone UTC
