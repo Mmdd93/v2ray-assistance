@@ -3161,47 +3161,6 @@ update() {
         return 1
     fi
 }
-#!/bin/bash
-
-# Colors for better visual organization
-RED='\033[1;31m'
-GREEN='\033[1;32m'
-WHITE='\033[1;33m'
-BLUE='\033[1;34m'
-MAGENTA='\033[1;35m'
-CYAN='\033[1;36m'
-YELLOW='\033[1;37m'
-ORANGE='\033[1;33m'
-PURPLE='\033[1;35m'
-LIGHT_BLUE='\033[1;94m'
-LIGHT_GREEN='\033[1;92m'
-LIGHT_CYAN='\033[1;96m'
-NC='\033[0m' # No Color
-
-# Header function
-display_header() {
-    clear
-    echo -e "${CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${NC}${GREEN}                v2ray ASSISTANT MANAGEMENT TOOL               ${NC}${NC}"
-    echo -e "${NC}${YELLOW}             Telegram: @tlgrmv2 | Version: 25.11.4            ${NC}${NC}"
-    echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
-    echo
-}
-
-# Function to display section headers with different colors
-section_header() {
-    local color=$1
-    local title=$2
-    echo -e "${color}╔══════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${NC} $title ${NC}"
-    echo -e "${color}╚══════════════════════════════════════════════════════════════════╝${NC}"
-}
-
-# Function to display menu options with better formatting
-menu_option() {
-    printf "${GREEN}%3s${NC} ${YELLOW}%-55s${NC}\n" "$1" "$2"
-}
-
 # Function to validate IP addresses
 validate_ip() {
     local ip=$1
@@ -3254,6 +3213,48 @@ show_status() {
     fi
 }
 
+# Colors for better visual organization
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+WHITE='\033[1;33m'
+BLUE='\033[1;34m'
+MAGENTA='\033[1;35m'
+CYAN='\033[1;36m'
+YELLOW='\033[1;37m'
+ORANGE='\033[1;33m'
+PURPLE='\033[1;35m'
+LIGHT_BLUE='\033[1;94m'
+LIGHT_GREEN='\033[1;92m'
+LIGHT_CYAN='\033[1;96m'
+NC='\033[0m' # No Color
+
+# Header function
+display_header() {
+    clear
+    echo -e "${CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}                v2ray ASSISTANT MANAGEMENT TOOL               ${NC}"
+    echo -e "${YELLOW}             Telegram: @tlgrmv2 | Version: 25.11.4            ${NC}"
+    echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
+    echo
+}
+
+# Function to display section headers with different colors
+section_header() {
+    local color=$1
+    local title=$2
+    echo -e "${color}╔══════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${color} $title ${NC}"
+    echo -e "${color}╚══════════════════════════════════════════════════════════════════╝${NC}"
+}
+
+# Function to display menu options with section color
+menu_option() {
+    local section_color=$1
+    local number=$2
+    local text=$3
+    printf "${GREEN}%3s${NC} ${section_color}%-55s${NC}\n" "$number" "$text"
+}
+
 # Main menu function
 main_menu() {
     while true; do
@@ -3261,159 +3262,159 @@ main_menu() {
         
         # System section - BLUE
         echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${NC} SYSTEM MANAGEMENT ${NC}"
+        echo -e "${BLUE} SYSTEM MANAGEMENT ${NC}"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "1" "Update and upgrade system + install packages"
-        menu_option "2" "Fix update issues (broken apt/dependencies)"
-        menu_option "3" "Change update and package sources to Iran or global"
-        menu_option "4" "System information"
-        menu_option "5" "Install Docker and Docker Compose"
-        menu_option "6" "Install Docker on Iran servers"
-        menu_option "72" "MTU management"
+        menu_option "${BLUE}" "1" "Update and upgrade system + install packages"
+        menu_option "${BLUE}" "2" "Fix update issues (broken apt/dependencies)"
+        menu_option "${BLUE}" "3" "Change update and package sources to Iran or global"
+        menu_option "${BLUE}" "4" "System information"
+        menu_option "${BLUE}" "5" "Install Docker and Docker Compose"
+        menu_option "${BLUE}" "6" "Install Docker on Iran servers"
+        menu_option "${BLUE}" "72" "MTU management"
         echo
         
         # Tools section - GREEN
         echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${NC} TOOLS ${NC}"
+        echo -e "${GREEN} TOOLS ${NC}"
         echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "7" "ISP defender (allow/block Iran ISPs)"
-        menu_option "8" "Network Optimizer and BBR"
-        menu_option "9" "Speed test and benchmark"
-        menu_option "10" "Port management (in-use ports, connected IPs)"
-        menu_option "11" "Auto clear cache and server reboot"
-        menu_option "12" "Ping management (enable/disable)"
-        menu_option "13" "Change server DNS"
-        menu_option "14" "Create personal DNS"
-        menu_option "15" "SSL certificate management"
-        menu_option "16" "SWAP management"
-        menu_option "17" "Desktop + Firefox on Ubuntu server"
-        menu_option "18" "Server monthly traffic limit"
-        menu_option "19" "CPU/RAM monitoring"
-        menu_option "20" "UFW firewall management"
-        menu_option "21" "Cloudflare auto IP changer"
-        menu_option "22" "IP quality checks"
-        menu_option "23" "Nginx management"
-        menu_option "24" "IPv6 management (enable/disable)"
-        menu_option "25" "ZRAM optimization"
-        menu_option "29" "Send file to remote server & Telegram"
-        menu_option "30" "Auto check URLs"
-        menu_option "32" "Change timezone (Fix WhatsApp time)"
-        menu_option "33" "Secure SSH (fail2ban)"
-        menu_option "34" "Block torrent traffic"
-        menu_option "35" "AWS CLI installation"
-        menu_option "36" "Cron job management"
-        menu_option "37" "File management tools"
-        menu_option "71" "Abuse Defender (Hetzner)"
+        menu_option "${GREEN}" "7" "ISP defender (allow/block Iran ISPs)"
+        menu_option "${GREEN}" "8" "Network Optimizer and BBR"
+        menu_option "${GREEN}" "9" "Speed test and benchmark"
+        menu_option "${GREEN}" "10" "Port management (in-use ports, connected IPs)"
+        menu_option "${GREEN}" "11" "Auto clear cache and server reboot"
+        menu_option "${GREEN}" "12" "Ping management (enable/disable)"
+        menu_option "${GREEN}" "13" "Change server DNS"
+        menu_option "${GREEN}" "14" "Create personal DNS"
+        menu_option "${GREEN}" "15" "SSL certificate management"
+        menu_option "${GREEN}" "16" "SWAP management"
+        menu_option "${GREEN}" "17" "Desktop + Firefox on Ubuntu server"
+        menu_option "${GREEN}" "18" "Server monthly traffic limit"
+        menu_option "${GREEN}" "19" "CPU/RAM monitoring"
+        menu_option "${GREEN}" "20" "UFW firewall management"
+        menu_option "${GREEN}" "21" "Cloudflare auto IP changer"
+        menu_option "${GREEN}" "22" "IP quality checks"
+        menu_option "${GREEN}" "23" "Nginx management"
+        menu_option "${GREEN}" "24" "IPv6 management (enable/disable)"
+        menu_option "${GREEN}" "25" "ZRAM optimization"
+        menu_option "${GREEN}" "29" "Send file to remote server & Telegram"
+        menu_option "${GREEN}" "30" "Auto check URLs"
+        menu_option "${GREEN}" "32" "Change timezone (Fix WhatsApp time)"
+        menu_option "${GREEN}" "33" "Secure SSH (fail2ban)"
+        menu_option "${GREEN}" "34" "Block torrent traffic"
+        menu_option "${GREEN}" "35" "AWS CLI installation"
+        menu_option "${GREEN}" "36" "Cron job management"
+        menu_option "${GREEN}" "37" "File management tools"
+        menu_option "${GREEN}" "71" "Abuse Defender (Hetzner)"
         echo
        
         # Tunnel section - CYAN
         echo -e "${CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${NC} TUNNEL SERVICES ${NC}"
+        echo -e "${CYAN} TUNNEL SERVICES ${NC}"
         echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${CYAN}Combine local tunnels (SIT, GRE, GENEVE, VXLAN) with:${NC}"
         echo -e "${CYAN}Backhaul, GOST, WSS, etc., for enhanced stealth${NC}"
-        menu_option "26" "SIT tunnel 6to4 (IPv6 local) (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "28" "GRE tunnel (IPv4/IPv6 local) (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "45" "GENEVE tunnel (IPv4 local) (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "46" "VXLAN tunnel (IPv4 local) (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "31" "HAProxy tunnel (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "27" "Backhaul tunnel (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "44" "GOST tunnel by (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "55" "GOST Reverse tunnel (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "47" "WSS/WS tunnel (CDN support) (github.com/Mmdd93/v2ray-assistance/)"
-        menu_option "56" "WireGuard Reverse Tunnel by (EYLAN)"
-        menu_option "58" "WireGuard/Hysteria Tunnel (TAQ-BOSTAN) (github.com/ParsaKSH/TAQ-BOSTAN)"
-        menu_option "61" "Backhaul premium tunnel cracked by (t.me/anony_identity)"
-        menu_option "62" "Rathole tunnel v2 by (github.com/Musixal)"
-        menu_option "63" "Trust Tunnel (TCP/UDP over QUIC) (github.com/Erfan-XRay)"
-        menu_option "64" "HPulse Tunnel (TCP/UDP over Hysteria 2) (github.com/Erfan-XRay)"
-        menu_option "66" "DNS Tunnel (tunnel over DNS) (github.com/IRSupp/DnsTunnel)"
-        menu_option "67" "FRP Tunnel (Fast Reverse Proxy) (github.com/MmdBay/frp-manager)"
-        menu_option "68" "Phantom Tunnel (Reverse) by (github.com/webwizards-team/Phantom-Tunnel/)"
-        menu_option "69" "FRPulse Tunnel (Fast Reverse Proxy) (github.com/Erfan-XRay/FRPulse)" 
-        menu_option "70" "FRP Tunnel by Mehrad (github.com/mikeesierrah/frp-script)" 
-        menu_option "76" "ZEX Tunnel Waterwall (github.com/izex/ZEX-Tunnel)"
-        menu_option "79" "Pingtunnel Manager (github.com/hoseinlolready/Pingtunnel_manager)"
+        menu_option "${CYAN}" "26" "SIT tunnel 6to4 (IPv6 local) (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "${CYAN}" "28" "GRE tunnel (IPv4/IPv6 local) (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "${CYAN}" "45" "GENEVE tunnel (IPv4 local) (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "${CYAN}" "46" "VXLAN tunnel (IPv4 local) (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "${CYAN}" "31" "HAProxy tunnel (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "${CYAN}" "27" "Backhaul tunnel (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "${CYAN}" "44" "GOST tunnel by (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "${CYAN}" "55" "GOST Reverse tunnel (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "${CYAN}" "47" "WSS/WS tunnel (CDN support) (github.com/Mmdd93/v2ray-assistance/)"
+        menu_option "${CYAN}" "56" "WireGuard Reverse Tunnel by (EYLAN)"
+        menu_option "${CYAN}" "58" "WireGuard/Hysteria Tunnel (TAQ-BOSTAN) (github.com/ParsaKSH/TAQ-BOSTAN)"
+        menu_option "${CYAN}" "61" "Backhaul premium tunnel cracked by (t.me/anony_identity)"
+        menu_option "${CYAN}" "62" "Rathole tunnel v2 by (github.com/Musixal)"
+        menu_option "${CYAN}" "63" "Trust Tunnel (TCP/UDP over QUIC) (github.com/Erfan-XRay)"
+        menu_option "${CYAN}" "64" "HPulse Tunnel (TCP/UDP over Hysteria 2) (github.com/Erfan-XRay)"
+        menu_option "${CYAN}" "66" "DNS Tunnel (tunnel over DNS) (github.com/IRSupp/DnsTunnel)"
+        menu_option "${CYAN}" "67" "FRP Tunnel (Fast Reverse Proxy) (github.com/MmdBay/frp-manager)"
+        menu_option "${CYAN}" "68" "Phantom Tunnel (Reverse) by (github.com/webwizards-team/Phantom-Tunnel/)"
+        menu_option "${CYAN}" "69" "FRPulse Tunnel (Fast Reverse Proxy) (github.com/Erfan-XRay/FRPulse)" 
+        menu_option "${CYAN}" "70" "FRP Tunnel by Mehrad (github.com/mikeesierrah/frp-script)" 
+        menu_option "${CYAN}" "76" "ZEX Tunnel Waterwall (github.com/izex/ZEX-Tunnel)"
+        menu_option "${CYAN}" "79" "Pingtunnel Manager (github.com/hoseinlolready/Pingtunnel_manager)"
         echo
         
         # XUI section - MAGENTA
         echo -e "${MAGENTA}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${NC} XUI ${NC}"
+        echo -e "${MAGENTA} XUI ${NC}"
         echo -e "${MAGENTA}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "38" "X-UI panels (x-ui, 3x-ui, tx-ui)"
-        menu_option "74" "Sing-box/SagerNet panel (s-ui) (github.com/alireza0/s-ui)"
-        menu_option "73" "X-UI panel multi node location (github.com/azavaxhuman/Nodex)"
-        menu_option "80" "Hysteria2 Blitz Panel (github.com/ReturnFI/Blitz)"
+        menu_option "${MAGENTA}" "38" "X-UI panels (x-ui, 3x-ui, tx-ui)"
+        menu_option "${MAGENTA}" "74" "Sing-box/SagerNet panel (s-ui) (github.com/alireza0/s-ui)"
+        menu_option "${MAGENTA}" "73" "X-UI panel multi node location (github.com/azavaxhuman/Nodex)"
+        menu_option "${MAGENTA}" "80" "Hysteria2 Blitz Panel (github.com/ReturnFI/Blitz)"
         
         # Telegram Bot section - PURPLE
         echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${NC} TELEGRAM BOT ${NC}"
+        echo -e "${PURPLE} TELEGRAM BOT ${NC}"
         echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "75" "Mirza Bot pro (telegram bot for sale) (github.com/mahdiMGF2/botmirzapanel)"
-        menu_option "77" "mtproto proxy (telegram proxy) (github.com/seriyps/mtproto_proxy)"
+        menu_option "${PURPLE}" "75" "Mirza Bot pro (telegram bot for sale) (github.com/mahdiMGF2/botmirzapanel)"
+        menu_option "${PURPLE}" "77" "mtproto proxy (telegram proxy) (github.com/seriyps/mtproto_proxy)"
         echo
         
         # Marzban section - LIGHT_BLUE
         echo -e "${LIGHT_BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${NC} MARZBAN ${NC}"
+        echo -e "${LIGHT_BLUE} MARZBAN ${NC}"
         echo -e "${LIGHT_BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "39" "Marzban panel"
-        menu_option "40" "Marzban node by v2"
-        menu_option "53" "Marzban node official script"
-        menu_option "52" "Marzban node by Mehrdad"
+        menu_option "${LIGHT_BLUE}" "39" "Marzban panel"
+        menu_option "${LIGHT_BLUE}" "40" "Marzban node by v2"
+        menu_option "${LIGHT_BLUE}" "53" "Marzban node official script"
+        menu_option "${LIGHT_BLUE}" "52" "Marzban node by Mehrdad"
         echo
         
         # Remnawave section - LIGHT_GREEN
         echo -e "${LIGHT_GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${NC} REMNAWAVE ${NC}"
+        echo -e "${LIGHT_GREEN} REMNAWAVE ${NC}"
         echo -e "${LIGHT_GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "48" "Remnawave"
+        menu_option "${LIGHT_GREEN}" "48" "Remnawave"
         echo
         
         # Marzneshin section - ORANGE
         echo -e "${ORANGE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${NC} MARZNESHIN ${NC}"
+        echo -e "${ORANGE} MARZNESHIN ${NC}"
         echo -e "${ORANGE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "49" "Marzneshin"
-        menu_option "50" "Marzneshin node by ErfJab"
-        menu_option "51" "Marzneshin node by Mehrdad"
+        menu_option "${ORANGE}" "49" "Marzneshin"
+        menu_option "${ORANGE}" "50" "Marzneshin node by ErfJab"
+        menu_option "${ORANGE}" "51" "Marzneshin node by Mehrdad"
         echo
         
         # WireGuard/OpenVPN section - LIGHT_CYAN
         echo -e "${LIGHT_CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${NC} WIREGUARD - OPENVPN ${NC}"
+        echo -e "${LIGHT_CYAN} WIREGUARD-OPENVPN-L2TP-SSTP ${NC}"
         echo -e "${LIGHT_CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "60" "WGDashboard (WireGuard management)"
-        menu_option "54" "SoftEther by RTX-VPN v2 (L2TP, OpenVPN, SSTP)"
-        menu_option "57" "OPENVPN Webpanel (Multi node location)"
-        menu_option "81" "OV-Panel (Multi node location)  by github.com/primeZdev/ov-panel"
-        menu_option "82" "IranGate-OV  by github.com/amiridev-org/irangate-ov"
+        menu_option "${LIGHT_CYAN}" "60" "WGDashboard (WireGuard management)"
+        menu_option "${LIGHT_CYAN}" "54" "SoftEther by RTX-VPN v2"
+        menu_option "${LIGHT_CYAN}" "57" "OPENVPN Webpanel (Multi node location)"
+        menu_option "${LIGHT_CYAN}" "81" "OV-Panel (Multi node location)  by github.com/primeZdev/ov-panel"
+        menu_option "${LIGHT_CYAN}" "82" "IranGate-OV  by github.com/amiridev-org/irangate-ov"
         echo
         
         # Panel Backup section - YELLOW
         echo -e "${YELLOW}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${NC} PANEL BACKUP ${NC}"
+        echo -e "${YELLOW} PANEL BACKUP ${NC}"
         echo -e "${YELLOW}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "41" "Panel Backup (Marzban, X-UI, Hiddify)"
-        menu_option "42" "Auto panel restart"
+        menu_option "${YELLOW}" "41" "Panel Backup (Marzban, X-UI, Hiddify)"
+        menu_option "${YELLOW}" "42" "Auto panel restart"
         echo
         
         # Monitoring section - WHITE
         echo -e "${WHITE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${NC} MONITORING ${NC}"
+        echo -e "${WHITE} MONITORING ${NC}"
         echo -e "${WHITE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        
-        menu_option "59" "Uptime Kuma monitoring"
+        menu_option "${WHITE}" "59" "Uptime Kuma monitoring"
         echo
         
         # Footer section
         echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
 		echo -e " $(netspeed)"
-        menu_option "00" "Update scripts"
-        menu_option "0" "Exit"
+        menu_option "${BLUE}" "00" "Update scripts"
+        menu_option "${BLUE}" "0" "Exit"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         
         read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
+
         
 
         case $choice in
