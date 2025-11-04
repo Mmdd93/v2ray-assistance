@@ -3216,7 +3216,6 @@ show_status() {
 # Colors for better visual organization
 RED='\033[1;31m'
 GREEN='\033[1;32m'
-
 BLUE='\033[1;34m'
 MAGENTA='\033[1;35m'
 CYAN='\033[1;36m'
@@ -3247,13 +3246,13 @@ main_menu() {
         echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${BLUE} SYSTEM MANAGEMENT ${WHITE}[github.com/Mmdd93/v2ray-assistance] ${NC}"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN}  1.${NC} ${BLUE}Update and upgrade system + install packages${NC}"
-        echo -e "${LIGHT_GREEN}  2.${NC} ${BLUE}Fix update issues (broken apt/dependencies)${NC}"
-        echo -e "${LIGHT_GREEN}  3.${NC} ${BLUE}Change update and package sources to Iran or global${NC}"
-        echo -e "${LIGHT_GREEN}  4.${NC} ${BLUE}System information${NC}"
-        echo -e "${LIGHT_GREEN}  5.${NC} ${BLUE}Install Docker and Docker Compose${NC}"
-        echo -e "${LIGHT_GREEN}  6.${NC} ${BLUE}Install Docker on Iran servers${NC}"
-        echo -e "${LIGHT_GREEN} 72.${NC} ${BLUE}MTU management${NC}"
+        echo -e "${BLUE}  1.${NC} ${BLUE}Update and upgrade system + install packages${NC}"
+        echo -e "${BLUE}  2.${NC} ${BLUE}Fix update issues (broken apt/dependencies)${NC}"
+        echo -e "${BLUE}  3.${NC} ${BLUE}Change update and package sources to Iran or global${NC}"
+        echo -e "${BLUE}  4.${NC} ${BLUE}System information${NC}"
+        echo -e "${BLUE}  5.${NC} ${BLUE}Install Docker and Docker Compose${NC}"
+        echo -e "${BLUE}  6.${NC} ${BLUE}Install Docker on Iran servers${NC}"
+        echo -e "${BLUE} 72.${NC} ${BLUE}MTU management${NC}"
         echo
         
         # Tools section - GREEN
@@ -3296,107 +3295,109 @@ main_menu() {
         echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${YELLOW}Combine local tunnels [SIT,GRE,GENEVE,VXLAN] with:${NC}"
         echo -e "${YELLOW}dokodemo,Rathole,Backhaul,GOST,etc... for enhanced stealth${NC}"
-        echo -e "${LIGHT_GREEN} 26.${NC} ${CYAN}SIT tunnel 6to4 (IPv6 local)             ${WHITE}[github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 28.${NC} ${CYAN}GRE tunnel (IPv4/IPv6 local)             ${WHITE}[github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 45.${NC} ${CYAN}GENEVE tunnel (IPv4 local)               ${WHITE}[github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 46.${NC} ${CYAN}VXLAN tunnel (IPv4 local)                ${WHITE}[github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 31.${NC} ${CYAN}HAProxy tunnel                           ${WHITE}[github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 27.${NC} ${CYAN}Backhaul tunnel                          ${WHITE}[github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 44.${NC} ${CYAN}GOST tunnel by                           ${WHITE}[github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 55.${NC} ${CYAN}GOST Reverse tunnel                      ${WHITE}[github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 47.${NC} ${CYAN}WSS/WS tunnel (CDN support)              ${WHITE}[github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 56.${NC} ${CYAN}WireGuard Reverse Tunnel                 ${WHITE}[github.com/eylandoo]${NC}"
-        echo -e "${LIGHT_GREEN} 58.${NC} ${CYAN}WireGuard/Hysteria Tunnel (TAQ-BOSTAN)   ${WHITE}[github.com/ParsaKSH]${NC}"
-        echo -e "${LIGHT_GREEN} 61.${NC} ${CYAN}Backhaul premium tunnel cracked          ${WHITE}[t.me/anony_identity]${NC}"
-        echo -e "${LIGHT_GREEN} 62.${NC} ${CYAN}Rathole tunnel v2 by                     ${WHITE}[github.com/Musixal]${NC}"
-        echo -e "${LIGHT_GREEN} 63.${NC} ${CYAN}Trust Tunnel (TCP/UDP over QUIC)         ${WHITE}[github.com/Erfan-XRay]${NC}"
-        echo -e "${LIGHT_GREEN} 64.${NC} ${CYAN}HPulse Tunnel (TCP/UDP over Hysteria 2)  ${WHITE}[github.com/Erfan-XRay]${NC}"
-        echo -e "${LIGHT_GREEN} 66.${NC} ${CYAN}DNS Tunnel (tunnel over DNS)             ${WHITE}[github.com/IRSupp]${NC}"
-        echo -e "${LIGHT_GREEN} 67.${NC} ${CYAN}FRP Tunnel (Fast Reverse Proxy)          ${WHITE}[github.com/MmdBay]${NC}"
-        echo -e "${LIGHT_GREEN} 68.${NC} ${CYAN}Phantom Tunnel (Reverse) by              ${WHITE}[github.com/webwizards-team]${NC}"
-        echo -e "${LIGHT_GREEN} 69.${NC} ${CYAN}FRPulse Tunnel (Fast Reverse Proxy)      ${WHITE}[github.com/Erfan-XRay]${NC}" 
-        echo -e "${LIGHT_GREEN} 70.${NC} ${CYAN}FRP Tunnel by Mehrad                     ${WHITE}[github.com/mikeesierrah]${NC}" 
-        echo -e "${LIGHT_GREEN} 76.${NC} ${CYAN}ZEX Tunnel Waterwall                     ${WHITE}[github.com/izex/ZEX-Tunnel]${NC}"
-        echo -e "${LIGHT_GREEN} 79.${NC} ${CYAN}Pingtunnel Manager                       ${WHITE}[github.com/hoseinlolready]${NC}"
+        echo -e "${CYAN} 26.${NC} ${CYAN}SIT tunnel 6to4 (IPv6 local)             ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${CYAN} 28.${NC} ${CYAN}GRE tunnel (IPv4/IPv6 local)             ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${CYAN} 45.${NC} ${CYAN}GENEVE tunnel (IPv4 local)               ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${CYAN} 46.${NC} ${CYAN}VXLAN tunnel (IPv4 local)                ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${CYAN} 31.${NC} ${CYAN}HAProxy tunnel                           ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${CYAN} 27.${NC} ${CYAN}Backhaul tunnel                          ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${CYAN} 44.${NC} ${CYAN}GOST tunnel by                           ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${CYAN} 55.${NC} ${CYAN}GOST Reverse tunnel                      ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${CYAN} 47.${NC} ${CYAN}WSS/WS tunnel (CDN support)              ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${CYAN} 56.${NC} ${CYAN}WireGuard Reverse Tunnel                 ${WHITE}[github.com/eylandoo]${NC}"
+        echo -e "${CYAN} 58.${NC} ${CYAN}WireGuard/Hysteria Tunnel (TAQ-BOSTAN)   ${WHITE}[github.com/ParsaKSH]${NC}"
+        echo -e "${CYAN} 61.${NC} ${CYAN}Backhaul premium tunnel cracked          ${WHITE}[t.me/anony_identity]${NC}"
+        echo -e "${CYAN} 62.${NC} ${CYAN}Rathole tunnel v2 by                     ${WHITE}[github.com/Musixal]${NC}"
+        echo -e "${CYAN} 63.${NC} ${CYAN}Trust Tunnel (TCP/UDP over QUIC)         ${WHITE}[github.com/Erfan-XRay]${NC}"
+        echo -e "${CYAN} 64.${NC} ${CYAN}HPulse Tunnel (TCP/UDP over Hysteria 2)  ${WHITE}[github.com/Erfan-XRay]${NC}"
+        echo -e "${CYAN} 66.${NC} ${CYAN}DNS Tunnel (tunnel over DNS)             ${WHITE}[github.com/IRSupp]${NC}"
+        echo -e "${CYAN} 67.${NC} ${CYAN}FRP Tunnel (Fast Reverse Proxy)          ${WHITE}[github.com/MmdBay]${NC}"
+        echo -e "${CYAN} 68.${NC} ${CYAN}Phantom Tunnel (Reverse) by              ${WHITE}[github.com/webwizards-team]${NC}"
+        echo -e "${CYAN} 69.${NC} ${CYAN}FRPulse Tunnel (Fast Reverse Proxy)      ${WHITE}[github.com/Erfan-XRay]${NC}" 
+        echo -e "${CYAN} 70.${NC} ${CYAN}FRP Tunnel by Mehrad                     ${WHITE}[github.com/mikeesierrah]${NC}" 
+        echo -e "${CYAN} 76.${NC} ${CYAN}ZEX Tunnel Waterwall                     ${WHITE}[github.com/izex/ZEX-Tunnel]${NC}"
+        echo -e "${CYAN} 79.${NC} ${CYAN}Pingtunnel Manager                       ${WHITE}[github.com/hoseinlolready]${NC}"
         echo
         
         # XUI section - MAGENTA
         echo -e "${MAGENTA}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${MAGENTA} XUI ${NC}"
         echo -e "${MAGENTA}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 38.${NC} ${MAGENTA}X-UI panels (x-ui, 3x-ui, tx-ui) ${GREEN}[Single]${NC}${NC}"
-        echo -e "${LIGHT_GREEN} 74.${NC} ${MAGENTA}Sing-box/SagerNet panel (s-ui) ${GREEN}[Single]${NC} ${WHITE}[github.com/alireza0]${NC}"
-        echo -e "${LIGHT_GREEN} 73.${NC} ${MAGENTA}X-UI panel ${RED}[Multi]${NC}                        ${WHITE}[github.com/azavaxhuman]${NC}"
-        echo -e "${LIGHT_GREEN} 80.${NC} ${MAGENTA}Hysteria2 Blitz Panel ${GREEN}[Single]${NC}          ${WHITE}[github.com/ReturnFI]${NC}"
+        echo -e "${MAGENTA} 38.${NC} ${MAGENTA}X-UI panels (x-ui, 3x-ui, tx-ui) ${GREEN}[Single]${NC}${NC}"
+        echo -e "${MAGENTA} 74.${NC} ${MAGENTA}Sing-box/SagerNet panel (s-ui) ${GREEN}[Single]${NC}  ${WHITE}[github.com/alireza0]${NC}"
+        echo -e "${MAGENTA} 73.${NC} ${MAGENTA}X-UI panel ${RED}[Multi]${NC}                        ${WHITE}[github.com/azavaxhuman]${NC}"
+        echo -e "${MAGENTA} 80.${NC} ${MAGENTA}Hysteria2 Blitz Panel ${GREEN}[Single]${NC}           ${WHITE}[github.com/ReturnFI]${NC}"
         echo
-        # Telegram Bot section - PURPLE
+        
+        # Telegram Bot section - WHITE
         echo -e "${WHITE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${WHITE} TELEGRAM BOT ${NC}"
         echo -e "${WHITE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 75.${NC} ${WHITE}Mirza Bot Pro VPN Sale ${RED}[Multi]${NC} ${WHITE}[github.com/mahdiMGF2]${NC}"
-        echo -e "${LIGHT_GREEN} 77.${NC} ${WHITE}mtproto proxy (telegram proxy) ${WHITE}[github.com/seriyps]${NC}"
+        echo -e "${WHITE} 75.${NC} ${WHITE}Mirza Bot Pro VPN Sale ${RED}[Multi]${NC} ${WHITE}[github.com/mahdiMGF2]${NC}"
+        echo -e "${WHITE} 77.${NC} ${WHITE}mtproto proxy (telegram proxy) ${WHITE}[github.com/seriyps]${NC}"
         echo
         
         # Marzban section - LIGHT_BLUE
         echo -e "${LIGHT_BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${LIGHT_BLUE} MARZBAN ${NC}"
         echo -e "${LIGHT_BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 39.${NC} ${LIGHT_BLUE}Marzban ${RED}[Multi]${NC}${NC}"
-        echo -e "${LIGHT_GREEN} 40.${NC} ${LIGHT_BLUE}Marzban node by v2${NC}"
-        echo -e "${LIGHT_GREEN} 53.${NC} ${LIGHT_BLUE}Marzban node official script${NC}"
-        echo -e "${LIGHT_GREEN} 52.${NC} ${LIGHT_BLUE}Marzban node by Mehrdad${NC}"
+        echo -e "${LIGHT_BLUE} 39.${NC} ${LIGHT_BLUE}Marzban ${RED}[Multi]${NC}${NC}"
+        echo -e "${LIGHT_BLUE} 40.${NC} ${LIGHT_BLUE}Marzban node by v2${NC}"
+        echo -e "${LIGHT_BLUE} 53.${NC} ${LIGHT_BLUE}Marzban node official script${NC}"
+        echo -e "${LIGHT_BLUE} 52.${NC} ${LIGHT_BLUE}Marzban node by Mehrdad${NC}"
         echo
         
-        # Remnawave section - LIGHT_GREEN
+        # Remnawave section - GREEN
         echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${GREEN} REMNAWAVE ${NC}"
         echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 48.${NC} ${GREEN}Remnawave ${RED}[Multi]${NC}${NC}"
+        echo -e "${GREEN} 48.${NC} ${GREEN}Remnawave ${RED}[Multi]${NC}${NC}"
         echo
         
         # Marzneshin section - ORANGE
         echo -e "${ORANGE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${ORANGE} MARZNESHIN ${NC}"
         echo -e "${ORANGE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 49.${NC} ${ORANGE}Marzneshin ${RED}[Multi]${NC}${NC}"
-        echo -e "${LIGHT_GREEN} 50.${NC} ${ORANGE}Marzneshin node by ErfJab${NC}"
-        echo -e "${LIGHT_GREEN} 51.${NC} ${ORANGE}Marzneshin node by Mehrdad${NC}"
+        echo -e "${ORANGE} 49.${NC} ${ORANGE}Marzneshin ${RED}[Multi]${NC}${NC}"
+        echo -e "${ORANGE} 50.${NC} ${ORANGE}Marzneshin node by ErfJab${NC}"
+        echo -e "${ORANGE} 51.${NC} ${ORANGE}Marzneshin node by Mehrdad${NC}"
         echo
         
         # WireGuard/OpenVPN section - LIGHT_CYAN
         echo -e "${LIGHT_CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${LIGHT_CYAN} WIREGUARD-OPENVPN-L2TP-SSTP ${NC}"
         echo -e "${LIGHT_CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 60.${NC} ${LIGHT_CYAN}WireGuard Dashboard ${GREEN}[Single]${NC} ${WHITE}[github.com/WGDashboard]${NC}"
-        echo -e "${LIGHT_GREEN} 54.${NC} ${LIGHT_CYAN}SoftEther RTX-VPN ${GREEN}[Single]${NC}   ${WHITE}[github.com/Sir-MmD]${NC}"
-        echo -e "${LIGHT_GREEN} 57.${NC} ${LIGHT_CYAN}OPEN VPN ${RED}[Multi]${NC}               ${WHITE}[github.com/eylandoo]${NC}"
-        echo -e "${LIGHT_GREEN} 81.${NC} ${LIGHT_CYAN}OV-Panel ${RED}[Multi]${NC}               ${WHITE}[github.com/primeZdev/ov-panel]${NC}"
-        echo -e "${LIGHT_GREEN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC}         ${WHITE}[github.com/amiridev-org]${NC}"
+        echo -e "${LIGHT_CYAN} 60.${NC} ${LIGHT_CYAN}WireGuard Dashboard ${GREEN}[Single]${NC} ${WHITE}[github.com/WGDashboard]${NC}"
+        echo -e "${LIGHT_CYAN} 54.${NC} ${LIGHT_CYAN}SoftEther RTX-VPN ${GREEN}[Single]${NC}   ${WHITE}[github.com/Sir-MmD]${NC}"
+        echo -e "${LIGHT_CYAN} 57.${NC} ${LIGHT_CYAN}OPEN VPN ${RED}[Multi]${NC}               ${WHITE}[github.com/eylandoo]${NC}"
+        echo -e "${LIGHT_CYAN} 81.${NC} ${LIGHT_CYAN}OV-Panel ${RED}[Multi]${NC}               ${WHITE}[github.com/primeZdev/ov-panel]${NC}"
+        echo -e "${LIGHT_CYAN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC}         ${WHITE}[github.com/amiridev-org]${NC}"
         echo
         
         # Panel Backup section - YELLOW
         echo -e "${YELLOW}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${YELLOW} PANEL BACKUP ${NC}"
         echo -e "${YELLOW}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 41.${NC} ${YELLOW}Panel Backup (Marzban, X-UI, Hiddify)${NC}"
-        echo -e "${LIGHT_GREEN} 42.${NC} ${YELLOW}Auto panel restart${NC}"
+        echo -e "${YELLOW} 41.${NC} ${YELLOW}Panel Backup (Marzban, X-UI, Hiddify)${NC}"
+        echo -e "${YELLOW} 42.${NC} ${YELLOW}Auto panel restart${NC}"
         echo
         
         # Monitoring section - WHITE
         echo -e "${WHITE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${WHITE} MONITORING ${NC}"
         echo -e "${WHITE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 59.${NC} ${WHITE}Uptime Kuma monitoring${NC}"
+        echo -e "${WHITE} 59.${NC} ${WHITE}Uptime Kuma monitoring${NC}"
         echo
         
         # Footer section
         echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e " $(netspeed)"
-        echo -e "${LIGHT_GREEN} 00.${NC} ${BLUE}Update scripts${NC}"
-        echo -e "${LIGHT_GREEN}  0.${NC} ${BLUE}Exit${NC}"
+        echo -e "${BLUE} 00.${NC} ${BLUE}Update scripts${NC}"
+        echo -e "${BLUE}  0.${NC} ${BLUE}Exit${NC}"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         
         read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
+
 
 
         case $choice in
