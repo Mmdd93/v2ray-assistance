@@ -3253,6 +3253,7 @@ main_menu() {
         echo -e "${BLUE}  5.${NC} ${BLUE}Install Docker and Docker Compose${NC}"
         echo -e "${BLUE}  6.${NC} ${BLUE}Install Docker on Iran servers${NC}"
         echo -e "${BLUE} 72.${NC} ${BLUE}MTU management${NC}"
+		echo -e "${BLUE} 83.${NC} ${BLUE}Cleanup [Advanced]${NC}"
         echo
         
         # Tools section - GREEN
@@ -3733,6 +3734,12 @@ sudo bash zex-tunnel-install.sh
 				git clone https://github.com/AmiriDev-ORG/IranGate-OV.git
                 curl -Ls https://raw.githubusercontent.com/AmiriDev-ORG/IranGate-OV/refs/heads/CyrusTheGreat/install.sh -o IranGate-OV.sh
                 sudo bash IranGate-OV.sh
+                ;;
+				83)
+                echo -e "${YELLOW}Cleanup...${NC}"
+				sleep 1
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/Cleanup.sh -o Cleanup.sh
+                sudo bash Cleanup.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
