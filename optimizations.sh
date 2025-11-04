@@ -1029,30 +1029,38 @@ show_main_menu() {
     echo "================================================================"
     echo "           NETWORK OPTIMIZER TOOL - MAIN MENU                  "
     echo "================================================================"
-    echo -e "${WHITE}Select optimization category:${CYAN}                       "
-    echo "                                                                "
-    echo -e "${GREEN}SYSCTL OPTIMIZATIONS:${CYAN}                              "
-    echo -e "  ${GREEN}1${NC}${WHITE}. Gaming (Low Latency)${CYAN}                           "
-    echo -e "  ${GREEN}2${NC}${WHITE}. Streaming (High Throughput)${CYAN}                    "
-    echo -e "  ${GREEN}3${NC}${WHITE}. General Purpose (Balanced)${CYAN}                     "
-    echo -e "  ${GREEN}4${NC}${WHITE}. Competitive Gaming (Extreme)${CYAN}                   "
-    echo "                                                                "
-    echo -e "${BLUE}TC OPTIMIZATIONS:${CYAN}                                 "
-    echo -e "  ${GREEN}5${NC}${WHITE}. TC Gaming Mode${CYAN}                                "
-    echo -e "  ${GREEN}6${NC}${WHITE}. TC High Loss Mode${CYAN}                             "
-    echo -e "  ${GREEN}7${NC}${WHITE}. TC General Mode${CYAN}                               "
-    echo -e "  ${GREEN}8${NC}${WHITE}. NetEM Testing${CYAN}                                 "
-    echo "                                                                "
-    echo -e "${YELLOW}TOOLS & MANAGEMENT:${CYAN}                             "
-    echo -e "  ${GREEN}9${NC}${WHITE}. Show Current Status${CYAN}                           "
-    echo -e "  ${GREEN}10${NC}${WHITE}. Backup Configurations${CYAN}                        "
-    echo -e "  ${GREEN}11${NC}${WHITE}. Remove All Optimizations${CYAN}                     "
-    echo "                                                                "
-    echo -e "${PURPLE}SYSTEM CONTROL:${CYAN}                                "
-    echo -e "  ${GREEN}12${NC}${WHITE}. System Control Panel${CYAN}                         "
-    echo "                                                                "
-    echo -e "  ${GREEN}0${NC}${WHITE}. Exit${CYAN}                                         "
-    echo "                                                                "
+    echo
+    echo -e "${GREEN}SYSCTL OPTIMIZATIONS:${CYAN}"
+    echo -e "  ${GREEN}1${NC}${WHITE}. Gaming (Low Latency)${CYAN}"
+    echo -e "  ${GREEN}2${NC}${WHITE}. Streaming (High Throughput)${CYAN}"
+    echo -e "  ${GREEN}3${NC}${WHITE}. General Purpose (Balanced)${CYAN}"
+    echo -e "  ${GREEN}4${NC}${WHITE}. Competitive Gaming (Extreme)${CYAN}"
+    echo
+    echo -e "${BLUE}TC OPTIMIZATIONS:${CYAN}"
+    echo -e "  ${GREEN}5${NC}${WHITE}. TC Gaming Mode${CYAN}"
+    echo -e "  ${GREEN}6${NC}${WHITE}. TC High Loss Mode${CYAN}"
+    echo -e "  ${GREEN}7${NC}${WHITE}. TC General Mode${CYAN}"
+    echo -e "  ${GREEN}8${NC}${WHITE}. NetEM Testing${CYAN}"
+    echo
+    echo -e "${YELLOW}TOOLS & MANAGEMENT:${CYAN}"
+    echo -e "  ${GREEN}9${NC}${WHITE}. Show Current Status${CYAN}"
+    echo -e "  ${GREEN}10${NC}${WHITE}. Backup Configurations${CYAN}"
+    echo
+    echo -e "${GREEN}VIEW & MONITOR:${CYAN}"
+    echo -e "  ${GREEN}11${NC}${WHITE}. Show Current Settings${CYAN}"
+    echo -e "  ${GREEN}12${NC}${WHITE}. Show Sysctl.conf File${CYAN}"
+    echo -e "  ${GREEN}13${NC}${WHITE}. Test Network Performance${CYAN}"
+    echo
+    echo -e "${BLUE}EDIT & CONFIGURE:${CYAN}"
+    echo -e "  ${GREEN}14${NC}${WHITE}. Live Sysctl Editor${CYAN}"
+    echo -e "  ${GREEN}15${NC}${WHITE}. Edit Sysctl.conf (Text Editor)${CYAN}"
+    echo -e "  ${GREEN}16${NC}${WHITE}. Apply Settings Immediately${CYAN}"
+    echo
+    echo -e "${PURPLE}MAINTENANCE:${CYAN}"
+    echo -e "  ${GREEN}17${NC}${WHITE}. Backup Configurations${CYAN}"
+    echo -e "  ${GREEN}18${NC}${WHITE}. Remove All Optimizations${CYAN}"
+    echo
+    echo -e "  ${GREEN}0${NC}${WHITE}. Exit${CYAN}"
     echo "================================================================"
     echo -e "${NC}"
 }
@@ -1077,33 +1085,7 @@ show_netem_menu() {
     echo -e "${NC}"
 }
 
-show_control_menu() {
-    clear
-    echo -e "${CYAN}"
-    echo "================================================================"
-    echo "                   SYSTEM CONTROL PANEL                        "
-    echo "================================================================"
-    echo -e "${WHITE}Select control action:${CYAN}                             "
-    echo "                                                                "
-    echo -e "${GREEN}VIEW & MONITOR:${CYAN}                                  "
-    echo -e "  ${GREEN}1${NC}${WHITE}. Show Current Settings${CYAN}                           "
-    echo -e "  ${GREEN}2${NC}${WHITE}. Show Sysctl.conf File${CYAN}                           "
-    echo -e "  ${GREEN}3${NC}${WHITE}. Test Network Performance${CYAN}                        "
-    echo "                                                                "
-    echo -e "${BLUE}EDIT & CONFIGURE:${CYAN}                                "
-    echo -e "  ${GREEN}4${NC}${WHITE}. Live Sysctl Editor${CYAN}                              "
-    echo -e "  ${GREEN}5${NC}${WHITE}. Edit Sysctl.conf (Text Editor)${CYAN}                  "
-    echo -e "  ${GREEN}6${NC}${WHITE}. Apply Settings Immediately${CYAN}                      "
-    echo "                                                                "
-    echo -e "${PURPLE}MAINTENANCE:${CYAN}                                    "
-    echo -e "  ${GREEN}7${NC}${WHITE}. Backup Configurations${CYAN}                          "
-    echo -e "  ${GREEN}8${NC}${WHITE}. Remove All Optimizations${CYAN}                       "
-    echo "                                                                "
-    echo -e "  ${GREEN}0${NC}${WHITE}. Back to Main Menu${CYAN}                             "
-    echo "                                                                "
-    echo "================================================================"
-    echo -e "${NC}"
-}
+
 
 handle_netem_menu() {
     while true; do
@@ -1126,34 +1108,12 @@ handle_netem_menu() {
     done
 }
 
-handle_control_menu() {
-    while true; do
-        show_control_menu
-        echo -e "${YELLOW}Select option [0-8]: ${NC}"
-        read -r choice
-        
-        case $choice in
-            1) show_current_settings ;;
-            2) show_sysctl_file ;;
-            3) test_network_performance ;;
-            4) edit_sysctl_live ;;
-            5) edit_sysctl_conf ;;
-            6) apply_settings_immediately ;;
-            7) backup_configs ;;
-            8) remove_all_optimizations ;;
-            0) break ;;
-            *) echo -e "${RED}Invalid option! Please select 0-8${NC}" ;;
-        esac
-        
-        echo -e "\n${CYAN}Press Enter to continue...${NC}"
-        read -r
-    done
-}
+
 
 main_menu() {
     while true; do
         show_main_menu
-        echo -e "${YELLOW}Select option [0-12]: ${NC}"
+        echo -e "${YELLOW}Select option: ${NC}"
         read -r choice
         
         case $choice in
@@ -1167,8 +1127,14 @@ main_menu() {
             8) handle_netem_menu ;;
             9) show_current_settings ;;
             10) backup_configs ;;
-            11) remove_all_optimizations ;;
-            12) handle_control_menu ;;
+            11) show_current_settings ;;
+            12) show_sysctl_file ;;
+            13) test_network_performance ;;
+            14) edit_sysctl_live ;;
+            15) edit_sysctl_conf ;;
+            16) apply_settings_immediately ;;
+            17) backup_configs ;;
+            18) remove_all_optimizations ;;
             0)
                 echo -e "${GREEN}Goodbye!${NC}"
                 exit 0
