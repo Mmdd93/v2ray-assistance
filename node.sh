@@ -3190,9 +3190,7 @@ display_header() {
 
 # Function to display section headers
 section_header() {
-    echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║${NC}${WHITE} $1 ${NC}${BLUE}║${NC}"
-    echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${BLUE}║${NC}║${WHITE} $1 ${NC}${BLUE}║${NC}"
 }
 
 # Function to display menu options with better formatting
@@ -3342,10 +3340,10 @@ main_menu() {
 		menu_option "74" "Sing-box/SagerNet panel (s-ui) (github.com/alireza0/s-ui)"
 		menu_option "73" "X-UI panel multi node location (github.com/azavaxhuman/Nodex)"
 		menu_option "80" "Hysteria2 Blitz Panel (github.com/ReturnFI/Blitz)"
-		separator
+		section_header "Telegram Bot"
         menu_option "75" "Mirza Bot pro (telegram bot for sale) (github.com/mahdiMGF2/botmirzapanel)"
 		menu_option "77" "mtproto proxy (telegram proxy) (github.com/seriyps/mtproto_proxy)"
-        #menu_option "78" "OpenVPN panel (github.com/palark/ovpn-admin)"
+        
   
         section_header "Marzban"
         menu_option "39" "Marzban panel"
@@ -3360,6 +3358,7 @@ main_menu() {
         menu_option "51" "Marzneshin node by Mehrdad"
 		
         section_header "WireGuard - OPENVPN "
+		#menu_option "78" "OpenVPN panel (github.com/palark/ovpn-admin)"
         menu_option "60" "WGDashboard (WireGuard management)"
         menu_option "54" "SoftEther by RTX-VPN v2 (L2TP, OpenVPN, SSTP)"
         menu_option "57" "OPENVPN Webpanel (Multi node location)"
