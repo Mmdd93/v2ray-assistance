@@ -3177,16 +3177,16 @@ NC='\033[0m' # No Color
 # Header function
 display_header() {
     clear
-    echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${NC}${CYAN}              v2ray ASSISTANT MANAGEMENT TOOL              ${NC}${NC}"
-    echo -e "${NC}${YELLOW}           Telegram: @tlgrmv2 | Version: 25.11.4           ${NC}${NC}"
-    echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${GREEN}╔═════════════════════════════════════════════════════╗${NC}"
+    echo -e "${NC}${CYAN}v2ray ASSISTANT MANAGEMENT TOOL              ${NC}${NC}"
+    echo -e "${NC}${YELLOW}Telegram: @tlgrmv2 | Version: 25.11.4           ${NC}${NC}"
+    echo -e "${GREEN}╚═════════════════════════════════════════════════════╝${NC}"
 }
 # Function to display section headers
 section_header() {
-    echo -e "${BLUE}╔══════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}╔════════════════════════════════════════════════╗${NC}"
     echo -e "${NC} $1 ${NC}"
-    echo -e "${BLUE}╚══════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${BLUE}╚════════════════════════════════════════════════╝${NC}"
 }
 
 # Function to display menu options with better formatting
@@ -3363,13 +3363,13 @@ main_menu() {
         menu_option "42" "Auto panel restart"
 		
 		section_header "Monitoring"
+		echo -e "${CYAN}System Status:${NC} $(netspeed)"
         menu_option "59" "Uptime Kuma monitoring"
-      echo  ""
-        # Footer options
-        echo -e "${CYAN}System Status:${NC} $(netspeed)"
+        
+		echo -e "${BLUE}══════════════════════════════════════════════════════════${NC}"
         menu_option "00" "Update scripts"
         menu_option "0" "Exit"
-        
+        echo -e "${BLUE}══════════════════════════════════════════════════════════${NC}"
         read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
         case $choice in
             1) 
