@@ -3326,14 +3326,14 @@ main_menu() {
         echo -e "${MAGENTA}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${LIGHT_GREEN} 38.${NC} ${MAGENTA}X-UI panels (x-ui, 3x-ui, tx-ui) ${GREEN}[Single]${NC}${NC}"
         echo -e "${LIGHT_GREEN} 74.${NC} ${MAGENTA}Sing-box/SagerNet panel (s-ui) ${GREEN}[Single]${NC} ${WHITE}by github.com/alireza0/s-ui${NC}"
-        echo -e "${LIGHT_GREEN} 73.${NC} ${MAGENTA}X-UI panel ${CYAN}[Multi]${NC} ${WHITE}by github.com/azavaxhuman/Nodex${NC}"
+        echo -e "${LIGHT_GREEN} 73.${NC} ${MAGENTA}X-UI panel ${RED}[Multi]${NC} ${WHITE}by github.com/azavaxhuman/Nodex${NC}"
         echo -e "${LIGHT_GREEN} 80.${NC} ${MAGENTA}Hysteria2 Blitz Panel ${GREEN}[Single]${NC} ${WHITE}by github.com/ReturnFI/Blitz${NC}"
         
         # Telegram Bot section - PURPLE
         echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${PURPLE} TELEGRAM BOT ${NC}"
         echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 75.${NC} ${PURPLE}Mirza Bot pro (telegram bot for sale) ${CYAN}[Multi]${NC} ${WHITE}by github.com/mahdiMGF2/botmirzapanel${NC}"
+        echo -e "${LIGHT_GREEN} 75.${NC} ${PURPLE}Mirza Bot pro (telegram bot for sale) ${RED}[Multi]${NC} ${WHITE}by github.com/mahdiMGF2/botmirzapanel${NC}"
         echo -e "${LIGHT_GREEN} 77.${NC} ${PURPLE}mtproto proxy (telegram proxy) ${WHITE}by github.com/seriyps/mtproto_proxy${NC}"
         echo
         
@@ -3341,7 +3341,7 @@ main_menu() {
         echo -e "${LIGHT_BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${LIGHT_BLUE} MARZBAN ${NC}"
         echo -e "${LIGHT_BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 39.${NC} ${LIGHT_BLUE}Marzban ${CYAN}[Multi]${NC}${NC}"
+        echo -e "${LIGHT_GREEN} 39.${NC} ${LIGHT_BLUE}Marzban ${RED}[Multi]${NC}${NC}"
         echo -e "${LIGHT_GREEN} 40.${NC} ${LIGHT_BLUE}Marzban node by v2${NC}"
         echo -e "${LIGHT_GREEN} 53.${NC} ${LIGHT_BLUE}Marzban node official script${NC}"
         echo -e "${LIGHT_GREEN} 52.${NC} ${LIGHT_BLUE}Marzban node by Mehrdad${NC}"
@@ -3351,14 +3351,14 @@ main_menu() {
         echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${GREEN} REMNAWAVE ${NC}"
         echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 48.${NC} ${GREEN}Remnawave ${CYAN}[Multi]${NC}${NC}"
+        echo -e "${LIGHT_GREEN} 48.${NC} ${GREEN}Remnawave ${RED}[Multi]${NC}${NC}"
         echo
         
         # Marzneshin section - ORANGE
         echo -e "${ORANGE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${ORANGE} MARZNESHIN ${NC}"
         echo -e "${ORANGE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 49.${NC} ${ORANGE}Marzneshin ${CYAN}[Multi]${NC}${NC}"
+        echo -e "${LIGHT_GREEN} 49.${NC} ${ORANGE}Marzneshin ${RED}[Multi]${NC}${NC}"
         echo -e "${LIGHT_GREEN} 50.${NC} ${ORANGE}Marzneshin node by ErfJab${NC}"
         echo -e "${LIGHT_GREEN} 51.${NC} ${ORANGE}Marzneshin node by Mehrdad${NC}"
         echo
@@ -3369,8 +3369,8 @@ main_menu() {
         echo -e "${LIGHT_CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${LIGHT_GREEN} 60.${NC} ${LIGHT_CYAN}WireGuard Dashboard ${GREEN}[Single]${NC} ${WHITE}by github.com/WGDashboard/WGDashboard${NC}"
         echo -e "${LIGHT_GREEN} 54.${NC} ${LIGHT_CYAN}SoftEther RTX-VPN ${GREEN}[Single]${NC} ${WHITE}by github.com/Sir-MmD/RTX-VPN${NC}"
-        echo -e "${LIGHT_GREEN} 57.${NC} ${LIGHT_CYAN}OPEN VPN ${CYAN}[Multi]${NC} ${WHITE}by github.com/eylandoo/openvpn_webpanel_manager${NC}"
-        echo -e "${LIGHT_GREEN} 81.${NC} ${LIGHT_CYAN}OV-Panel ${CYAN}[Multi]${NC} ${WHITE}by github.com/primeZdev/ov-panel${NC}"
+        echo -e "${LIGHT_GREEN} 57.${NC} ${LIGHT_CYAN}OPEN VPN ${RED}[Multi]${NC} ${WHITE}by github.com/eylandoo/openvpn_webpanel_manager${NC}"
+        echo -e "${LIGHT_GREEN} 81.${NC} ${LIGHT_CYAN}OV-Panel ${RED}[Multi]${NC} ${WHITE}by github.com/primeZdev/ov-panel${NC}"
         echo -e "${LIGHT_GREEN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC} ${WHITE}by github.com/amiridev-org/irangate-ov${NC}"
         echo
         
