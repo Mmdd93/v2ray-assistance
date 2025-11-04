@@ -18,6 +18,7 @@ show_header() {
     echo "║      Comprehensive Clean Tool       ║"
     echo "╚══════════════════════════════════════╝"
     echo -e "${NC}"
+    echo -e " $(netspeed)"
 }
 
 # Function to confirm deletion
@@ -940,7 +941,7 @@ display_folder_analysis() {
     fi
     
     if [[ "$path" == *"download"* ]] || [[ "$path" == *"Downloads"* ]]; then
-        echo "  ������ Downloads folder - consider archiving old files"
+        echo "  ������ Downloads folder - consider archiving old files"
     fi
     
     # Show disk usage for context
@@ -1021,7 +1022,36 @@ main() {
         esac
     done
 }
-
+netspeed() {
+    local iface rx1 tx1 rx2 tx2 rx_speed tx_speed
+    cpu=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
+    mem=$(free | awk '/Mem:/ {printf "%.1f", $3/$2 * 100}')
+    disk=$(df / | awk 'NR==2 {print $5}' | cut -d'%' -f1)
+    
+    # Get network interface
+    iface=$(ip route | grep default | awk '{print $5}')
+    if [ -z "$iface" ]; then
+        echo "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}% | NET: No interface"
+        return 1
+    fi
+    
+    # First measurement - ADD COLON to interface name
+    rx1=$(grep "$iface:" /proc/net/dev | awk '{print $2}')
+    tx1=$(grep "$iface:" /proc/net/dev | awk '{print $10}')
+    
+    # Wait 1 second
+    sleep 1
+    
+    # Second measurement - ADD COLON to interface name
+    rx2=$(grep "$iface:" /proc/net/dev | awk '{print $2}')
+    tx2=$(grep "$iface:" /proc/net/dev | awk '{print $10}')
+    
+    # Calculate speeds
+    rx_speed=$(echo "scale=1; ($rx2 - $rx1) / 1048576" | bc 2>/dev/null || echo "0")
+    tx_speed=$(echo "scale=1; ($tx2 - $tx1) / 1048576" | bc 2>/dev/null || echo "0")
+    
+   echo -e "${GREEN}CPU: ${cpu}%${NC} ${YELLOW}RAM: ${mem}%${NC} ${RED}DISK: ${disk}%${NC} ${CYAN}NET: ↓${rx_speed}MB/s ↑${tx_speed}MB/s${NC}"
+}
 # If script is executed directly, run the main function
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main
