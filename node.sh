@@ -3364,9 +3364,9 @@ main_menu() {
 		
 		section_header "Monitoring"
         menu_option "59" "Uptime Kuma monitoring"
-      
+      echo  ""
         # Footer options
-        section_header "echo -e "${CYAN}System Status:${NC} $(netspeed)""
+        echo -e "${CYAN}System Status:${NC} $(netspeed)"
         menu_option "00" "Update scripts"
         menu_option "0" "Exit"
         
