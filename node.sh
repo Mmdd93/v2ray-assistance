@@ -3670,20 +3670,20 @@ netspeed() {
     # Get network interface
     iface=$(ip route | grep default | awk '{print $5}')
     if [ -z "$iface" ]; then
-        echo "Error: No default network interface found"
+        echo "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}% | NET: No interface"
         return 1
     fi
     
-    # First measurement
-    rx1=$(grep "$iface" /proc/net/dev | awk '{print $2}')
-    tx1=$(grep "$iface" /proc/net/dev | awk '{print $10}')
+    # First measurement - ADD COLON to interface name
+    rx1=$(grep "$iface:" /proc/net/dev | awk '{print $2}')
+    tx1=$(grep "$iface:" /proc/net/dev | awk '{print $10}')
     
     # Wait 1 second
     sleep 1
     
-    # Second measurement
-    rx2=$(grep "$iface" /proc/net/dev | awk '{print $2}')
-    tx2=$(grep "$iface" /proc/net/dev | awk '{print $10}')
+    # Second measurement - ADD COLON to interface name
+    rx2=$(grep "$iface:" /proc/net/dev | awk '{print $2}')
+    tx2=$(grep "$iface:" /proc/net/dev | awk '{print $10}')
     
     # Calculate speeds
     rx_speed=$(echo "scale=1; ($rx2 - $rx1) / 1048576" | bc 2>/dev/null || echo "0")
