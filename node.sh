@@ -3341,24 +3341,24 @@ main_menu() {
         echo -e "${MAGENTA}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${MAGENTA} XUI ${NC}"
         echo -e "${MAGENTA}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "${MAGENTA}" "38" "X-UI panels (x-ui, 3x-ui, tx-ui)"
-        menu_option "${MAGENTA}" "74" "Sing-box/SagerNet panel (s-ui) (github.com/alireza0/s-ui)"
-        menu_option "${MAGENTA}" "73" "X-UI panel multi node location (github.com/azavaxhuman/Nodex)"
-        menu_option "${MAGENTA}" "80" "Hysteria2 Blitz Panel (github.com/ReturnFI/Blitz)"
+        menu_option "${MAGENTA}" "38" "X-UI panels (x-ui, 3x-ui, tx-ui) ${LIGHT_GREEN}[Single]${NC}"
+        menu_option "${MAGENTA}" "74" "Sing-box/SagerNet panel (s-ui) ${LIGHT_GREEN}[Single]${NC} by github.com/alireza0/s-ui"
+        menu_option "${MAGENTA}" "73" "X-UI panel ${PURPLE}[Multi]${NC} by github.com/azavaxhuman/Nodex"
+        menu_option "${MAGENTA}" "80" "Hysteria2 Blitz Panel ${LIGHT_GREEN}[Single]${NC} by github.com/ReturnFI/Blitz"
         
         # Telegram Bot section - PURPLE
         echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${PURPLE} TELEGRAM BOT ${NC}"
         echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "${PURPLE}" "75" "Mirza Bot pro (telegram bot for sale) (github.com/mahdiMGF2/botmirzapanel)"
-        menu_option "${PURPLE}" "77" "mtproto proxy (telegram proxy) (github.com/seriyps/mtproto_proxy)"
+        menu_option "${PURPLE}" "75" "Mirza Bot pro (telegram bot for sale) ${PURPLE}[Multi]${NC} by github.com/mahdiMGF2/botmirzapanel"
+        menu_option "${PURPLE}" "77" "mtproto proxy (telegram proxy) by github.com/seriyps/mtproto_proxy"
         echo
         
         # Marzban section - LIGHT_BLUE
         echo -e "${LIGHT_BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${LIGHT_BLUE} MARZBAN ${NC}"
         echo -e "${LIGHT_BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "${LIGHT_BLUE}" "39" "Marzban panel"
+        menu_option "${LIGHT_BLUE}" "39" "Marzban ${PURPLE}[Multi]${NC}"
         menu_option "${LIGHT_BLUE}" "40" "Marzban node by v2"
         menu_option "${LIGHT_BLUE}" "53" "Marzban node official script"
         menu_option "${LIGHT_BLUE}" "52" "Marzban node by Mehrdad"
@@ -3368,14 +3368,14 @@ main_menu() {
         echo -e "${LIGHT_GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${LIGHT_GREEN} REMNAWAVE ${NC}"
         echo -e "${LIGHT_GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "${LIGHT_GREEN}" "48" "Remnawave"
+        menu_option "${LIGHT_GREEN}" "48" "Remnawave ${PURPLE}[Multi]${NC}"
         echo
         
         # Marzneshin section - ORANGE
         echo -e "${ORANGE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${ORANGE} MARZNESHIN ${NC}"
         echo -e "${ORANGE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "${ORANGE}" "49" "Marzneshin"
+        menu_option "${ORANGE}" "49" "Marzneshin ${PURPLE}[Multi]${NC}"
         menu_option "${ORANGE}" "50" "Marzneshin node by ErfJab"
         menu_option "${ORANGE}" "51" "Marzneshin node by Mehrdad"
         echo
@@ -3384,11 +3384,11 @@ main_menu() {
         echo -e "${LIGHT_CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${LIGHT_CYAN} WIREGUARD-OPENVPN-L2TP-SSTP ${NC}"
         echo -e "${LIGHT_CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        menu_option "${LIGHT_CYAN}" "60" "WireGuard Dashboard by github.com/WGDashboard/WGDashboard"
-        menu_option "${LIGHT_CYAN}" "54" "SoftEther by RTX-VPN v2 by github.com/Sir-MmD/RTX-VPN"
-        menu_option "${LIGHT_CYAN}" "57" "OPENVPN Webpanel (Multi node location)"
-        menu_option "${LIGHT_CYAN}" "81" "OV-Panel (Multi node location)  by github.com/primeZdev/ov-panel"
-        menu_option "${LIGHT_CYAN}" "82" "IranGate-OV  by github.com/amiridev-org/irangate-ov"
+        menu_option "${LIGHT_CYAN}" "60" "WireGuard Dashboard ${LIGHT_GREEN}[Single]${NC} by github.com/WGDashboard/WGDashboard"
+        menu_option "${LIGHT_CYAN}" "54" "SoftEther RTX-VPN ${LIGHT_GREEN}[Single]${NC} by github.com/Sir-MmD/RTX-VPN"
+        menu_option "${LIGHT_CYAN}" "57" "OPEN VPN ${PURPLE}[Multi]${NC} by github.com/eylandoo/openvpn_webpanel_manager"
+        menu_option "${LIGHT_CYAN}" "81" "OV-Panel ${PURPLE}[Multi]${NC} by github.com/primeZdev/ov-panel"
+        menu_option "${LIGHT_CYAN}" "82" "IranGate-OV ${LIGHT_GREEN}[Single]${NC} by github.com/amiridev-org/irangate-ov"
         echo
         
         # Panel Backup section - YELLOW
