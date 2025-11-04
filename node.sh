@@ -3182,8 +3182,8 @@ NC='\033[0m' # No Color
 display_header() {
     clear
     echo -e "${CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║${NC}${GREEN}                v2ray ASSISTANT MANAGEMENT TOOL               ${NC}${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}${YELLOW}             Telegram: @tlgrmv2 | Version: 25.11.4            ${NC}${CYAN}║${NC}"
+    echo -e "${NC}${GREEN}                v2ray ASSISTANT MANAGEMENT TOOL               ${NC}${NC}"
+    echo -e "${NC}${YELLOW}             Telegram: @tlgrmv2 | Version: 25.11.4            ${NC}${NC}"
     echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
     echo
 }
@@ -3193,7 +3193,7 @@ section_header() {
     local color=$1
     local title=$2
     echo -e "${color}╔══════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${color}║${NC} $title ${color}║${NC}"
+    echo -e "${NC} $title ${NC}"
     echo -e "${color}╚══════════════════════════════════════════════════════════════════╝${NC}"
 }
 
@@ -3261,7 +3261,7 @@ main_menu() {
         
         # System section - BLUE
         echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${BLUE}║${NC} SYSTEM MANAGEMENT ${BLUE}║${NC}"
+        echo -e "${NC} SYSTEM MANAGEMENT ${NC}"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "1" "Update and upgrade system + install packages"
         menu_option "2" "Fix update issues (broken apt/dependencies)"
@@ -3274,7 +3274,7 @@ main_menu() {
         
         # Tools section - GREEN
         echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${GREEN}║${NC} TOOLS ${GREEN}║${NC}"
+        echo -e "${NC} TOOLS ${NC}"
         echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "7" "ISP defender (allow/block Iran ISPs)"
         menu_option "8" "Network Optimizer and BBR"
@@ -3308,7 +3308,7 @@ main_menu() {
        
         # Tunnel section - CYAN
         echo -e "${CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${CYAN}║${NC} TUNNEL SERVICES ${CYAN}║${NC}"
+        echo -e "${NC} TUNNEL SERVICES ${NC}"
         echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${CYAN}Combine local tunnels (SIT, GRE, GENEVE, VXLAN) with:${NC}"
         echo -e "${CYAN}Backhaul, GOST, WSS, etc., for enhanced stealth${NC}"
@@ -3338,7 +3338,7 @@ main_menu() {
         
         # XUI section - MAGENTA
         echo -e "${MAGENTA}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${MAGENTA}║${NC} XUI ${MAGENTA}║${NC}"
+        echo -e "${NC} XUI ${NC}"
         echo -e "${MAGENTA}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "38" "X-UI panels (x-ui, 3x-ui, tx-ui)"
         menu_option "74" "Sing-box/SagerNet panel (s-ui) (github.com/alireza0/s-ui)"
@@ -3347,7 +3347,7 @@ main_menu() {
         
         # Telegram Bot section - PURPLE
         echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${PURPLE}║${NC} TELEGRAM BOT ${PURPLE}║${NC}"
+        echo -e "${NC} TELEGRAM BOT ${NC}"
         echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "75" "Mirza Bot pro (telegram bot for sale) (github.com/mahdiMGF2/botmirzapanel)"
         menu_option "77" "mtproto proxy (telegram proxy) (github.com/seriyps/mtproto_proxy)"
@@ -3355,7 +3355,7 @@ main_menu() {
         
         # Marzban section - LIGHT_BLUE
         echo -e "${LIGHT_BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${LIGHT_BLUE}║${NC} MARZBAN ${LIGHT_BLUE}║${NC}"
+        echo -e "${NC} MARZBAN ${NC}"
         echo -e "${LIGHT_BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "39" "Marzban panel"
         menu_option "40" "Marzban node by v2"
@@ -3365,14 +3365,14 @@ main_menu() {
         
         # Remnawave section - LIGHT_GREEN
         echo -e "${LIGHT_GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${LIGHT_GREEN}║${NC} REMNAWAVE ${LIGHT_GREEN}║${NC}"
+        echo -e "${NC} REMNAWAVE ${NC}"
         echo -e "${LIGHT_GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "48" "Remnawave"
         echo
         
         # Marzneshin section - ORANGE
         echo -e "${ORANGE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${ORANGE}║${NC} MARZNESHIN ${ORANGE}║${NC}"
+        echo -e "${NC} MARZNESHIN ${NC}"
         echo -e "${ORANGE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "49" "Marzneshin"
         menu_option "50" "Marzneshin node by ErfJab"
@@ -3381,7 +3381,7 @@ main_menu() {
         
         # WireGuard/OpenVPN section - LIGHT_CYAN
         echo -e "${LIGHT_CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${LIGHT_CYAN}║${NC} WIREGUARD - OPENVPN ${LIGHT_CYAN}║${NC}"
+        echo -e "${NC} WIREGUARD - OPENVPN ${NC}"
         echo -e "${LIGHT_CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "60" "WGDashboard (WireGuard management)"
         menu_option "54" "SoftEther by RTX-VPN v2 (L2TP, OpenVPN, SSTP)"
@@ -3392,7 +3392,7 @@ main_menu() {
         
         # Panel Backup section - YELLOW
         echo -e "${YELLOW}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${YELLOW}║${NC} PANEL BACKUP ${YELLOW}║${NC}"
+        echo -e "${NC} PANEL BACKUP ${NC}"
         echo -e "${YELLOW}╚══════════════════════════════════════════════════════════════════╝${NC}"
         menu_option "41" "Panel Backup (Marzban, X-UI, Hiddify)"
         menu_option "42" "Auto panel restart"
@@ -3400,7 +3400,7 @@ main_menu() {
         
         # Monitoring section - WHITE
         echo -e "${WHITE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${WHITE}║${NC} MONITORING ${WHITE}║${NC}"
+        echo -e "${NC} MONITORING ${NC}"
         echo -e "${WHITE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${CYAN}System Status:${NC} $(netspeed)"
         menu_option "59" "Uptime Kuma monitoring"
