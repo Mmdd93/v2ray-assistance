@@ -743,9 +743,9 @@ xui() {
     echo -e "\033[1;36m============================================\033[0m"
     echo -e "\033[1;33m         Select panel\033[0m"
     echo -e "\033[1;36m============================================\033[0m"
-
-    echo -e "\033[1;32m1.\033[0m Alireza x-ui"
-    echo -e "\033[1;32m2.\033[0m Sanaei 3x-ui"
+	echo -e "\033[1;32m1.\033[0m Sanaei 3x-ui"
+    echo -e "\033[1;32m2.\033[0m Alireza x-ui"
+    
     echo -e "\033[1;32m3.\033[0m AghayeCoder tx-ui"
     echo -e "\033[1;32m4.\033[0m X-UI command"
     echo -e "\033[1;32m0.\033[0m Return to the main menu"
@@ -753,8 +753,8 @@ xui() {
     read -p "Select an option: " option
 
     case "$option" in
-        1) repo="alireza0/x-ui" ;;
-        2) repo="mhsanaei/3x-ui" ;;
+        2) repo="alireza0/x-ui" ;;
+        1) repo="mhsanaei/3x-ui" ;;
         3) repo="AghayeCoder/tx-ui" ;;
         4) x-ui; return ;;
         0) return ;;
