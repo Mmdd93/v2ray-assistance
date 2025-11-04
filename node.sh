@@ -3244,7 +3244,7 @@ main_menu() {
         
         # System section - BLUE
         echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${BLUE} SYSTEM MANAGEMENT ${WHITE}[github.com/Mmdd93/v2ray-assistance] ${NC}"
+        echo -e "${BLUE} SYSTEM MANAGEMENT  ${NC}"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${BLUE}  1.${NC} ${BLUE}Update and upgrade system + install packages${NC}"
         echo -e "${BLUE}  2.${NC} ${BLUE}Fix update issues (broken apt/dependencies)${NC}"
@@ -3257,7 +3257,7 @@ main_menu() {
         
         # Tools section - GREEN
         echo -e "${LIGHT_GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${LIGHT_GREEN} TOOLS ${WHITE}[github.com/Mmdd93/v2ray-assistance] ${NC}"
+        echo -e "${LIGHT_GREEN} TOOLS  ${NC}"
         echo -e "${LIGHT_GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${LIGHT_GREEN}  7.${NC} ${LIGHT_GREEN}ISP defender (allow/block Iran ISPs)${NC}"
         echo -e "${LIGHT_GREEN}  8.${NC} ${LIGHT_GREEN}Network Optimizer and BBR${NC}"
