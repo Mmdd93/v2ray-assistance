@@ -3391,12 +3391,13 @@ main_menu() {
         
         # Footer section
         echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e " $(netspeed)"
         echo -e "${BLUE} 00.${NC} ${BLUE}Update scripts${NC}"
         echo -e "${BLUE}  0.${NC} ${BLUE}Exit${NC}"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         
         read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
+		
+		echo -e " $(netspeed)"
 
 
 
