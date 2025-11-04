@@ -3394,10 +3394,11 @@ main_menu() {
         echo -e "${BLUE} 00.${NC} ${BLUE}Update scripts${NC}"
         echo -e "${BLUE}  0.${NC} ${BLUE}Exit${NC}"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        
+        echo -e " $(netspeed)"
+		echo
         read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
 		
-		echo -e " $(netspeed)"
+		
 
 
 
@@ -3780,7 +3781,7 @@ netspeed() {
     rx_speed=$(echo "scale=1; ($rx2 - $rx1) / 1048576" | bc 2>/dev/null || echo "0")
     tx_speed=$(echo "scale=1; ($tx2 - $tx1) / 1048576" | bc 2>/dev/null || echo "0")
     
-   echo -e "${GREEN}[ CPU: ${cpu}% ]${NC} ${YELLOW}[ RAM: ${mem}% ]${NC} ${RED}[ DISK: ${disk}% ]${NC} ${CYAN}[ NET: ↓${rx_speed}MB/s ↑${tx_speed}MB/s ]${NC}"
+   echo -e "${GREEN}CPU: ${cpu}%${NC} ${YELLOW}RAM: ${mem}%${NC} ${RED}DISK: ${disk}%${NC} ${CYAN}NET: ↓${rx_speed}MB/s ↑${tx_speed}MB/s${NC}"
 }
 # Start the main menu
 main_menu
