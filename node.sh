@@ -2683,7 +2683,7 @@ display_system_info() {
     
     # System Status (assuming netspeed is a custom function)
     if command -v netspeed >/dev/null 2>&1; then
-        echo -e "${CYAN}System Status:${NC} $(timeout 2 netspeed 2>/dev/null || echo "Unknown")"
+        echo -e "${CYAN}System Status:${NC} $(timeout 4 netspeed 2>/dev/null || echo "Unknown")"
     else
         echo -e "${CYAN}System Status:${NC} netspeed command not found"
     fi
