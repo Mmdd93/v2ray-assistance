@@ -222,7 +222,7 @@ menu() {
         echo -e "${YELLOW}3)${NC} Reset MTU to default"
         echo -e "${YELLOW}4)${NC} Cron Management"
         echo -e "${YELLOW}5)${NC} Find Best MTU"
-        echo -e "${YELLOW}6)${NC} Exit"
+        echo -e "${YELLOW}0)${NC} Exit"
         read -rp "Select an option: " opt
 
         case $opt in
@@ -231,7 +231,7 @@ menu() {
             3) reset_mtu ;;
             4) cron_management ;;
             5) find_best_mtu ;;
-            6) exit 0 ;;
+            0) exit 0 ;;
             *) echo -e "${RED}? Invalid option.${NC}" ;;
         esac
     done
