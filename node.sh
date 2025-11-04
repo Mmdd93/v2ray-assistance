@@ -3402,12 +3402,13 @@ main_menu() {
         echo -e "${WHITE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${NC} MONITORING ${NC}"
         echo -e "${WHITE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${CYAN}System Status:${NC} $(netspeed)"
+        
         menu_option "59" "Uptime Kuma monitoring"
         echo
         
         # Footer section
         echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
+		echo -e "$(netspeed)"
         menu_option "00" "Update scripts"
         menu_option "0" "Exit"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
