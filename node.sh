@@ -3232,10 +3232,10 @@ NC='\033[0m' # No Color
 # Header function
 display_header() {
     clear
-    echo -e "${CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${BLUE}                v2ray ASSISTANT MANAGEMENT TOOL               ${NC}"
     echo -e "${YELLOW}             Telegram: @tlgrmv2 | Version: 25.11.4            ${NC}"
-    echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════════╝${NC}"
 }
 
 # Main menu function
