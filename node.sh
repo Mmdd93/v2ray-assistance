@@ -3330,11 +3330,11 @@ main_menu() {
         echo -e "${LIGHT_GREEN} 80.${NC} ${MAGENTA}Hysteria2 Blitz Panel ${GREEN}[Single]${NC} ${WHITE}by github.com/ReturnFI/Blitz${NC}"
         echo
         # Telegram Bot section - PURPLE
-        echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${PURPLE} TELEGRAM BOT ${NC}"
-        echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_GREEN} 75.${NC} ${PURPLE}Mirza Bot pro (telegram bot for sale) ${RED}[Multi]${NC} ${WHITE}by github.com/mahdiMGF2/botmirzapanel${NC}"
-        echo -e "${LIGHT_GREEN} 77.${NC} ${PURPLE}mtproto proxy (telegram proxy) ${WHITE}by github.com/seriyps/mtproto_proxy${NC}"
+        echo -e "${WHITE}╔══════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${WHITE} TELEGRAM BOT ${NC}"
+        echo -e "${WHITE}╚══════════════════════════════════════════════════════════════════╝${NC}"
+        echo -e "${LIGHT_GREEN} 75.${NC} ${WHITE}Mirza Bot pro (telegram bot for sale) ${RED}[Multi]${NC} ${WHITE}by github.com/mahdiMGF2/botmirzapanel${NC}"
+        echo -e "${LIGHT_GREEN} 77.${NC} ${WHITE}mtproto proxy (telegram proxy) ${WHITE}by github.com/seriyps/mtproto_proxy${NC}"
         echo
         
         # Marzban section - LIGHT_BLUE
