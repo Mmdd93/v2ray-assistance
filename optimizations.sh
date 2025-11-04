@@ -26,7 +26,6 @@ NC='\033[0m' # No Color
 create_backup_dir() {
     if [ ! -d "$BACKUP_DIR" ]; then
         mkdir -p "$BACKUP_DIR"
-        echo -e "${GREEN}Created backup directory: $BACKUP_DIR${NC}"
     fi
 }
 
@@ -36,13 +35,11 @@ backup_configs() {
     local timestamp=$(date +%Y%m%d_%H%M%S)
     cp "$SYSCTL_CONF" "${BACKUP_DIR}/sysctl.conf.bak.${timestamp}"
     cp "$LIMITS_CONF" "${BACKUP_DIR}/limits.conf.bak.${timestamp}"
-    echo -e "${GREEN}Backup completed: ${BACKUP_DIR}/sysctl.conf.bak.${timestamp}${NC}"
-    echo -e "${GREEN}Backup completed: ${BACKUP_DIR}/limits.conf.bak.${timestamp}${NC}"
 }
 
 reload_sysctl() {
     echo -e "${GREEN}Reloading sysctl settings...${NC}"
-    sysctl -p
+    sysctl -p > /dev/null 2>&1
 }
 
 update_config() {
@@ -52,7 +49,7 @@ update_config() {
     
     if grep -q "^$key" "$file"; then
         if grep -q "^$key.*$value" "$file"; then
-            echo -e "${YELLOW}Setting $key already configured with value $value${NC}"
+            echo -e "${YELLOW}Setting $key already configured${NC}"
         else
             sed -i "s|^$key.*|$key = $value|" "$file"
             echo -e "${GREEN}Updated $key to $value${NC}"
@@ -134,8 +131,7 @@ apply_gaming_optimizations() {
     done
 
     reload_sysctl
-    echo -e "${GREEN}GAMING optimizations applied successfully!${NC}"
-    echo -e "${YELLOW}Optimized for: Low latency, fast response times, UDP performance${NC}"
+    echo -e "${GREEN}GAMING optimizations applied!${NC}"
 }
 
 apply_streaming_optimizations() {
@@ -167,9 +163,6 @@ apply_streaming_optimizations() {
         ["net.ipv4.tcp_fin_timeout"]="15"
         ["net.ipv4.tcp_keepalive_time"]="600"
         ["fs.file-max"]="4194304"
-        ["fs.nr_open"]="4194304"
-        ["net.netfilter.nf_conntrack_max"]="262144"
-        ["net.netfilter.nf_conntrack_tcp_timeout_established"]="86400"
     )
 
     for key in "${!streaming_settings[@]}"; do
@@ -196,8 +189,7 @@ apply_streaming_optimizations() {
     done
 
     reload_sysctl
-    echo -e "${GREEN}STREAMING optimizations applied successfully!${NC}"
-    echo -e "${YELLOW}Optimized for: High bandwidth, stable connections, large file transfers${NC}"
+    echo -e "${GREEN}STREAMING optimizations applied!${NC}"
 }
 
 apply_general_optimizations() {
@@ -227,8 +219,6 @@ apply_general_optimizations() {
         ["net.ipv4.tcp_fin_timeout"]="30"
         ["net.ipv4.tcp_keepalive_time"]="7200"
         ["net.ipv4.tcp_syncookies"]="1"
-        ["net.ipv4.conf.all.rp_filter"]="1"
-        ["net.ipv4.conf.default.rp_filter"]="1"
         ["fs.file-max"]="65536"
     )
 
@@ -256,8 +246,7 @@ apply_general_optimizations() {
     done
 
     reload_sysctl
-    echo -e "${GREEN}GENERAL PURPOSE optimizations applied successfully!${NC}"
-    echo -e "${YELLOW}Optimized for: Balanced performance, stability, everyday use${NC}"
+    echo -e "${GREEN}GENERAL PURPOSE optimizations applied!${NC}"
 }
 
 apply_competitive_gaming_optimizations() {
@@ -308,13 +297,11 @@ apply_competitive_gaming_optimizations() {
     done
 
     reload_sysctl
-    echo -e "${GREEN}COMPETITIVE GAMING optimizations applied successfully!${NC}"
-    echo -e "${YELLOW}WARNING: Very aggressive settings - may affect stability${NC}"
-    echo -e "${YELLOW}Optimized for: Extreme low latency, competitive gaming${NC}"
+    echo -e "${GREEN}COMPETITIVE GAMING optimizations applied!${NC}"
 }
 
 # =============================================================================
-# TC OPTIMIZATION FUNCTIONS
+# TC OPTIMIZATION FUNCTIONS (NO LOGGING)
 # =============================================================================
 
 tc_optimize_by_category() {
@@ -409,10 +396,6 @@ tc_optimize_by_category() {
     echo -e "${WHITE}Link Speed: ${GREEN}${LINK_SPEED}Mbps${NC}"
     echo -e "${WHITE}Configured Bandwidth: ${GREEN}${BANDWIDTH}Mbps${NC}"
     echo -e "${WHITE}Queue Discipline: ${GREEN}$(tc qdisc show dev "$INTERFACE" | head -1 | awk '{print $2}')${NC}"
-    echo -e "${WHITE}TX Queue Length: ${GREEN}$(cat "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null || echo 'default')${NC}"
-    
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    echo "[$timestamp] $category mode: $INTERFACE - ${LINK_SPEED}Mbps - $(tc qdisc show dev "$INTERFACE" | head -1)" >> /var/log/tc_optimizer.log
 }
 
 apply_tc_gaming_optimizations() {
@@ -423,7 +406,6 @@ apply_tc_gaming_optimizations() {
     if test_qdisc "cake"; then
         echo -e "${GREEN}Using CAKE (Best for gaming)${NC}"
         tc qdisc add dev "$INTERFACE" root cake bandwidth ${BANDWIDTH}mbit besteffort dual-dsthost
-        echo -e "${GREEN}CAKE configured with dual-dsthost for gaming traffic${NC}"
         
     elif test_qdisc "fq_codel"; then
         echo -e "${GREEN}Using FQ_Codel (Excellent for gaming)${NC}"
@@ -434,7 +416,6 @@ apply_tc_gaming_optimizations() {
             interval 50ms \
             quantum 300 \
             noecn
-        echo -e "${GREEN}FQ_Codel configured with aggressive low-latency settings${NC}"
         
     elif test_qdisc "fq"; then
         echo -e "${GREEN}Using FQ (Good for gaming with BBR)${NC}"
@@ -442,12 +423,10 @@ apply_tc_gaming_optimizations() {
             flow_limit 500 \
             quantum 300 \
             initial_quantum 10000
-        echo -e "${GREEN}FQ configured for gaming${NC}"
         
     else
         echo -e "${YELLOW}Using PFIFO_Fast with gaming optimizations${NC}"
         tc qdisc add dev "$INTERFACE" root pfifo_fast
-        echo -e "${GREEN}Basic PFIFO_Fast configured${NC}"
     fi
     
     echo 1 > /proc/sys/net/ipv4/tcp_low_latency 2>/dev/null
@@ -462,7 +441,6 @@ apply_tc_high_loss_optimizations() {
     if test_qdisc "cake"; then
         echo -e "${GREEN}Using CAKE with loss compensation${NC}"
         tc qdisc add dev "$INTERFACE" root cake bandwidth ${BANDWIDTH}mbit besteffort ack-filter
-        echo -e "${GREEN}CAKE configured with ack-filter for lossy networks${NC}"
         
     elif test_qdisc "fq_codel"; then
         echo -e "${GREEN}Using FQ_Codel with loss tolerance${NC}"
@@ -473,7 +451,6 @@ apply_tc_high_loss_optimizations() {
             interval 200ms \
             memory_limit 64Mb \
             ecn
-        echo -e "${GREEN}FQ_Codel configured for high packet loss environments${NC}"
         
     elif test_qdisc "sfq"; then
         echo -e "${GREEN}Using SFQ with loss recovery${NC}"
@@ -481,12 +458,10 @@ apply_tc_high_loss_optimizations() {
             perturb 120 \
             quantum 1514 \
             depth 127
-        echo -e "${GREEN}SFQ configured for packet loss scenarios${NC}"
         
     else
         echo -e "${YELLOW}Using basic configuration with larger buffers${NC}"
         tc qdisc add dev "$INTERFACE" root pfifo_fast
-        echo -e "${GREEN}Basic configuration with larger buffers${NC}"
     fi
     
     echo 2 > /proc/sys/net/ipv4/tcp_syn_retries 2>/dev/null
@@ -503,7 +478,6 @@ apply_tc_general_optimizations() {
     if test_qdisc "cake"; then
         echo -e "${GREEN}Using CAKE (Best all-around)${NC}"
         tc qdisc add dev "$INTERFACE" root cake bandwidth ${BANDWIDTH}mbit besteffort
-        echo -e "${GREEN}CAKE configured for general purpose use${NC}"
         
     elif test_qdisc "fq_codel"; then
         echo -e "${GREEN}Using FQ_Codel (Excellent balanced)${NC}"
@@ -513,17 +487,14 @@ apply_tc_general_optimizations() {
             target 5ms \
             interval 100ms \
             memory_limit 32Mb
-        echo -e "${GREEN}FQ_Codel configured for general use${NC}"
         
     elif test_qdisc "fq"; then
         echo -e "${GREEN}Using FQ (Good performance)${NC}"
         tc qdisc add dev "$INTERFACE" root fq
-        echo -e "${GREEN}FQ configured${NC}"
         
     else
         echo -e "${YELLOW}Using PFIFO_Fast (Compatible)${NC}"
         tc qdisc add dev "$INTERFACE" root pfifo_fast
-        echo -e "${GREEN}PFIFO_Fast configured${NC}"
     fi
 }
 
@@ -564,7 +535,6 @@ tc_remove_optimizations() {
     echo -e "${RED}Removing ALL TC optimizations...${NC}"
     
     for INTERFACE in $(ls /sys/class/net/ | grep -v lo); do
-        echo -e "${YELLOW}Cleaning $INTERFACE...${NC}"
         tc qdisc del dev "$INTERFACE" root 2>/dev/null
         tc qdisc del dev "$INTERFACE" ingress 2>/dev/null
         ip link set dev "$INTERFACE" mtu 1500 2>/dev/null
@@ -578,7 +548,7 @@ tc_remove_optimizations() {
 }
 
 # =============================================================================
-# REMOVAL FUNCTIONS
+# REMOVAL FUNCTIONS (NO LOGGING)
 # =============================================================================
 
 remove_all_optimizations() {
@@ -601,7 +571,6 @@ remove_all_optimizations() {
         "net.ipv4.tcp_fin_timeout" "net.ipv4.tcp_keepalive_time" "net.ipv4.tcp_keepalive_intvl"
         "net.ipv4.tcp_keepalive_probes" "net.ipv4.tcp_notsent_lowat" "net.ipv4.tcp_syncookies"
         "net.ipv4.udp_rmem_min" "net.ipv4.udp_wmem_min" "fs.file-max" "fs.nr_open"
-        "net.netfilter.nf_conntrack_max" "net.netfilter.nf_conntrack_tcp_timeout_established"
     )
 
     for key in "${sysctl_keys[@]}"; do
@@ -617,11 +586,8 @@ remove_all_optimizations() {
         sed -i "/^$key/d" "$LIMITS_CONF"
     done
 
-    echo -e "${YELLOW}Reloading system defaults...${NC}"
     sysctl -p > /dev/null 2>&1
     sysctl --system > /dev/null 2>&1
-
-    echo -e "${YELLOW}Resetting network settings...${NC}"
     
     for interface in $(ls /sys/class/net/ | grep -v lo); do
         tc qdisc del dev "$interface" root 2>/dev/null
@@ -631,15 +597,11 @@ remove_all_optimizations() {
     echo "cubic" > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null
     echo "fq_codel" > /proc/sys/net/core/default_qdisc 2>/dev/null
 
-    echo -e "${GREEN}ALL optimizations removed successfully!${NC}"
-    echo -e "${YELLOW}System restored to default settings:${NC}"
-    echo -e "   Congestion Control: ${BLUE}$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null || echo 'cubic')${NC}"
-    echo -e "   Queue Discipline:   ${BLUE}$(sysctl -n net.core.default_qdisc 2>/dev/null || echo 'fq_codel')${NC}"
-    echo -e "   File Limits:        ${BLUE}Restored to system defaults${NC}"
-    echo -e "   Network Settings:   ${BLUE}Restored to kernel defaults${NC}"
+    echo -e "${GREEN}ALL optimizations removed!${NC}"
 }
+
 # =============================================================================
-# CONTROL FUNCTIONS
+# CONTROL FUNCTIONS (NO LOGGING)
 # =============================================================================
 
 show_current_settings() {
@@ -649,38 +611,20 @@ show_current_settings() {
     echo "================================================================"
     echo -e "${NC}"
     
-    # Network settings
     echo -e "${YELLOW}NETWORK SETTINGS:${NC}"
     echo -e "  Congestion Control: ${GREEN}$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null || echo 'default')${NC}"
     echo -e "  Queue Discipline:   ${GREEN}$(sysctl -n net.core.default_qdisc 2>/dev/null || echo 'default')${NC}"
     echo -e "  TCP Low Latency:    ${GREEN}$(sysctl -n net.ipv4.tcp_low_latency 2>/dev/null || echo '0')${NC}"
-    echo -e "  TCP Fast Open:      ${GREEN}$(sysctl -n net.ipv4.tcp_fastopen 2>/dev/null || echo '0')${NC}"
     
-    # Memory settings
     echo -e "\n${YELLOW}MEMORY SETTINGS:${NC}"
     echo -e "  Swappiness:         ${GREEN}$(sysctl -n vm.swappiness 2>/dev/null || echo '60')${NC}"
     echo -e "  Dirty Ratio:        ${GREEN}$(sysctl -n vm.dirty_ratio 2>/dev/null || echo '20')${NC}"
-    echo -e "  Dirty Background:   ${GREEN}$(sysctl -n vm.dirty_background_ratio 2>/dev/null || echo '10')${NC}"
     
-    # File limits
-    echo -e "\n${YELLOW}FILE LIMITS:${NC}"
-    echo -e "  File Max:           ${GREEN}$(sysctl -n fs.file-max 2>/dev/null || echo 'default')${NC}"
-    echo -e "  Current Open Files: ${GREEN}$(cat /proc/sys/fs/file-nr | awk '{print $1}')${NC}"
-    
-    # TC status
     echo -e "\n${YELLOW}TRAFFIC CONTROL:${NC}"
     for IFACE in $(ls /sys/class/net/ | grep -v lo); do
         QDISC=$(tc qdisc show dev "$IFACE" 2>/dev/null | head -1 || echo "None")
         echo -e "  ${WHITE}$IFACE: ${BLUE}$QDISC${NC}"
     done
-    
-    # Service status
-    echo -e "\n${YELLOW}SERVICE STATUS:${NC}"
-    if systemctl is-active --quiet rsyslog; then
-        echo -e "  System Logging:     ${GREEN}ENABLED${NC}"
-    else
-        echo -e "  System Logging:     ${RED}DISABLED${NC}"
-    fi
 }
 
 edit_sysctl_live() {
@@ -707,29 +651,24 @@ edit_sysctl_live() {
                 key=$(echo "$input" | cut -d'=' -f1 | xargs)
                 value=$(echo "$input" | cut -d'=' -f2 | xargs)
                 
-                # Validate key format
                 if [[ ! "$key" =~ ^[a-zA-Z0-9_.]+$ ]]; then
                     echo -e "${RED}Invalid key format${NC}"
                     continue
                 fi
                 
-                # Try to apply live
                 if sysctl -w "$key=$value" 2>/dev/null; then
                     echo -e "${GREEN}Live setting applied: $key = $value${NC}"
                     
-                    # Also update config file
                     if grep -q "^$key" "$SYSCTL_CONF" 2>/dev/null; then
                         sed -i "s|^$key.*|$key = $value|" "$SYSCTL_CONF"
                     else
                         echo "$key = $value" >> "$SYSCTL_CONF"
                     fi
-                    echo -e "${GREEN}Config file updated${NC}"
                 else
                     echo -e "${RED}Failed to apply setting${NC}"
                 fi
                 ;;
             *)
-                # Try to show current value
                 current=$(sysctl -n "$input" 2>/dev/null)
                 if [ $? -eq 0 ]; then
                     echo -e "${GREEN}Current: $input = $current${NC}"
@@ -744,141 +683,14 @@ edit_sysctl_live() {
 apply_settings_immediately() {
     echo -e "${GREEN}Applying all settings immediately...${NC}"
     
-    # Reload sysctl
-    if sysctl -p; then
+    if sysctl -p > /dev/null 2>&1; then
         echo -e "${GREEN}Sysctl settings applied${NC}"
     else
         echo -e "${RED}Error applying sysctl settings${NC}"
         return 1
     fi
     
-    # Apply TC settings if interface detected
-    INTERFACE=$(ip route get 8.8.8.8 2>/dev/null | awk '/dev/ {print $5; exit}')
-    if [ -n "$INTERFACE" ]; then
-        echo -e "${GREEN}Network interface detected: $INTERFACE${NC}"
-        # You can add TC re-application here if needed
-    fi
-    
     echo -e "${GREEN}All settings applied successfully${NC}"
-}
-
-disable_system_logging() {
-    echo -e "${YELLOW}Disabling system logging...${NC}"
-    
-    if systemctl stop rsyslog 2>/dev/null && systemctl disable rsyslog 2>/dev/null; then
-        echo -e "${GREEN}System logging disabled${NC}"
-        
-        # Also disable journald if requested
-        echo -e "${YELLOW}Disable systemd journal as well? [y/N]: ${NC}"
-        read -r choice
-        if [[ "$choice" =~ [yY] ]]; then
-            if systemctl stop systemd-journald 2>/dev/null && systemctl disable systemd-journald 2>/dev/null; then
-                echo -e "${GREEN}Systemd journal disabled${NC}"
-            else
-                echo -e "${RED}Failed to disable systemd journal${NC}"
-            fi
-        fi
-    else
-        echo -e "${RED}Failed to disable system logging${NC}"
-    fi
-}
-
-enable_system_logging() {
-    echo -e "${YELLOW}Enabling system logging...${NC}"
-    
-    if systemctl enable rsyslog 2>/dev/null && systemctl start rsyslog 2>/dev/null; then
-        echo -e "${GREEN}System logging enabled${NC}"
-        
-        # Also enable journald
-        if systemctl enable systemd-journald 2>/dev/null && systemctl start systemd-journald 2>/dev/null; then
-            echo -e "${GREEN}Systemd journal enabled${NC}"
-        fi
-    else
-        echo -e "${RED}Failed to enable system logging${NC}"
-    fi
-}
-
-toggle_logging() {
-    if systemctl is-active --quiet rsyslog; then
-        disable_system_logging
-    else
-        enable_system_logging
-    fi
-}
-
-show_log_status() {
-    echo -e "${CYAN}"
-    echo "================================================================"
-    echo "                   LOGGING STATUS                              "
-    echo "================================================================"
-    echo -e "${NC}"
-    
-    echo -e "${YELLOW}SERVICE STATUS:${NC}"
-    if systemctl is-active --quiet rsyslog; then
-        echo -e "  rsyslog:          ${GREEN}ACTIVE${NC}"
-    else
-        echo -e "  rsyslog:          ${RED}INACTIVE${NC}"
-    fi
-    
-    if systemctl is-active --quiet systemd-journald; then
-        echo -e "  systemd-journal:  ${GREEN}ACTIVE${NC}"
-    else
-        echo -e "  systemd-journal:  ${RED}INACTIVE${NC}"
-    fi
-    
-    echo -e "\n${YELLOW}LOG FILES:${NC}"
-    local log_files=(
-        "/var/log/syslog"
-        "/var/log/messages"
-        "/var/log/kern.log"
-        "/var/log/tc_optimizer.log"
-    )
-    
-    for log_file in "${log_files[@]}"; do
-        if [ -f "$log_file" ]; then
-            size=$(du -h "$log_file" 2>/dev/null | cut -f1)
-            lines=$(wc -l < "$log_file" 2>/dev/null)
-            echo -e "  ${WHITE}$log_file: ${GREEN}$size, $lines lines${NC}"
-        else
-            echo -e "  ${WHITE}$log_file: ${RED}Not found${NC}"
-        fi
-    done
-    
-    # Show recent TC optimizer activity
-    if [ -f "/var/log/tc_optimizer.log" ]; then
-        echo -e "\n${YELLOW}RECENT TC OPTIMIZER ACTIVITY:${NC}"
-        tail -5 "/var/log/tc_optimizer.log" | while read line; do
-            echo -e "  ${WHITE}$line${NC}"
-        done
-    fi
-}
-
-clear_logs() {
-    echo -e "${YELLOW}Clearing log files...${NC}"
-    
-    local log_files=(
-        "/var/log/syslog"
-        "/var/log/messages"
-        "/var/log/kern.log"
-        "/var/log/tc_optimizer.log"
-    )
-    
-    for log_file in "${log_files[@]}"; do
-        if [ -f "$log_file" ]; then
-            if truncate -s 0 "$log_file" 2>/dev/null; then
-                echo -e "${GREEN}Cleared: $log_file${NC}"
-            else
-                echo -e "${RED}Failed to clear: $log_file${NC}"
-            fi
-        fi
-    done
-    
-    # Also clear journal if active
-    if command -v journalctl >/dev/null 2>&1; then
-        if journalctl --vacuum-size=1M 2>/dev/null; then
-            echo -e "${GREEN}Cleared systemd journal${NC}"
-        fi
-    fi
 }
 
 test_network_performance() {
@@ -896,34 +708,9 @@ test_network_performance() {
     
     echo -e "${YELLOW}Interface: ${GREEN}$INTERFACE${NC}"
     
-    # Basic ping test
     if command -v ping >/dev/null 2>&1; then
         echo -e "\n${YELLOW}PING TEST (Google DNS):${NC}"
         ping -c 4 -W 2 8.8.8.8 2>/dev/null | grep -E "packets|rtt|loss" || echo -e "${RED}Ping test failed${NC}"
-    fi
-    
-    # Speed test if available
-    if command -v speedtest-cli >/dev/null 2>&1; then
-        echo -e "\n${YELLOW}SPEED TEST:${NC}"
-        speedtest-cli --simple 2>/dev/null || echo -e "${RED}Speed test not available${NC}"
-    elif command -v iperf3 >/dev/null 2>&1; then
-        echo -e "\n${YELLOW}IPERF3 (requires server):${NC}"
-        echo -e "${WHITE}Run: iperf3 -c <server> -t 10${NC}"
-    fi
-    
-    # Interface statistics
-    echo -e "\n${YELLOW}INTERFACE STATISTICS:${NC}"
-    if [ -f "/sys/class/net/$INTERFACE/statistics/rx_bytes" ]; then
-        rx_bytes=$(cat "/sys/class/net/$INTERFACE/statistics/rx_bytes")
-        tx_bytes=$(cat "/sys/class/net/$INTERFACE/statistics/tx_bytes")
-        echo -e "  RX: ${GREEN}$(numfmt --to=iec $rx_bytes)${NC}, TX: ${GREEN}$(numfmt --to=iec $tx_bytes)${NC}"
-    fi
-    
-    # Connection count
-    if command -v ss >/dev/null 2>&1; then
-        echo -e "\n${YELLOW}CONNECTION COUNT:${NC}"
-        total_conn=$(ss -tun | wc -l)
-        echo -e "  Total connections: ${GREEN}$((total_conn - 1))${NC}"
     fi
 }
 
@@ -935,7 +722,6 @@ show_sysctl_file() {
     echo -e "${NC}"
     
     if [ -f "$SYSCTL_CONF" ]; then
-        # Show only non-empty, non-comment lines
         grep -v '^#' "$SYSCTL_CONF" | grep -v '^$' | while read line; do
             echo -e "  ${WHITE}$line${NC}"
         done
@@ -946,6 +732,34 @@ show_sysctl_file() {
         echo -e "${RED}sysctl.conf not found${NC}"
     fi
 }
+
+edit_sysctl_conf() {
+    echo -e "${YELLOW}Opening sysctl.conf for editing...${NC}"
+    
+    if command -v nano >/dev/null 2>&1; then
+        editor="nano"
+    elif command -v vim >/dev/null 2>&1; then
+        editor="vim"
+    elif command -v vi >/dev/null 2>&1; then
+        editor="vi"
+    else
+        echo -e "${RED}No text editor found. Install nano, vim, or vi.${NC}"
+        return 1
+    fi
+    
+    if $editor "$SYSCTL_CONF"; then
+        echo -e "${GREEN}File edited successfully${NC}"
+        
+        echo -e "${YELLOW}Apply changes now? [y/N]: ${NC}"
+        read -r apply_choice
+        if [[ "$apply_choice" =~ [yY] ]]; then
+            apply_settings_immediately
+        fi
+    else
+        echo -e "${RED}Error editing file${NC}"
+    fi
+}
+
 # =============================================================================
 # MENU SYSTEM
 # =============================================================================
@@ -1004,37 +818,32 @@ show_netem_menu() {
     echo -e "${NC}"
 }
 
-show_status() {
+show_control_menu() {
     clear
     echo -e "${CYAN}"
     echo "================================================================"
-    echo "                   CURRENT SYSTEM STATUS                       "
+    echo "                   SYSTEM CONTROL PANEL                        "
+    echo "================================================================"
+    echo -e "${WHITE}Select control action:${CYAN}                             "
+    echo "                                                                "
+    echo -e "${GREEN}VIEW & MONITOR:${CYAN}                                  "
+    echo -e "  ${GREEN}1${NC}${WHITE}. Show Current Settings${CYAN}                           "
+    echo -e "  ${GREEN}2${NC}${WHITE}. Show Sysctl.conf File${CYAN}                           "
+    echo -e "  ${GREEN}3${NC}${WHITE}. Test Network Performance${CYAN}                        "
+    echo "                                                                "
+    echo -e "${BLUE}EDIT & CONFIGURE:${CYAN}                                "
+    echo -e "  ${GREEN}4${NC}${WHITE}. Live Sysctl Editor${CYAN}                              "
+    echo -e "  ${GREEN}5${NC}${WHITE}. Edit Sysctl.conf (Text Editor)${CYAN}                  "
+    echo -e "  ${GREEN}6${NC}${WHITE}. Apply Settings Immediately${CYAN}                      "
+    echo "                                                                "
+    echo -e "${PURPLE}MAINTENANCE:${CYAN}                                    "
+    echo -e "  ${GREEN}7${NC}${WHITE}. Backup Configurations${CYAN}                          "
+    echo -e "  ${GREEN}8${NC}${WHITE}. Remove All Optimizations${CYAN}                       "
+    echo "                                                                "
+    echo -e "  ${GREEN}0${NC}${WHITE}. Back to Main Menu${CYAN}                             "
+    echo "                                                                "
     echo "================================================================"
     echo -e "${NC}"
-    
-    INTERFACE=$(ip route get 8.8.8.8 2>/dev/null | awk '/dev/ {print $5; exit}')
-    if [ -z "$INTERFACE" ]; then
-        echo -e "${RED}ERROR: Could not detect network interface${NC}"
-    else
-        echo -e "${WHITE}Interface: ${GREEN}$INTERFACE${NC}"
-    fi
-    
-    echo ""
-    echo -e "${YELLOW}Network Settings:${NC}"
-    echo -e "  Congestion Control: ${BLUE}$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null || echo 'Not set')${NC}"
-    echo -e "  Queue Discipline:   ${BLUE}$(sysctl -n net.core.default_qdisc 2>/dev/null || echo 'Not set')${NC}"
-    echo -e "  TCP Low Latency:    ${BLUE}$(cat /proc/sys/net/ipv4/tcp_low_latency 2>/dev/null || echo 'default')${NC}"
-    
-    echo ""
-    echo -e "${YELLOW}TC Configuration:${NC}"
-    for IFACE in $(ls /sys/class/net/ | grep -v lo); do
-        QDISC=$(tc qdisc show dev "$IFACE" 2>/dev/null | head -1 || echo "None")
-        echo -e "  ${WHITE}$IFACE: ${BLUE}$QDISC${NC}"
-    done
-    
-    echo ""
-    echo -e "${CYAN}Press Enter to continue...${NC}"
-    read
 }
 
 handle_netem_menu() {
@@ -1058,10 +867,34 @@ handle_netem_menu() {
     done
 }
 
+handle_control_menu() {
+    while true; do
+        show_control_menu
+        echo -e "${YELLOW}Select option [0-8]: ${NC}"
+        read -r choice
+        
+        case $choice in
+            1) show_current_settings ;;
+            2) show_sysctl_file ;;
+            3) test_network_performance ;;
+            4) edit_sysctl_live ;;
+            5) edit_sysctl_conf ;;
+            6) apply_settings_immediately ;;
+            7) backup_configs ;;
+            8) remove_all_optimizations ;;
+            0) break ;;
+            *) echo -e "${RED}Invalid option! Please select 0-8${NC}" ;;
+        esac
+        
+        echo -e "\n${CYAN}Press Enter to continue...${NC}"
+        read
+    done
+}
+
 main_menu() {
     while true; do
         show_main_menu
-        echo -e "${YELLOW}Select option [0-11]: ${NC}"
+        echo -e "${YELLOW}Select option [0-12]: ${NC}"
         read -r choice
         
         case $choice in
@@ -1073,7 +906,7 @@ main_menu() {
             6) tc_optimize_by_category "high-loss" ;;
             7) tc_optimize_by_category "general" ;;
             8) handle_netem_menu ;;
-            9) show_status ;;
+            9) show_current_settings ;;
             10) backup_configs ;;
             11) remove_all_optimizations ;;
             12) handle_control_menu ;;
@@ -1082,74 +915,7 @@ main_menu() {
                 exit 0
                 ;;
             *)
-                echo -e "${RED}Invalid option! Please select 0-11${NC}"
-                ;;
-        esac
-        
-        echo -e "\n${CYAN}Press Enter to continue...${NC}"
-        read
-    done
-}
-# =============================================================================
-# CONTROL MENU
-# =============================================================================
-
-show_control_menu() {
-    clear
-    echo -e "${CYAN}"
-    echo "================================================================"
-    echo "                   SYSTEM CONTROL PANEL                        "
-    echo "================================================================"
-    echo -e "${WHITE}Select control action:${CYAN}                             "
-    echo "                                                                "
-    echo -e "${GREEN}VIEW & MONITOR:${CYAN}                                  "
-    echo -e "  ${GREEN}1${NC}${WHITE}. Show Current Settings${CYAN}                           "
-    echo -e "  ${GREEN}2${NC}${WHITE}. Show Sysctl.conf File${CYAN}                           "
-    echo -e "  ${GREEN}3${NC}${WHITE}. Show Logging Status${CYAN}                             "
-    echo -e "  ${GREEN}4${NC}${WHITE}. Test Network Performance${CYAN}                        "
-    echo "                                                                "
-    echo -e "${BLUE}EDIT & CONFIGURE:${CYAN}                                "
-    echo -e "  ${GREEN}5${NC}${WHITE}. Live Sysctl Editor${CYAN}                              "
-    echo -e "  ${GREEN}6${NC}${WHITE}. Edit Sysctl.conf (Text Editor)${CYAN}                  "
-    echo -e "  ${GREEN}7${NC}${WHITE}. Apply Settings Immediately${CYAN}                      "
-    echo "                                                                "
-    echo -e "${YELLOW}LOGGING CONTROL:${CYAN}                                "
-    echo -e "  ${GREEN}8${NC}${WHITE}. Toggle System Logging${CYAN}                           "
-    echo -e "  ${GREEN}9${NC}${WHITE}. Clear Log Files${CYAN}                                 "
-    echo "                                                                "
-    echo -e "${PURPLE}MAINTENANCE:${CYAN}                                    "
-    echo -e "  ${GREEN}10${NC}${WHITE}. Backup Configurations${CYAN}                          "
-    echo -e "  ${GREEN}11${NC}${WHITE}. Remove All Optimizations${CYAN}                       "
-    echo "                                                                "
-    echo -e "  ${GREEN}0${NC}${WHITE}. Back to Main Menu${CYAN}                             "
-    echo "                                                                "
-    echo "================================================================"
-    echo -e "${NC}"
-}
-
-handle_control_menu() {
-    while true; do
-        show_control_menu
-        echo -e "${YELLOW}Select option [0-11]: ${NC}"
-        read -r choice
-        
-        case $choice in
-            1) show_current_settings ;;
-            2) show_sysctl_file ;;
-            3) show_log_status ;;
-            4) test_network_performance ;;
-            5) edit_sysctl_live ;;
-            6) edit_sysctl_conf ;;
-            7) apply_settings_immediately ;;
-            8) toggle_logging ;;
-            9) clear_logs ;;
-            10) backup_configs ;;
-            11) remove_all_optimizations ;;
-            0)
-                break
-                ;;
-            *)
-                echo -e "${RED}Invalid option! Please select 0-11${NC}"
+                echo -e "${RED}Invalid option! Please select 0-12${NC}"
                 ;;
         esac
         
@@ -1158,48 +924,6 @@ handle_control_menu() {
     done
 }
 
-# =============================================================================
-# EDIT SYSCTL.CONF FUNCTION
-# =============================================================================
-
-edit_sysctl_conf() {
-    echo -e "${YELLOW}Opening sysctl.conf for editing...${NC}"
-    
-    # Show file info first
-    if [ -f "$SYSCTL_CONF" ]; then
-        file_size=$(du -h "$SYSCTL_CONF" | cut -f1)
-        line_count=$(wc -l < "$SYSCTL_CONF")
-        echo -e "${WHITE}File: $SYSCTL_CONF ($file_size, $line_count lines)${NC}"
-    fi
-    
-    # Select editor
-    if command -v nano >/dev/null 2>&1; then
-        editor="nano"
-    elif command -v vim >/dev/null 2>&1; then
-        editor="vim"
-    elif command -v vi >/dev/null 2>&1; then
-        editor="vi"
-    else
-        echo -e "${RED}No text editor found. Install nano, vim, or vi.${NC}"
-        return 1
-    fi
-    
-    # Edit file
-    if $editor "$SYSCTL_CONF"; then
-        echo -e "${GREEN}File edited successfully${NC}"
-        
-        # Ask to apply changes
-        echo -e "${YELLOW}Apply changes now? [y/N]: ${NC}"
-        read -r apply_choice
-        if [[ "$apply_choice" =~ [yY] ]]; then
-            apply_settings_immediately
-        else
-            echo -e "${YELLOW}Remember to apply changes later with option 7${NC}"
-        fi
-    else
-        echo -e "${RED}Error editing file${NC}"
-    fi
-}
 # =============================================================================
 # INITIALIZATION
 # =============================================================================
