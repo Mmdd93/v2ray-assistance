@@ -3233,7 +3233,7 @@ NC='\033[0m' # No Color
 display_header() {
     clear
     echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}                v2ray ASSISTANT MANAGEMENT TOOL               ${NC}"
+    echo -e "${BLUE}                github.com/Mmdd93/v2ray-assistance              ${NC}"
     echo -e "${YELLOW}             Telegram: @tlgrmv2 | Version: 25.11.4            ${NC}"
     echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════════╝${NC}"
 }
@@ -3245,7 +3245,7 @@ main_menu() {
         
         # System section - BLUE
         echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${BLUE} SYSTEM MANAGEMENT ${NC}"
+        echo -e "${BLUE} SYSTEM MANAGEMENT ${WHITE}[github.com/Mmdd93/v2ray-assistance] ${NC}"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${LIGHT_GREEN}  1.${NC} ${BLUE}Update and upgrade system + install packages${NC}"
         echo -e "${LIGHT_GREEN}  2.${NC} ${BLUE}Fix update issues (broken apt/dependencies)${NC}"
@@ -3258,7 +3258,7 @@ main_menu() {
         
         # Tools section - GREEN
         echo -e "${LIGHT_GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${LIGHT_GREEN} TOOLS ${NC}"
+        echo -e "${LIGHT_GREEN} TOOLS ${WHITE}[github.com/Mmdd93/v2ray-assistance] ${NC}"
         echo -e "${LIGHT_GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${LIGHT_GREEN}  7.${NC} ${GREEN}ISP defender (allow/block Iran ISPs)${NC}"
         echo -e "${LIGHT_GREEN}  8.${NC} ${GREEN}Network Optimizer and BBR${NC}"
@@ -3296,28 +3296,28 @@ main_menu() {
         echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${CYAN}Combine local tunnels (SIT, GRE, GENEVE, VXLAN) with:${NC}"
         echo -e "${CYAN}Backhaul, GOST, WSS, etc., for enhanced stealth${NC}"
-        echo -e "${LIGHT_GREEN} 26.${NC} ${CYAN}SIT tunnel 6to4 (IPv6 local) ${WHITE}            [github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 28.${NC} ${CYAN}GRE tunnel (IPv4/IPv6 local) ${WHITE}            [github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 45.${NC} ${CYAN}GENEVE tunnel (IPv4 local) ${WHITE}              [github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 46.${NC} ${CYAN}VXLAN tunnel (IPv4 local) ${WHITE}               [github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 31.${NC} ${CYAN}HAProxy tunnel ${WHITE}                          [github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 27.${NC} ${CYAN}Backhaul tunnel ${WHITE}                         [github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 44.${NC} ${CYAN}GOST tunnel by ${WHITE}                          [github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 55.${NC} ${CYAN}GOST Reverse tunnel ${WHITE}                     [github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 47.${NC} ${CYAN}WSS/WS tunnel (CDN support) ${WHITE}             [github.com/Mmdd93]${NC}"
-        echo -e "${LIGHT_GREEN} 56.${NC} ${CYAN}WireGuard Reverse Tunnel ${WHITE}                [github.com/eylandoo]${NC}"
-        echo -e "${LIGHT_GREEN} 58.${NC} ${CYAN}WireGuard/Hysteria Tunnel (TAQ-BOSTAN) ${WHITE}  [github.com/ParsaKSH]${NC}"
-        echo -e "${LIGHT_GREEN} 61.${NC} ${CYAN}Backhaul premium tunnel cracked ${WHITE}         [t.me/anony_identity]${NC}"
-        echo -e "${LIGHT_GREEN} 62.${NC} ${CYAN}Rathole tunnel v2 by ${WHITE}                    [github.com/Musixal]${NC}"
-        echo -e "${LIGHT_GREEN} 63.${NC} ${CYAN}Trust Tunnel (TCP/UDP over QUIC) ${WHITE}        [github.com/Erfan-XRay]${NC}"
-        echo -e "${LIGHT_GREEN} 64.${NC} ${CYAN}HPulse Tunnel (TCP/UDP over Hysteria 2) ${WHITE} [github.com/Erfan-XRay]${NC}"
-        echo -e "${LIGHT_GREEN} 66.${NC} ${CYAN}DNS Tunnel (tunnel over DNS) ${WHITE}            [github.com/IRSupp]${NC}"
-        echo -e "${LIGHT_GREEN} 67.${NC} ${CYAN}FRP Tunnel (Fast Reverse Proxy) ${WHITE}         [github.com/MmdBay]${NC}"
-        echo -e "${LIGHT_GREEN} 68.${NC} ${CYAN}Phantom Tunnel (Reverse) by ${WHITE}             [github.com/webwizards-team]${NC}"
-        echo -e "${LIGHT_GREEN} 69.${NC} ${CYAN}FRPulse Tunnel (Fast Reverse Proxy) ${WHITE}     [github.com/Erfan-XRay]${NC}" 
-        echo -e "${LIGHT_GREEN} 70.${NC} ${CYAN}FRP Tunnel by Mehrad ${WHITE}                    [github.com/mikeesierrah]${NC}" 
-        echo -e "${LIGHT_GREEN} 76.${NC} ${CYAN}ZEX Tunnel Waterwall ${WHITE}                    [github.com/izex/ZEX-Tunnel]${NC}"
-        echo -e "${LIGHT_GREEN} 79.${NC} ${CYAN}Pingtunnel Manager ${WHITE}                      [github.com/hoseinlolready]${NC}"
+        echo -e "${LIGHT_GREEN} 26.${NC} ${CYAN}SIT tunnel 6to4 (IPv6 local)             ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${LIGHT_GREEN} 28.${NC} ${CYAN}GRE tunnel (IPv4/IPv6 local)             ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${LIGHT_GREEN} 45.${NC} ${CYAN}GENEVE tunnel (IPv4 local)               ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${LIGHT_GREEN} 46.${NC} ${CYAN}VXLAN tunnel (IPv4 local)                ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${LIGHT_GREEN} 31.${NC} ${CYAN}HAProxy tunnel                           ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${LIGHT_GREEN} 27.${NC} ${CYAN}Backhaul tunnel                          ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${LIGHT_GREEN} 44.${NC} ${CYAN}GOST tunnel by                           ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${LIGHT_GREEN} 55.${NC} ${CYAN}GOST Reverse tunnel                      ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${LIGHT_GREEN} 47.${NC} ${CYAN}WSS/WS tunnel (CDN support)              ${WHITE}[github.com/Mmdd93]${NC}"
+        echo -e "${LIGHT_GREEN} 56.${NC} ${CYAN}WireGuard Reverse Tunnel                 ${WHITE}[github.com/eylandoo]${NC}"
+        echo -e "${LIGHT_GREEN} 58.${NC} ${CYAN}WireGuard/Hysteria Tunnel (TAQ-BOSTAN)   ${WHITE}[github.com/ParsaKSH]${NC}"
+        echo -e "${LIGHT_GREEN} 61.${NC} ${CYAN}Backhaul premium tunnel cracked          ${WHITE}[t.me/anony_identity]${NC}"
+        echo -e "${LIGHT_GREEN} 62.${NC} ${CYAN}Rathole tunnel v2 by                     ${WHITE}[github.com/Musixal]${NC}"
+        echo -e "${LIGHT_GREEN} 63.${NC} ${CYAN}Trust Tunnel (TCP/UDP over QUIC)         ${WHITE}[github.com/Erfan-XRay]${NC}"
+        echo -e "${LIGHT_GREEN} 64.${NC} ${CYAN}HPulse Tunnel (TCP/UDP over Hysteria 2)  ${WHITE}[github.com/Erfan-XRay]${NC}"
+        echo -e "${LIGHT_GREEN} 66.${NC} ${CYAN}DNS Tunnel (tunnel over DNS)             ${WHITE}[github.com/IRSupp]${NC}"
+        echo -e "${LIGHT_GREEN} 67.${NC} ${CYAN}FRP Tunnel (Fast Reverse Proxy)          ${WHITE}[github.com/MmdBay]${NC}"
+        echo -e "${LIGHT_GREEN} 68.${NC} ${CYAN}Phantom Tunnel (Reverse) by              ${WHITE}[github.com/webwizards-team]${NC}"
+        echo -e "${LIGHT_GREEN} 69.${NC} ${CYAN}FRPulse Tunnel (Fast Reverse Proxy)      ${WHITE}[github.com/Erfan-XRay]${NC}" 
+        echo -e "${LIGHT_GREEN} 70.${NC} ${CYAN}FRP Tunnel by Mehrad                     ${WHITE}[github.com/mikeesierrah]${NC}" 
+        echo -e "${LIGHT_GREEN} 76.${NC} ${CYAN}ZEX Tunnel Waterwall                     ${WHITE}[github.com/izex/ZEX-Tunnel]${NC}"
+        echo -e "${LIGHT_GREEN} 79.${NC} ${CYAN}Pingtunnel Manager                       ${WHITE}[github.com/hoseinlolready]${NC}"
         echo
         
         # XUI section - MAGENTA
@@ -3326,8 +3326,8 @@ main_menu() {
         echo -e "${MAGENTA}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${LIGHT_GREEN} 38.${NC} ${MAGENTA}X-UI panels (x-ui, 3x-ui, tx-ui) ${GREEN}[Single]${NC}${NC}"
         echo -e "${LIGHT_GREEN} 74.${NC} ${MAGENTA}Sing-box/SagerNet panel (s-ui) ${GREEN}[Single]${NC} ${WHITE}[github.com/alireza0]${NC}"
-        echo -e "${LIGHT_GREEN} 73.${NC} ${MAGENTA}X-UI panel ${RED}[Multi]${NC} ${WHITE}[github.com/azavaxhuman]${NC}"
-        echo -e "${LIGHT_GREEN} 80.${NC} ${MAGENTA}Hysteria2 Blitz Panel ${GREEN}[Single]${NC} ${WHITE}[github.com/ReturnFI]${NC}"
+        echo -e "${LIGHT_GREEN} 73.${NC} ${MAGENTA}X-UI panel ${RED}[Multi]${NC}                        ${WHITE}[github.com/azavaxhuman]${NC}"
+        echo -e "${LIGHT_GREEN} 80.${NC} ${MAGENTA}Hysteria2 Blitz Panel ${GREEN}[Single]${NC}          ${WHITE}[github.com/ReturnFI]${NC}"
         echo
         # Telegram Bot section - PURPLE
         echo -e "${WHITE}╔══════════════════════════════════════════════════════════════════╗${NC}"
@@ -3368,10 +3368,10 @@ main_menu() {
         echo -e "${LIGHT_CYAN} WIREGUARD-OPENVPN-L2TP-SSTP ${NC}"
         echo -e "${LIGHT_CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${LIGHT_GREEN} 60.${NC} ${LIGHT_CYAN}WireGuard Dashboard ${GREEN}[Single]${NC} ${WHITE}[github.com/WGDashboard]${NC}"
-        echo -e "${LIGHT_GREEN} 54.${NC} ${LIGHT_CYAN}SoftEther RTX-VPN ${GREEN}[Single]${NC} ${WHITE}[github.com/Sir-MmD]${NC}"
-        echo -e "${LIGHT_GREEN} 57.${NC} ${LIGHT_CYAN}OPEN VPN ${RED}[Multi]${NC} ${WHITE}[github.com/eylandoo]${NC}"
-        echo -e "${LIGHT_GREEN} 81.${NC} ${LIGHT_CYAN}OV-Panel ${RED}[Multi]${NC} ${WHITE}[github.com/primeZdev/ov-panel]${NC}"
-        echo -e "${LIGHT_GREEN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC} ${WHITE}[github.com/amiridev-org]${NC}"
+        echo -e "${LIGHT_GREEN} 54.${NC} ${LIGHT_CYAN}SoftEther RTX-VPN ${GREEN}[Single]${NC}   ${WHITE}[github.com/Sir-MmD]${NC}"
+        echo -e "${LIGHT_GREEN} 57.${NC} ${LIGHT_CYAN}OPEN VPN ${RED}[Multi]${NC}               ${WHITE}[github.com/eylandoo]${NC}"
+        echo -e "${LIGHT_GREEN} 81.${NC} ${LIGHT_CYAN}OV-Panel ${RED}[Multi]${NC}               ${WHITE}[github.com/primeZdev/ov-panel]${NC}"
+        echo -e "${LIGHT_GREEN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC}         ${WHITE}[github.com/amiridev-org]${NC}"
         echo
         
         # Panel Backup section - YELLOW
