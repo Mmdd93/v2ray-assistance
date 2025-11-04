@@ -3305,8 +3305,8 @@ main_menu() {
         
         # Footer options
         section_header "MAINTENANCE"
-		menu_option   Status: "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}%"
-		menu_option "NET: ↓$(echo "scale=1; ($rx2 - $rx1) / 1048576" | bc)MB/s ↑$(echo "scale=1; ($tx2 - $tx1) / 1048576" | bc)MB/s"
+		menu_option Status: "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}%"
+		menu_option Net: "NET: ↓$(echo "scale=1; ($rx2 - $rx1) / 1048576" | bc)MB/s ↑$(echo "scale=1; ($tx2 - $tx1) / 1048576" | bc)MB/s"
         menu_option "00" "Update scripts"
         menu_option "0" "Exit"
 
@@ -3657,12 +3657,11 @@ sudo bash zex-tunnel-install.sh
  cpu=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
  mem=$(free | awk '/Mem:/ {printf "%.1f", $3/$2 * 100}')
  disk=$(df / | awk 'NR==2 {print $5}' | cut -d'%' -f1)
- iface=$(ip route | grep default | awk '{print $5}'); \
-rx1=$(grep $iface /proc/net/dev | awk '{print $2}'); \
-tx1=$(grep $iface /proc/net/dev | awk '{print $10}'); \
-sleep 1; \
-rx2=$(grep $iface /proc/net/dev | awk '{print $2}'); \
-tx2=$(grep $iface /proc/net/dev | awk '{print $10}'); \
+ iface=$(ip route | grep default | awk '{print $5}')
+rx1=$(grep $iface /proc/net/dev | awk '{print $2}')
+tx1=$(grep $iface /proc/net/dev | awk '{print $10}')
+rx2=$(grep $iface /proc/net/dev | awk '{print $2}')
+tx2=$(grep $iface /proc/net/dev | awk '{print $10}')
 # Start the main menu
 main_menu
 
