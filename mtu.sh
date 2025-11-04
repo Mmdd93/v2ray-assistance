@@ -47,24 +47,58 @@ set_mtu() {
 
     if [[ "$iface" == "ALL" ]]; then
         for ifc in $(ls /sys/class/net | grep -v lo); do
-            sudo ip link set dev "$ifc" mtu "$mtu"
-            echo -e "? MTU for ${GREEN}$ifc${NC} set to ${YELLOW}$mtu${NC}"
+            sudo ip link set dev "$ifc" mtu "$mtu" 2>/dev/null
+            if [ $? -eq 0 ]; then
+                echo -e "? MTU for ${GREEN}$ifc${NC} set to ${YELLOW}$mtu${NC}"
+            else
+                echo -e "${RED}? Failed to set MTU for $ifc${NC}"
+            fi
         done
     else
-        sudo ip link set dev "$iface" mtu "$mtu"
-        echo -e "? MTU for ${GREEN}$iface${NC} set to ${YELLOW}$mtu${NC}"
+        sudo ip link set dev "$iface" mtu "$mtu" 2>/dev/null
+        if [ $? -eq 0 ]; then
+            echo -e "? MTU for ${GREEN}$iface${NC} set to ${YELLOW}$mtu${NC}"
+        else
+            echo -e "${RED}? Failed to set MTU for $iface${NC}"
+            pause
+            return
+        fi
     fi
 
     read -rp "Do you want to persist this change at reboot? (yes/no): " choice
-    if [[ "$choice" == "yes" ]]; then
+    if [[ "$choice" =~ ^[Yy](es)?$ ]]; then
+        # Remove any existing MTU cron entries
+        temp_cron=$(mktemp)
+        crontab -l 2>/dev/null | grep -v "ip link set dev.*mtu" > "$temp_cron"
+        
         if [[ "$iface" == "ALL" ]]; then
-            cron_line='@reboot for i in $(ls /sys/class/net | grep -v lo); do ip link set dev $i mtu '"$mtu"'; done'
-            (crontab -l 2>/dev/null; echo "$cron_line") | crontab -
+            # Create a proper startup script for all interfaces
+            local mtu_script="/usr/local/bin/set-mtu-all.sh"
+            cat > "$mtu_script" << EOF
+#!/bin/bash
+# Wait for network interfaces to be ready
+sleep 30
+for ifc in /sys/class/net/*; do
+    iface_name=\$(basename "\$ifc")
+    if [ "\$iface_name" != "lo" ]; then
+        ip link set dev "\$iface_name" mtu $mtu 2>/dev/null
+    fi
+done
+EOF
+            chmod +x "$mtu_script"
+            echo "@reboot $mtu_script" >> "$temp_cron"
             echo -e "?? Persisted MTU=${YELLOW}$mtu${NC} for ${GREEN}ALL interfaces${NC} at reboot."
         else
-            (crontab -l 2>/dev/null; echo "@reboot ip link set dev $iface mtu $mtu") | crontab -
+            # For single interface, use a simple cron with proper bash execution
+            echo "@reboot /bin/bash -c 'sleep 30; ip link set dev $iface mtu $mtu'" >> "$temp_cron"
             echo -e "?? Persisted MTU=${YELLOW}$mtu${NC} for ${GREEN}$iface${NC} at reboot."
         fi
+        
+        # Install the new crontab
+        crontab "$temp_cron"
+        rm -f "$temp_cron"
+        
+        echo -e "${GREEN}? MTU persistence configured successfully.${NC}"
     fi
     pause
 }
