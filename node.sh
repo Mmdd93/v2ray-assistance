@@ -3174,23 +3174,14 @@ YELLOW='\033[1;37m'
 NC='\033[0m' # No Color
 
 # Header function
-# Header function with dynamic centering
+# Header function
 display_header() {
     clear
-    local title="v2ray ASSISTANT MANAGEMENT TOOL"
-    local subtitle="Telegram: @tlgrmv2 | Version: 25.9.5"
-    local width=68
-    
-    # Calculate padding for centering
-    local title_padding=$(( (width - ${#title}) / 2 ))
-    local subtitle_padding=$(( (width - ${#subtitle}) / 2 ))
-    
-    printf "${GREEN}╔%*s╗${NC}\n" $width "" | tr ' ' '═'
-    printf "${GREEN}║%*s${NC}${CYAN}%s${NC}${GREEN}%*s║${NC}\n" $title_padding "" "$title" $title_padding ""
-    printf "${GREEN}║%*s${NC}${YELLOW}%s${NC}${GREEN}%*s║${NC}\n" $subtitle_padding "" "$subtitle" $subtitle_padding ""
-    printf "${GREEN}╚%*s╝${NC}\n" $width "" | tr ' ' '═'
+    echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║${NC}${CYAN}              v2ray ASSISTANT MANAGEMENT TOOL              ${NC}${GREEN}║${NC}"
+    echo -e "${GREEN}║${NC}${YELLOW}           Telegram: @tlgrmv2 | Version: 25.9.5           ${NC}${GREEN}║${NC}"
+    echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
 }
-
 # Function to display section headers
 section_header() {
     echo -e "${BLUE}╔══════════════════════════════════════════════════════════╗${NC}"
