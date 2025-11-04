@@ -3190,7 +3190,9 @@ display_header() {
 
 # Function to display section headers
 section_header() {
-    echo -e "${BLUE}║${NC} $1 ${NC}${BLUE}║${NC}"
+    echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}" 
+	echo -e "${BLUE}║${NC} $1 ${NC}${BLUE}║${NC}"
+	echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
 }
 
 # Function to display menu options with better formatting
