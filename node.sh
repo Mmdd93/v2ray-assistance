@@ -3223,7 +3223,7 @@ CYAN='\033[1;36m'
 YELLOW='\033[1;33m'
 WHITE='\033[1;37m'
 ORANGE='\033[1;33m'
-PURPLE='\033[1;35m'
+PURPLE='\033[1;95m'
 LIGHT_BLUE='\033[1;94m'
 LIGHT_GREEN='\033[38;5;118m'
 LIGHT_CYAN='\033[1;96m'
@@ -3328,7 +3328,7 @@ main_menu() {
         echo -e "${LIGHT_GREEN} 74.${NC} ${MAGENTA}Sing-box/SagerNet panel (s-ui) ${GREEN}[Single]${NC} ${WHITE}by github.com/alireza0/s-ui${NC}"
         echo -e "${LIGHT_GREEN} 73.${NC} ${MAGENTA}X-UI panel ${RED}[Multi]${NC} ${WHITE}by github.com/azavaxhuman/Nodex${NC}"
         echo -e "${LIGHT_GREEN} 80.${NC} ${MAGENTA}Hysteria2 Blitz Panel ${GREEN}[Single]${NC} ${WHITE}by github.com/ReturnFI/Blitz${NC}"
-        
+        echo
         # Telegram Bot section - PURPLE
         echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${PURPLE} TELEGRAM BOT ${NC}"
