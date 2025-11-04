@@ -3648,7 +3648,14 @@ sudo bash zex-tunnel-install.sh
         read -p "$(echo -e ${GREEN}"Press Enter to continue..."${NC})" dummy
     done
 }
-
+#!/bin/bash
+status() {
+    cpu=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
+    mem=$(free | awk '/Mem:/ {printf "%.1f", $3/$2 * 100}')
+    disk=$(df / | awk 'NR==2 {print $5}' | cut -d'%' -f1)
+    echo "CPU: ${cpu}% | RAM: ${mem}% | DISK: ${disk}%"
+}
+status
 # Start the main menu
 main_menu
 
