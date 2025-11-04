@@ -3323,10 +3323,10 @@ main_menu() {
         echo -e "${MAGENTA}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${MAGENTA} XUI ${NC}"
         echo -e "${MAGENTA}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${MAGENTA} 38.${NC} ${MAGENTA}X-UI panels (x-ui, 3x-ui, tx-ui) ${GREEN}[Single]${NC}${NC}"
-        echo -e "${MAGENTA} 74.${NC} ${MAGENTA}Sing-box/SagerNet panel (s-ui) ${GREEN}[Single]${NC}  ${WHITE}[github.com/alireza0]${NC}"
-        echo -e "${MAGENTA} 73.${NC} ${MAGENTA}X-UI panel ${RED}[Multi]${NC}                        ${WHITE}[github.com/azavaxhuman]${NC}"
-        echo -e "${MAGENTA} 80.${NC} ${MAGENTA}Hysteria2 Blitz Panel ${GREEN}[Single]${NC}           ${WHITE}[github.com/ReturnFI]${NC}"
+        echo -e "${MAGENTA} 38.${NC} ${MAGENTA}X-UI panels [MHSanaei,alireza,tx-ui] ${GREEN}[Single]${NC}${NC}"
+        echo -e "${MAGENTA} 74.${NC} ${MAGENTA}s-ui Sing-box/SagerNet panel [alireza] ${GREEN}[Single]${NC}  ${WHITE}[github.com/alireza0]${NC}"
+        echo -e "${MAGENTA} 73.${NC} ${MAGENTA}X-UI panel ${RED}[Multi]${NC}                                ${WHITE}[github.com/azavaxhuman]${NC}"
+        echo -e "${MAGENTA} 80.${NC} ${MAGENTA}Hysteria2 Blitz Panel ${GREEN}[Single]${NC}                   ${WHITE}[github.com/ReturnFI]${NC}"
         echo
         
         # Telegram Bot section - WHITE
