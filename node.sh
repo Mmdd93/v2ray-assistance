@@ -3324,9 +3324,9 @@ main_menu() {
         echo -e "${MAGENTA} XUI ${NC}"
         echo -e "${MAGENTA}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${MAGENTA} 38.${NC} ${MAGENTA}X-UI panels [MHSanaei,alireza,tx-ui] ${GREEN}[Single]${NC}${NC}"
-        echo -e "${MAGENTA} 74.${NC} ${MAGENTA}s-ui Sing-box/SagerNet panel [alireza] ${GREEN}[Single]${NC}  ${WHITE}[github.com/alireza0]${NC}"
+        echo -e "${MAGENTA} 74.${NC} ${MAGENTA}s-ui Sing-box/SagerNet panel [alireza] ${GREEN}[Single]${NC}   ${WHITE}[github.com/alireza0]${NC}"
         echo -e "${MAGENTA} 73.${NC} ${MAGENTA}X-UI panel ${RED}[Multi]${NC}                                ${WHITE}[github.com/azavaxhuman]${NC}"
-        echo -e "${MAGENTA} 80.${NC} ${MAGENTA}Hysteria2 Blitz Panel ${GREEN}[Single]${NC}                   ${WHITE}[github.com/ReturnFI]${NC}"
+        echo -e "${MAGENTA} 80.${NC} ${MAGENTA}Hysteria2 Blitz Panel ${GREEN}[Single]${NC}                    ${WHITE}[github.com/ReturnFI]${NC}"
         echo
         
         # Telegram Bot section - WHITE
@@ -3367,11 +3367,11 @@ main_menu() {
         echo -e "${LIGHT_CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${LIGHT_CYAN} WIREGUARD-OPENVPN-L2TP-SSTP ${NC}"
         echo -e "${LIGHT_CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
-        echo -e "${LIGHT_CYAN} 60.${NC} ${LIGHT_CYAN}WireGuard Dashboard ${GREEN}[Single]${NC}  ${WHITE}[github.com/WGDashboard]${NC}"
-        echo -e "${LIGHT_CYAN} 54.${NC} ${LIGHT_CYAN}SoftEther RTX-VPN ${GREEN}[Single]${NC}    ${WHITE}[github.com/Sir-MmD]${NC}"
+        echo -e "${LIGHT_CYAN} 60.${NC} ${LIGHT_CYAN}WireGuard Dashboard ${GREEN}[Single]${NC}   ${WHITE}[github.com/WGDashboard]${NC}"
+        echo -e "${LIGHT_CYAN} 54.${NC} ${LIGHT_CYAN}SoftEther RTX-VPN ${GREEN}[Single]${NC}     ${WHITE}[github.com/Sir-MmD]${NC}"
         echo -e "${LIGHT_CYAN} 57.${NC} ${LIGHT_CYAN}OPEN VPN ${RED}[Multi]${NC}               ${WHITE}[github.com/eylandoo]${NC}"
         echo -e "${LIGHT_CYAN} 81.${NC} ${LIGHT_CYAN}OV-Panel ${RED}[Multi]${NC}               ${WHITE}[github.com/primeZdev/ov-panel]${NC}"
-        echo -e "${LIGHT_CYAN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC}          ${WHITE}[github.com/amiridev-org]${NC}"
+        echo -e "${LIGHT_CYAN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC}           ${WHITE}[github.com/amiridev-org]${NC}"
         echo
         
         # Panel Backup section - YELLOW
