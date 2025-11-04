@@ -3185,9 +3185,9 @@ display_header() {
 
 # Function to display section headers
 section_header() {
-    echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}" 
-	echo -e "${BLUE}║${NC} $1 ${NC}${BLUE}║${NC}"
-	echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${BLUE}╔═════════════════════════════════════════════════╗${NC}" 
+	echo -e "${BLUE}║${NC} $1 ${NC}${BLUE}                            ║${NC}"
+	echo -e "${BLUE}╚═════════════════════════════════════════════════╝${NC}"
 }
 
 # Function to display menu options with better formatting
@@ -3197,7 +3197,7 @@ menu_option() {
 
 # Function to display a horizontal separator
 separator() {
-    echo -e "${MAGENTA}──────────────────────────────────────────────────────────────────────${NC}"
+    
 }
 
 # Function to validate IP addresses
