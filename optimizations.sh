@@ -479,7 +479,6 @@ select_performance_profile() {
 }
 
 create_tc_optimizer_script() {
-setup_tc_optimizer
     local profile="$1"
     local interface="$2"
     
@@ -658,7 +657,7 @@ check_startup_status() {
 }
 
 # Main setup function
-setup_tc_optimizer() {
+tc_optimize() {
     echo -e "${CYAN}=== TC Optimizer Setup ===${NC}"
     
     # Select interface
@@ -793,155 +792,8 @@ cleanup_tc() {
     echo 1000 > "/sys/class/net/$interface/tx_queue_len" 2>/dev/null
 }
 
-# Enhanced TC optimization functions
-apply_tc_gaming_optimizations() {
-    local interface="$1"
-    echo -e "${GREEN}Applying GAMING optimizations (Ultra Low Latency)...${NC}"
-    
-    # Set optimal queue length for low latency
-    echo 256 > "/sys/class/net/$interface/tx_queue_len" 2>/dev/null
-    
-    # Disable Ethernet flow control for lower latency
-    ethtool -A "$interface" rx off tx off 2>/dev/null
-    
-    if tc qdisc add dev "$interface" root cake bandwidth 1000mbit besteffort dual-dsthost nat nowash no-ack-filter 2>/dev/null; then
-        echo -e "${GREEN}Using CAKE (Optimal for gaming)${NC}"
-    elif tc qdisc add dev "$interface" root fq_codel limit 1000 flows 1024 target 2ms interval 20ms noecn 2>/dev/null; then
-        echo -e "${GREEN}Using FQ_Codel (Excellent for gaming)${NC}"
-    elif tc qdisc add dev "$interface" root pfifo_fast 2>/dev/null; then
-        echo -e "${YELLOW}Using PFIFO_Fast (Fallback)${NC}"
-    else
-        echo -e "${RED}Failed to apply any queue discipline${NC}"
-        return 1
-    fi
-    
-    # Verify the qdisc was applied
-    if tc qdisc show dev "$interface" | grep -q "cake\|fq_codel\|pfifo"; then
-        echo -e "${GREEN}✓ Gaming optimizations applied successfully${NC}"
-        return 0
-    else
-        echo -e "${RED}✗ Failed to verify queue discipline${NC}"
-        return 1
-    fi
-}
 
-apply_tc_high_loss_optimizations() {
-    local interface="$1"
-    echo -e "${YELLOW}Applying HIGH PACKET LOSS optimizations...${NC}"
-    
-    # Larger buffers for loss recovery
-    echo 4000 > "/sys/class/net/$interface/tx_queue_len" 2>/dev/null
-    
-    # Enable ECN if supported
-    echo 1 > /proc/sys/net/ipv4/tcp_ecn 2>/dev/null
-    
-    if tc qdisc add dev "$interface" root cake bandwidth 850mbit besteffort ack-filter nat nowash 2>/dev/null; then
-        echo -e "${GREEN}Using CAKE with advanced loss compensation${NC}"
-    elif tc qdisc add dev "$interface" root fq_codel limit 30000 flows 4096 ecn ce-threshold 1ms 2>/dev/null; then
-        echo -e "${GREEN}Using FQ_Codel with enhanced loss tolerance${NC}"
-    elif tc qdisc add dev "$interface" root pfifo_fast 2>/dev/null; then
-        echo -e "${YELLOW}Using PFIFO_Fast with larger buffers${NC}"
-    else
-        echo -e "${RED}Failed to apply any queue discipline${NC}"
-        return 1
-    fi
-    
-    # Verify application
-    if tc qdisc show dev "$interface" | grep -q "cake\|fq_codel\|pfifo"; then
-        echo -e "${GREEN}✓ High-loss optimizations applied successfully${NC}"
-        return 0
-    else
-        echo -e "${RED}✗ Failed to verify queue discipline${NC}"
-        return 1
-    fi
-}
 
-apply_tc_general_optimizations() {
-    local interface="$1"
-    echo -e "${BLUE}Applying GENERAL PURPOSE optimizations...${NC}"
-    
-    # Balanced queue length
-    echo 1000 > "/sys/class/net/$interface/tx_queue_len" 2>/dev/null
-    
-    if tc qdisc add dev "$interface" root cake bandwidth 1000mbit besteffort nat nowash 2>/dev/null; then
-        echo -e "${GREEN}Using CAKE (Optimal all-around)${NC}"
-    elif tc qdisc add dev "$interface" root fq_codel ecn ce-threshold 4ms 2>/dev/null; then
-        echo -e "${GREEN}Using FQ_Codel (Excellent balanced)${NC}"
-    elif tc qdisc add dev "$interface" root pfifo_fast 2>/dev/null; then
-        echo -e "${YELLOW}Using PFIFO_Fast (Compatible)${NC}"
-    else
-        echo -e "${RED}Failed to apply any queue discipline${NC}"
-        return 1
-    fi
-    
-    # Verify application
-    if tc qdisc show dev "$interface" | grep -q "cake\|fq_codel\|pfifo"; then
-        echo -e "${GREEN}✓ General optimizations applied successfully${NC}"
-        return 0
-    else
-        echo -e "${RED}✗ Failed to verify queue discipline${NC}"
-        return 1
-    fi
-}
-
-# Main TC optimization function
-tc_optimize_by_category() {
-    local category="${1:-general}"
-    local auto_mode="${2:-false}"
-    
-    echo "=============================================="
-    echo "        TC OPTIMIZER - $category MODE"
-    echo "=============================================="
-    
-    INTERFACE=$(ip route get 8.8.8.8 2>/dev/null | awk '/dev/ {print $5; exit}')
-    
-    if [ -z "$INTERFACE" ]; then
-        echo -e "${RED}ERROR: Could not detect network interface${NC}"
-        return 1
-    fi
-    
-    echo -e "${WHITE}Detected interface: ${GREEN}$INTERFACE${NC}"
-    
-    cleanup_tc "$INTERFACE"
-    
-    echo -e "${YELLOW}Applying $category optimizations...${NC}"
-    
-    case "$category" in
-        "gaming")
-            apply_tc_gaming_optimizations "$INTERFACE"
-            ;;
-        "high-loss")
-            apply_tc_high_loss_optimizations "$INTERFACE"
-            ;;
-        "general")
-            apply_tc_general_optimizations "$INTERFACE"
-            ;;
-        *)
-            echo -e "${RED}Unknown category: $category${NC}"
-            return 1
-            ;;
-    esac
-    
-    local result=$?
-    
-    echo ""
-    echo "=============================================="
-    if [ $result -eq 0 ]; then
-        echo -e "${GREEN}$category OPTIMIZATION COMPLETE${NC}"
-        echo -e "${WHITE}Interface: ${GREEN}$INTERFACE${NC}"
-        echo -e "${WHITE}Queue Discipline: ${GREEN}$(tc qdisc show dev "$INTERFACE" | head -1 | awk '{print $2}')${NC}"
-    else
-        echo -e "${RED}$category OPTIMIZATION FAILED${NC}"
-    fi
-    echo "=============================================="
-    
-    # Only ask about startup if not in auto mode and optimization was successful
-    if [ "$auto_mode" = "false" ] && [ $result -eq 0 ]; then
-        ask_startup_config "$category"
-    fi
-    
-    return $result
-}
 
 apply_netem_testing() {
     local condition="$1"
@@ -1258,8 +1110,6 @@ show_main_menu() {
     echo
     echo -e "${BLUE}TC OPTIMIZATIONS:${CYAN}"
     echo -e "  ${GREEN}5${NC}${WHITE}. TC Gaming Mode${CYAN}"
-    echo -e "  ${GREEN}6${NC}${WHITE}. TC High Loss Mode${CYAN}"
-    echo -e "  ${GREEN}7${NC}${WHITE}. TC General Mode${CYAN}"
     echo -e "  ${GREEN}8${NC}${WHITE}. NetEM Testing${CYAN}"
     echo
     echo -e "${YELLOW}TOOLS & MANAGEMENT:${CYAN}"
@@ -1298,9 +1148,7 @@ main_menu() {
             2) apply_streaming_optimizations ;;
             3) apply_general_optimizations ;;
             4) apply_competitive_gaming_optimizations ;;
-            5) tc_optimize_by_category "gaming" ;;
-            6) tc_optimize_by_category "high-loss" ;;
-            7) tc_optimize_by_category "general" ;;
+            5) tc_optimize;;
             8) handle_netem_menu ;;
             9) show_current_settings ;;
             10) backup_configs ;;
