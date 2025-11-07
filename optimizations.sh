@@ -339,87 +339,286 @@ apply_competitive_gaming_optimizations() {
 # TC OPTIMIZATION FUNCTIONS
 # =============================================================================
 
-create_tc_optimizer_script() {
-    local category="$1"
+# Function to detect available network interfaces
+detect_interfaces() {
+    echo -e "${YELLOW}Detecting network interfaces...${NC}"
     
-    echo -e "${GREEN}Creating TC optimizer script for $category mode...${NC}"
+    # Get all physical interfaces (excluding virtual ones)
+    INTERFACES=($(ls /sys/class/net/ | grep -v -E '^(lo|docker|veth|br-|virbr)'))
+    
+    if [ ${#INTERFACES[@]} -eq 0 ]; then
+        echo -e "${RED}No network interfaces found!${NC}"
+        return 1
+    fi
+    
+    echo -e "${GREEN}Available interfaces:${NC}"
+    for i in "${!INTERFACES[@]}"; do
+        # Get IP address for each interface
+        IP=$(ip addr show ${INTERFACES[$i]} 2>/dev/null | grep -oP 'inet \K[\d.]+' | head -1)
+        STATUS=$(cat /sys/class/net/${INTERFACES[$i]}/operstate 2>/dev/null)
+        if [ "$STATUS" = "up" ]; then
+            STATUS_COLOR="${GREEN}▲${NC}"
+        else
+            STATUS_COLOR="${RED}▼${NC}"
+        fi
+        
+        echo -e "  $((i+1)). ${INTERFACES[$i]} $STATUS_COLOR ${WHITE}(${IP:-No IP})${NC}"
+    done
+    
+    # Find default route interface
+    DEFAULT_INTERFACE=$(ip route get 8.8.8.8 2>/dev/null | awk '/dev/ {print $5; exit}')
+    if [ -n "$DEFAULT_INTERFACE" ]; then
+        echo -e "${CYAN}Default route interface: $DEFAULT_INTERFACE${NC}"
+    fi
+}
+
+# Function to select interface
+select_interface() {
+    detect_interfaces
+    
+    if [ ${#INTERFACES[@]} -eq 0 ]; then
+        return 1
+    fi
+    
+    # If only one interface, use it automatically
+    if [ ${#INTERFACES[@]} -eq 1 ]; then
+        SELECTED_INTERFACE=${INTERFACES[0]}
+        echo -e "${GREEN}Using only available interface: $SELECTED_INTERFACE${NC}"
+        return 0
+    fi
+    
+    echo -e "\n${CYAN}Select network interface:${NC}"
+    echo -e "  ${WHITE}0. Auto-detect (use default route)${NC}"
+    for i in "${!INTERFACES[@]}"; do
+        echo -e "  ${WHITE}$((i+1)). ${INTERFACES[$i]}${NC}"
+    done
+    
+    while true; do
+        echo -ne "${YELLOW}Enter choice [0-${#INTERFACES[@]}]: ${NC}"
+        read choice
+        
+        case $choice in
+            0)
+                if [ -n "$DEFAULT_INTERFACE" ]; then
+                    SELECTED_INTERFACE="$DEFAULT_INTERFACE"
+                    echo -e "${GREEN}Using auto-detected interface: $SELECTED_INTERFACE${NC}"
+                    break
+                else
+                    echo -e "${RED}Could not auto-detect default interface${NC}"
+                    continue
+                fi
+                ;;
+            [1-9]*)
+                if [ $choice -le ${#INTERFACES[@]} ]; then
+                    SELECTED_INTERFACE="${INTERFACES[$((choice-1))]}"
+                    echo -e "${GREEN}Selected interface: $SELECTED_INTERFACE${NC}"
+                    break
+                else
+                    echo -e "${RED}Invalid choice. Please try again.${NC}"
+                fi
+                ;;
+            *)
+                echo -e "${RED}Please enter a valid number.${NC}"
+                ;;
+        esac
+    done
+}
+
+# Function to select performance profile
+select_performance_profile() {
+    echo -e "\n${CYAN}Select performance profile:${NC}"
+    echo -e "  ${WHITE}1. Gaming Mode${NC}"
+    echo -e "     ${GREEN}✓ Lowest latency for competitive gaming${NC}"
+    echo -e "     ${GREEN}✓ Fast response times${NC}"
+    echo -e "     ${YELLOW}⚠ Lower throughput for large downloads${NC}"
+    
+    echo -e "  ${WHITE}2. High-Loss Network Mode${NC}"
+    echo -e "     ${GREEN}✓ Better performance on lossy connections${NC}"
+    echo -e "     ${GREEN}✓ Improved stability on Wi-Fi/LTE${NC}"
+    echo -e "     ${YELLOW}⚠ Slightly higher latency${NC}"
+    
+    echo -e "  ${WHITE}3. General Purpose Mode${NC}"
+    echo -e "     ${GREEN}✓ Balanced performance${NC}"
+    echo -e "     ${GREEN}✓ Good for browsing/streaming${NC}"
+    echo -e "     ${YELLOW}⚠ Not optimized for gaming${NC}"
+    
+    echo -e "  ${WHITE}4. Custom Mode${NC}"
+    echo -e "     ${GREEN}✓ Manual configuration${NC}"
+    echo -e "     ${YELLOW}⚠ Advanced users only${NC}"
+    
+    while true; do
+        echo -ne "${YELLOW}Enter choice [1-4]: ${NC}"
+        read choice
+        
+        case $choice in
+            1)
+                PROFILE="gaming"
+                echo -e "${GREEN}Selected: Gaming Mode${NC}"
+                break
+                ;;
+            2)
+                PROFILE="high-loss"
+                echo -e "${GREEN}Selected: High-Loss Network Mode${NC}"
+                break
+                ;;
+            3)
+                PROFILE="general"
+                echo -e "${GREEN}Selected: General Purpose Mode${NC}"
+                break
+                ;;
+            4)
+                PROFILE="custom"
+                echo -e "${GREEN}Selected: Custom Mode${NC}"
+                break
+                ;;
+            *)
+                echo -e "${RED}Invalid choice. Please enter 1-4.${NC}"
+                ;;
+        esac
+    done
+}
+
+create_tc_optimizer_script() {
+setup_tc_optimizer
+    local profile="$1"
+    local interface="$2"
+    
+    echo -e "${GREEN}Creating TC optimizer script for $profile mode on $interface...${NC}"
     
     # Create the script with proper error handling
     cat > "$TC_SCRIPT_PATH" << EOF
 #!/bin/bash
-# TC Optimizer - $category Mode
-# Runs at startup via cron
+# TC Optimizer - $profile Mode
+# Interface: $interface
+# Created: $(date)
 
-
+set -e
 
 # Wait for network to be ready
 sleep 30
 
-INTERFACE=\$(ip route get 8.8.8.8 2>/dev/null | awk '/dev/ {print \$5; exit}')
+INTERFACE="$interface"
 
-if [ -z "\$INTERFACE" ]; then
+# Verify interface exists
+if ! ip link show "\$INTERFACE" > /dev/null 2>&1; then
+    echo "Error: Interface \$INTERFACE not found"
     exit 1
 fi
 
+# Wait for interface to be up
+for i in {1..30}; do
+    if ip link show "\$INTERFACE" | grep -q "state UP"; then
+        break
+    fi
+    sleep 1
+done
 
+echo "Applying $profile optimizations to \$INTERFACE..."
 
 # Clean existing rules
-tc qdisc del dev "\$INTERFACE" root 2>/dev/null
-tc qdisc del dev "\$INTERFACE" ingress 2>/dev/null
+tc qdisc del dev "\$INTERFACE" root 2>/dev/null || true
+tc qdisc del dev "\$INTERFACE" ingress 2>/dev/null || true
 
-# Apply $category optimization
+# Apply $profile optimization
 EOF
 
-    # Add the specific category configuration
-    case "$category" in
+    # Add the specific profile configuration
+    case "$profile" in
         "gaming")
             cat >> "$TC_SCRIPT_PATH" << 'GAMING_EOF'
-echo 256 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
-ethtool -A "$INTERFACE" rx off tx off 2>/dev/null
+# =============================================================================
+# GAMING OPTIMIZATIONS - Lowest latency for competitive gaming
+# =============================================================================
+
+echo "Applying comprehensive gaming optimizations..."
+
+# 1. Disable pause frames (if supported)
+ethtool -A "$INTERFACE" rx off tx off 2>/dev/null && echo "✓ Pause frames disabled" || echo "⚠ Pause frames not supported"
+
+# 2. Disable segmentation offloads for lower latency
+ethtool -K "$INTERFACE" gso off 2>/dev/null && echo "✓ GSO disabled"
+ethtool -K "$INTERFACE" tso off 2>/dev/null && echo "✓ TSO disabled" 
+ethtool -K "$INTERFACE" gro off 2>/dev/null && echo "✓ GRO disabled"
+ethtool -K "$INTERFACE" lro off 2>/dev/null && echo "✓ LRO disabled"
+
+# 3. Ring buffer optimizations for low latency
+ethtool -G "$INTERFACE" rx 256 tx 256 2>/dev/null && echo "✓ Small ring buffers set (256)" || echo "⚠ Ring buffers not supported"
+
+# 4. Interrupt coalescing - disable for lowest latency
+ethtool -C "$INTERFACE" rx-usecs 0 tx-usecs 0 2>/dev/null && echo "✓ Interrupt coalescing disabled" || echo "⚠ Interrupt coalescing not supported"
+
+# 5. TCP stack optimizations for gaming
+echo 10 > /proc/sys/net/ipv4/tcp_fin_timeout 2>/dev/null || true
+echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse 2>/dev/null || true
+echo 1 > /proc/sys/net/ipv4/tcp_low_latency 2>/dev/null || true
+
+# 6. TX queue length for low latency
+echo 256 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null && echo "✓ TX queue length set to 256" || echo "⚠ TX queue length not supported"
+
+# 7. Advanced queuing discipline for gaming
+echo "Applying gaming-optimized qdisc..."
 if tc qdisc add dev "$INTERFACE" root cake bandwidth 1000mbit besteffort dual-dsthost nat nowash no-ack-filter 2>/dev/null; then
-   
+    echo "✓ CAKE qdisc applied (gaming optimized)"
 elif tc qdisc add dev "$INTERFACE" root fq_codel limit 1000 flows 1024 target 2ms interval 20ms noecn 2>/dev/null; then
-   
+    echo "✓ fq_codel qdisc applied (gaming optimized)"
 else
     tc qdisc add dev "$INTERFACE" root pfifo_fast
-   
+    echo "✓ Fallback to pfifo_fast"
 fi
 GAMING_EOF
             ;;
         "high-loss")
             cat >> "$TC_SCRIPT_PATH" << 'HIGHLOSS_EOF'
-echo 4000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
-echo 1 > /proc/sys/net/ipv4/tcp_ecn 2>/dev/null
-if tc qdisc add dev "$INTERFACE" root cake bandwidth 850mbit besteffort ack-filter nat nowash 2>/dev/null; then
-  
-elif tc qdisc add dev "$INTERFACE" root fq_codel limit 30000 flows 4096 ecn ce-threshold 1ms 2>/dev/null; then
+# High-loss network optimizations
+echo "Applying high-loss network optimizations..."
 
+echo 4000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null && echo "✓ TX queue length set to 4000" || echo "⚠ TX queue length not supported"
+echo 1 > /proc/sys/net/ipv4/tcp_ecn 2>/dev/null && echo "✓ ECN enabled" || true
+
+# Buffer bloat control for unstable networks
+if tc qdisc add dev "$INTERFACE" root cake bandwidth 850mbit besteffort ack-filter nat nowash 2>/dev/null; then
+    echo "✓ CAKE qdisc applied (high-loss optimized)"
+elif tc qdisc add dev "$INTERFACE" root fq_codel limit 30000 flows 4096 ecn ce-threshold 1ms 2>/dev/null; then
+    echo "✓ fq_codel qdisc applied (high-loss optimized)"
 else
     tc qdisc add dev "$INTERFACE" root pfifo_fast
-   
+    echo "✓ Fallback to pfifo_fast"
 fi
 HIGHLOSS_EOF
             ;;
         "general")
             cat >> "$TC_SCRIPT_PATH" << 'GENERAL_EOF'
-echo 1000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
-if tc qdisc add dev "$INTERFACE" root cake bandwidth 1000mbit besteffort nat nowash 2>/dev/null; then
+# General purpose optimizations
+echo "Applying general purpose optimizations..."
 
+echo 1000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null && echo "✓ TX queue length set to 1000" || echo "⚠ TX queue length not supported"
+
+# Balanced settings for mixed usage
+if tc qdisc add dev "$INTERFACE" root cake bandwidth 1000mbit besteffort nat nowash 2>/dev/null; then
+    echo "✓ CAKE qdisc applied (general purpose)"
 elif tc qdisc add dev "$INTERFACE" root fq_codel ecn ce-threshold 4ms 2>/dev/null; then
- 
+    echo "✓ fq_codel qdisc applied (general purpose)"
 else
     tc qdisc add dev "$INTERFACE" root pfifo_fast
-
+    echo "✓ Fallback to pfifo_fast"
 fi
 GENERAL_EOF
+            ;;
+        "custom")
+            cat >> "$TC_SCRIPT_PATH" << 'CUSTOM_EOF'
+# Custom mode - user configured
+echo "Running in custom mode - no predefined optimizations"
+# Add your custom TC rules here
+tc qdisc add dev "$INTERFACE" root pfifo_fast
+echo "✓ Custom mode: basic pfifo_fast applied"
+CUSTOM_EOF
             ;;
     esac
 
     # Add the footer
     cat >> "$TC_SCRIPT_PATH" << 'EOF'
 
-
-
+echo "Optimizations completed successfully for $INTERFACE"
 exit 0
 EOF
 
@@ -429,6 +628,7 @@ EOF
     # Verify the script was created
     if [ -f "$TC_SCRIPT_PATH" ] && [ -x "$TC_SCRIPT_PATH" ]; then
         echo -e "${GREEN}✓ TC optimizer script created at: $TC_SCRIPT_PATH${NC}"
+        echo -e "${CYAN}Profile: $profile | Interface: $interface${NC}"
         return 0
     else
         echo -e "${RED}✗ Failed to create TC optimizer script${NC}"
@@ -436,7 +636,7 @@ EOF
     fi
 }
 
-# Check if optimizations are enabled at startup
+# Enhanced startup status check
 check_startup_status() {
     echo -e "${YELLOW}Checking startup status...${NC}"
     
@@ -444,9 +644,40 @@ check_startup_status() {
         echo -e "${GREEN}✓ TC optimizations are enabled at startup${NC}"
         echo -e "${WHITE}Cron entry:${NC}"
         crontab -l | grep "$TC_SCRIPT_NAME"
+        
+        # Show current interface and profile info
+        if [ -f "$TC_SCRIPT_PATH" ]; then
+            echo -e "\n${WHITE}Script details:${NC}"
+            grep -E "^(# TC Optimizer|# Interface:|# Created:)" "$TC_SCRIPT_PATH" | head -3
+        fi
         return 0
     else
         echo -e "${YELLOW}⚠ TC optimizations are NOT enabled at startup${NC}"
+        return 1
+    fi
+}
+
+# Main setup function
+setup_tc_optimizer() {
+    echo -e "${CYAN}=== TC Optimizer Setup ===${NC}"
+    
+    # Select interface
+    if ! select_interface; then
+        echo -e "${RED}Failed to select interface. Exiting.${NC}"
+        return 1
+    fi
+    
+    # Select performance profile
+    select_performance_profile
+    
+    # Create the script
+    if create_tc_optimizer_script "$PROFILE" "$SELECTED_INTERFACE"; then
+        echo -e "\n${GREEN}✓ Setup completed successfully!${NC}"
+        echo -e "${WHITE}Interface:${NC} $SELECTED_INTERFACE"
+        echo -e "${WHITE}Profile:${NC} $PROFILE"
+        echo -e "${WHITE}Script:${NC} $TC_SCRIPT_PATH"
+    else
+        echo -e "${RED}✗ Setup failed${NC}"
         return 1
     fi
 }
