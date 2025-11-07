@@ -1149,7 +1149,7 @@ show_main_menu() {
     echo -e "  ${GREEN}4${NC}${WHITE}. Competitive Gaming (Extreme)${CYAN}"
     echo
     echo -e "${BLUE}TC OPTIMIZATIONS:${CYAN}"
-    echo -e "  ${GREEN}5${NC}${WHITE}. TC Gaming Mode${CYAN}"
+    echo -e "  ${GREEN}5${NC}${WHITE}. TC optimizations${CYAN}"
     echo -e "  ${GREEN}8${NC}${WHITE}. NetEM Testing${CYAN}"
     echo
     echo -e "${YELLOW}TOOLS & MANAGEMENT:${CYAN}"
