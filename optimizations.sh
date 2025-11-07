@@ -339,6 +339,8 @@ apply_competitive_gaming_optimizations() {
 # TC OPTIMIZATION FUNCTIONS
 # =============================================================================
 
+
+
 # Function to detect available network interfaces
 detect_interfaces() {
     echo -e "${YELLOW}Detecting network interfaces...${NC}"
@@ -656,42 +658,9 @@ check_startup_status() {
     fi
 }
 
-# Main setup function
-tc_optimize() {
-    echo -e "${CYAN}=== TC Optimizer Setup ===${NC}"
-    
-    # Select interface
-    if ! select_interface; then
-        echo -e "${RED}Failed to select interface. Exiting.${NC}"
-        return 1
-    fi
-    
-    # Select performance profile
-    select_performance_profile
-    
-    # Create the script
-    if create_tc_optimizer_script "$PROFILE" "$SELECTED_INTERFACE"; then
-        echo -e "\n${GREEN}✓ Setup completed successfully!${NC}"
-        echo -e "${WHITE}Interface:${NC} $SELECTED_INTERFACE"
-        echo -e "${WHITE}Profile:${NC} $PROFILE"
-        echo -e "${WHITE}Script:${NC} $TC_SCRIPT_PATH"
-    else
-        echo -e "${RED}✗ Setup failed${NC}"
-        return 1
-    fi
-}
-
 # Enable optimizations at system startup
 enable_startup_optimizations() {
-    local category="${1:-general}"
-    
     echo -e "${YELLOW}Enabling TC optimizations at startup...${NC}"
-    
-    # Create the TC optimizer script with the selected category
-    if ! create_tc_optimizer_script "$category"; then
-        echo -e "${RED}Failed to create TC script${NC}"
-        return 1
-    fi
     
     # Create a temporary crontab
     local temp_cron=$(mktemp)
@@ -703,7 +672,7 @@ enable_startup_optimizations() {
     # Install the new crontab
     if crontab "$temp_cron"; then
         rm -f "$temp_cron"
-        echo -e "${GREEN}✓ Startup optimizations enabled for category: $category${NC}"
+        echo -e "${GREEN}✓ Startup optimizations enabled${NC}"
         echo -e "${WHITE}Optimizations will run automatically on boot${NC}"
         return 0
     else
@@ -743,8 +712,6 @@ disable_startup_optimizations() {
 
 # Ask user about startup configuration
 ask_startup_config() {
-    local category="$1"
-    
     echo ""
     echo "=============================================="
     echo -e "${CYAN}STARTUP CONFIGURATION${NC}"
@@ -761,7 +728,7 @@ ask_startup_config() {
     read -r choice
     case "${choice:-y}" in
         [Yy]*)
-            enable_startup_optimizations "$category"
+            enable_startup_optimizations
             ;;
         [Nn]*)
             echo -e "${YELLOW}TC optimizations will run only once (current session)${NC}"
@@ -771,14 +738,14 @@ ask_startup_config() {
             echo ""
             echo -n "Press Enter to continue..."
             read -r
-            ask_startup_config "$category"
+            ask_startup_config
             ;;
         [Dd]*)
             disable_startup_optimizations
             ;;
         *)
             echo -e "${RED}Invalid choice. Please try again.${NC}"
-            ask_startup_config "$category"
+            ask_startup_config
             ;;
     esac
 }
@@ -787,9 +754,82 @@ ask_startup_config() {
 cleanup_tc() {
     local interface="$1"
     echo -e "${YELLOW}Cleaning existing TC rules...${NC}"
-    tc qdisc del dev "$interface" root 2>/dev/null
-    tc qdisc del dev "$interface" ingress 2>/dev/null
-    echo 1000 > "/sys/class/net/$interface/tx_queue_len" 2>/dev/null
+    tc qdisc del dev "$interface" root 2>/dev/null || true
+    tc qdisc del dev "$interface" ingress 2>/dev/null || true
+    echo 1000 > "/sys/class/net/$interface/tx_queue_len" 2>/dev/null || true
+    echo -e "${GREEN}✓ TC rules cleaned up for $interface${NC}"
+}
+
+# Run TC optimizations immediately
+run_tc_optimizations() {
+    if [ -f "$TC_SCRIPT_PATH" ] && [ -x "$TC_SCRIPT_PATH" ]; then
+        echo -e "${YELLOW}Running TC optimizations now...${NC}"
+        sudo "$TC_SCRIPT_PATH"
+    else
+        echo -e "${RED}TC optimizer script not found or not executable${NC}"
+        echo -e "${YELLOW}Please run setup first${NC}"
+        return 1
+    fi
+}
+
+# Main setup function
+tc_optimize() {
+    echo -e "${CYAN}=== TC Optimizer Setup ===${NC}"
+    
+    # Select interface
+    if ! select_interface; then
+        echo -e "${RED}Failed to select interface. Exiting.${NC}"
+        return 1
+    fi
+    
+    # Select performance profile
+    select_performance_profile
+    
+    # Create the script
+    if create_tc_optimizer_script "$PROFILE" "$SELECTED_INTERFACE"; then
+        echo -e "\n${GREEN}✓ Setup completed successfully!${NC}"
+        echo -e "${WHITE}Interface:${NC} $SELECTED_INTERFACE"
+        echo -e "${WHITE}Profile:${NC} $PROFILE"
+        echo -e "${WHITE}Script:${NC} $TC_SCRIPT_PATH"
+        
+        # Ask about startup configuration
+        ask_startup_config
+        
+        # Ask if user wants to run optimizations now
+        echo ""
+        echo -n "Do you want to apply optimizations now? [Y/n]: "
+        read -r apply_now
+        case "${apply_now:-y}" in
+            [Yy]*)
+                run_tc_optimizations
+                ;;
+            [Nn]*)
+                echo -e "${YELLOW}Optimizations will run on next boot or manually via: sudo $TC_SCRIPT_PATH${NC}"
+                ;;
+        esac
+        
+    else
+        echo -e "${RED}✗ Setup failed${NC}"
+        return 1
+    fi
+}
+
+# Display current TC status
+show_tc_status() {
+    local interface="$1"
+    echo -e "${CYAN}=== Current TC Status for $interface ===${NC}"
+    
+    # Show current qdisc
+    echo -e "${YELLOW}Current qdisc:${NC}"
+    tc qdisc show dev "$interface"
+    
+    # Show interface statistics
+    echo -e "\n${YELLOW}Interface statistics:${NC}"
+    ip -s link show "$interface"
+    
+    # Show ethtool settings
+    echo -e "\n${YELLOW}Ethtool settings:${NC}"
+    ethtool -k "$interface" 2>/dev/null | grep -E "(tso|gso|gro|lro):" || echo "Ethtool not available"
 }
 
 
