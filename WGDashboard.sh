@@ -34,7 +34,7 @@ function install_wgdashboard() {
     sudo apt install -y python3 python3-pip git wireguard-tools net-tools
 
     echo -e "${BLUE}[+] Cloning WGDashboard...${RESET}"
-    git clone https://github.com/donaldzou/WGDashboard.git "$WGD_DIR"
+    git clone https://github.com/donaldzou/WGDashboard.git
     cd "$WGD_DIR" || exit
 
     echo -e "${BLUE}[+] Installing WGDashboard...${RESET}"
