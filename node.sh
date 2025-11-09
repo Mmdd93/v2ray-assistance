@@ -3288,6 +3288,7 @@ main_menu() {
         echo -e "${LIGHT_GREEN} 36.${NC} ${LIGHT_GREEN}Cron job management${NC}"
         echo -e "${LIGHT_GREEN} 37.${NC} ${LIGHT_GREEN}File management tools${NC}"
         echo -e "${LIGHT_GREEN} 71.${NC} ${LIGHT_GREEN}Abuse Defender (Hetzner)${NC}"
+		 echo -e "${LIGHT_GREEN} 84.${NC} ${LIGHT_GREEN}MikroTik (CHR/DOCKER MODE)${NC}"
         echo
        
         # Tunnel section - CYAN
@@ -3740,6 +3741,12 @@ sudo bash zex-tunnel-install.sh
 				sleep 1
                 curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/Cleanup.sh -o Cleanup.sh
                 sudo bash Cleanup.sh
+                ;;
+			84)
+                echo -e "${YELLOW}Cleanup...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/MikroTik.sh -o MikroTik.sh
+                sudo bash MikroTik.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
