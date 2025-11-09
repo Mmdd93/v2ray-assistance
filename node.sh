@@ -3743,7 +3743,7 @@ sudo bash zex-tunnel-install.sh
                 sudo bash Cleanup.sh
                 ;;
 			84)
-                echo -e "${YELLOW}Cleanup...${NC}"
+                echo -e "${YELLOW}MikroTik...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/MikroTik.sh -o MikroTik.sh
                 sudo bash MikroTik.sh
