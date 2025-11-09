@@ -1180,8 +1180,14 @@ download_mikrotik_image_from_github() {
             docker load --input mikrotik7.7_docker_livekadeh.com
             log "INFO" "MikroTik Docker image loaded successfully"
             
-            # Cleanup temporary files
-            rm -f "$filename" "mikrotik7.7_docker_livekadeh.com"
+            # Ask user if they want to delete temporary files
+            read -p "Do you want to delete the temporary files? (y/n): " delete_files
+            if [[ $delete_files =~ ^[Yy]$ ]]; then
+                rm -f "$filename" "mikrotik7.7_docker_livekadeh.com"
+                log "INFO" "Temporary files deleted successfully"
+            else
+                log "INFO" "Temporary files kept: $filename and mikrotik7.7_docker_livekadeh.com"
+            fi
         else
             error_exit "Docker image file not found after extraction"
         fi
