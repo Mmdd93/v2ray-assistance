@@ -3252,7 +3252,7 @@ main_menu() {
         echo -e "${BLUE}  4.${NC} ${BLUE}System Information${NC}"
         echo -e "${BLUE}  5.${NC} ${BLUE}Install Docker and Docker Compose${NC}"
         echo -e "${BLUE}  6.${NC} ${BLUE}Install Docker On Iran Servers${NC}"
-		echo -e "${BLUE}  8.${NC} ${BLUE}}System and Network Optimizer${NC}"
+		echo -e "${BLUE}  8.${NC} ${BLUE}System and Network Optimizer${NC}"
         echo -e "${BLUE} 72.${NC} ${BLUE}MTU Management${NC}"
 		echo -e "${BLUE} 83.${NC} ${BLUE}Disk Cleanup [Advanced]${NC}"
         echo
