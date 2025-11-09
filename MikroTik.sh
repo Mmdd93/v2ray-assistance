@@ -270,33 +270,7 @@ backup_system() {
     log "INFO" "Backup created: $backup_path"
 }
 
-# CHR Installation functions
-get_available_chr_versions() {
-    log "INFO" "Fetching available CHR versions..."
-    
-    # This would typically call an API, for now we'll use a static list
-    echo "7.15.2 7.14.1 7.13.5 7.12.4 7.11.2"
-}
 
-download_chr_image() {
-    local version="${1:-$DEFAULT_CHR_VERSION}"
-    local filename="chr-${version}.img.zip"
-    local url="https://download.mikrotik.com/routeros/${version}/$filename"
-    
-    log "INFO" "Downloading CHR version $version..."
-    download_with_retry "$url" "$filename"
-    
-    # Verify download
-    if [[ ! -f "$filename" ]]; then
-        error_exit "Downloaded file not found: $filename"
-    fi
-    
-    # Extract image
-    log "INFO" "Extracting CHR image..."
-    if ! unzip -q "$filename" -d chr.img; then
-        error_exit "Failed to extract CHR image"
-    fi
-}
 
 validate_disk_space() {
     local required_space=1000000  # 1GB in KB
@@ -307,37 +281,228 @@ validate_disk_space() {
     fi
 }
 
+# CHR Installation functions
+detect_architecture() {
+    local arch
+    arch=$(uname -m)
+    case "$arch" in
+        x86_64)
+            echo "x86"
+            ;;
+        aarch64|arm64)
+            echo "arm64"
+            ;;
+        armv7l|armv6l)
+            echo "arm"
+            ;;
+        *)
+            error_exit "Unsupported architecture: $arch"
+            ;;
+    esac
+}
+
+get_available_chr_versions() {
+    log "INFO" "Fetching available CHR versions..." >&2
+    # Simple static list - you can enhance this later
+    echo "7.20.4 7.19.3 7.18.2 7.17.3 7.16.3 7.15.2"
+}
+
+get_chr_download_url() {
+    local version="$1"
+    local arch="$2"
+    
+    case "$arch" in
+        x86)
+            echo "https://download.mikrotik.com/routeros/${version}/chr-${version}.img.zip"
+            ;;
+        arm64)
+            echo "https://download.mikrotik.com/routeros/${version}/chr-${version}-arm64.img.zip"
+            ;;
+        arm)
+            echo "https://download.mikrotik.com/routeros/${version}/chr-${version}-arm.img.zip"
+            ;;
+        *)
+            error_exit "Unsupported architecture for CHR: $arch"
+            ;;
+    esac
+}
+
+verify_chr_requirements() {
+    log "INFO" "Verifying system requirements..."
+    
+    # Check architecture
+    local arch=$(detect_architecture)
+    log "INFO" "Detected architecture: $arch"
+    
+    # Check disk space (at least 2GB free)
+    local available_space
+    available_space=$(df / | awk 'NR==2 {print $4}')
+    if [[ $available_space -lt 2097152 ]]; then  # 2GB in KB
+        error_exit "Insufficient disk space. Need at least 2GB free."
+    fi
+    
+    # Check memory (at least 1GB)
+    local total_mem
+    total_mem=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+    if [[ $total_mem -lt 1000000 ]]; then  # Less than 1GB
+        log "WARN" "Low memory detected. CHR recommends at least 1GB RAM."
+        read -p "Continue anyway? (y/n): " continue_low_mem
+        if [[ ! $continue_low_mem =~ ^[Yy]$ ]]; then
+            exit 0
+        fi
+    fi
+    
+    log "INFO" "System requirements verified"
+}
+
+download_chr_image() {
+    local version="${1:-$DEFAULT_CHR_VERSION}"
+    local arch=$(detect_architecture)
+    local url=$(get_chr_download_url "$version" "$arch")
+    local filename="chr-${version}-${arch}.img.zip"
+    
+    log "INFO" "Downloading CHR $version for $arch..."
+    log "INFO" "Download URL: $url"
+    
+    if download_with_retry "$url" "$filename"; then
+        # Verify download
+        if [[ ! -f "$filename" ]]; then
+            error_exit "Downloaded file not found: $filename"
+        fi
+        
+        # Extract image
+        log "INFO" "Extracting CHR image..."
+        if ! unzip -q "$filename" -d "chr-${version}-${arch}"; then
+            error_exit "Failed to extract CHR image"
+        fi
+    else
+        error_exit "Failed to download CHR image"
+    fi
+}
+
+get_chr_image_path() {
+    local version="$1"
+    local arch="$2"
+    local extract_dir="chr-${version}-${arch}"
+    
+    # Look for the .img file in the extracted directory
+    local img_file=$(find "$extract_dir" -name "*.img" | head -1)
+    
+    if [[ -z "$img_file" ]]; then
+        error_exit "Could not find CHR image file in $extract_dir"
+    fi
+    
+    echo "$img_file"
+}
+
 install_chr_image() {
     log "INFO" "Starting CHR installation..."
     
+    # Show initial warning FIRST
+    echo "=================================================================="
+    echo "🚨 🚨 🚨  CRITICAL WARNING 🚨 🚨 🚨"
+    echo "=================================================================="
+    echo "THIS OPERATION WILL:"
+    echo "✅ INSTALL MikroTik CHR"
+    echo "❌ PERMANENTLY DELETE Ubuntu OS"
+    echo "❌ ERASE ALL your files and data"
+    echo "❌ REMOVE all installed applications"
+    echo "❌ REPLACE everything with RouterOS"
+    echo "=================================================================="
+    
+    read -p "Type 'DELETE-UBUNTU' to continue: " confirmation
+    if [[ "$confirmation" != "DELETE-UBUNTU" ]]; then
+        log "INFO" "Installation cancelled by user"
+        exit 0
+    fi
+    
     check_root
+    verify_chr_requirements
     backup_system
-    validate_disk_space
     
     local version
     echo "Available CHR versions:"
+    
+    # Get versions
     local versions=($(get_available_chr_versions))
-    select version in "${versions[@]}"; do
-        if [[ -n "$version" ]]; then
+    
+    # If versions array is empty, use fallback
+    if [[ ${#versions[@]} -eq 0 ]]; then
+        log "WARN" "No versions found, using fallback list"
+        versions=("7.20.4" "7.19.3" "7.18.2" "7.17.3" "7.16.3")
+    fi
+    
+    # Display versions with numbers
+    for i in "${!versions[@]}"; do
+        echo "$((i+1))) ${versions[i]}"
+    done
+    
+    # Let user select version
+    local selected_num
+    while true; do
+        read -p "Select version [1-${#versions[@]}]: " selected_num
+        if [[ "$selected_num" =~ ^[0-9]+$ ]] && 
+           [ "$selected_num" -ge 1 ] && 
+           [ "$selected_num" -le "${#versions[@]}" ]; then
+            version="${versions[$((selected_num-1))]}"
             break
+        else
+            echo "Invalid selection. Please choose a number between 1 and ${#versions[@]}"
         fi
     done
     
-    download_chr_image "$version"
+    log "INFO" "Selected CHR version: $version"
     
-    # Detect root partition
-    local root_partition
-    root_partition=$(findmnt -n -o SOURCE / | sed 's/[0-9]*$//')
+    # SECOND warning with the actual version
+    echo "=================================================================="
+    echo "🚨 🚨 🚨  FINAL WARNING - VERSION CONFIRMATION 🚨 🚨 🚨"
+    echo "=================================================================="
+    echo "THIS OPERATION WILL:"
+    echo "✅ INSTALL MikroTik CHR $version"
+    echo "❌ PERMANENTLY DELETE Ubuntu OS"
+    echo "❌ ERASE ALL your files and data"
+    echo "❌ REMOVE all installed applications"
+    echo "❌ REPLACE everything with RouterOS"
+    echo "=================================================================="
     
-    if [[ -z "$root_partition" ]]; then
-        error_exit "Could not detect root partition"
+    read -p "Type 'CONFIRM-$version' to continue: " version_confirmation
+    if [[ "$version_confirmation" != "CONFIRM-$version" ]]; then
+        log "INFO" "Installation cancelled by user at version confirmation"
+        exit 0
     fi
     
-    log "WARN" "This will overwrite $root_partition with CHR image!"
-    read -p "Are you sure you want to continue? (yes/no): " confirmation
+    download_chr_image "$version"
     
-    if [[ "$confirmation" != "yes" ]]; then
-        log "INFO" "Installation cancelled by user"
+    # Detect root disk
+    local root_disk
+    root_disk=$(lsblk -n -o PKNAME $(findmnt -n -o SOURCE /) 2>/dev/null | head -1)
+    
+    if [[ -z "$root_disk" ]]; then
+        # Fallback method
+        root_disk=$(findmnt -n -o SOURCE / | sed 's/[0-9]*$//' | sed 's/\/dev\///')
+    fi
+    
+    if [[ -z "$root_disk" ]]; then
+        error_exit "Could not detect root disk"
+    fi
+    
+    local full_disk_path="/dev/${root_disk}"
+    local arch=$(detect_architecture)
+    local chr_image=$(get_chr_image_path "$version" "$arch")
+    
+    # Final confirmation
+    echo "=================================================================="
+    echo "FINAL CONFIRMATION - THIS IS YOUR LAST CHANCE TO CANCEL"
+    echo "=================================================================="
+    echo "Ubuntu will be REPLACED with:"
+    echo "MikroTik CHR Version: $version"
+    echo "Target Disk: $full_disk_path"
+    echo "Image: $chr_image"
+    echo "=================================================================="
+    
+    read -p "Type 'ERASE-UBUNTU-NOW' to proceed: " final_confirmation
+    if [[ "$final_confirmation" != "ERASE-UBUNTU-NOW" ]]; then
+        log "INFO" "Installation cancelled by user at final confirmation"
         exit 0
     fi
     
@@ -346,69 +511,34 @@ install_chr_image() {
     echo 1 > /proc/sys/kernel/sysrq
     sync
     
-    # Write CHR image to disk
-    log "INFO" "Writing CHR image to disk (this may take several minutes)..."
-    local chr_image="chr.img/chr-${version}.img"
+    # Unmount all partitions on the target disk
+    log "INFO" "Unmounting partitions on $full_disk_path..."
+    for partition in ${full_disk_path}*; do
+        if mountpoint -q "$partition" 2>/dev/null; then
+            umount -f "$partition"
+        fi
+    done
     
-    if ! dd if="$chr_image" bs=1M of="$root_partition" status=progress; then
+    # Write CHR image to disk (THIS DELETES UBUNTU)
+    log "INFO" "Writing CHR image to disk - REPLACING UBUNTU..."
+    log "INFO" "Source: $chr_image"
+    log "INFO" "Target: $full_disk_path"
+    
+    if ! dd if="$chr_image" bs=1M of="$full_disk_path" status=progress; then
         error_exit "Failed to write CHR image to disk"
     fi
     
     # Final sync and reboot
     log "INFO" "Finalizing installation..."
     sync
-    echo "Installation complete. System will reboot in 10 seconds..."
+    echo "Ubuntu has been REPLACED with MikroTik CHR $version"
+    echo "System will reboot in 10 seconds into RouterOS..."
     sleep 10
     
-    # Trigger reboot
+    # Trigger reboot into RouterOS
     echo b > /proc/sysrq-trigger
 }
 
-# Docker management functions
-# Enhanced Docker installation detection
-install_docker() {
-    log "INFO" "Checking Docker installation..."
-    
-    # First, check if Docker is already installed but just not running
-    if command -v docker &> /dev/null; then
-        log "INFO" "Docker command is available, but service may not be running"
-        
-        # Try to start the existing Docker installation
-        if ensure_docker_running; then
-            log "INFO" "Docker is now running"
-            return 0
-        else
-            log "WARN" "Existing Docker installation found but couldn't start it"
-        fi
-    fi
-    
-    # If we get here, Docker needs to be installed
-    log "INFO" "Installing Docker..."
-    
-    # Set DNS for reliable download
-    echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf > /dev/null
-    echo "nameserver 1.1.1.1" | sudo tee -a /etc/resolv.conf > /dev/null
-    
-    # Detect which installation method to use based on distribution
-    case "$DISTRO_ID" in
-        "ubuntu"|"debian")
-            install_docker_apt
-            ;;
-        "centos"|"rhel"|"fedora")
-            install_docker_yum
-            ;;
-        *)
-            install_docker_script
-            ;;
-    esac
-    
-    # Verify installation
-    if command -v docker &> /dev/null && ensure_docker_running; then
-        log "INFO" "Docker installed and running successfully"
-    else
-        error_exit "Docker installation failed"
-    fi
-}
 
 # Docker installation via apt (Ubuntu/Debian)
 install_docker_apt() {
