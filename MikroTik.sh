@@ -1,4 +1,4 @@
-#!/bin/bash
+-+#!/bin/bash
 
 # Script: Advanced MikroTik Deployment Manager
 # Author: Peyman - Github.com/Ptechgithub
@@ -400,21 +400,17 @@ install_chr_image() {
     
     # Show initial warning FIRST
     echo "=================================================================="
-    echo "🚨 🚨 🚨  CRITICAL WARNING 🚨 🚨 🚨"
+    echo "CRITICAL WARNING "
     echo "=================================================================="
     echo "THIS OPERATION WILL:"
-    echo "✅ INSTALL MikroTik CHR"
-    echo "❌ PERMANENTLY DELETE Ubuntu OS"
-    echo "❌ ERASE ALL your files and data"
-    echo "❌ REMOVE all installed applications"
-    echo "❌ REPLACE everything with RouterOS"
+    echo "INSTALL MikroTik CHR"
+    echo "PERMANENTLY DELETE Ubuntu OS"
+    echo "ERASE ALL your files and data"
+    echo "REMOVE all installed applications"
+    echo "REPLACE everything with RouterOS"
     echo "=================================================================="
     
-    read -p "Type 'DELETE-UBUNTU' to continue: " confirmation
-    if [[ "$confirmation" != "DELETE-UBUNTU" ]]; then
-        log "INFO" "Installation cancelled by user"
-        exit 0
-    fi
+    read -p "Enter to continue " 
     
     check_root
     verify_chr_requirements
@@ -453,23 +449,6 @@ install_chr_image() {
     
     log "INFO" "Selected CHR version: $version"
     
-    # SECOND warning with the actual version
-    echo "=================================================================="
-    echo "🚨 🚨 🚨  FINAL WARNING - VERSION CONFIRMATION 🚨 🚨 🚨"
-    echo "=================================================================="
-    echo "THIS OPERATION WILL:"
-    echo "✅ INSTALL MikroTik CHR $version"
-    echo "❌ PERMANENTLY DELETE Ubuntu OS"
-    echo "❌ ERASE ALL your files and data"
-    echo "❌ REMOVE all installed applications"
-    echo "❌ REPLACE everything with RouterOS"
-    echo "=================================================================="
-    
-    read -p "Type 'CONFIRM-$version' to continue: " version_confirmation
-    if [[ "$version_confirmation" != "CONFIRM-$version" ]]; then
-        log "INFO" "Installation cancelled by user at version confirmation"
-        exit 0
-    fi
     
     download_chr_image "$version"
     
@@ -500,8 +479,8 @@ install_chr_image() {
     echo "Image: $chr_image"
     echo "=================================================================="
     
-    read -p "Type 'ERASE-UBUNTU-NOW' to proceed: " final_confirmation
-    if [[ "$final_confirmation" != "ERASE-UBUNTU-NOW" ]]; then
+    read -p "Type 'ERASE' to proceed: " final_confirmation
+    if [[ "$final_confirmation" != "ERASE" ]]; then
         log "INFO" "Installation cancelled by user at final confirmation"
         exit 0
     fi
