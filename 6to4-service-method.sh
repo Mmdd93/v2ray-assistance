@@ -169,7 +169,7 @@ fi
     
     
     # Ask for the route network
-    echo -e "\n${greEN}Enter generated local ipv4 from the remote server for routing (e.g., $ipv4_address):${RESET}"
+    echo -e "\n${greEN}Enter generated local ipv6 from the remote server for routing (e.g., $ipv6_address):${RESET}"
     read -p " > " route_network
 
     if [[ -z "$route_network" ]]; then
