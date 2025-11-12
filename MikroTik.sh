@@ -967,46 +967,32 @@ cleanup_system() {
                 # Clean Docker system
                 docker system prune -af 2>/dev/null || true
                 
-                # Force containerd cleanup - REMOVE SNAPSHOTS
-                echo "Cleaning containerd snapshot data..."
-                
-                # Method 1: Stop containerd and remove MikroTik files directly
+                # Force containerd cleanup - EMPTY ENTIRE CONTAINERD DIRECTORY
+                echo "Cleaning containerd data..."
                 if systemctl is-active --quiet containerd; then
                     echo "Stopping containerd..."
                     systemctl stop containerd
                     
-                    # Remove specific MikroTik snapshot directories
-                    find /var/lib/containerd -name "*mikrotik*" -type d -exec rm -rf {} + 2>/dev/null || true
-                    find /var/lib/containerd -name "*routeros*" -type d -exec rm -rf {} + 2>/dev/null || true
-                    find /var/lib/containerd -name "*mhm.qemu2*" -type f -exec rm -f {} + 2>/dev/null || true
-                    
-# Empty the entire containerd directory
-    if [[ -d "/var/lib/containerd" ]]; then
-        echo "Emptying /var/lib/containerd..."
-        # Remove all contents but keep the directory structure
-        find /var/lib/containerd -mindepth 1 -delete 2>/dev/null || true
-        
-        # Alternative method using rm -rf
-        # rm -rf /var/lib/containerd/* /var/lib/containerd/.* 2>/dev/null || true
-    fi
-    
-    echo "Starting containerd..."
-    systemctl start containerd
-    
-    # Wait for containerd to initialize
-    sleep 5
-fi
-
-# Also clean any temporary containerd directories
-if [[ -d "/var/lib/containerd" ]]; then
-    # Ensure the directory exists and has proper structure
-    mkdir -p /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots
-    mkdir -p /var/lib/containerd/io.containerd.content.v1.content/blobs/sha256
-    chown -R root:root /var/lib/containerd 2>/dev/null || true
-fi
+                    # Empty the entire containerd directory
+                    if [[ -d "/var/lib/containerd" ]]; then
+                        echo "Emptying /var/lib/containerd..."
+                        # Remove all contents but keep the directory structure
+                        find /var/lib/containerd -mindepth 1 -delete 2>/dev/null || true
+                    fi
                     
                     echo "Starting containerd..."
                     systemctl start containerd
+                    
+                    # Wait for containerd to initialize
+                    sleep 5
+                fi
+                
+                # Also clean any temporary containerd directories
+                if [[ -d "/var/lib/containerd" ]]; then
+                    # Ensure the directory exists and has proper structure
+                    mkdir -p /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots
+                    mkdir -p /var/lib/containerd/io.containerd.content.v1.content/blobs/sha256
+                    chown -R root:root /var/lib/containerd 2>/dev/null || true
                 fi
                 
                 # Method 2: Use ctr command if available
@@ -1014,10 +1000,6 @@ fi
                     echo "Using ctr to clean images..."
                     ctr -n moby images rm $(ctr -n moby images ls -q) 2>/dev/null || true
                 fi
-                
-                # Method 3: Nuclear option for containerd
-                echo "Performing final containerd cleanup..."
-                containerd-stress --cleanup 2>/dev/null || true
                 
                 log "INFO" "ALL MikroTik files removed"
                 echo -e "${GREEN}Cleanup complete! Freed up ~5GB+ of space.${NC}"
