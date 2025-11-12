@@ -485,11 +485,32 @@ services:
     restart: unless-stopped
 $network_section
     cap_add:
-      - NET_ADMIN
-      - SYS_MODULE
-      - SYS_RAWIO
+      - NET_ADMIN     # Network config
+      - SYS_MODULE    # Load kernel modules
+      - SYS_RAWIO     # Raw I/O access
+      - SYS_TIME      # System clock changes
+      - SYS_NICE      # Change process priority
+      - IPC_LOCK      # Lock memory in RAM
     devices:
-      - "/dev/net/tun"
+      - "/dev/net/tun"  # TUN/TAP tunnels
+      - "/dev/kvm"      # Hardware virtualization
+      - "/dev/ppp"      # PPP dial-up connections
+    sysctls:
+      - net.ipv4.ip_forward=1          # IP forwarding
+      - net.ipv6.conf.all.disable_ipv6=0  # IPv6
+      - net.ipv4.conf.all.rp_filter=0  # Asymmetric routing
+      - net.core.somaxconn=65535       # Max connection queue
+      - net.core.netdev_max_backlog=30000 # Network buffer size
+      - net.ipv4.tcp_max_syn_backlog=30000 # TCP connection queue
+    security_opt:
+      - seccomp=unconfined   # Bypass system call filtering
+      - apparmor=unconfined  # Bypass AppArmor restrictions
+    privileged: true         # Full host access (DANGEROUS)
+    ulimits:
+      nproc: 65535           # Max processes
+      nofile:                # Max open files
+        soft: 65535
+        hard: 65535
 $sysctls_section
     ports:
 $(echo -e "$ports_section")
@@ -799,67 +820,80 @@ manage_container() {
 manage_compose() {
     local action
     while true; do
-    clear
-    echo -e "${GREEN}Docker Compose Management${NC}"
-    echo "=========================================="
-    echo "1) Start Services"
-    echo "2) Stop Services"
-    echo "3) Restart Services"
-    echo "4) View Logs"
-    echo "5) Down (Stop & Remove)"
-    echo "6) Recreate Services"
-    echo "0) Back to Main Menu"
-    echo ""
-    
-    read -p "Select action [0-6]: " action
-    
-    case $action in
-        1)
-            if docker-compose start; then
-                log "INFO" "Services started successfully"
-            else
-                log "ERROR" "Failed to start services"
-            fi
-            ;;
-        2)
-            if docker-compose stop; then
-                log "INFO" "Services stopped successfully"
-            else
-                log "ERROR" "Failed to stop services"
-            fi
-            ;;
-        3)
-            if docker-compose restart; then
-                log "INFO" "Services restarted successfully"
-            else
-                log "ERROR" "Failed to restart services"
-            fi
-            ;;
-        4)
-            echo -e "${YELLOW}Showing compose logs (Ctrl+C to exit):${NC}"
-            docker-compose logs -f
-            ;;
-        5)
-            read -p "This will stop and remove all containers. Continue? (y/n): " confirm
-            if [[ "$confirm" == "y" ]]; then
-                if docker-compose down; then
-                    log "INFO" "Services stopped and removed"
+        clear
+        echo -e "${GREEN}Docker Compose Management${NC}"
+        echo "=========================================="
+        echo "1) Start Services"
+        echo "2) Stop Services"
+        echo "3) Restart Services"
+        echo "4) View Logs"
+        echo "5) Down (Stop & Remove)"
+        echo "6) Recreate Services"
+        echo "0) Back to Main Menu"
+        echo ""
+        
+        read -p "Select action [0-6]: " action
+        
+        # Determine which compose command to use
+        local compose_cmd
+        if command -v docker-compose &> /dev/null; then
+            compose_cmd="docker-compose"
+        elif docker compose version &> /dev/null; then
+            compose_cmd="docker compose"
+        else
+            echo -e "${RED}Docker Compose not found!${NC}"
+            return 1
+        fi
+        
+        case $action in
+            1)
+                if $compose_cmd start; then
+                    log "INFO" "Services started successfully"
+                else
+                    log "ERROR" "Failed to start services"
+                fi
+                ;;
+            2)
+                if $compose_cmd stop; then
+                    log "INFO" "Services stopped successfully"
                 else
                     log "ERROR" "Failed to stop services"
                 fi
-            fi
-            ;;
-        6)
-            if docker-compose up -d --force-recreate; then
-                log "INFO" "Services recreated successfully"
-            else
-                log "ERROR" "Failed to recreate services"
-            fi
-            ;;
-        0) return ;;
-        *) echo "Invalid option" ;;
-    esac
-
+                ;;
+            3)
+                if $compose_cmd restart; then
+                    log "INFO" "Services restarted successfully"
+                else
+                    log "ERROR" "Failed to restart services"
+                fi
+                ;;
+            4)
+                echo -e "${YELLOW}Showing compose logs (Ctrl+C to exit):${NC}"
+                $compose_cmd logs -f
+                ;;
+            5)
+                read -p "This will stop and remove all containers. Continue? (y/n): " confirm
+                if [[ "$confirm" == "y" ]]; then
+                    if $compose_cmd down; then
+                        log "INFO" "Services stopped and removed"
+                    else
+                        log "ERROR" "Failed to stop services"
+                    fi
+                fi
+                ;;
+            6)
+                if $compose_cmd up -d --force-recreate; then
+                    log "INFO" "Services recreated successfully"
+                else
+                    log "ERROR" "Failed to recreate services"
+                fi
+                ;;
+            0) return ;;
+            *) echo "Invalid option" ;;
+        esac
+        
+        echo ""
+        read -p "Press Enter to continue..."
     done
 }
 
