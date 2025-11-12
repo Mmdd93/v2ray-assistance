@@ -367,7 +367,7 @@ setup_docker_compose() {
       - net.ipv4.conf.all.rp_filter=0  # Asymmetric routing
       - net.core.somaxconn=65535       # Max connection queue
       - net.core.netdev_max_backlog=30000 # Network buffer size
-      - net.ipv4.tcp_max_syn_backlog=30000 # TCP connection queue
+      - net.ipv4.tcp_max_syn_backlog=30000 # TCP connection queue"
     
     # Define port mappings with alternatives
     declare -A port_mappings
