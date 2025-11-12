@@ -724,6 +724,7 @@ system_health_check() {
 manage_container() {
     local action
     while true; do
+    clear
         local container_name="mikrotik_router"  # MOVE INSIDE
     
     echo -e "${GREEN}Container Management${NC}"
@@ -791,14 +792,14 @@ manage_container() {
         0) return ;;
         *) echo "Invalid option" ;;
     esac
-        echo ""
-        read -p "Press Enter to continue..."
+
     done
 }
 
 manage_compose() {
     local action
     while true; do
+    clear
     echo -e "${GREEN}Docker Compose Management${NC}"
     echo "=========================================="
     echo "1) Start Services"
@@ -858,14 +859,14 @@ manage_compose() {
         0) return ;;
         *) echo "Invalid option" ;;
     esac
-        echo ""
-        read -p "Press Enter to continue..."
+
     done
 }
 
 cleanup_system() {
     local option
     while true; do
+    clear
     echo -e "${GREEN}System Cleanup${NC}"
     echo "=========================================="
     echo "1) Remove All Stopped Containers"
@@ -1043,10 +1044,163 @@ cleanup_system() {
         0) return ;;
         *) echo "Invalid option" ;;
     esac
-        echo ""
-        read -p "Press Enter to continue..."
+
     done
 }
+# ==============================================================================
+# DEPENDENCY MANAGEMENT
+# ==============================================================================
+
+install_essentials() {
+    log "INFO" "Installing essential dependencies..."
+    
+    local essentials=(
+        "wget"
+        "curl"
+        "p7zip-full"
+        "p7zip-rar"
+        "tar"
+        "gzip"
+        "unzip"
+        "zip"
+        "net-tools"
+        "iproute2"
+        "dnsutils"
+        "jq"
+        "bc"
+        "file"
+        "software-properties-common"
+        "apt-transport-https"
+        "ca-certificates"
+        "gnupg"
+        "lsb-release"
+    )
+    
+    # Check which packages are missing using better method
+    local missing_packages=()
+    for package in "${essentials[@]}"; do
+        if ! dpkg -s "$package" &> /dev/null; then
+            missing_packages+=("$package")
+        fi
+    done
+    
+    if [[ ${#missing_packages[@]} -eq 0 ]]; then
+        echo -e "${GREEN}All essential packages are already installed.${NC}"
+        return 0
+    fi
+    
+    echo -e "${YELLOW}Missing packages: ${missing_packages[*]}${NC}"
+    echo "Installing missing packages only..."
+    
+    # Update package list
+    sudo apt-get update -qq
+    
+    # Install only missing packages
+    for package in "${missing_packages[@]}"; do
+        echo -e "${YELLOW}Installing: $package${NC}"
+        if sudo apt-get install -y -qq "$package"; then
+            echo -e "${GREEN}✓ $package installed${NC}"
+        else
+            echo -e "${RED}✗ Failed to install: $package${NC}"
+        fi
+    done
+    
+    # Install Docker Compose if not present
+    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+        echo -e "${YELLOW}Installing Docker Compose...${NC}"
+        install_docker_compose
+    fi
+    
+    log "INFO" "Essential dependencies installation completed"
+}
+
+check_dependencies() {
+    log "INFO" "Checking dependencies..."
+    
+    # Use dpkg -s for accurate package checking
+    local basic_deps=("wget" "curl" "p7zip-full" "tar" "gzip" "unzip")
+    local missing_deps=()
+    
+    for dep in "${basic_deps[@]}"; do
+        if ! dpkg -s "$dep" &> /dev/null; then
+            missing_deps+=("$dep")
+        fi
+    done
+    
+    if [[ ${#missing_deps[@]} -gt 0 ]]; then
+        log "INFO" "Missing dependencies detected: ${missing_deps[*]}"
+        read -p "Install missing dependencies automatically? [Y/n]: " install_choice
+        install_choice=${install_choice:-Y}
+        
+        if [[ "$install_choice" =~ ^[Yy]$ ]]; then
+            install_essentials
+        else
+            log "WARN" "Some dependencies are missing: ${missing_deps[*]}"
+        fi
+    else
+        log "INFO" "All basic dependencies are installed"
+    fi
+}
+# ==============================================================================
+# STATUS FUNCTIONS
+# ==============================================================================
+
+show_system_status() {
+    echo -e "${BLUE}System Status:${NC}"
+    echo "=========================================="
+    
+    # Docker status
+    if command -v docker &> /dev/null && docker info &> /dev/null; then
+        echo -e "Docker: ${GREEN}✓ Running${NC}"
+    else
+        echo -e "Docker: ${RED}✗ Not running${NC}"
+    fi
+    
+    # MikroTik container status
+    if docker ps -a --format "{{.Names}}" | grep -q "mikrotik_router"; then
+        if docker ps --format "{{.Names}}" | grep -q "mikrotik_router"; then
+            echo -e "MikroTik Container: ${GREEN}✓ Running${NC}"
+        else
+            echo -e "MikroTik Container: ${YELLOW}⏸ Stopped${NC}"
+        fi
+    else
+        echo -e "MikroTik Container: ${RED}✗ Not found${NC}"
+    fi
+    
+    # Docker Compose status
+    if command -v docker-compose &> /dev/null || docker compose version &> /dev/null; then
+        echo -e "Docker Compose: ${GREEN}✓ Installed${NC}"
+    else
+        echo -e "Docker Compose: ${RED}✗ Not installed${NC}"
+    fi
+    
+    # Essential dependencies status
+    local missing_deps=()
+    local basic_deps=("wget" "curl" "p7zip-full" "tar" "gzip" "unzip")
+    for dep in "${basic_deps[@]}"; do
+        if ! command -v "$dep" &> /dev/null && ! dpkg -s "$dep" &> /dev/null; then
+            missing_deps+=("$dep")
+        fi
+    done
+    
+    if [[ ${#missing_deps[@]} -eq 0 ]]; then
+        echo -e "Dependencies: ${GREEN}✓ All installed${NC}"
+    else
+        echo -e "Dependencies: ${RED}✗ Missing: ${missing_deps[*]}${NC}"
+    fi
+    
+    # Disk space status
+    local disk_usage=$(df / --output=pcent | tail -1 | tr -d ' %')
+    if [ "$disk_usage" -lt 80 ]; then
+        echo -e "Disk Space: ${GREEN}✓ ${disk_usage}% used${NC}"
+    else
+        echo -e "Disk Space: ${RED}✗ ${disk_usage}% used${NC}"
+    fi
+    
+    echo "=========================================="
+    echo ""
+}
+
 # ==============================================================================
 # MAIN MENU
 # ==============================================================================
@@ -1060,6 +1214,11 @@ show_main_menu() {
     echo "╚══════════════════════════════════════╝"
     echo -e "${NC}"
     
+    # Show system status
+    show_system_status
+    
+    # Menu Options
+    echo -e "${GREEN}Menu Options:${NC}"
     echo "1) Install MikroTik CHR (Bare Metal)"
     echo "2) Install MikroTik via Docker"
     echo "3) Deploy with Docker Compose"
@@ -1069,6 +1228,7 @@ show_main_menu() {
     echo "7) Manage Container"
     echo "8) Manage Docker Compose"
     echo "9) System Cleanup"
+    echo "10) Install Essential Dependencies"
     echo "0) Exit"
     echo ""
 }
@@ -1076,11 +1236,9 @@ show_main_menu() {
 main_menu() {
     init_directories
     detect_system
-    check_dependencies
-    
     while true; do
         show_main_menu
-        read -p "Select an option [0-9]: " choice
+        read -p "Select an option [0-10]: " choice
         
         case $choice in
             1) install_chr_image ;;
@@ -1092,6 +1250,7 @@ main_menu() {
             7) manage_container ;;
             8) manage_compose ;;
             9) cleanup_system ;;
+            10) install_essentials ;;
             0) exit 0 ;;
             *) echo "Invalid option" ;;
         esac
@@ -1100,6 +1259,8 @@ main_menu() {
         read -p "Press Enter to continue..."
     done
 }
+
+
 
 # ==============================================================================
 # START SCRIPT
