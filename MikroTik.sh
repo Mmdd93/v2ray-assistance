@@ -207,7 +207,7 @@ install_chr_image() {
 # ==============================================================================
 
 install_docker() {
-    log "INFO" "Installing Docker..."
+
     
     if command -v docker &> /dev/null; then
         log "INFO" "Docker is already installed"
@@ -223,7 +223,7 @@ install_docker() {
 }
 
 download_docker_image() {
-    log "INFO" "Downloading MikroTik Docker image..."
+
     
     local url="https://github.com/Ptechgithub/MIKROTIK/releases/download/L6/Docker-image-Mikrotik-7.7-L6.7z"
     local filename="Docker-image-Mikrotik-7.7-L6.7z"
@@ -330,7 +330,7 @@ show_container_access_info() {
 }
 
 install_mikrotik_docker() {
-    log "INFO" "Starting MikroTik Docker installation..."
+
     
     install_docker
     download_docker_image
@@ -354,7 +354,7 @@ check_port_availability() {
 }
 
 setup_docker_compose() {
-    log "INFO" "Setting up Docker Compose..."
+
     
     # ONLY BRIDGE MODE - NO HOST MODE OPTION
     local network_section="    networks:
@@ -593,7 +593,7 @@ deploy_with_compose() {
 
 # Also add this function if missing:
 install_docker_compose() {
-    log "INFO" "Installing Docker Compose..."
+
     
     # Install Docker Compose Plugin (preferred method)
     sudo apt-get update
@@ -601,7 +601,7 @@ install_docker_compose() {
     
     # Alternative: Install standalone docker-compose
     if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
-        log "INFO" "Installing standalone Docker Compose..."
+
         sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
         sudo chmod +x /usr/local/bin/docker-compose
     fi
@@ -702,7 +702,9 @@ system_health_check() {
 }
 
 manage_container() {
-    local container_name="mikrotik_router"
+    local action
+    while true; do
+        local container_name="mikrotik_router"  # MOVE INSIDE
     
     echo -e "${GREEN}Container Management${NC}"
     echo "=========================================="
@@ -769,9 +771,14 @@ manage_container() {
         0) return ;;
         *) echo "Invalid option" ;;
     esac
+        echo ""
+        read -p "Press Enter to continue..."
+    done
 }
 
 manage_compose() {
+    local action
+    while true; do
     echo -e "${GREEN}Docker Compose Management${NC}"
     echo "=========================================="
     echo "1) Start Services"
@@ -831,9 +838,14 @@ manage_compose() {
         0) return ;;
         *) echo "Invalid option" ;;
     esac
+        echo ""
+        read -p "Press Enter to continue..."
+    done
 }
 
 cleanup_system() {
+    local option
+    while true; do
     echo -e "${GREEN}System Cleanup${NC}"
     echo "=========================================="
     echo "1) Remove All Stopped Containers"
@@ -1011,6 +1023,9 @@ cleanup_system() {
         0) return ;;
         *) echo "Invalid option" ;;
     esac
+        echo ""
+        read -p "Press Enter to continue..."
+    done
 }
 # ==============================================================================
 # MAIN MENU
