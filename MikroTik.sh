@@ -362,9 +362,12 @@ setup_docker_compose() {
       - mikrotik_net"
     
     local sysctls_section="    sysctls:
-      - net.ipv4.ip_forward=1
-      - net.ipv6.conf.all.disable_ipv6=0
-      - net.ipv4.conf.all.rp_filter=0"
+      - net.ipv4.ip_forward=1          # IP forwarding
+      - net.ipv6.conf.all.disable_ipv6=0  # IPv6
+      - net.ipv4.conf.all.rp_filter=0  # Asymmetric routing
+      - net.core.somaxconn=65535       # Max connection queue
+      - net.core.netdev_max_backlog=30000 # Network buffer size
+      - net.ipv4.tcp_max_syn_backlog=30000 # TCP connection queue
     
     # Define port mappings with alternatives
     declare -A port_mappings
@@ -495,13 +498,6 @@ $network_section
       - "/dev/net/tun"  # TUN/TAP tunnels
       - "/dev/kvm"      # Hardware virtualization
       - "/dev/ppp"      # PPP dial-up connections
-    sysctls:
-      - net.ipv4.ip_forward=1          # IP forwarding
-      - net.ipv6.conf.all.disable_ipv6=0  # IPv6
-      - net.ipv4.conf.all.rp_filter=0  # Asymmetric routing
-      - net.core.somaxconn=65535       # Max connection queue
-      - net.core.netdev_max_backlog=30000 # Network buffer size
-      - net.ipv4.tcp_max_syn_backlog=30000 # TCP connection queue
     security_opt:
       - seccomp=unconfined   # Bypass system call filtering
       - apparmor=unconfined  # Bypass AppArmor restrictions
