@@ -1,84 +1,45 @@
--+#!/bin/bash
-
-# Script: Advanced MikroTik Deployment Manager
-# Author: Peyman - Github.com/Ptechgithub
-# Version: 3.1.0
-# Description: Enterprise-grade MikroTik deployment with multiple installation methods
+#!/bin/bash
 
 set -euo pipefail
 
-# Color codes for output
+# ==============================================================================
+# CONFIGURATION
+# ==============================================================================
+
+# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Logging variables
+# Paths
 LOG_FILE="/var/log/mikrotik_installer.log"
-DEBUG_MODE=false
-VERBOSE_MODE=false
-
-# Configuration variables
 CONFIG_FILE="/etc/mikrotik_installer.conf"
 BACKUP_DIR="/var/backups/mikrotik"
 TEMP_DIR="/tmp/mikrotik_installer"
 
-# Default settings
+# Defaults
 DEFAULT_CHR_VERSION="7.15.2"
-DEFAULT_DOCKER_IMAGE="livekadeh_com_mikrotik7_7"
-DEFAULT_PORTS="80 8291 22 443 53 1723 4500 500 1194 5678 5679 8728 8729"
-RESERVED_PORTS="80 8291"
+DEFAULT_PORTS="80 123 8291 22 443 53 1701 1723 1812 1813 2000 3784 3799 4500 4784 500 1194 5678 5679 8728 8729 60594"
 
-# Load configuration if exists
-load_config() {
-    if [[ -f "$CONFIG_FILE" ]]; then
-        source "$CONFIG_FILE"
-        log "INFO" "Configuration loaded from $CONFIG_FILE"
-    fi
-}
+# ==============================================================================
+# CORE FUNCTIONS
+# ==============================================================================
 
-# Initialize directories
-init_directories() {
-    mkdir -p "$BACKUP_DIR" "$TEMP_DIR"
-    chmod 700 "$BACKUP_DIR"
-}
-
-# Advanced logging function
 log() {
     local level="$1"
     local message="$2"
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     
     echo -e "${timestamp} [${level}] ${message}" | tee -a "$LOG_FILE"
-    
-    case "$level" in
-        "ERROR")
-            echo -e "${RED}${timestamp} [${level}] ${message}${NC}" >&2
-            ;;
-        "WARN")
-            echo -e "${YELLOW}${timestamp} [${level}] ${message}${NC}"
-            ;;
-        "INFO")
-            echo -e "${GREEN}${timestamp} [${level}] ${message}${NC}"
-            ;;
-        "DEBUG")
-            if [[ "$DEBUG_MODE" == true ]]; then
-                echo -e "${BLUE}${timestamp} [${level}] ${message}${NC}"
-            fi
-            ;;
-    esac
 }
 
-# Error handling function
 error_exit() {
     log "ERROR" "$1"
     exit 1
 }
 
-# Check if running as root
 check_root() {
     if [[ $EUID -eq 0 ]]; then
         log "WARN" "Running as root user"
@@ -87,1718 +48,837 @@ check_root() {
     fi
 }
 
-# Detect system information
+init_directories() {
+    mkdir -p "$BACKUP_DIR" "$TEMP_DIR"
+    chmod 700 "$BACKUP_DIR"
+}
+
+# ==============================================================================
+# SYSTEM DETECTION
+# ==============================================================================
+
 detect_system() {
     log "INFO" "Detecting system information..."
     
     if [[ -f /etc/os-release ]]; then
         source /etc/os-release
         DISTRO_ID="${ID}"
-        DISTRO_VERSION="${VERSION_ID}"
-        DISTRO_NAME="${NAME}"
-        
-        log "INFO" "Distribution: $DISTRO_NAME $DISTRO_VERSION"
-        
-        case "$DISTRO_ID" in
-            "ubuntu"|"debian")
-                PM="apt-get"
-                PM_UPDATE="$PM update -qq"
-                PM_INSTALL="$PM install -y -qq"
-                ;;
-            "centos"|"rhel")
-                PM="yum"
-                PM_UPDATE="$PM update -q -y"
-                PM_INSTALL="$PM install -y -q"
-                ;;
-            "fedora")
-                PM="dnf"
-                PM_UPDATE="$PM update -q -y"
-                PM_INSTALL="$PM install -y -q"
-                ;;
-            "arch")
-                PM="pacman"
-                PM_UPDATE="$PM -Syu --noconfirm"
-                PM_INSTALL="$PM -S --noconfirm"
-                ;;
-            *)
-                error_exit "Unsupported distribution: $DISTRO_ID"
-                ;;
-        esac
+        log "INFO" "Distribution: $NAME $VERSION_ID"
     else
         error_exit "Cannot detect distribution"
     fi
     
-    # Detect architecture
     ARCH=$(uname -m)
     log "INFO" "Architecture: $ARCH"
-    
-    # Detect available memory and disk space
-    MEMORY_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-    MEMORY_GB=$((MEMORY_KB / 1024 / 1024))
-    DISK_SPACE=$(df / | awk 'NR==2 {print $4}')
-    
-    log "INFO" "Memory: ${MEMORY_GB}GB, Disk space: ${DISK_SPACE}KB"
 }
 
-# Dependency management
+detect_architecture() {
+    local arch=$(uname -m)
+    case "$arch" in
+        x86_64) echo "x86" ;;
+        aarch64|arm64) echo "arm64" ;;
+        armv7l|armv6l) echo "arm" ;;
+        *) error_exit "Unsupported architecture: $arch" ;;
+    esac
+}
+
+# ==============================================================================
+# DEPENDENCY MANAGEMENT
+# ==============================================================================
+
 check_dependencies() {
     log "INFO" "Checking dependencies..."
     
-    local basic_deps=("wget" "curl" "p7zip-full" "coreutils" "unzip" "tar" "gzip")
-    local advanced_deps=("jq" "bc" "net-tools" "iproute2" "dnsutils")
+    local deps=("wget" "curl" "unzip" "tar" "gzip")
     local missing_deps=()
     
-    # Check for missing dependencies
-    for dep in "${basic_deps[@]}" "${advanced_deps[@]}"; do
+    for dep in "${deps[@]}"; do
         if ! command -v "$dep" &> /dev/null; then
             missing_deps+=("$dep")
-            log "WARN" "Dependency missing: $dep"
-        else
-            log "DEBUG" "Dependency found: $dep"
         fi
     done
     
-    # Only install if there are missing dependencies
     if [[ ${#missing_deps[@]} -gt 0 ]]; then
         log "INFO" "Installing missing dependencies: ${missing_deps[*]}"
-        sudo $PM_UPDATE
-        
-        for dep in "${missing_deps[@]}"; do
-            log "INFO" "Installing $dep..."
-            if ! sudo $PM_INSTALL "$dep"; then
-                log "WARN" "Failed to install $dep, trying alternative package names..."
-                install_dependency_fallback "$dep"
-            fi
-        done
-        
-        log "INFO" "Dependency installation completed"
-    else
-        log "INFO" "All dependencies are already installed"
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq "${missing_deps[@]}"
     fi
 }
 
-install_dependency_fallback() {
-    local dep="$1"
-    case "$dep" in
-        "p7zip-full")
-            sudo $PM_INSTALL "p7zip" || sudo $PM_INSTALL "7zip" || log "WARN" "Could not install 7zip"
-            ;;
-        "net-tools")
-            sudo $PM_INSTALL "net-tools" || log "WARN" "Could not install net-tools"
-            ;;
-        "dnsutils")
-            sudo $PM_INSTALL "bind-utils" || sudo $PM_INSTALL "dnsutils" || log "WARN" "Could not install dnsutils"
-            ;;
-        *)
-            log "WARN" "No fallback for $dep"
-            ;;
-    esac
-}
-
-# Network validation functions
-validate_ip() {
-    local ip="$1"
-    if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-validate_port() {
-    local port="$1"
-    if [[ $port =~ ^[0-9]+$ ]] && [ "$port" -ge 1 ] && [ "$port" -le 65535 ]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-check_port_availability() {
-    local port="$1"
-    if netstat -tuln 2>/dev/null | grep ":${port} " > /dev/null; then
-        return 1
-    else
-        return 0
-    fi
-}
-
-# Download with retry and resume support
-download_with_retry() {
-    local url="$1"
-    local output="$2"
-    local max_retries=3
-    local retry_count=0
-    
-    while [ $retry_count -lt $max_retries ]; do
-        if wget --continue --progress=bar:force --timeout=30 --tries=3 "$url" -O "$output"; then
-            log "INFO" "Download completed: $output"
-            return 0
-        else
-            retry_count=$((retry_count + 1))
-            log "WARN" "Download failed, retry $retry_count/$max_retries..."
-            sleep 5
-        fi
-    done
-    
-    error_exit "Failed to download $url after $max_retries attempts"
-}
-
-# Backup existing configuration
-backup_system() {
-    local backup_name="mikrotik_backup_$(date +%Y%m%d_%H%M%S)"
-    local backup_path="$BACKUP_DIR/$backup_name"
-    
-    log "INFO" "Creating system backup..."
-    mkdir -p "$backup_path"
-    
-    # Backup network configuration
-    if command -v nmcli &> /dev/null; then
-        nmcli connection show > "$backup_path/network_connections.txt" 2>/dev/null || true
-    fi
-    
-    # Backup firewall rules
-    if command -v iptables &> /dev/null; then
-        iptables-save > "$backup_path/iptables_rules.txt" 2>/dev/null || true
-    fi
-    
-    # Backup Docker containers
-    if command -v docker &> /dev/null; then
-        docker ps -a > "$backup_path/docker_containers.txt" 2>/dev/null || true
-    fi
-    
-    log "INFO" "Backup created: $backup_path"
-}
-
-
-
-validate_disk_space() {
-    local required_space=1000000  # 1GB in KB
-    local available_space=$(df / | awk 'NR==2 {print $4}')
-    
-    if [ "$available_space" -lt "$required_space" ]; then
-        error_exit "Insufficient disk space. Required: 1GB, Available: ${available_space}KB"
-    fi
-}
-
-# CHR Installation functions
-detect_architecture() {
-    local arch
-    arch=$(uname -m)
-    case "$arch" in
-        x86_64)
-            echo "x86"
-            ;;
-        aarch64|arm64)
-            echo "arm64"
-            ;;
-        armv7l|armv6l)
-            echo "arm"
-            ;;
-        *)
-            error_exit "Unsupported architecture: $arch"
-            ;;
-    esac
-}
-
-get_available_chr_versions() {
-    log "INFO" "Fetching available CHR versions..." >&2
-    # Simple static list - you can enhance this later
-    echo "7.20.4 7.19.3 7.18.2 7.17.3 7.16.3 7.15.2"
-}
-
-get_chr_download_url() {
-    local version="$1"
-    local arch="$2"
-    
-    case "$arch" in
-        x86)
-            echo "https://download.mikrotik.com/routeros/${version}/chr-${version}.img.zip"
-            ;;
-        arm64)
-            echo "https://download.mikrotik.com/routeros/${version}/chr-${version}-arm64.img.zip"
-            ;;
-        arm)
-            echo "https://download.mikrotik.com/routeros/${version}/chr-${version}-arm.img.zip"
-            ;;
-        *)
-            error_exit "Unsupported architecture for CHR: $arch"
-            ;;
-    esac
-}
+# ==============================================================================
+# CHR INSTALLATION
+# ==============================================================================
 
 verify_chr_requirements() {
     log "INFO" "Verifying system requirements..."
     
-    # Check architecture
-    local arch=$(detect_architecture)
-    log "INFO" "Detected architecture: $arch"
-    
-    # Check disk space (at least 2GB free)
-    local available_space
-    available_space=$(df / | awk 'NR==2 {print $4}')
-    if [[ $available_space -lt 2097152 ]]; then  # 2GB in KB
-        error_exit "Insufficient disk space. Need at least 2GB free."
+    local available_space=$(df / | awk 'NR==2 {print $4}')
+    if [[ $available_space -lt 10097152 ]]; then
+        error_exit "Insufficient disk space. Need at least 10GB free."
     fi
     
-    # Check memory (at least 1GB)
-    local total_mem
-    total_mem=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-    if [[ $total_mem -lt 1000000 ]]; then  # Less than 1GB
+    local total_mem=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+    if [[ $total_mem -lt 1000000 ]]; then
         log "WARN" "Low memory detected. CHR recommends at least 1GB RAM."
         read -p "Continue anyway? (y/n): " continue_low_mem
-        if [[ ! $continue_low_mem =~ ^[Yy]$ ]]; then
-            exit 0
-        fi
+        [[ ! $continue_low_mem =~ ^[Yy]$ ]] && exit 0
     fi
-    
-    log "INFO" "System requirements verified"
 }
 
 download_chr_image() {
-    local version="${1:-$DEFAULT_CHR_VERSION}"
+    local version="$1"
     local arch=$(detect_architecture)
-    local url=$(get_chr_download_url "$version" "$arch")
-    local filename="chr-${version}-${arch}.img.zip"
+    local url="https://download.mikrotik.com/routeros/${version}/chr-${version}.img.zip"
+    local filename="chr-${version}.img.zip"
     
     log "INFO" "Downloading CHR $version for $arch..."
-    log "INFO" "Download URL: $url"
     
-    if download_with_retry "$url" "$filename"; then
-        # Verify download
-        if [[ ! -f "$filename" ]]; then
-            error_exit "Downloaded file not found: $filename"
-        fi
-        
-        # Extract image
-        log "INFO" "Extracting CHR image..."
-        if ! unzip -q "$filename" -d "chr-${version}-${arch}"; then
-            error_exit "Failed to extract CHR image"
-        fi
+    if wget --continue --progress=bar:force "$url" -O "$filename"; then
+        unzip -q "$filename" -d "chr-${version}"
+        log "INFO" "CHR image downloaded and extracted"
     else
         error_exit "Failed to download CHR image"
     fi
 }
 
-get_chr_image_path() {
-    local version="$1"
-    local arch="$2"
-    local extract_dir="chr-${version}-${arch}"
-    
-    # Look for the .img file in the extracted directory
-    local img_file=$(find "$extract_dir" -name "*.img" | head -1)
-    
-    if [[ -z "$img_file" ]]; then
-        error_exit "Could not find CHR image file in $extract_dir"
-    fi
-    
-    echo "$img_file"
-}
-
 install_chr_image() {
-    log "INFO" "Starting CHR installation..."
-    
-    # Show initial warning FIRST
     echo "=================================================================="
-    echo "CRITICAL WARNING "
+    echo "CRITICAL WARNING"
     echo "=================================================================="
-    echo "THIS OPERATION WILL:"
-    echo "INSTALL MikroTik CHR"
-    echo "PERMANENTLY DELETE Ubuntu OS"
-    echo "ERASE ALL your files and data"
-    echo "REMOVE all installed applications"
-    echo "REPLACE everything with RouterOS"
+    echo "THIS OPERATION WILL REPLACE YOUR CURRENT OS WITH MIKROTIK CHR"
+    echo "ALL DATA WILL BE PERMANENTLY DELETED"
     echo "=================================================================="
     
-    read -p "Enter to continue " 
+    read -p "Press Enter to continue or Ctrl+C to cancel"
     
     check_root
     verify_chr_requirements
-    backup_system
-    
+
     local version
     echo "Available CHR versions:"
+    local versions=("7.20.4" "7.19.3" "7.18.2" "7.17.3" "7.16.3" "7.15.2")
     
-    # Get versions
-    local versions=($(get_available_chr_versions))
-    
-    # If versions array is empty, use fallback
-    if [[ ${#versions[@]} -eq 0 ]]; then
-        log "WARN" "No versions found, using fallback list"
-        versions=("7.20.4" "7.19.3" "7.18.2" "7.17.3" "7.16.3")
-    fi
-    
-    # Display versions with numbers
     for i in "${!versions[@]}"; do
         echo "$((i+1))) ${versions[i]}"
     done
     
-    # Let user select version
-    local selected_num
-    while true; do
-        read -p "Select version [1-${#versions[@]}]: " selected_num
-        if [[ "$selected_num" =~ ^[0-9]+$ ]] && 
-           [ "$selected_num" -ge 1 ] && 
-           [ "$selected_num" -le "${#versions[@]}" ]; then
-            version="${versions[$((selected_num-1))]}"
-            break
-        else
-            echo "Invalid selection. Please choose a number between 1 and ${#versions[@]}"
-        fi
-    done
-    
-    log "INFO" "Selected CHR version: $version"
-    
+    read -p "Select version [1-${#versions[@]}]: " selected_num
+    if [[ "$selected_num" =~ ^[0-9]+$ ]] && [ "$selected_num" -ge 1 ] && [ "$selected_num" -le "${#versions[@]}" ]; then
+        version="${versions[$((selected_num-1))]}"
+    else
+        error_exit "Invalid version selection"
+    fi
     
     download_chr_image "$version"
     
-    # Detect root disk
-    local root_disk
-    root_disk=$(lsblk -n -o PKNAME $(findmnt -n -o SOURCE /) 2>/dev/null | head -1)
-    
-    if [[ -z "$root_disk" ]]; then
-        # Fallback method
-        root_disk=$(findmnt -n -o SOURCE / | sed 's/[0-9]*$//' | sed 's/\/dev\///')
-    fi
-    
-    if [[ -z "$root_disk" ]]; then
-        error_exit "Could not detect root disk"
-    fi
+    local root_disk=$(lsblk -n -o PKNAME $(findmnt -n -o SOURCE /) 2>/dev/null | head -1)
+    [[ -z "$root_disk" ]] && error_exit "Could not detect root disk"
     
     local full_disk_path="/dev/${root_disk}"
-    local arch=$(detect_architecture)
-    local chr_image=$(get_chr_image_path "$version" "$arch")
+    local chr_image=$(find "chr-${version}" -name "*.img" | head -1)
     
-    # Final confirmation
     echo "=================================================================="
-    echo "FINAL CONFIRMATION - THIS IS YOUR LAST CHANCE TO CANCEL"
+    echo "FINAL CONFIRMATION"
     echo "=================================================================="
-    echo "Ubuntu will be REPLACED with:"
-    echo "MikroTik CHR Version: $version"
     echo "Target Disk: $full_disk_path"
-    echo "Image: $chr_image"
+    echo "MikroTik Version: $version"
     echo "=================================================================="
     
     read -p "Type 'ERASE' to proceed: " final_confirmation
-    if [[ "$final_confirmation" != "ERASE" ]]; then
-        log "INFO" "Installation cancelled by user at final confirmation"
-        exit 0
-    fi
+    [[ "$final_confirmation" != "ERASE" ]] && exit 0
     
-    # Prepare system for disk operations
-    log "INFO" "Preparing system for installation..."
-    echo 1 > /proc/sys/kernel/sysrq
-    sync
-    
-    # Unmount all partitions on the target disk
-    log "INFO" "Unmounting partitions on $full_disk_path..."
+    log "INFO" "Writing CHR image to disk..."
     for partition in ${full_disk_path}*; do
-        if mountpoint -q "$partition" 2>/dev/null; then
-            umount -f "$partition"
-        fi
+        mountpoint -q "$partition" 2>/dev/null && umount -f "$partition"
     done
     
-    # Write CHR image to disk (THIS DELETES UBUNTU)
-    log "INFO" "Writing CHR image to disk - REPLACING UBUNTU..."
-    log "INFO" "Source: $chr_image"
-    log "INFO" "Target: $full_disk_path"
+    if dd if="$chr_image" bs=1M of="$full_disk_path" status=progress; then
+        log "INFO" "Installation complete. Rebooting..."
+        sync
+        sleep 10
+        echo b > /proc/sysrq-trigger
+    else
+        error_exit "Failed to write CHR image"
+    fi
+}
+
+# ==============================================================================
+# DOCKER INSTALLATION
+# ==============================================================================
+
+install_docker() {
+    log "INFO" "Installing Docker..."
     
-    if ! dd if="$chr_image" bs=1M of="$full_disk_path" status=progress; then
-        error_exit "Failed to write CHR image to disk"
+    if command -v docker &> /dev/null; then
+        log "INFO" "Docker is already installed"
+        return
     fi
     
-    # Final sync and reboot
-    log "INFO" "Finalizing installation..."
-    sync
-    echo "Ubuntu has been REPLACED with MikroTik CHR $version"
-    echo "System will reboot in 10 seconds into RouterOS..."
-    sleep 10
-    
-    # Trigger reboot into RouterOS
-    echo b > /proc/sysrq-trigger
-}
-
-
-# Docker installation via apt (Ubuntu/Debian)
-install_docker_apt() {
-    log "INFO" "Installing Docker using apt..."
-    
-    # Update package index
-    sudo apt-get update
-    
-    # Install prerequisites
-    sudo apt-get install -y \
-        apt-transport-https \
-        ca-certificates \
-        curl \
-        gnupg \
-        lsb-release
-    
-    # Add Docker's official GPG key
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-    
-    # Add Docker repository
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-    
-    # Update package index again
-    sudo apt-get update
-    
-    # Install Docker
-    sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-    
-    # Start and enable Docker service
-    sudo systemctl start docker
-    sudo systemctl enable docker
-    
-    # Add user to docker group
-    sudo usermod -aG docker "$USER"
-    
-    log "INFO" "Please log out and log back in for group changes to take effect, or run: newgrp docker"
-}
-
-# Docker installation via yum/dnf (CentOS/RHEL/Fedora)
-install_docker_yum() {
-    log "INFO" "Installing Docker using yum/dnf..."
-    
-    # Install prerequisites
-    sudo $PM install -y yum-utils
-    
-    # Add Docker repository
-    sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-    
-    # Install Docker
-    sudo $PM install -y docker-ce docker-ce-cli containerd.io
-    
-    # Start and enable Docker service
-    sudo systemctl start docker
-    sudo systemctl enable docker
-    
-    # Add user to docker group
-    sudo usermod -aG docker "$USER"
-}
-
-# Docker installation via official script (fallback)
-install_docker_script() {
-    log "INFO" "Installing Docker using official script..."
-    
-    # Download and run Docker installation script
     curl -fsSL https://get.docker.com -o get-docker.sh
     sudo sh get-docker.sh
-    
-    # Add user to docker group
     sudo usermod -aG docker "$USER"
-    
-    # Cleanup
     rm -f get-docker.sh
-}
-
-setup_docker_networking() {
-    local network_name="mikrotik_net"
     
-    # Create custom network if it doesn't exist
-    if ! docker network ls | grep -q "$network_name"; then
-        log "INFO" "Creating Docker network: $network_name"
-        docker network create --subnet=172.20.0.0/16 "$network_name"
-    fi
-}
-
-get_available_docker_images() {
-    log "INFO" "Checking available Docker images..."
-    
-    # In a real scenario, you might query a registry API
-    # For now, we'll use predefined options
-    echo "livekadeh_com_mikrotik7_7 mikrotik/routeros:latest custom_mikrotik_image"
+    log "INFO" "Docker installed successfully"
 }
 
 download_docker_image() {
-    local image_source="$1"
+    log "INFO" "Downloading MikroTik Docker image..."
     
-    case "$image_source" in
-        "github")
-            local url="https://github.com/Ptechgithub/MIKROTIK/releases/download/L6/Docker-image-Mikrotik-7.7-L6.7z"
-            local filename="Docker-image-Mikrotik-7.7-L6.7z"
-            
-            download_with_retry "$url" "$filename"
-            7z e "$filename" -y
-            docker load --input mikrotik7.7_docker_livekadeh.com
-            ;;
-        "dockerhub")
-            docker pull mikrotik/routeros:latest
-            ;;
-        "custom")
-            read -p "Enter custom image name: " custom_image
-            docker pull "$custom_image"
-            ;;
-    esac
+    local url="https://github.com/Ptechgithub/MIKROTIK/releases/download/L6/Docker-image-Mikrotik-7.7-L6.7z"
+    local filename="Docker-image-Mikrotik-7.7-L6.7z"
+    
+    wget --continue --progress=bar:force "$url" -O "$filename"
+    7z x "$filename" -y
+    docker load --input mikrotik7.7_docker_livekadeh.com
+    
+    log "INFO" "MikroTik Docker image loaded"
 }
 
-setup_port_mappings() {
-    local port_mappings=""
+create_mikrotik_container() {
+    local container_name="mikrotik_router"
     
-    echo "Default ports to be mapped: $DEFAULT_PORTS"
-    read -p "Do you want to customize port mappings? (y/n): " customize_ports
-    
-    if [[ "$customize_ports" == "y" ]]; then
-        echo "Enter additional ports (space-separated, or 'none' for no additional ports):"
-        read -a additional_ports
-        
-        if [[ "${additional_ports[0]}" != "none" ]]; then
-            for port in "${additional_ports[@]}"; do
-                if validate_port "$port"; then
-                    if [[ " $RESERVED_PORTS " != *" $port "* ]]; then
-                        if check_port_availability "$port"; then
-                            port_mappings+=" -p $port:$port"
-                            log "INFO" "Port $port will be mapped"
-                        else
-                            log "WARN" "Port $port is already in use, skipping"
-                        fi
-                    else
-                        log "WARN" "Port $port is reserved for default services, skipping"
-                    fi
-                else
-                    log "WARN" "Invalid port: $port"
-                fi
-            done
-        fi
+    if docker ps -a --format "{{.Names}}" | grep -q "$container_name"; then
+        read -p "Container exists. Remove and recreate? (y/n): " recreate
+        [[ "$recreate" == "y" ]] && docker rm -f "$container_name"
     fi
     
-    # Add default ports
+    local port_mappings=""
     for port in $DEFAULT_PORTS; do
         port_mappings+=" -p $port:$port"
     done
     
-    echo "$port_mappings"
-}
-
-setup_volume_mappings() {
-    local volume_mappings=""
-    read -p "Do you want to setup persistent storage? (y/n): " persistent_storage
-    
-    if [[ "$persistent_storage" == "y" ]]; then
-        local volume_path="/var/lib/mikrotik_data"
-        sudo mkdir -p "$volume_path"
-        sudo chmod 755 "$volume_path"
-        volume_mappings=" -v $volume_path:/routeros/storage"
-        log "INFO" "Persistent storage enabled at $volume_path"
-    fi
-    
-    echo "$volume_mappings"
-}
-
-create_mikrotik_container() {
-    local container_name="livekadeh_com_mikrotik7_7"
-    local image_name="livekadeh_com_mikrotik7_7"
-    
-    # Check if container already exists
-    if docker ps -a --format "{{.Names}}" | grep -q "$container_name"; then
-        log "WARN" "Container $container_name already exists"
-        read -p "Do you want to remove and recreate it? (y/n): " recreate
-        if [[ "$recreate" == "y" ]]; then
-            docker stop "$container_name" || true
-            docker rm "$container_name" || true
-        else
-            log "INFO" "Using existing container"
-            return 0
-        fi
-    fi
-    
-    # Get configuration options
-    local port_mappings=$(setup_port_mappings)
-    local volume_mappings=$(setup_volume_mappings)
-    
-    # Create container with advanced options
-    log "INFO" "Creating MikroTik container..."
-    local docker_cmd="docker run --restart unless-stopped \
+    docker run -d \
+        --name "$container_name" \
+        --restart unless-stopped \
         --cap-add=NET_ADMIN \
         --cap-add=SYS_MODULE \
         --device=/dev/net/tun \
-        --sysctl net.ipv4.ip_forward=1 \
-        --sysctl net.ipv6.conf.all.disable_ipv6=0 \
-        --name $container_name \
         $port_mappings \
-        $volume_mappings \
-        -d $image_name"
-    
-    log "DEBUG" "Docker command: $docker_cmd"
-    
-    if eval "$docker_cmd"; then
-        log "INFO" "MikroTik container created successfully"
+        livekadeh_com_mikrotik7_7
         
-        # Wait for container to start
-        sleep 10
-        
-        # Show container status
-        docker ps -f "name=$container_name"
-        
-        # Offer to attach to container
-        read -p "Do you want to attach to the container console? (y/n): " attach_console
-        if [[ "$attach_console" == "y" ]]; then
-            log "INFO" "Attaching to container console (press Ctrl+P then Ctrl+Q to detach)"
-            docker attach "$container_name"
-        fi
-    else
-        error_exit "Failed to create MikroTik container"
-    fi
+    log "INFO" "MikroTik container created"
 }
 
 install_mikrotik_docker() {
     log "INFO" "Starting MikroTik Docker installation..."
     
     install_docker
-    setup_docker_networking
-    
-    echo "Select Docker image source:"
-    select image_source in "github" "dockerhub" "custom"; do
-        case $image_source in
-            "github"|"dockerhub"|"custom")
-                download_docker_image "$image_source"
-                break
-                ;;
-            *)
-                echo "Invalid selection"
-                ;;
-        esac
-    done
-    
+    download_docker_image
     create_mikrotik_container
+    
+    log "INFO" "MikroTik Docker installation completed"
 }
 
-# Container management functions
-mikrotik_container_status() {
-    local container_name="livekadeh_com_mikrotik7_7"
-    
-    if docker ps -a --format "{{.Names}}" | grep -q "$container_name"; then
-        log "INFO" "MikroTik container status:"
-        docker ps -a -f "name=$container_name" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-        
-        # Show resource usage
-        log "INFO" "Resource usage:"
-        docker stats "$container_name" --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}"
-        
-        return 0
-    else
-        log "WARN" "MikroTik container not found"
+# ==============================================================================
+# DOCKER COMPOSE
+# ==============================================================================
+
+check_port_availability() {
+    local port="$1"
+    if ss -tuln | grep -q ":${port} " || \
+       netstat -tuln 2>/dev/null | grep -q ":${port} "; then
         return 1
+    else
+        return 0
     fi
 }
 
-stop_mikrotik_container() {
-    local container_name="livekadeh_com_mikrotik7_7"
-    
-    if docker ps -a --format "{{.Names}}" | grep -q "$container_name"; then
-        log "INFO" "Stopping MikroTik container..."
-        docker stop "$container_name"
-        log "INFO" "Container stopped"
-    else
-        log "WARN" "Container not found"
-    fi
-}
-
-start_mikrotik_container() {
-    local container_name="livekadeh_com_mikrotik7_7"
-    
-    if docker ps -a --format "{{.Names}}" | grep -q "$container_name"; then
-        log "INFO" "Starting MikroTik container..."
-        docker start "$container_name"
-        log "INFO" "Container started"
-        
-        # Wait for services to come up
-        sleep 5
-        mikrotik_container_status
-    else
-        log "WARN" "Container not found"
-    fi
-}
-
-restart_mikrotik_container() {
-    local container_name="livekadeh_com_mikrotik7_7"
-    
-    if docker ps -a --format "{{.Names}}" | grep -q "$container_name"; then
-        log "INFO" "Restarting MikroTik container..."
-        docker restart "$container_name"
-        log "INFO" "Container restarted"
-        
-        sleep 5
-        mikrotik_container_status
-    else
-        log "WARN" "Container not found"
-    fi
-}
-
-backup_mikrotik_config() {
-    local container_name="livekadeh_com_mikrotik7_7"
-    local backup_name="mikrotik_config_$(date +%Y%m%d_%H%M%S).backup"
-    local backup_path="$BACKUP_DIR/$backup_name"
-    
-    if docker ps --format "{{.Names}}" | grep -q "$container_name"; then
-        log "INFO" "Backing up MikroTik configuration..."
-        
-        # Export configuration (this would need MikroTik CLI access)
-        # For now, we'll backup the container itself
-        docker export "$container_name" | gzip > "${backup_path}.tar.gz"
-        
-        log "INFO" "Configuration backed up to: ${backup_path}.tar.gz"
-    else
-        log "WARN" "Container is not running, cannot backup configuration"
-    fi
-}
-
-uninstall_mikrotik() {
-    log "INFO" "Starting MikroTik uninstallation..."
-    
-    local container_name="livekadeh_com_mikrotik7_7"
-    
-    # Backup before removal
-    read -p "Do you want to backup configuration before uninstall? (y/n): " backup_before_uninstall
-    if [[ "$backup_before_uninstall" == "y" ]]; then
-        backup_mikrotik_config
-    fi
-    
-    # Stop and remove container
-    if docker ps -a --format "{{.Names}}" | grep -q "$container_name"; then
-        log "INFO" "Removing MikroTik container..."
-        docker stop "$container_name" || true
-        docker rm "$container_name" || true
-        log "INFO" "Container removed"
-    else
-        log "WARN" "Container not found"
-    fi
-    
-    # Remove image
-    read -p "Do you want to remove the Docker image as well? (y/n): " remove_image
-    if [[ "$remove_image" == "y" ]]; then
-        if docker images -a | grep -q "livekadeh_com_mikrotik7_7"; then
-            docker rmi "livekadeh_com_mikrotik7_7"
-            log "INFO" "Docker image removed"
-        else
-            log "WARN" "Docker image not found"
-        fi
-    fi
-    
-    # Cleanup volumes
-    read -p "Do you want to remove persistent data? (y/n): " remove_data
-    if [[ "$remove_data" == "y" ]]; then
-        local volume_path="/var/lib/mikrotik_data"
-        if [[ -d "$volume_path" ]]; then
-            sudo rm -rf "$volume_path"
-            log "INFO" "Persistent data removed"
-        fi
-    fi
-    
-    log "INFO" "Uninstallation completed"
-}
-
-# System health check
-system_health_check() {
-    log "INFO" "Performing system health check..."
-    
-    # Check Docker service
-    if systemctl is-active --quiet docker; then
-        log "INFO" "Docker service: ${GREEN}Running${NC}"
-    else
-        log "WARN" "Docker service: ${RED}Not running${NC}"
-    fi
-    
-    # Check disk space
-    local disk_usage=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
-    if [ "$disk_usage" -lt 80 ]; then
-        log "INFO" "Disk usage: ${GREEN}${disk_usage}%${NC}"
-    else
-        log "WARN" "Disk usage: ${RED}${disk_usage}%${NC}"
-    fi
-    
-    # Check memory
-    local mem_usage=$(free | awk 'NR==2{printf "%.2f", $3*100/$2}')
-    if (( $(echo "$mem_usage < 80" | bc -l) )); then
-        log "INFO" "Memory usage: ${GREEN}${mem_usage}%${NC}"
-    else
-        log "WARN" "Memory usage: ${RED}${mem_usage}%${NC}"
-    fi
-    
-    # Check network
-    if ping -c 1 -W 3 8.8.8.8 &> /dev/null; then
-        log "INFO" "Network connectivity: ${GREEN}OK${NC}"
-    else
-        log "WARN" "Network connectivity: ${RED}Failed${NC}"
-    fi
-}
-
-# Docker Compose functions
 setup_docker_compose() {
     log "INFO" "Setting up Docker Compose..."
     
-    # Check if Docker Compose is installed
-    if ! command -v docker-compose &> /dev/null && ! command -v docker compose &> /dev/null; then
-        install_docker_compose
-    fi
+    # Use BRIDGE mode only (safe)
+    local network_section="    networks:
+      - mikrotik_net"
     
-    # Create necessary directories
-    mkdir -p {monitoring/dashboards,monitoring/datasources,scripts,backups}
-    
-    # Generate configuration files
-    generate_docker_compose_files
-    
-    # Ensure .env file exists
-    if [[ ! -f ".env" ]]; then
-        create_env_file
-    fi
-    
-    generate_monitoring_config
-}
-
-install_docker_compose() {
-    log "INFO" "Installing Docker Compose..."
-    
-    # Install Docker Compose v2 (preferred)
-    if command -v docker &> /dev/null; then
-        log "INFO" "Installing Docker Compose Plugin..."
-        sudo $PM_INSTALL docker-compose-plugin
-    else
-        # Fallback to standalone docker-compose
-        log "INFO" "Installing standalone Docker Compose..."
-        sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-        sudo chmod +x /usr/local/bin/docker-compose
-    fi
-    
-    # Verify installation
-    if command -v docker-compose &> /dev/null || command -v docker compose &> /dev/null; then
-        log "INFO" "Docker Compose installed successfully"
-    else
-        error_exit "Failed to install Docker Compose"
-    fi
-}
-
-# Function to check and resolve port conflicts
-check_port_conflicts() {
-    local ports=("22" "80" "443" "53" "1723" "4500" "500" "1194" "8291" "5678" "5679" "8728" "8729")
-    local conflicting_ports=()
-    
-    log "INFO" "Checking for port conflicts..."
-    
-    for port in "${ports[@]}"; do
-        if netstat -tuln 2>/dev/null | grep -q ":${port} "; then
-            conflicting_ports+=("$port")
-            log "WARN" "Port $port is already in use"
-        fi
-    done
-    
-    if [[ ${#conflicting_ports[@]} -gt 0 ]]; then
-        echo "The following ports are already in use: ${conflicting_ports[*]}"
-        echo "This will cause conflicts with MikroTik container."
-        
-        read -p "Do you want to automatically resolve port conflicts? (y/n): " resolve_choice
-        if [[ "$resolve_choice" == "y" ]]; then
-            resolve_port_conflicts "${conflicting_ports[@]}"
-        else
-            log "WARN" "Port conflicts not resolved. Container may fail to start."
-        fi
-    else
-        log "INFO" "No port conflicts detected"
-    fi
-}
-
-# Function to resolve port conflicts
-resolve_port_conflicts() {
-    local conflicting_ports=("$@")
-    
-    log "INFO" "Resolving port conflicts by updating .env file..."
-    
-    # Update .env file with alternative ports
-    for port in "${conflicting_ports[@]}"; do
-        case $port in
-            22)
-                update_env_port "SSH_PORT" "2222"
-                ;;
-            53)
-                update_env_port "DNS_PORT" "5353"
-                ;;
-            80)
-                update_env_port "WEB_PORT" "8080"
-                ;;
-            443)
-                update_env_port "HTTPS_PORT" "8443"
-                ;;
-            8291)
-                update_env_port "WINBOX_PORT" "8292"
-                ;;
-            1723)
-                update_env_port "PPTP_PORT" "11723"
-                ;;
-            4500)
-                update_env_port "IPSEC_PORT" "14500"
-                ;;
-            500)
-                update_env_port "IKE_PORT" "1500"
-                ;;
-            1194)
-                update_env_port "OVPN_PORT" "11194"
-                ;;
-            5678)
-                update_env_port "API_PORT" "15678"
-                ;;
-            5679)
-                update_env_port "API_SSL_PORT" "15679"
-                ;;
-            8728)
-                update_env_port "API_RAW_PORT" "18728"
-                ;;
-            8729)
-                update_env_port "API_SSL_RAW_PORT" "18729"
-                ;;
-        esac
-    done
-    
-    # Regenerate docker-compose.yml with new ports
-    generate_docker_compose_files
-    
-    log "INFO" "Port conflicts resolved. Check .env file for new port mappings."
-}
-
-# Generate Docker Compose files
-# Generate Docker Compose files
-generate_docker_compose_files() {
-    log "INFO" "Generating Docker Compose configuration..."
-    
-    # Main docker-compose.yml
-    cat > docker-compose.yml << 'EOF'
-services:
-  mikrotik:
-    image: ${MIKROTIK_IMAGE:-livekadeh_com_mikrotik7_7}
-    container_name: ${CONTAINER_NAME:-mikrotik_router}
-    restart: ${RESTART_POLICY:-unless-stopped}
-    cap_add:
-      - NET_ADMIN
-      - SYS_MODULE
-    devices:
-      - "/dev/net/tun"
-    sysctls:
+    local sysctls_section="    sysctls:
       - net.ipv4.ip_forward=1
       - net.ipv6.conf.all.disable_ipv6=0
-    ports:
-      - "${WEB_PORT:-80}:80"
-      - "${WINBOX_PORT:-8291}:8291"
-      - "${SSH_PORT:-22}:22"
-      - "${HTTPS_PORT:-443}:443"
-      - "${DNS_PORT:-53}:53"
-      - "${PPTP_PORT:-1723}:1723"
-      - "${IPSEC_PORT:-4500}:4500"
-      - "${IKE_PORT:-500}:500"
-      - "${OVPN_PORT:-1194}:1194"
-      - "${L2TP_PORT:-1701}:1701"
-      - "${API_PORT:-5678}:5678"
-      - "${API_SSL_PORT:-5679}:5679"
-      - "${API_RAW_PORT:-8728}:8728"
-      - "${API_SSL_RAW_PORT:-8729}:8729"
-    volumes:
-      # PERSISTENT STORAGE - This prevents factory reset
+      - net.ipv4.conf.all.rp_filter=0"
+    
+    # Define port mappings with alternatives
+    declare -A port_mappings
+    port_mappings=(
+        ["80"]="8080"
+        ["8291"]="8292" 
+        ["22"]="2222"
+        ["443"]="8443"
+        ["53"]="5353"
+        ["1701"]="11701"
+        ["1723"]="11723"
+        ["1812"]="11812"
+        ["1813"]="11813"
+        ["2000"]="12000"
+        ["3784"]="13784"
+        ["3799"]="13799"
+        ["4500"]="14500"
+        ["4784"]="14784"
+        ["500"]="1500"
+        ["1194"]="11194"
+        ["5678"]="15678"
+        ["5679"]="15679"
+        ["8728"]="18728"
+        ["8729"]="18729"
+        ["60594"]="60595"
+    )
+    
+    # Check port availability and build ports section
+    local ports_section=""
+    for port in $DEFAULT_PORTS; do
+        local alt_port="${port_mappings[$port]:-$(($port + 10000))}"
+        
+        if check_port_availability "$port"; then
+            ports_section+="      - \"$port:$port\"\n"
+            log "INFO" "Port $port is available"
+        else
+            echo -e "${YELLOW}Port $port is already in use${NC}"
+            echo "Suggested alternative: $alt_port"
+            read -p "Enter alternative port for $port (or press Enter for $alt_port, or 'skip' to skip): " user_port
+            
+            if [[ -z "$user_port" ]]; then
+                final_port="$alt_port"
+            elif [[ "$user_port" == "skip" ]]; then
+                log "INFO" "Skipping port $port"
+                continue
+            else
+                if [[ "$user_port" =~ ^[0-9]+$ ]] && [ "$user_port" -ge 1 ] && [ "$user_port" -le 65535 ]; then
+                    final_port="$user_port"
+                else
+                    echo -e "${RED}Invalid port, using default alternative $alt_port${NC}"
+                    final_port="$alt_port"
+                fi
+            fi
+            
+            if check_port_availability "$final_port"; then
+                ports_section+="      - \"$final_port:$port\"\n"
+                log "INFO" "Mapping $port -> $final_port"
+            else
+                echo -e "${RED}Alternative port $final_port is also busy, skipping port $port${NC}"
+            fi
+        fi
+    done
+
+    # Ask about persistent storage
+    read -p "Enable persistent storage? (recommended) [Y/n]: " persistent_storage
+    persistent_storage=${persistent_storage:-Y}
+    
+    local volumes_section=""
+    local volumes_definition=""
+    
+    if [[ "$persistent_storage" =~ ^[Yy]$ ]]; then
+        volumes_section="    volumes:
       - mikrotik_data:/routeros
       - mikrotik_data:/flash
       - mikrotik_data:/rw
       - mikrotik_data:/storage
-      # System time
-      - /etc/localtime:/etc/localtime:ro
-    networks:
-      - mikrotik_net
+      - /etc/localtime:/etc/localtime:ro"
+        
+        volumes_definition="
+volumes:
+  mikrotik_data:
+    driver: local"
+        log "INFO" "Persistent storage enabled"
+    else
+        volumes_section="    volumes:
+      - /etc/localtime:/etc/localtime:ro"
+        log "WARN" "Persistent storage disabled"
+    fi
+
+    # Ask for timezone
+    read -p "Enter timezone [UTC]: " timezone
+    timezone=${timezone:-UTC}
+    
+    # Create docker-compose.yml
+    cat > docker-compose.yml << EOF
+services:
+  mikrotik:
+    image: livekadeh_com_mikrotik7_7
+    container_name: mikrotik_router
+    restart: unless-stopped
+$network_section
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+      - SYS_RAWIO
+    devices:
+      - "/dev/net/tun"
+$sysctls_section
+    ports:
+$ports_section
+$volumes_section
     environment:
-      - TZ=${TIMEZONE:-UTC}
+      - TZ=$timezone
+      - ROS_LICENSE=yes
+$volumes_definition
 
 networks:
   mikrotik_net:
     driver: bridge
-
-volumes:
-  mikrotik_data:
-    driver: local
 EOF
 
-    log "INFO" "Docker Compose file generated successfully"
-}
-
-# Function to create .env file
-create_env_file() {
-    cat > .env << 'EOF'
-# MikroTik Docker Compose Configuration
-MIKROTIK_IMAGE=livekadeh_com_mikrotik7_7
-CONTAINER_NAME=mikrotik_router
-RESTART_POLICY=unless-stopped
-TIMEZONE=UTC
-
-# Port Configuration - Change these if you have port conflicts
-WEB_PORT=80
-WINBOX_PORT=8291
-SSH_PORT=22
-HTTPS_PORT=443
-DNS_PORT=53
-PPTP_PORT=1723
-IPSEC_PORT=4500
-IKE_PORT=500
-OVPN_PORT=1194
-L2TP_PORT=1701
-API_PORT=5678
-API_SSL_PORT=5679
-API_RAW_PORT=8728
-API_SSL_RAW_PORT=8729
-EOF
-
-    log "INFO" ".env file created with default values"
-}
-
-# Function to update .env port variables
-update_env_port() {
-    local var_name="$1"
-    local port_value="$2"
+    log "INFO" "Docker Compose file created"
     
-    if [[ -f ".env" ]]; then
-        if grep -q "^${var_name}=" ".env"; then
-            sed -i "s/^${var_name}=.*/${var_name}=${port_value}/" ".env"
-        else
-            echo "${var_name}=${port_value}" >> ".env"
-        fi
-    else
-        echo "${var_name}=${port_value}" > ".env"
-    fi
-}
-
-# Function to let user customize ports
-customize_ports() {
-    echo "Port Configuration:"
-    echo "Current port mappings from .env file:"
-    
-    # Load current values from .env
-    if [[ -f ".env" ]]; then
-        source .env 2>/dev/null || true
-    fi
-    
-    echo "  Web Interface: ${WEB_PORT:-80}"
-    echo "  WinBox: ${WINBOX_PORT:-8291}" 
-    echo "  SSH: ${SSH_PORT:-22}"
-    echo "  HTTPS: ${HTTPS_PORT:-443}"
-    echo "  DNS: ${DNS_PORT:-53}"
-    echo "  PPTP: ${PPTP_PORT:-1723}"
-    echo "  IPSec: ${IPSEC_PORT:-4500}"
-    echo "  IKE: ${IKE_PORT:-500}"
-    echo "  OpenVPN: ${OVPN_PORT:-1194}"
-    echo "  L2TP: ${L2TP_PORT:-1701}"
-    echo "  API: ${API_PORT:-5678}"
-    echo "  API SSL: ${API_SSL_PORT:-5679}"
-    echo "  API Raw: ${API_RAW_PORT:-8728}"
-    echo "  API SSL Raw: ${API_SSL_RAW_PORT:-8729}"
-    echo ""
-    
-    read -p "Do you want to customize these ports? (y/n): " customize_ports
-    
-    if [[ "$customize_ports" == "y" ]]; then
-        echo "Enter custom ports (press Enter to keep current value):"
-        
-        read -p "Web Interface port [${WEB_PORT:-80}]: " web_port
-        read -p "WinBox port [${WINBOX_PORT:-8291}]: " winbox_port
-        read -p "SSH port [${SSH_PORT:-22}]: " ssh_port
-        read -p "HTTPS port [${HTTPS_PORT:-443}]: " https_port
-        read -p "DNS port [${DNS_PORT:-53}]: " dns_port
-        read -p "PPTP port [${PPTP_PORT:-1723}]: " pptp_port
-        read -p "IPSec port [${IPSEC_PORT:-4500}]: " ipsec_port
-        read -p "IKE port [${IKE_PORT:-500}]: " ike_port
-        read -p "OpenVPN port [${OVPN_PORT:-1194}]: " ovpn_port
-        read -p "L2TP port [${L2TP_PORT:-1701}]: " l2tp_port
-        read -p "API port [${API_PORT:-5678}]: " api_port
-        read -p "API SSL port [${API_SSL_PORT:-5679}]: " api_ssl_port
-        read -p "API Raw port [${API_RAW_PORT:-8728}]: " api_raw_port
-        read -p "API SSL Raw port [${API_SSL_RAW_PORT:-8729}]: " api_ssl_raw_port
-        
-        # Update .env file with custom ports
-        [[ -n "$web_port" ]] && update_env_port "WEB_PORT" "$web_port"
-        [[ -n "$winbox_port" ]] && update_env_port "WINBOX_PORT" "$winbox_port"
-        [[ -n "$ssh_port" ]] && update_env_port "SSH_PORT" "$ssh_port"
-        [[ -n "$https_port" ]] && update_env_port "HTTPS_PORT" "$https_port"
-        [[ -n "$dns_port" ]] && update_env_port "DNS_PORT" "$dns_port"
-        [[ -n "$pptp_port" ]] && update_env_port "PPTP_PORT" "$pptp_port"
-        [[ -n "$ipsec_port" ]] && update_env_port "IPSEC_PORT" "$ipsec_port"
-        [[ -n "$ike_port" ]] && update_env_port "IKE_PORT" "$ike_port"
-        [[ -n "$ovpn_port" ]] && update_env_port "OVPN_PORT" "$ovpn_port"
-        [[ -n "$l2tp_port" ]] && update_env_port "L2TP_PORT" "$l2tp_port"
-        [[ -n "$api_port" ]] && update_env_port "API_PORT" "$api_port"
-        [[ -n "$api_ssl_port" ]] && update_env_port "API_SSL_PORT" "$api_ssl_port"
-        [[ -n "$api_raw_port" ]] && update_env_port "API_RAW_PORT" "$api_raw_port"
-        [[ -n "$api_ssl_raw_port" ]] && update_env_port "API_SSL_RAW_PORT" "$api_ssl_raw_port"
-        
-        # Regenerate docker-compose.yml with new ports
-        generate_docker_compose_files
-        
-        log "INFO" "Port configuration updated"
-    fi
-}
-
-# Function to setup MikroTik image
-setup_mikrotik_image() {
-    echo "Select MikroTik image source:"
-    echo "1) Use custom image (livekadeh_com_mikrotik7_7)"
-    echo "2) Use official MikroTik RouterOS image"
-    read -p "Enter your choice [1-2]: " image_choice
-    
-    # Ensure .env file exists
-    if [[ ! -f ".env" ]]; then
-        log "INFO" "Creating .env file..."
-        create_env_file
-    fi
-    
-    case $image_choice in
-        1)
-            log "INFO" "Using custom MikroTik image"
-            # Update .env file to use custom image
-            update_env_port "MIKROTIK_IMAGE" "livekadeh_com_mikrotik7_7"
-            
-            # Check if image exists locally, if not download it
-            if ! docker images -a | grep -q "livekadeh_com_mikrotik7_7"; then
-                log "INFO" "Custom image not found locally. Downloading from GitHub..."
-                download_mikrotik_image_from_github
-            fi
-            ;;
-        2)
-            log "INFO" "Using official MikroTik RouterOS image"
-            # Update .env file to use official image
-            update_env_port "MIKROTIK_IMAGE" "mikrotik/routeros:latest"
-            ;;
-        *)
-            log "WARN" "Invalid choice, using custom image"
-            update_env_port "MIKROTIK_IMAGE" "livekadeh_com_mikrotik7_7"
-            ;;
-    esac
-}
-
-# Function to download MikroTik image from GitHub
-download_mikrotik_image_from_github() {
-    log "INFO" "Downloading MikroTik Docker image from GitHub..."
-    
-    local url="https://github.com/Ptechgithub/MIKROTIK/releases/download/L6/Docker-image-Mikrotik-7.7-L6.7z"
-    local filename="Docker-image-Mikrotik-7.7-L6.7z"
-    
-    # Download the image archive
-    if download_with_retry "$url" "$filename"; then
-        # Extract the image
-        if command -v 7z &> /dev/null || command -v 7za &> /dev/null; then
-            log "INFO" "Extracting Docker image..."
-            7z x "$filename" -y || 7za x "$filename" -y
-        else
-            log "ERROR" "7z is not installed. Please install p7zip-full package."
-            exit 1
-        fi
-        
-        # Load the Docker image
-        if [[ -f "mikrotik7.7_docker_livekadeh.com" ]]; then
-            log "INFO" "Loading Docker image..."
-            docker load --input mikrotik7.7_docker_livekadeh.com
-            log "INFO" "MikroTik Docker image loaded successfully"
-            
-            # Ask user if they want to delete temporary files
-            read -p "Do you want to delete the temporary files? (y/n): " delete_files
-            if [[ $delete_files =~ ^[Yy]$ ]]; then
-                rm -f "$filename" "mikrotik7.7_docker_livekadeh.com"
-                log "INFO" "Temporary files deleted successfully"
-            else
-                log "INFO" "Temporary files kept: $filename and mikrotik7.7_docker_livekadeh.com"
-            fi
-        else
-            error_exit "Docker image file not found after extraction"
-        fi
-    else
-        error_exit "Failed to download MikroTik Docker image"
-    fi
-}
-
-generate_monitoring_config() {
-    log "INFO" "Generating monitoring configuration..."
-    
-    # Prometheus configuration
-    cat > monitoring/prometheus.yml << 'EOF'
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-
-scrape_configs:
-  - job_name: 'mikrotik'
-    static_configs:
-      - targets: ['mikrotik:8728']
-    metrics_path: '/metrics'
-    params:
-      address: ['mikrotik:8728']
-      user: ['admin']
-      password: ['']
-EOF
-
-    # Grafana datasource
-    cat > monitoring/datasources/prometheus.yml << 'EOF'
-apiVersion: 1
-
-datasources:
-  - name: Prometheus
-    type: prometheus
-    access: proxy
-    url: http://prometheus:9090
-    isDefault: true
-EOF
-
-    log "INFO" "Monitoring configuration generated"
-}
-
-# Function to show access information after deployment
-show_access_info() {
-    echo ""
-    echo -e "${GREEN}MikroTik Deployment Successful!${NC}"
+    # Show configuration
+    echo -e "${GREEN}Final Configuration:${NC}"
     echo "=========================================="
-    echo "Access your MikroTik router using:"
-    echo ""
-    
-    # Load current values from .env
-    if [[ -f ".env" ]]; then
-        source .env 2>/dev/null || true
-    fi
-    
-    local host_ip=$(hostname -I | awk '{print $1}')
-    if [[ -z "$host_ip" ]]; then
-        host_ip="localhost"
-    fi
-    
-    echo "Web Interface: http://${host_ip}:${WEB_PORT:-80}"
-    echo "WinBox:        ${host_ip}:${WINBOX_PORT:-8291}"
-    echo "SSH:           ssh admin@${host_ip} -p ${SSH_PORT:-22}"
-    echo "HTTPS:         https://${host_ip}:${HTTPS_PORT:-443}"
-    echo ""
-    echo "Default credentials:"
-    echo "Username: admin"
-    echo "Password: (no password - CHR mode)"
-    echo ""
-    echo "Note: Some ports may have been changed to avoid conflicts"
-    echo "Check .env file for actual port mappings"
+    echo -e "Network Mode: BRIDGE (SAFE)"
+    echo -e "Port Mappings:\n$ports_section"
+    echo "Persistent Storage: $persistent_storage"
+    echo "Timezone: $timezone"
+    echo "=========================================="
 }
 
-# Docker Compose management functions
-manage_compose_services() {
-    local action="$1"
-    local compose_file="${2:-docker-compose.yml}"
-    
-    # Use docker-compose v2 if available, otherwise use v1
-    local compose_cmd="docker-compose"
-    if command -v docker &> /dev/null && docker compose version &> /dev/null; then
-        compose_cmd="docker compose"
-    fi
-    
-    case "$action" in
-        "start")
-            $compose_cmd -f "$compose_file" start
-            ;;
-        "stop")
-            $compose_cmd -f "$compose_file" stop
-            ;;
-        "restart")
-            $compose_cmd -f "$compose_file" restart
-            ;;
-        "down")
-            $compose_cmd -f "$compose_file" down
-            ;;
-        "logs")
-            $compose_cmd -f "$compose_file" logs -f
-            ;;
-        "ps")
-            $compose_cmd -f "$compose_file" ps
-            ;;
-        "stats")
-            $compose_cmd -f "$compose_file" stats
-            ;;
-        "up")
-            $compose_cmd -f "$compose_file" up -d
-            ;;
-        *)
-            error_exit "Unknown action: $action"
-            ;;
-    esac
-}
-
-# Check and start Docker service
 ensure_docker_running() {
-    # First check if Docker is installed by checking the command
-    if ! command -v docker &> /dev/null; then
-        log "INFO" "Docker is not installed. Installing Docker first..."
-        install_docker
-        return
-    fi
-    
-    # Check if Docker service exists using multiple methods
-    local docker_service_found=false
-    
-    # Method 1: Check systemd service
-    if systemctl list-unit-files | grep -q docker.service; then
-        docker_service_found=true
-        log "INFO" "Docker systemd service found"
-    fi
-    
-    # Method 2: Check if Docker socket exists
-    if [[ -S "/var/run/docker.sock" ]]; then
-        docker_service_found=true
-        log "INFO" "Docker socket found"
-    fi
-    
-    # Method 3: Check if Docker process is running
-    if pgrep -f "dockerd" > /dev/null; then
-        docker_service_found=true
-        log "INFO" "Docker daemon process is running"
-    fi
-    
-    if [[ "$docker_service_found" == false ]]; then
-        log "WARN" "Docker service not found via standard methods. Checking Docker directly..."
-        
-        # Try to communicate with Docker directly
-        if docker info &> /dev/null; then
-            log "INFO" "Docker is running (direct communication successful)"
-            return 0
-        else
-            log "INFO" "Starting Docker manually..."
-            start_docker_manual
-            return
-        fi
-    fi
-    
-    # Now check if Docker is running and accessible
-    if docker info &> /dev/null; then
-        log "INFO" "Docker is running and accessible"
-        return 0
-    fi
-    
-    # If we have systemd service but it's not running, start it
-    if systemctl list-unit-files | grep -q docker.service; then
-        if ! systemctl is-active --quiet docker; then
-            log "INFO" "Starting Docker systemd service..."
-            if sudo systemctl start docker; then
-                sudo systemctl enable docker
-                
-                # Wait for Docker to be ready
-                wait_for_docker
-                return $?
-            else
-                log "ERROR" "Failed to start Docker systemd service"
-                start_docker_manual
-                return
-            fi
-        fi
-    else
-        # No systemd service found, try manual start
-        start_docker_manual
-        return
+    if ! docker info &> /dev/null; then
+        sudo systemctl start docker
+        sudo systemctl enable docker
     fi
 }
 
-# Wait for Docker to be ready
-wait_for_docker() {
-    local max_retries=10
-    local retry_count=0
-    
-    while [ $retry_count -lt $max_retries ]; do
-        if docker info &> /dev/null; then
-            log "INFO" "Docker is now running and accessible"
-            return 0
-        else
-            retry_count=$((retry_count + 1))
-            log "WARN" "Waiting for Docker to be ready... ($retry_count/$max_retries)"
-            sleep 3
-        fi
-    done
-    
-    log "ERROR" "Docker failed to become ready after $max_retries attempts"
-    return 1
-}
-
-# Start Docker manually (for non-systemd installations)
-start_docker_manual() {
-    log "INFO" "Attempting to start Docker manually..."
-    
-    # Method 1: Try dockerd directly
-    if command -v dockerd &> /dev/null; then
-        log "INFO" "Starting dockerd directly..."
-        sudo nohup dockerd &> /tmp/dockerd.log &
-        sleep 5
-        
-        if wait_for_docker; then
-            log "INFO" "Docker started successfully via dockerd"
-            return 0
-        fi
-    fi
-    
-    # Method 2: Try service command (for older systems)
-    if command -v service &> /dev/null; then
-        log "INFO" "Starting Docker via service command..."
-        sudo service docker start
-        sleep 5
-        
-        if wait_for_docker; then
-            log "INFO" "Docker started successfully via service command"
-            return 0
-        fi
-    fi
-    
-    # Method 3: Try init.d (for very old systems)
-    if [[ -f "/etc/init.d/docker" ]]; then
-        log "INFO" "Starting Docker via init.d..."
-        sudo /etc/init.d/docker start
-        sleep 5
-        
-        if wait_for_docker; then
-            log "INFO" "Docker started successfully via init.d"
-            return 0
-        fi
-    fi
-    
-    # Method 4: Last resort - check if Docker is already running but needs sudo
-    log "INFO" "Checking if Docker needs sudo privileges..."
-    if sudo docker info &> /dev/null; then
-        log "INFO" "Docker is running but requires sudo"
-        return 0
-    fi
-    
-    log "ERROR" "Could not start Docker using any method"
-    log "INFO" "Please start Docker manually and try again:"
-    log "INFO" "  sudo systemctl start docker"
-    log "INFO" "  OR"
-    log "INFO" "  sudo dockerd &"
-    error_exit "Docker service could not be started"
-}
-
-# Check Docker installation status
-check_docker_status() {
-    log "INFO" "Checking Docker status..."
-    
-    if command -v docker &> /dev/null; then
-        echo "✓ Docker command is available"
-        
-        if docker info &> /dev/null; then
-            echo "✓ Docker daemon is running and accessible"
-            echo "✓ Docker version: $(docker --version | cut -d' ' -f3 | tr -d ',')"
-            return 0
-        else
-            echo "✗ Docker command exists but daemon is not accessible"
-            return 1
-        fi
-    else
-        echo "✗ Docker command not found"
-        return 1
-    fi
-}
-
-# Deploy with Docker Compose
 deploy_with_compose() {
-    local compose_file="${1:-docker-compose.yml}"
-    
-    log "INFO" "Deploying with Docker Compose: $compose_file"
-    
-    # Ensure Docker is running
     ensure_docker_running
+    setup_docker_compose
     
-    if [[ ! -f "$compose_file" ]]; then
-        error_exit "Docker Compose file not found: $compose_file"
-    fi
-    
-    # Check for port conflicts and customize if needed
-    check_port_conflicts
-    customize_ports
-    
-    # Check if the MikroTik image exists locally
     if ! docker images -a | grep -q "livekadeh_com_mikrotik7_7"; then
-        log "INFO" "MikroTik Docker image not found locally. Downloading from GitHub..."
-        download_mikrotik_image_from_github
+        download_docker_image
     fi
     
-    # Validate compose file
-    if command -v docker-compose &> /dev/null; then
-        if ! docker-compose -f "$compose_file" config > /dev/null; then
-            error_exit "Invalid Docker Compose file"
+    docker-compose up -d
+    log "INFO" "MikroTik deployed with Docker Compose"
+}
+
+# ==============================================================================
+# MANAGEMENT FUNCTIONS
+# ==============================================================================
+
+container_status() {
+    local container_name="mikrotik_router"
+    
+    if docker ps -a --format "{{.Names}}" | grep -q "$container_name"; then
+        echo -e "${GREEN}Container Information:${NC}"
+        echo "=========================================="
+        
+        # Basic container info in clean format
+        docker ps -a -f "name=$container_name" --format "table {{.Names}}\t{{.Status}}\t{{.RunningFor}}"
+        
+        echo -e "\n${GREEN}Port Mappings:${NC}"
+        echo "=========================================="
+        
+        # Get ports and format them nicely
+        local ports=$(docker inspect "$container_name" --format='{{range $p, $conf := .NetworkSettings.Ports}}{{$p}} {{end}}')
+        for port in $ports; do
+            local mapping=$(docker port "$container_name" "$port" 2>/dev/null | head -1)
+            if [[ -n "$mapping" ]]; then
+                echo "  $port -> $mapping"
+            fi
+        done
+        
+        echo -e "\n${GREEN}Resource Usage:${NC}"
+        echo "=========================================="
+        docker stats "$container_name" --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}"
+        
+    else
+        log "WARN" "Container '$container_name' not found"
+    fi
+}
+
+backup_config() {
+    local container_name="mikrotik_router"
+    local backup_name="mikrotik_backup_$(date +%Y%m%d_%H%M%S).tar.gz"
+    
+    if docker ps --format "{{.Names}}" | grep -q "$container_name"; then
+        docker export "$container_name" | gzip > "$BACKUP_DIR/$backup_name"
+        log "INFO" "Backup created: $backup_name"
+    else
+        log "WARN" "Container is not running"
+    fi
+}
+
+system_health_check() {
+    echo -e "${GREEN}System Health Check${NC}"
+    echo "=========================================="
+    
+    # Check Docker service
+    if systemctl is-active --quiet docker; then
+        echo -e "Docker service: ${GREEN}Running${NC}"
+    else
+        echo -e "Docker service: ${RED}Not running${NC}"
+    fi
+    
+    # Check disk space
+    local disk_usage=$(df / --output=pcent | tail -1 | tr -d ' %')
+    if [ "$disk_usage" -lt 80 ]; then
+        echo -e "Disk usage: ${GREEN}${disk_usage}%${NC}"
+    else
+        echo -e "Disk usage: ${RED}${disk_usage}%${NC}"
+    fi
+    
+    # Check memory
+    if command -v free &> /dev/null; then
+        local mem_usage=$(free | awk 'NR==2{printf "%.1f", $3*100/$2}')
+        if (( $(echo "$mem_usage < 80" | bc -l 2>/dev/null) )); then
+            echo -e "Memory usage: ${GREEN}${mem_usage}%${NC}"
+        else
+            echo -e "Memory usage: ${RED}${mem_usage}%${NC}"
         fi
     fi
     
-    # Deploy services
-    log "INFO" "Starting services..."
-    manage_compose_services "up" "$compose_file"
-    
-    # Show status
-    manage_compose_services "ps" "$compose_file"
-    
-    log "INFO" "Deployment completed successfully"
-    
-    # Show access information
-    show_access_info
-}
-
-# Main menu
-show_main_menu() {
-    clear
-    echo -e "${CYAN}"
-    echo "╔══════════════════════════════════════════════════════════════╗"
-    echo "║               Advanced MikroTik Deployment Manager          ║"
-    echo "║                      Version 3.1.0                          ║"
-    echo "║                 Author: Github.com/Ptechgithub              ║"
-    echo "╚══════════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
-    
-    # System Information
-    if command -v lsb_release &> /dev/null; then
-        OS=$(lsb_release -d | cut -f2)
-    elif [ -f /etc/os-release ]; then
-        OS=$(source /etc/os-release && echo $PRETTY_NAME)
+    # Check container status
+    local container_name="mikrotik_router"
+    if docker ps --format "{{.Names}}" | grep -q "$container_name"; then
+        echo -e "MikroTik container: ${GREEN}Running${NC}"
     else
-        OS="Unknown"
+        echo -e "MikroTik container: ${RED}Not running${NC}"
     fi
     
-    ARCH=$(uname -m)
-    if [ -f /proc/meminfo ]; then
-        MEMORY_GB=$(grep MemTotal /proc/meminfo | awk '{printf "%.1f", $2/1024/1024}')
-    else
-        MEMORY_GB="Unknown"
-    fi
-    
-    echo -e "${YELLOW}System Information:${NC}"
-    echo -e "  OS: $OS"
-    echo -e "  Arch: $ARCH"
-    echo -e "  Memory: ${MEMORY_GB}GB"
-    echo ""
-    
-    echo -e "${GREEN}Main Installation Options:${NC}"
-    echo "  1) Install MikroTik CHR (Bare Metal)"
-    echo "  2) Install MikroTik via Docker"
-    echo "  3) Deploy with Docker Compose"
-    echo ""
-    
-    echo -e "${BLUE}Docker Compose Management:${NC}"
-    echo "  4) Start Compose Services"
-    echo "  5) Stop Compose Services"
-    echo "  6) Restart Compose Services"
-    echo "  7) Compose Services Status"
-    echo "  8) View Compose Logs"
-    echo "  9) Backup Configuration"
-    echo "  10) Restore Configuration"
-    echo ""
-    
-    echo -e "${PURPLE}System & Monitoring:${NC}"
-    echo "  11) System Health Check"
-    echo "  12) Docker Status Check"
-    echo "  13) View Installation Log"
-    echo "  14) Cleanup Temporary Files"
-    echo "  15) Customize Ports"
-    echo ""
-    
-    echo -e "${RED}Utility Options:${NC}"
-    echo "  0) Exit"
-    echo ""
-    
-    echo -e "${YELLOW}Quick Commands:${NC}"
-    echo "  - Use command-line options for automation"
-    echo "  - Run with --help for all options"
-    echo ""
+    echo "=========================================="
 }
 
-# Menu interaction handler
-handle_menu_choice() {
-    local choice="$1"
+manage_container() {
+    local container_name="mikrotik_router"
     
-    case $choice in
+    echo -e "${GREEN}Container Management${NC}"
+    echo "=========================================="
+    echo "1) Start Container"
+    echo "2) Stop Container"
+    echo "3) Restart Container"
+    echo "4) View Container Logs"
+    echo "5) Remove Container"
+    echo "6) Remove Container & Image"
+    echo "0) Back to Main Menu"
+    echo ""
+    
+    read -p "Select action [0-6]: " action
+    
+    case $action in
         1)
-            log "INFO" "Starting CHR installation..."
-            install_chr_image
+            if docker start "$container_name"; then
+                log "INFO" "Container started successfully"
+            else
+                log "ERROR" "Failed to start container"
+            fi
             ;;
         2)
-            log "INFO" "Starting Docker installation..."
-            install_mikrotik_docker
+            if docker stop "$container_name"; then
+                log "INFO" "Container stopped successfully"
+            else
+                log "ERROR" "Failed to stop container"
+            fi
             ;;
         3)
-            log "INFO" "Setting up Docker Compose deployment..."
-            ensure_docker_running
-            setup_docker_compose
-            
-            # Let user choose image source
-            setup_mikrotik_image
-            
-            read -p "Do you want to include monitoring stack? (y/n): " monitoring_choice
-            if [[ "$monitoring_choice" == "y" ]]; then
-                generate_monitoring_config
-                deploy_with_compose "docker-compose.monitoring.yml"
+            if docker restart "$container_name"; then
+                log "INFO" "Container restarted successfully"
             else
-                deploy_with_compose "docker-compose.yml"
+                log "ERROR" "Failed to restart container"
             fi
             ;;
         4)
-            manage_compose_services "start" "docker-compose.yml"
+            echo -e "${YELLOW}Showing container logs (Ctrl+C to exit):${NC}"
+            docker logs -f "$container_name"
             ;;
         5)
-            manage_compose_services "stop" "docker-compose.yml"
+            read -p "Are you sure you want to remove the container? (y/n): " confirm
+            if [[ "$confirm" == "y" ]]; then
+                docker stop "$container_name" 2>/dev/null
+                if docker rm "$container_name"; then
+                    log "INFO" "Container removed successfully"
+                else
+                    log "ERROR" "Failed to remove container"
+                fi
+            fi
             ;;
         6)
-            manage_compose_services "restart" "docker-compose.yml"
-            ;;
-        7)
-            manage_compose_services "ps" "docker-compose.yml"
-            ;;
-        8)
-            manage_compose_services "logs" "docker-compose.yml"
-            ;;
-        9)
-            backup_mikrotik_config
-            ;;
-        10)
-            read -p "Enter backup file to restore from: " backup_file
-            if [[ -n "$backup_file" ]]; then
-                log "INFO" "Restore function would be implemented here"
-            else
-                log "ERROR" "No backup file specified"
+            read -p "This will remove container AND image. Continue? (y/n): " confirm
+            if [[ "$confirm" == "y" ]]; then
+                docker stop "$container_name" 2>/dev/null
+                docker rm "$container_name" 2>/dev/null
+                if docker rmi "livekadeh_com_mikrotik7_7"; then
+                    log "INFO" "Container and image removed successfully"
+                else
+                    log "ERROR" "Failed to remove image"
+                fi
             fi
             ;;
-        11)
-            system_health_check
-            ;;
-        12)
-            check_docker_status
-            ;;
-        13)
-            if command -v less &> /dev/null; then
-                less "$LOG_FILE"
-            else
-                cat "$LOG_FILE"
-            fi
-            ;;
-        14)
-            rm -rf "$TEMP_DIR"
-            log "INFO" "Temporary files cleaned up"
-            ;;
-        15)
-            customize_ports
-            ;;
-        0)
-            log "INFO" "Exiting Advanced MikroTik Deployment Manager"
-            exit 0
-            ;;
-        *)
-            log "ERROR" "Invalid option: $choice"
-            ;;
+        0) return ;;
+        *) echo "Invalid option" ;;
     esac
 }
 
-# Main menu loop
+manage_compose() {
+    echo -e "${GREEN}Docker Compose Management${NC}"
+    echo "=========================================="
+    echo "1) Start Services"
+    echo "2) Stop Services"
+    echo "3) Restart Services"
+    echo "4) View Logs"
+    echo "5) Down (Stop & Remove)"
+    echo "6) Recreate Services"
+    echo "0) Back to Main Menu"
+    echo ""
+    
+    read -p "Select action [0-6]: " action
+    
+    case $action in
+        1)
+            if docker-compose start; then
+                log "INFO" "Services started successfully"
+            else
+                log "ERROR" "Failed to start services"
+            fi
+            ;;
+        2)
+            if docker-compose stop; then
+                log "INFO" "Services stopped successfully"
+            else
+                log "ERROR" "Failed to stop services"
+            fi
+            ;;
+        3)
+            if docker-compose restart; then
+                log "INFO" "Services restarted successfully"
+            else
+                log "ERROR" "Failed to restart services"
+            fi
+            ;;
+        4)
+            echo -e "${YELLOW}Showing compose logs (Ctrl+C to exit):${NC}"
+            docker-compose logs -f
+            ;;
+        5)
+            read -p "This will stop and remove all containers. Continue? (y/n): " confirm
+            if [[ "$confirm" == "y" ]]; then
+                if docker-compose down; then
+                    log "INFO" "Services stopped and removed"
+                else
+                    log "ERROR" "Failed to stop services"
+                fi
+            fi
+            ;;
+        6)
+            if docker-compose up -d --force-recreate; then
+                log "INFO" "Services recreated successfully"
+            else
+                log "ERROR" "Failed to recreate services"
+            fi
+            ;;
+        0) return ;;
+        *) echo "Invalid option" ;;
+    esac
+}
+
+cleanup_system() {
+    echo -e "${GREEN}System Cleanup${NC}"
+    echo "=========================================="
+    echo "1) Remove All Stopped Containers"
+    echo "2) Remove Dangling Images"
+    echo "3) Remove Unused Networks"
+    echo "4) Remove All Unused Data (Prune)"
+    echo "5) Cleanup Temporary Files"
+    echo "6) Remove MikroTik Container Only"
+    echo "7) Remove MikroTik Container & Image"
+    echo "8) Remove ALL Docker Data (Nuclear Option)"
+    echo "9) Remove ALL MikroTik Files (Complete Clean)"
+    echo "0) Back to Main Menu"
+    echo ""
+    
+    read -p "Select cleanup option [0-9]: " option
+    
+    case $option in
+        1)
+            docker container prune -f
+            log "INFO" "Stopped containers removed"
+            ;;
+        2)
+            docker image prune -f
+            log "INFO" "Dangling images removed"
+            ;;
+        3)
+            docker network prune -f
+            log "INFO" "Unused networks removed"
+            ;;
+        4)
+            docker system prune -af
+            log "INFO" "All unused data removed"
+            ;;
+        5)
+            rm -rf "$TEMP_DIR"
+            log "INFO" "Temporary files cleaned up"
+            ;;
+        6)
+            echo -e "${YELLOW}Removing MikroTik container...${NC}"
+            docker stop mikrotik_router 2>/dev/null || true
+            docker rm mikrotik_router 2>/dev/null || true
+            log "INFO" "MikroTik container removed"
+            ;;
+        7)
+            echo -e "${YELLOW}Removing MikroTik container and image...${NC}"
+            docker stop mikrotik_router 2>/dev/null || true
+            docker rm mikrotik_router 2>/dev/null || true
+            docker rmi livekadeh_com_mikrotik7_7 2>/dev/null || true
+            log "INFO" "MikroTik container and image removed"
+            ;;
+        8)
+            echo -e "${RED}==========================================${NC}"
+            echo -e "${RED}        WARNING: NUCLEAR OPTION${NC}"
+            echo -e "${RED}==========================================${NC}"
+            echo "This will remove:"
+            echo "✓ All containers (running and stopped)"
+            echo "✓ All images"
+            echo "✓ All networks" 
+            echo "✓ All volumes"
+            echo "✓ All build cache"
+            echo ""
+            read -p "Type 'DELETE EVERYTHING' to confirm: " confirmation
+            if [[ "$confirmation" == "DELETE EVERYTHING" ]]; then
+                echo -e "${RED}Removing ALL Docker data...${NC}"
+                
+                # Remove all containers
+                docker rm -f $(docker ps -aq) 2>/dev/null || true
+                
+                # Remove all images
+                docker rmi -f $(docker images -aq) 2>/dev/null || true
+                
+                # Remove all volumes
+                docker volume rm -f $(docker volume ls -q) 2>/dev/null || true
+                
+                # Remove all networks (except defaults)
+                docker network rm $(docker network ls -q --filter type=custom) 2>/dev/null || true
+                
+                # Full system prune
+                docker system prune -af --volumes
+                
+                log "INFO" "ALL Docker data removed"
+            else
+                echo "Nuclear cleanup cancelled"
+            fi
+            ;;
+        9)
+            echo -e "${RED}==========================================${NC}"
+            echo -e "${RED}    COMPLETE MIKROTIK CLEANUP${NC}"
+            echo -e "${RED}==========================================${NC}"
+            echo "This will remove:"
+            echo "✓ All MikroTik Docker containers/images"
+            echo "✓ All leftover MikroTik files"
+            echo "✓ All downloaded MikroTik images"
+            echo "✓ All temporary files"
+            echo "✓ All containerd snapshot data"
+            echo ""
+            read -p "Type 'CLEAN MIKROTIK' to confirm: " confirmation
+            if [[ "$confirmation" == "CLEAN MIKROTIK" ]]; then
+                echo -e "${RED}Removing ALL MikroTik files...${NC}"
+                
+                # Stop and remove MikroTik containers
+                docker stop mikrotik_router 2>/dev/null || true
+                docker rm mikrotik_router 2>/dev/null || true
+                docker rmi livekadeh_com_mikrotik7_7 2>/dev/null || true
+                
+                # Remove downloaded image files (KEEP 7z files)
+                rm -f /root/mikrotik7.7_docker_livekadeh.com 2>/dev/null || true
+                rm -f mikrotik7.7_docker_livekadeh.com 2>/dev/null || true
+                
+                # Remove CHR installation files
+                rm -rf chr-* 2>/dev/null || true
+                rm -f chr-*.img.zip 2>/dev/null || true
+                rm -f chr-*.img 2>/dev/null || true
+                
+                # Remove temporary directories
+                rm -rf "$TEMP_DIR" 2>/dev/null || true
+                rm -rf /tmp/mikrotik_* 2>/dev/null || true
+                
+                # Remove backup directories
+                rm -rf "$BACKUP_DIR" 2>/dev/null || true
+                rm -rf ./mikrotik_backups 2>/dev/null || true
+                
+                # Remove compose files
+                rm -f docker-compose.yml 2>/dev/null || true
+                rm -f docker-compose.*.yml 2>/dev/null || true
+                rm -f .env 2>/dev/null || true
+                
+                # Remove setup scripts
+                rm -f setup_*.sh 2>/dev/null || true
+                
+                # Clean Docker system
+                docker system prune -af 2>/dev/null || true
+                
+                log "INFO" "ALL MikroTik files removed"
+                echo -e "${GREEN}Cleanup complete!${NC}"
+            else
+                echo "MikroTik cleanup cancelled"
+            fi
+            ;;
+        0) return ;;
+        *) echo "Invalid option" ;;
+    esac
+}
+
+# ==============================================================================
+# MAIN MENU
+# ==============================================================================
+
+show_main_menu() {
+    clear
+    echo -e "${GREEN}"
+    echo "╔══════════════════════════════════════╗"
+    echo "║      MikroTik Deployment Tool       ║"
+    echo "║         Github.com/Ptechgithub      ║"
+    echo "╚══════════════════════════════════════╝"
+    echo -e "${NC}"
+    
+    echo "1) Install MikroTik CHR (Bare Metal)"
+    echo "2) Install MikroTik via Docker"
+    echo "3) Deploy with Docker Compose"
+    echo "4) Container Status"
+    echo "5) Backup Configuration"
+    echo "6) System Health Check"
+    echo "7) Manage Container"
+    echo "8) Manage Docker Compose"
+    echo "9) System Cleanup"
+    echo "0) Exit"
+    echo ""
+}
+
 main_menu() {
+    init_directories
+    detect_system
+    check_dependencies
+    
     while true; do
         show_main_menu
-        read -p "$(echo -e ${YELLOW}"Select an option [0-15]: "${NC})" choice
+        read -p "Select an option [0-9]: " choice
         
-        handle_menu_choice "$choice"
+        case $choice in
+            1) install_chr_image ;;
+            2) install_mikrotik_docker ;;
+            3) deploy_with_compose ;;
+            4) container_status ;;
+            5) backup_config ;;
+            6) system_health_check ;;
+            7) manage_container ;;
+            8) manage_compose ;;
+            9) cleanup_system ;;
+            0) exit 0 ;;
+            *) echo "Invalid option" ;;
+        esac
         
-        if [[ "$choice" != "0" ]]; then
-            echo ""
-            read -p "$(echo -e ${YELLOW}"Press Enter to continue..."${NC})" wait
-        fi
+        echo ""
+        read -p "Press Enter to continue..."
     done
 }
 
-# Initialize and start the menu
-init_directories
-detect_system
-load_config
-check_dependencies
+# ==============================================================================
+# START SCRIPT
+# ==============================================================================
 
-log "INFO" "Advanced MikroTik Deployment Manager started"
-
-# Start the main menu
-main_menu
+if [[ $# -eq 0 ]]; then
+    main_menu
+else
+    # Command-line mode for automation
+    case $1 in
+        --chr) install_chr_image ;;
+        --docker) install_mikrotik_docker ;;
+        --compose) deploy_with_compose ;;
+        --status) container_status ;;
+        --backup) backup_config ;;
+        *) echo "Use --chr, --docker, --compose, --status, or --backup" ;;
+    esac
+fi
