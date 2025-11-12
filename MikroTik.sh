@@ -20,8 +20,9 @@ BACKUP_DIR="/var/backups/mikrotik"
 TEMP_DIR="/tmp/mikrotik_installer"
 
 # Defaults
+# Defaults
 DEFAULT_CHR_VERSION="7.15.2"
-DEFAULT_PORTS="80 123 8291 22 443 53 1701 1723 1812 1813 2000 3784 3799 4500 4784 500 1194 5678 5679 8728 8729 60594"
+DEFAULT_PORTS="80 123 8291 22 443 53 1701 1723 1812 1813 2000 3784 3799 4500 4784 500 1194 5678 5679 8728 8729 60594 8080 20561 8900 8999 9999 21 23 110 995 143 993 25 465 587 3306 5432 3389 5900"
 
 # ==============================================================================
 # CORE FUNCTIONS
@@ -354,7 +355,7 @@ check_port_availability() {
 }
 
 setup_docker_compose() {
-
+    log "INFO" "Setting up Docker Compose..."
     
     # ONLY BRIDGE MODE - NO HOST MODE OPTION
     local network_section="    networks:
@@ -389,6 +390,24 @@ setup_docker_compose() {
         ["8728"]="18728"
         ["8729"]="18729"
         ["60594"]="60595"
+        ["8080"]="18080"
+        ["20561"]="20562"
+        ["8900"]="18900"
+        ["8999"]="18999"
+        ["9999"]="19999"
+        ["21"]="2021"
+        ["23"]="2023"
+        ["110"]="10110"
+        ["995"]="10995"
+        ["143"]="10143"
+        ["993"]="10993"
+        ["25"]="10025"
+        ["465"]="10465"
+        ["587"]="10587"
+        ["3306"]="13306"
+        ["5432"]="15432"
+        ["3389"]="13389"
+        ["5900"]="15900"
     )
     
     # Check port availability and build ports section
@@ -473,7 +492,7 @@ $network_section
       - "/dev/net/tun"
 $sysctls_section
     ports:
-$ports_section
+$(echo -e "$ports_section")
 $volumes_section
     environment:
       - TZ=$timezone
@@ -491,7 +510,8 @@ EOF
     echo -e "${GREEN}Final Configuration:${NC}"
     echo "=========================================="
     echo -e "Network Mode: BRIDGE (SAFE)"
-    echo -e "Port Mappings:\n$ports_section"
+    echo -e "Port Mappings:"
+    echo -e "$ports_section"
     echo "Persistent Storage: $persistent_storage"
     echo "Timezone: $timezone"
     echo "=========================================="
