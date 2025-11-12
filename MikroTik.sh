@@ -994,7 +994,16 @@ cleanup_system() {
             read -p "Type 'CLEAN MIKROTIK' to confirm: " confirmation
             if [[ "$confirmation" == "CLEAN MIKROTIK" ]]; then
                 echo -e "${RED}Removing ALL MikroTik files...${NC}"
-                
+                 # Remove all containers
+                docker rm -f $(docker ps -aq) 2>/dev/null || true
+                # Remove all images
+                docker rmi -f $(docker images -aq) 2>/dev/null || true
+                # Remove all volumes
+                docker volume rm -f $(docker volume ls -q) 2>/dev/null || true
+                # Remove all networks (except defaults)
+                docker network rm $(docker network ls -q --filter type=custom) 2>/dev/null || true
+                # Full system prune
+                docker system prune -af --volumes
                 # Stop and remove MikroTik containers
                 docker stop mikrotik_router 2>/dev/null || true
                 docker rm mikrotik_router 2>/dev/null || true
