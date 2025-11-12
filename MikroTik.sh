@@ -240,24 +240,93 @@ create_mikrotik_container() {
     
     if docker ps -a --format "{{.Names}}" | grep -q "$container_name"; then
         read -p "Container exists. Remove and recreate? (y/n): " recreate
-        [[ "$recreate" == "y" ]] && docker rm -f "$container_name"
+        if [[ "$recreate" == "y" ]]; then
+            docker stop "$container_name" 2>/dev/null || true
+            docker rm "$container_name" 2>/dev/null || true
+        else
+            log "INFO" "Using existing container"
+            return 0
+        fi
     fi
     
+    # Build port mappings
     local port_mappings=""
     for port in $DEFAULT_PORTS; do
         port_mappings+=" -p $port:$port"
     done
     
+    # Ask about persistent storage
+    read -p "Enable persistent storage? (recommended) [Y/n]: " persistent_storage
+    persistent_storage=${persistent_storage:-Y}
+    
+    local volume_mappings=""
+    if [[ "$persistent_storage" =~ ^[Yy]$ ]]; then
+        # Create volume if it doesn't exist
+        if ! docker volume ls | grep -q "mikrotik_data"; then
+            docker volume create mikrotik_data
+        fi
+        volume_mappings=" -v mikrotik_data:/routeros -v mikrotik_data:/flash -v mikrotik_data:/rw -v mikrotik_data:/storage"
+        log "INFO" "Persistent storage enabled"
+    else
+        log "WARN" "Persistent storage disabled - configuration will be lost on container restart"
+    fi
+    
+    # Add time volume
+    volume_mappings+=" -v /etc/localtime:/etc/localtime:ro"
+    
+    # Create the container with all options
     docker run -d \
         --name "$container_name" \
         --restart unless-stopped \
         --cap-add=NET_ADMIN \
         --cap-add=SYS_MODULE \
+        --cap-add=SYS_RAWIO \
         --device=/dev/net/tun \
+        --sysctl net.ipv4.ip_forward=1 \
+        --sysctl net.ipv6.conf.all.disable_ipv6=0 \
+        --sysctl net.ipv4.conf.all.rp_filter=0 \
         $port_mappings \
+        $volume_mappings \
+        -e TZ=UTC \
+        -e ROS_LICENSE=yes \
         livekadeh_com_mikrotik7_7
         
-    log "INFO" "MikroTik container created"
+    if [ $? -eq 0 ]; then
+        log "INFO" "MikroTik container created successfully"
+        
+        # Wait for container to start
+        sleep 5
+        
+        # Show container status
+        echo -e "${GREEN}Container Status:${NC}"
+        docker ps -f "name=$container_name"
+        
+        # Show access information
+        show_container_access_info
+        
+    else
+        error_exit "Failed to create MikroTik container"
+    fi
+}
+
+show_container_access_info() {
+    echo -e "${GREEN}Access Information:${NC}"
+    echo "=========================================="
+    
+    local host_ip=$(hostname -I | awk '{print $1}')
+    [[ -z "$host_ip" ]] && host_ip="localhost"
+    
+    echo "Web Interface: http://$host_ip:80"
+    echo "WinBox:        $host_ip:8291"
+    echo "SSH:           ssh admin@$host_ip -p 22"
+    echo "HTTPS:         https://$host_ip:443"
+    echo ""
+    echo "Default credentials:"
+    echo "Username: admin"
+    echo "Password: (no password)"
+    echo ""
+    echo "Container access: docker exec -it mikrotik_router bash"
+    echo "=========================================="
 }
 
 install_mikrotik_docker() {
@@ -287,7 +356,7 @@ check_port_availability() {
 setup_docker_compose() {
     log "INFO" "Setting up Docker Compose..."
     
-    # Use BRIDGE mode only (safe)
+    # ONLY BRIDGE MODE - NO HOST MODE OPTION
     local network_section="    networks:
       - mikrotik_net"
     
@@ -388,7 +457,7 @@ volumes:
     read -p "Enter timezone [UTC]: " timezone
     timezone=${timezone:-UTC}
     
-    # Create docker-compose.yml
+    # Create docker-compose.yml - ONLY BRIDGE MODE
     cat > docker-compose.yml << EOF
 services:
   mikrotik:
@@ -426,16 +495,82 @@ EOF
     echo "Persistent Storage: $persistent_storage"
     echo "Timezone: $timezone"
     echo "=========================================="
+    
+    echo -e "${GREEN}Access Information:${NC}"
+    echo "Web Interface: http://your-server-ip:80"
+    echo "WinBox: your-server-ip:8291"
+    echo "SSH: ssh admin@your-server-ip -p 22"
+    echo ""
+    echo "Container is SAFELY isolated in bridge network"
 }
 
 ensure_docker_running() {
-    if ! docker info &> /dev/null; then
+    # First check if Docker is installed
+    if ! command -v docker &> /dev/null; then
+        log "INFO" "Docker is not installed. Installing..."
+        install_docker
+        return
+    fi
+    
+    # Check if Docker service exists and is running
+    if systemctl is-active --quiet docker; then
+        log "INFO" "Docker service is running"
+    else
+        log "INFO" "Starting Docker service..."
         sudo systemctl start docker
         sudo systemctl enable docker
+        
+        # Wait for Docker to be ready
+        local max_retries=10
+        local retry_count=0
+        
+        while [ $retry_count -lt $max_retries ]; do
+            if docker info &> /dev/null; then
+                log "INFO" "Docker is now running and accessible"
+                return 0
+            else
+                retry_count=$((retry_count + 1))
+                log "WARN" "Waiting for Docker to be ready... ($retry_count/$max_retries)"
+                sleep 3
+            fi
+        done
+        
+        log "ERROR" "Docker failed to become ready after $max_retries attempts"
+        return 1
     fi
 }
 
 deploy_with_compose() {
+    # Check if Docker is installed
+    if ! command -v docker &> /dev/null; then
+        echo -e "${YELLOW}Docker is not installed. Installing Docker first...${NC}"
+        install_docker
+        
+        # Wait for Docker to be ready
+        echo "Waiting for Docker to start..."
+        sleep 10
+    fi
+    
+    # Check if Docker service is running
+    if ! systemctl is-active --quiet docker; then
+        echo -e "${YELLOW}Starting Docker service...${NC}"
+        sudo systemctl start docker
+        sudo systemctl enable docker
+        sleep 5
+    fi
+    
+    # Verify Docker is working
+    if ! docker info &> /dev/null; then
+        echo -e "${RED}Docker is not working properly. Please check Docker installation.${NC}"
+        return 1
+    fi
+    
+    # Check if Docker Compose is available
+    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+        echo -e "${YELLOW}Docker Compose not found. Installing...${NC}"
+        install_docker_compose
+    fi
+    
     ensure_docker_running
     setup_docker_compose
     
@@ -443,8 +578,40 @@ deploy_with_compose() {
         download_docker_image
     fi
     
-    docker-compose up -d
+    # Use the correct compose command
+    if command -v docker-compose &> /dev/null; then
+        docker-compose up -d
+    elif docker compose version &> /dev/null; then
+        docker compose up -d
+    else
+        echo -e "${RED}Docker Compose not available${NC}"
+        return 1
+    fi
+    
     log "INFO" "MikroTik deployed with Docker Compose"
+}
+
+# Also add this function if missing:
+install_docker_compose() {
+    log "INFO" "Installing Docker Compose..."
+    
+    # Install Docker Compose Plugin (preferred method)
+    sudo apt-get update
+    sudo apt-get install -y docker-compose-plugin
+    
+    # Alternative: Install standalone docker-compose
+    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+        log "INFO" "Installing standalone Docker Compose..."
+        sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+    fi
+    
+    # Verify installation
+    if command -v docker-compose &> /dev/null || docker compose version &> /dev/null; then
+        log "INFO" "Docker Compose installed successfully"
+    else
+        error_exit "Failed to install Docker Compose"
+    fi
 }
 
 # ==============================================================================
