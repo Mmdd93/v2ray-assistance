@@ -361,13 +361,11 @@ setup_docker_compose() {
     local network_section="    networks:
       - mikrotik_net"
     
+    # ONLY ALLOWED SYSCTLS IN DOCKER
     local sysctls_section="    sysctls:
-      - net.ipv4.ip_forward=1          # IP forwarding
-      - net.ipv6.conf.all.disable_ipv6=0  # IPv6
-      - net.ipv4.conf.all.rp_filter=0  # Asymmetric routing
-      - net.core.somaxconn=65535       # Max connection queue
-      - net.core.netdev_max_backlog=30000 # Network buffer size
-      - net.ipv4.tcp_max_syn_backlog=30000 # TCP connection queue"
+      - net.ipv4.ip_forward=1
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.rp_filter=0"
     
     # Define port mappings with alternatives
     declare -A port_mappings
@@ -488,23 +486,23 @@ services:
     restart: unless-stopped
 $network_section
     cap_add:
-      - NET_ADMIN     # Network config
-      - SYS_MODULE    # Load kernel modules
-      - SYS_RAWIO     # Raw I/O access
-      - SYS_TIME      # System clock changes
-      - SYS_NICE      # Change process priority
-      - IPC_LOCK      # Lock memory in RAM
+      - NET_ADMIN
+      - SYS_MODULE
+      - SYS_RAWIO
+      - SYS_TIME
+      - SYS_NICE
+      - IPC_LOCK
     devices:
-      - "/dev/net/tun"  # TUN/TAP tunnels
-      - "/dev/kvm"      # Hardware virtualization
-      - "/dev/ppp"      # PPP dial-up connections
+      - "/dev/net/tun"
+      - "/dev/kvm"
+      - "/dev/ppp"
     security_opt:
-      - seccomp=unconfined   # Bypass system call filtering
-      - apparmor=unconfined  # Bypass AppArmor restrictions
-    privileged: true         # Full host access (DANGEROUS)
+      - seccomp=unconfined
+      - apparmor=unconfined
+    privileged: true
     ulimits:
-      nproc: 65535           # Max processes
-      nofile:                # Max open files
+      nproc: 65535
+      nofile:
         soft: 65535
         hard: 65535
 $sysctls_section
