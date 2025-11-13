@@ -224,20 +224,80 @@ install_docker() {
 }
 
 download_docker_image() {
+    local image_choice="$1"
+    
+    case "$image_choice" in
+        "full_licensed")
+            log "INFO" "Downloading full licensed MikroTik (QEMU-based)..."
+            local url="https://github.com/Ptechgithub/MIKROTIK/releases/download/L6/Docker-image-Mikrotik-7.7-L6.7z"
+            local filename="Docker-image-Mikrotik-7.7-L6.7z"
+            
+            wget --continue --progress=bar:force "$url" -O "$filename"
+            7z x "$filename" -y
+            docker load --input mikrotik7.7_docker_livekadeh.com
+            log "INFO" "Full licensed MikroTik image loaded"
+            ;;
+            
+        "free_official")
+            log "INFO" "Downloading free official RouterOS..."
+            docker pull evilfreelancer/docker-routeros:latest
+            log "INFO" "Free official RouterOS image downloaded"
+            ;;
+    esac
+}
 
+select_mikrotik_image() {
+    echo -e "${GREEN}Select MikroTik Docker Image:${NC}"
+    echo "=========================================="
+    echo "1) Full Licensed MikroTik 7.7 (QEMU-based)"
+    echo "   - Full license, all features"
+    echo "   - Source: GitHub download (7z archive)"
+    echo "   - RAM: High usage (~1GB+)"
+    echo ""
+    echo "2) Free Official RouterOS"
+    echo "   - Docker Hub: evilfreelancer/docker-routeros"
+    echo "   - Official, Lightweight, Stable"
+    echo "   - RAM: Low usage (~100-256MB)"
+    echo "   - RECOMMENDED for most users"
+    echo "=========================================="
     
-    local url="https://github.com/Ptechgithub/MIKROTIK/releases/download/L6/Docker-image-Mikrotik-7.7-L6.7z"
-    local filename="Docker-image-Mikrotik-7.7-L6.7z"
+    read -p "Select image (1-2) [1]: " choice
+    choice=${choice:-1}
     
-    wget --continue --progress=bar:force "$url" -O "$filename"
-    7z x "$filename" -y
-    docker load --input mikrotik7.7_docker_livekadeh.com
+    case "$choice" in
+        1) echo "full_licensed" ;;
+        2) echo "free_official" ;;
+        *) echo "full_licensed" ;;
+    esac
+}
+
+get_image_name() {
+    local image_choice="$1"
     
-    log "INFO" "MikroTik Docker image loaded"
+    case "$image_choice" in
+        "full_licensed") echo "livekadeh_com_mikrotik7_7" ;;
+        "free_official") echo "evilfreelancer/docker-routeros:latest" ;;
+        *) echo "livekadeh_com_mikrotik7_7" ;;
+    esac
+}
+
+check_port_availability() {
+    local port="$1"
+    if ss -tuln | grep -q ":${port} " || \
+       netstat -tuln 2>/dev/null | grep -q ":${port} "; then
+        return 1
+    else
+        return 0
+    fi
 }
 
 create_mikrotik_container() {
     local container_name="mikrotik_router"
+    local image_choice=$(select_mikrotik_image)
+    local image_name=$(get_image_name "$image_choice")
+    
+    log "INFO" "Selected image: $image_choice"
+    log "INFO" "Image name: $image_name"
     
     if docker ps -a --format "{{.Names}}" | grep -q "$container_name"; then
         read -p "Container exists. Remove and recreate? (y/n): " recreate
@@ -250,12 +310,91 @@ create_mikrotik_container() {
         fi
     fi
     
-    # Build port mappings
-    local port_mappings=""
-    for port in $DEFAULT_PORTS; do
-        port_mappings+=" -p $port:$port"
-    done
+    # Download the selected image
+    download_docker_image "$image_choice"
     
+    # Define port mappings with alternatives (from compose)
+    declare -A port_mappings
+    port_mappings=(
+        ["80"]="8080"
+        ["8291"]="8292" 
+        ["22"]="2222"
+        ["443"]="8443"
+        ["53"]="5353"
+        ["1701"]="11701"
+        ["1723"]="11723"
+        ["1812"]="11812"
+        ["1813"]="11813"
+        ["2000"]="12000"
+        ["3784"]="13784"
+        ["3799"]="13799"
+        ["4500"]="14500"
+        ["4784"]="14784"
+        ["500"]="1500"
+        ["1194"]="11194"
+        ["5678"]="15678"
+        ["5679"]="15679"
+        ["8728"]="18728"
+        ["8729"]="18729"
+        ["60594"]="60595"
+        ["8080"]="18080"
+        ["20561"]="20562"
+        ["8900"]="18900"
+        ["8999"]="18999"
+        ["9999"]="19999"
+        ["21"]="2021"
+        ["23"]="2023"
+        ["110"]="10110"
+        ["995"]="10995"
+        ["143"]="10143"
+        ["993"]="10993"
+        ["25"]="10025"
+        ["465"]="10465"
+        ["587"]="10587"
+        ["3306"]="13306"
+        ["5432"]="15432"
+        ["3389"]="13389"
+        ["5900"]="15900"
+    )
+    
+    # Check port availability and build port mappings (from compose)
+    local final_port_mappings=""
+    echo -e "${GREEN}Checking port availability...${NC}"
+    
+    for port in $DEFAULT_PORTS; do
+        local alt_port="${port_mappings[$port]:-$(($port + 10000))}"
+        
+        if check_port_availability "$port"; then
+            final_port_mappings+=" -p $port:$port"
+            log "INFO" "Port $port is available"
+        else
+            echo -e "${YELLOW}Port $port is already in use${NC}"
+            echo "Suggested alternative: $alt_port"
+            read -p "Enter alternative port for $port (or press Enter for $alt_port, or 'skip' to skip): " user_port
+            
+            if [[ -z "$user_port" ]]; then
+                final_port="$alt_port"
+            elif [[ "$user_port" == "skip" ]]; then
+                log "INFO" "Skipping port $port"
+                continue
+            else
+                if [[ "$user_port" =~ ^[0-9]+$ ]] && [ "$user_port" -ge 1 ] && [ "$user_port" -le 65535 ]; then
+                    final_port="$user_port"
+                else
+                    echo -e "${RED}Invalid port, using default alternative $alt_port${NC}"
+                    final_port="$alt_port"
+                fi
+            fi
+            
+            if check_port_availability "$final_port"; then
+                final_port_mappings+=" -p $final_port:$port"
+                log "INFO" "Mapping $port -> $final_port"
+            else
+                echo -e "${RED}Alternative port $final_port is also busy, skipping port $port${NC}"
+            fi
+        fi
+    done
+
     # Ask about persistent storage
     read -p "Enable persistent storage? (recommended) [Y/n]: " persistent_storage
     persistent_storage=${persistent_storage:-Y}
@@ -274,23 +413,32 @@ create_mikrotik_container() {
     
     # Add time volume
     volume_mappings+=" -v /etc/localtime:/etc/localtime:ro"
+
+    # Ask for timezone
+    read -p "Enter timezone [UTC]: " timezone
+    timezone=${timezone:-UTC}
     
-    # Create the container with all options
+    # Add all capabilities and devices from compose
+    local capabilities="--cap-add=NET_ADMIN --cap-add=SYS_MODULE --cap-add=SYS_RAWIO --cap-add=SYS_TIME --cap-add=SYS_NICE --cap-add=IPC_LOCK"
+    local devices="--device=/dev/net/tun --device=/dev/kvm --device=/dev/ppp"
+    local ulimits="--ulimit nproc=65535 --ulimit nofile=65535:65535"
+    
+    # Create the container with ALL options from compose
     docker run -d \
         --name "$container_name" \
         --restart unless-stopped \
-        --cap-add=NET_ADMIN \
-        --cap-add=SYS_MODULE \
-        --cap-add=SYS_RAWIO \
-        --device=/dev/net/tun \
+        $capabilities \
+        $devices \
+        --privileged \
+        $ulimits \
         --sysctl net.ipv4.ip_forward=1 \
         --sysctl net.ipv6.conf.all.disable_ipv6=0 \
         --sysctl net.ipv4.conf.all.rp_filter=0 \
-        $port_mappings \
+        $final_port_mappings \
         $volume_mappings \
-        -e TZ=UTC \
+        -e TZ=$timezone \
         -e ROS_LICENSE=yes \
-        livekadeh_com_mikrotik7_7
+        $image_name
         
     if [ $? -eq 0 ]; then
         log "INFO" "MikroTik container created successfully"
@@ -303,65 +451,66 @@ create_mikrotik_container() {
         docker ps -f "name=$container_name"
         
         # Show access information
-        show_container_access_info
+        echo -e "${GREEN}Access Information:${NC}"
+        echo "=========================================="
+        
+        local host_ip=$(hostname -I | awk '{print $1}')
+        [[ -z "$host_ip" ]] && host_ip="localhost"
+        
+        echo "Image Type: $image_choice"
+        echo "Web Interface: http://$host_ip:80"
+        echo "WinBox:        $host_ip:8291"
+        echo "SSH:           ssh admin@$host_ip -p 22"
+        echo "HTTPS:         https://$host_ip:443"
+        echo ""
+        echo "Default credentials:"
+        echo "Username: admin"
+        echo "Password: (no password)"
+        echo ""
+        echo "Container access: docker exec -it mikrotik_router bash"
+        echo "=========================================="
+        
+        # Show final configuration summary (from compose)
+        echo -e "${GREEN}Final Configuration:${NC}"
+        echo "=========================================="
+        echo -e "Image Type: $image_choice"
+        echo -e "Port Mappings: $final_port_mappings"
+        echo "Persistent Storage: $persistent_storage"
+        echo "Timezone: $timezone"
+        echo "=========================================="
         
     else
         error_exit "Failed to create MikroTik container"
     fi
 }
 
-show_container_access_info() {
-    echo -e "${GREEN}Access Information:${NC}"
-    echo "=========================================="
-    
-    local host_ip=$(hostname -I | awk '{print $1}')
-    [[ -z "$host_ip" ]] && host_ip="localhost"
-    
-    echo "Web Interface: http://$host_ip:80"
-    echo "WinBox:        $host_ip:8291"
-    echo "SSH:           ssh admin@$host_ip -p 22"
-    echo "HTTPS:         https://$host_ip:443"
-    echo ""
-    echo "Default credentials:"
-    echo "Username: admin"
-    echo "Password: (no password)"
-    echo ""
-    echo "Container access: docker exec -it mikrotik_router bash"
-    echo "=========================================="
-}
-
 install_mikrotik_docker() {
-
-    
     install_docker
-    download_docker_image
     create_mikrotik_container
-    
     log "INFO" "MikroTik Docker installation completed"
 }
 
 # ==============================================================================
-# DOCKER COMPOSE
+# DOCKER COMPOSE (simplified since features are now in create_mikrotik_container)
 # ==============================================================================
-
-check_port_availability() {
-    local port="$1"
-    if ss -tuln | grep -q ":${port} " || \
-       netstat -tuln 2>/dev/null | grep -q ":${port} "; then
-        return 1
-    else
-        return 0
-    fi
-}
 
 setup_docker_compose() {
     log "INFO" "Setting up Docker Compose..."
     
-    # ONLY BRIDGE MODE - NO HOST MODE OPTION
+    # Select image type for compose
+    local image_choice=$(select_mikrotik_image)
+    local image_name=$(get_image_name "$image_choice")
+    
+    log "INFO" "Selected image for Compose: $image_name"
+    
+    # Download the selected image
+    download_docker_image "$image_choice"
+    
+    # Network section
     local network_section="    networks:
       - mikrotik_net"
     
-    # ONLY ALLOWED SYSCTLS IN DOCKER
+    # Sysctls section
     local sysctls_section="    sysctls:
       - net.ipv4.ip_forward=1
       - net.ipv6.conf.all.disable_ipv6=0
@@ -477,11 +626,11 @@ volumes:
     read -p "Enter timezone [UTC]: " timezone
     timezone=${timezone:-UTC}
     
-    # Create docker-compose.yml - ONLY BRIDGE MODE
+    # Create docker-compose.yml
     cat > docker-compose.yml << EOF
 services:
   mikrotik:
-    image: livekadeh_com_mikrotik7_7
+    image: $image_name
     container_name: mikrotik_router
     restart: unless-stopped
 $network_section
@@ -521,7 +670,8 @@ EOF
     # Show configuration
     echo -e "${GREEN}Final Configuration:${NC}"
     echo "=========================================="
-    echo -e "Network Mode: BRIDGE (SAFE)"
+    echo -e "Network Mode: BRIDGE"
+    echo -e "Image Type: $image_choice"
     echo -e "Port Mappings:"
     echo -e "$ports_section"
     echo "Persistent Storage: $persistent_storage"
@@ -533,44 +683,10 @@ EOF
     echo "WinBox: your-server-ip:8291"
     echo "SSH: ssh admin@your-server-ip -p 22"
     echo ""
-    echo "Container is SAFELY isolated in bridge network"
+    echo "Container is isolated in bridge network"
 }
 
-ensure_docker_running() {
-    # First check if Docker is installed
-    if ! command -v docker &> /dev/null; then
-        log "INFO" "Docker is not installed. Installing..."
-        install_docker
-        return
-    fi
-    
-    # Check if Docker service exists and is running
-    if systemctl is-active --quiet docker; then
-        log "INFO" "Docker service is running"
-    else
-        log "INFO" "Starting Docker service..."
-        sudo systemctl start docker
-        sudo systemctl enable docker
-        
-        # Wait for Docker to be ready
-        local max_retries=10
-        local retry_count=0
-        
-        while [ $retry_count -lt $max_retries ]; do
-            if docker info &> /dev/null; then
-                log "INFO" "Docker is now running and accessible"
-                return 0
-            else
-                retry_count=$((retry_count + 1))
-                log "WARN" "Waiting for Docker to be ready... ($retry_count/$max_retries)"
-                sleep 3
-            fi
-        done
-        
-        log "ERROR" "Docker failed to become ready after $max_retries attempts"
-        return 1
-    fi
-}
+
 
 deploy_with_compose() {
     # Check if Docker is installed
@@ -622,7 +738,41 @@ deploy_with_compose() {
     
     log "INFO" "MikroTik deployed with Docker Compose"
 }
-
+ensure_docker_running() {
+    # First check if Docker is installed
+    if ! command -v docker &> /dev/null; then
+        log "INFO" "Docker is not installed. Installing..."
+        install_docker
+        return
+    fi
+    
+    # Check if Docker service exists and is running
+    if systemctl is-active --quiet docker; then
+        log "INFO" "Docker service is running"
+    else
+        log "INFO" "Starting Docker service..."
+        sudo systemctl start docker
+        sudo systemctl enable docker
+        
+        # Wait for Docker to be ready
+        local max_retries=10
+        local retry_count=0
+        
+        while [ $retry_count -lt $max_retries ]; do
+            if docker info &> /dev/null; then
+                log "INFO" "Docker is now running and accessible"
+                return 0
+            else
+                retry_count=$((retry_count + 1))
+                log "WARN" "Waiting for Docker to be ready... ($retry_count/$max_retries)"
+                sleep 3
+            fi
+        done
+        
+        log "ERROR" "Docker failed to become ready after $max_retries attempts"
+        return 1
+    fi
+}
 # Also add this function if missing:
 install_docker_compose() {
 
