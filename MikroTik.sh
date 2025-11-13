@@ -1220,12 +1220,56 @@ manage_container() {
                 docker exec -it "$container_name" /bin/sh || \
                 echo "Cannot access container shell"
                 ;;
-            6)
-                echo -e "${GREEN}Container Information:${NC}"
-                echo "=========================================="
-                docker inspect "$container_name" | jq '.[] | {Name: .Name, State: .State.Status, Image: .Config.Image, IP: .NetworkSettings.IPAddress, Ports: .NetworkSettings.Ports}' 2>/dev/null || \
-                docker inspect "$container_name"
-                ;;
+6)
+    echo -e "${GREEN}Container Information:${NC}"
+    echo "=========================================="
+    
+    # Basic container info
+    echo -e "${YELLOW}📦 Basic Info:${NC}"
+    echo "------------------------------------------"
+    docker inspect mikrotik_router --format='
+    Name:   {{.Name}}
+    Image:  {{.Config.Image}}
+    Status: {{.State.Status}}
+    Running: {{.State.Running}}
+    Started: {{.State.StartedAt}}
+    ' 2>/dev/null || echo "Container not found"
+
+    echo -e "\n${YELLOW}🔌 Active Port Mappings:${NC}"
+    echo "------------------------------------------"
+    
+    # Show only ports that are actually mapped (not null)
+    docker inspect mikrotik_router --format='{{range $p, $conf := .NetworkSettings.Ports}}{{$p}} {{end}}' 2>/dev/null | tr ' ' '\n' | while read port; do
+        [[ -n "$port" ]] && docker port mikrotik_router "$port" 2>/dev/null | head -1 | while read mapping; do
+            if [[ -n "$mapping" ]]; then
+                echo "  $port → $mapping"
+            fi
+        done
+    done
+
+    echo -e "\n${YELLOW}🚀 Essential Ports:${NC}"
+    echo "------------------------------------------"
+    # Show only the most important ports
+    for port in 80 8291 22 443 53 1723 500 4500 1701 1194; do
+        mapping=$(docker port mikrotik_router "$port/tcp" 2>/dev/null | head -1)
+        if [[ -n "$mapping" ]]; then
+            echo "  $port/tcp → $mapping"
+        fi
+    done
+
+    echo -e "\n${YELLOW}📊 Resource Usage:${NC}"
+    echo "------------------------------------------"
+    docker stats mikrotik_router --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}" 2>/dev/null || echo "  Cannot get resource stats"
+
+    echo -e "\n${YELLOW}🔑 Quick Access:${NC}"
+    echo "------------------------------------------"
+    local host_ip=$(hostname -I | awk '{print $1}')
+    [[ -z "$host_ip" ]] && host_ip="your-server-ip"
+    echo "  Web:    http://$host_ip:80"
+    echo "  WinBox: $host_ip:8291"
+    echo "  SSH:    ssh admin@$host_ip -p 22"
+    echo "  HTTPS:  https://$host_ip:443"
+    ;;
             7)
                 read -p "Are you sure you want to remove the container? (y/n): " confirm
                 if [[ "$confirm" == "y" ]]; then
@@ -1343,11 +1387,54 @@ manage_compose() {
                     log "ERROR" "Failed to recreate services"
                 fi
                 ;;
-            7)
-                echo -e "${GREEN}Compose Services Status:${NC}"
-                echo "=========================================="
-                $compose_cmd ps
-                ;;
+
+7)
+    echo -e "${GREEN}Compose Services Status:${NC}"
+    echo "=========================================="
+    
+    # Service info
+    echo -e "${YELLOW}📦 Service Information:${NC}"
+    echo "------------------------------------------"
+    $compose_cmd ps --format "table {{.Service}}\t{{.Image}}\t{{.Status}}"
+    
+    echo -e "\n${YELLOW}🔌 Active Port Mappings:${NC}"
+    echo "------------------------------------------"
+    
+    # Show only ports that are actually mapped (not null)
+    docker inspect mikrotik_router --format='{{range $p, $conf := .NetworkSettings.Ports}}{{$p}} {{end}}' 2>/dev/null | tr ' ' '\n' | while read port; do
+        [[ -n "$port" ]] && docker port mikrotik_router "$port" 2>/dev/null | head -1 | while read mapping; do
+            if [[ -n "$mapping" ]]; then
+                echo "  $port → $mapping"
+            fi
+        done
+    done
+
+    echo -e "\n${YELLOW}🚀 Essential Ports:${NC}"
+    echo "------------------------------------------"
+    # Show only the most important ports
+    for port in 80 8291 22 443 53 1723 500 4500 1701 1194; do
+        mapping=$(docker port mikrotik_router "$port/tcp" 2>/dev/null | head -1)
+        if [[ -n "$mapping" ]]; then
+            echo "  $port/tcp → $mapping"
+        fi
+    done
+
+    echo -e "\n${YELLOW}📊 Resource Usage:${NC}"
+    echo "------------------------------------------"
+    docker stats mikrotik_router --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}" 2>/dev/null || echo "  Cannot get resource stats"
+
+    echo -e "\n${YELLOW}🔑 Quick Access:${NC}"
+    echo "------------------------------------------"
+    local host_ip=$(hostname -I | awk '{print $1}')
+    [[ -z "$host_ip" ]] && host_ip="your-server-ip"
+    echo "  Web:    http://$host_ip:80"
+    echo "  WinBox: $host_ip:8291"
+    echo "  SSH:    ssh admin@$host_ip -p 22"
+    echo "  HTTPS:  https://$host_ip:443"
+    echo "  DNS:    $host_ip:53"
+    echo "  PPTP:   $host_ip:1723"
+    echo "  IPSec:  $host_ip:500 & 4500"
+    ;;
             0) 
                 return 
                 ;;
