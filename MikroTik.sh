@@ -385,7 +385,7 @@ check_port_availability() {
 create_mikrotik_container() {
     local container_name="mikrotik_router"
     
-# Simple image selection directly in the function
+    # Simple image selection directly in the function
     clear
     echo -e "${GREEN}Select MikroTik Docker Image:${NC}"
     echo "=========================================="
@@ -420,7 +420,7 @@ create_mikrotik_container() {
     # Handle return option
     if [[ $choice == 0 ]]; then
         log "INFO" "Returning to main menu..."
-        main_menu
+        main_menu  # Fixed: return instead of calling main_menu
     fi
 
     local image_choice
@@ -479,8 +479,17 @@ create_mikrotik_container() {
         local alt_port="${port_mappings[$port]:-$(($port + 10000))}"
         
         if check_port_availability "$port"; then
-            final_port_mappings+=" -p $port:$port"
-            log "INFO" "Port $port is available"
+            # Add both TCP and UDP for key ports
+            case $port in
+                53|500|4500|1701|1194|1812|1813)
+                    final_port_mappings+=" -p $port:$port -p $port:$port/udp"
+                    log "INFO" "Port $port mapped for TCP and UDP"
+                    ;;
+                *)
+                    final_port_mappings+=" -p $port:$port"
+                    log "INFO" "Port $port is available (TCP)"
+                    ;;
+            esac
         else
             echo -e "${YELLOW}Port $port is already in use${NC}"
             echo "Suggested alternative: $alt_port"
@@ -501,8 +510,17 @@ create_mikrotik_container() {
             fi
             
             if check_port_availability "$final_port"; then
-                final_port_mappings+=" -p $final_port:$port"
-                log "INFO" "Mapping $port -> $final_port"
+                # Add both TCP and UDP for key ports
+                case $port in
+                    53|500|4500|1701|1194|1812|1813)
+                        final_port_mappings+=" -p $final_port:$port -p $final_port:$port/udp"
+                        log "INFO" "Mapping $port -> $final_port (TCP and UDP)"
+                        ;;
+                    *)
+                        final_port_mappings+=" -p $final_port:$port"
+                        log "INFO" "Mapping $port -> $final_port"
+                        ;;
+                esac
             else
                 echo -e "${RED}Alternative port $final_port is also busy, skipping port $port${NC}"
             fi
@@ -603,7 +621,7 @@ create_mikrotik_container() {
 setup_docker_compose() {
     log "INFO" "Setting up Docker Compose..."
     
-# Simple image selection directly in the function
+    # Simple image selection directly in the function
     clear
     echo -e "${GREEN}Select MikroTik Docker Image:${NC}"
     echo "=========================================="
@@ -638,7 +656,7 @@ setup_docker_compose() {
     # Handle return option
     if [[ $choice == 0 ]]; then
         log "INFO" "Returning to main menu..."
-        main_menu
+        main_menu  # Return with error code to indicate cancellation
     fi
 
     local image_choice
@@ -663,8 +681,6 @@ setup_docker_compose() {
     
     # Download the selected image
     download_docker_image "$image_choice"
-    
-
     
     # Network section
     local network_section="    networks:
@@ -696,8 +712,18 @@ setup_docker_compose() {
         local alt_port="${port_mappings[$port]:-$(($port + 10000))}"
         
         if check_port_availability "$port"; then
-            ports_section+="      - \"$port:$port\"\n"
-            log "INFO" "Port $port is available"
+            # Add both TCP and UDP for key ports
+            case $port in
+                53|500|4500|1701|1194|1812|1813)
+                    ports_section+="      - \"$port:$port\"\n"
+                    ports_section+="      - \"$port:$port/udp\"\n"
+                    log "INFO" "Port $port mapped for TCP and UDP"
+                    ;;
+                *)
+                    ports_section+="      - \"$port:$port\"\n"
+                    log "INFO" "Port $port is available (TCP)"
+                    ;;
+            esac
         else
             echo -e "${YELLOW}Port $port is already in use${NC}"
             echo "Suggested alternative: $alt_port"
@@ -718,8 +744,18 @@ setup_docker_compose() {
             fi
             
             if check_port_availability "$final_port"; then
-                ports_section+="      - \"$final_port:$port\"\n"
-                log "INFO" "Mapping $port -> $final_port"
+                # Add both TCP and UDP for key ports
+                case $port in
+                    53|500|4500|1701|1194|1812|1813)
+                        ports_section+="      - \"$final_port:$port\"\n"
+                        ports_section+="      - \"$final_port:$port/udp\"\n"
+                        log "INFO" "Mapping $port -> $final_port (TCP and UDP)"
+                        ;;
+                    *)
+                        ports_section+="      - \"$final_port:$port\"\n"
+                        log "INFO" "Mapping $port -> $final_port"
+                        ;;
+                esac
             else
                 echo -e "${RED}Alternative port $final_port is also busy, skipping port $port${NC}"
             fi
@@ -809,11 +845,24 @@ EOF
     echo "=========================================="
     
     echo -e "${GREEN}Access Information:${NC}"
-    echo "Web Interface: http://your-server-ip:80"
-    echo "WinBox: your-server-ip:8291"
-    echo "SSH: ssh admin@your-server-ip -p 22"
+    local host_ip=$(hostname -I | awk '{print $1}')
+    [[ -z "$host_ip" ]] && host_ip="your-server-ip"
+    echo "Web Interface: http://$host_ip:80"
+    echo "WinBox: $host_ip:8291"
+    echo "SSH: ssh admin@$host_ip -p 22"
+    echo "HTTPS: https://$host_ip:443"
     echo ""
     echo "Container is isolated in bridge network"
+    
+    # Ask if user wants to deploy now
+    read -p "Deploy with Docker Compose now? [Y/n]: " deploy_now
+    deploy_now=${deploy_now:-Y}
+    
+    if [[ "$deploy_now" =~ ^[Yy]$ ]]; then
+        deploy_with_compose
+    else
+        log "INFO" "Docker Compose file created. Run 'docker-compose up -d' to deploy later."
+    fi
 }
 
 deploy_with_compose() {
