@@ -496,9 +496,6 @@ $network_section
       - "/dev/net/tun"
       - "/dev/kvm"
       - "/dev/ppp"
-    security_opt:
-      - seccomp=unconfined
-      - apparmor=unconfined
     privileged: true
     ulimits:
       nproc: 65535
