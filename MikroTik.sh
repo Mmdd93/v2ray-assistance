@@ -363,6 +363,12 @@ download_docker_image() {
             docker pull evilfreelancer/docker-routeros:latest
             log "INFO" "Free official RouterOS image downloaded"
             ;;
+            
+        "mehdi_alt")
+            log "INFO" "Downloading Mehdi682007 MikroTik 7.7..."
+            docker pull mehdi682007/docker7.7:latest
+            log "INFO" "Mehdi682007 MikroTik image downloaded"
+            ;;
     esac
 }
 
@@ -382,8 +388,28 @@ create_mikrotik_container() {
     # Simple image selection directly in the function
     clear
     echo -e "${GREEN}Select MikroTik Docker Image:${NC}"
-    echo "1) Full Licensed (QEMU) - High RAM"
-    echo "2) Free Official - Low RAM (Recommended)"
+    echo "=========================================="
+    echo "1) Github Full Licensed 7.7"
+    echo "   - Source: Ptechgithub/MIKROTIK"
+    echo "   - Type: QEMU Virtual Machine"
+    echo "   - RAM: High (~1GB+)"
+    echo "   - Disk: High (~15GB+)"
+    echo "   - Features: Full license, all capabilities"
+    echo ""
+    echo "2) evilfreelancer - Free Official"
+    echo "   - Source: Docker Hub Official"
+    echo "   - Type: Native Container"
+    echo "   - RAM: Low (~512MB)"
+    echo "   - Disk: Low (~500MB)"
+    echo "   - Features: Lightweight, stable, all capabilities"
+    echo ""
+    echo "3) Mehdi682007 Docker 7.7"
+    echo "   - Source: Docker Hub Community"
+    echo "   - Type: Docker Image"
+    echo "   - RAM: Medium (~512MB)"
+    echo "   - Disk: Medium (~500MB)"
+    echo "   - Features: Full licensed, optimized, all capabilities"
+    echo "=========================================="
     
     local choice
     read -p "Select [1]: " choice
@@ -391,13 +417,20 @@ create_mikrotik_container() {
     
     local image_choice
     local image_name
-    if [[ $choice == 2 ]]; then
-        image_choice="free_official"
-        image_name="evilfreelancer/docker-routeros:latest"
-    else
-        image_choice="full_licensed" 
-        image_name="livekadeh_com_mikrotik7_7"
-    fi
+    case $choice in
+        2)
+            image_choice="free_official"
+            image_name="evilfreelancer/docker-routeros:latest"
+            ;;
+        3)
+            image_choice="mehdi_alt"
+            image_name="mehdi682007/docker7.7:latest"
+            ;;
+        *)
+            image_choice="full_licensed" 
+            image_name="livekadeh_com_mikrotik7_7"
+            ;;
+    esac
     
     log "INFO" "Selected: $image_choice"
     log "INFO" "Image: $image_name"
@@ -412,7 +445,6 @@ create_mikrotik_container() {
             return 0
         fi
     fi
-
     
     # Download the selected image
     download_docker_image "$image_choice"
@@ -566,8 +598,29 @@ setup_docker_compose() {
     # Simple image selection directly in the function
     clear
     echo -e "${GREEN}Select MikroTik Docker Image:${NC}"
-    echo "1) Full Licensed (QEMU) - High RAM"
-    echo "2) Free Official - Low RAM (Recommended)"
+    echo "=========================================="
+    echo "1) Github Full Licensed 7.7"
+    echo "   - Source: Ptechgithub/MIKROTIK"
+    echo "   - Type: QEMU Virtual Machine"
+    echo "   - RAM: High (~1GB+)"
+    echo "   - Disk: High (~15GB+)"
+    echo "   - Features: Full license, all capabilities"
+    echo ""
+    echo "2) evilfreelancer - Free Official"
+    echo "   - Source: Docker Hub Official"
+    echo "   - Type: Native Container"
+    echo "   - RAM: Low (~512MB)"
+    echo "   - Disk: Low (~500MB)"
+    echo "   - Features: Lightweight, stable, all capabilities"
+    echo ""
+    echo "3) Mehdi682007 Docker 7.7"
+    echo "   - Source: Docker Hub Community"
+    echo "   - Type: Docker Image"
+    echo "   - RAM: Medium (~512MB)"
+    echo "   - Disk: Medium (~500MB)"
+    echo "   - Features: Full licensed, optimized, all capabilities"
+    echo "=========================================="
+    
     
     local choice
     read -p "Select [1]: " choice
@@ -575,19 +628,28 @@ setup_docker_compose() {
     
     local image_choice
     local image_name
-    if [[ $choice == 2 ]]; then
-        image_choice="free_official"
-        image_name="evilfreelancer/docker-routeros:latest"
-    else
-        image_choice="full_licensed" 
-        image_name="livekadeh_com_mikrotik7_7"
-    fi
+    case $choice in
+        2)
+            image_choice="free_official"
+            image_name="evilfreelancer/docker-routeros:latest"
+            ;;
+        3)
+            image_choice="mehdi_alt"
+            image_name="mehdi682007/docker7.7:latest"
+            ;;
+        *)
+            image_choice="full_licensed" 
+            image_name="livekadeh_com_mikrotik7_7"
+            ;;
+    esac
     
     log "INFO" "Selected: $image_choice"
     log "INFO" "Image: $image_name"
     
     # Download the selected image
     download_docker_image "$image_choice"
+    
+
     
     # Network section
     local network_section="    networks:
@@ -930,52 +992,66 @@ cleanup_system() {
     echo "1) Remove All Stopped Containers"
     echo "2) Remove Dangling Images"
     echo "3) Remove Unused Networks"
-    echo "4) Remove All Unused Data (Prune)"
-    echo "5) Cleanup Temporary Files"
-    echo "6) Remove MikroTik Container Only"
-    echo "7) Remove MikroTik Container & Image"
-    echo "8) Remove ALL Docker Data (Nuclear Option)"
-    echo "9) Remove ALL MikroTik Files (Complete Clean)"
+    echo "4) Remove Unused Volumes"
+    echo "5) Remove All Unused Data (Prune)"
+    echo "6) Cleanup Temporary Files"
+    echo "7) Remove MikroTik Container Only"
+    echo "8) Remove MikroTik Container & Image"
+    echo "9) Remove MikroTik Container, Image & Volume"
+    echo "10) Remove ALL Docker Data (Nuclear Option)"
+    echo "11) Remove ALL MikroTik Files (Complete Clean)"
     echo "0) Back to Main Menu"
     echo ""
     
-    read -p "Select cleanup option [0-9]: " option
+    read -p "Select cleanup option [0-11]: " option
     
     case $option in
         1)
             docker container prune -f
-            echo -e "INFO" "Stopped containers removed"
+            log "INFO" "Stopped containers removed"
             ;;
         2)
             docker image prune -f
-            echo -e "INFO" "Dangling images removed"
+            log "INFO" "Dangling images removed"
             ;;
         3)
             docker network prune -f
-            echo -e "INFO" "Unused networks removed"
+            log "INFO" "Unused networks removed"
             ;;
         4)
-            docker system prune -af
-            echo -e "INFO" "All unused data removed"
+            docker volume prune -f
+            log "INFO" "Unused volumes removed"
             ;;
         5)
-            rm -rf "$TEMP_DIR"
-            echo -e "INFO" "Temporary files cleaned up"
+            docker system prune -af
+            log "INFO" "All unused data removed"
             ;;
         6)
-            echo -e "${YELLOW}Removing MikroTik container...${NC}"
-            docker stop mikrotik_router 2>/dev/null || true
-            docker rm mikrotik_router 2>/dev/null || true
-            echo -e "INFO" "MikroTik container removed"
+            rm -rf "$TEMP_DIR"
+            log "INFO" "Temporary files cleaned up"
             ;;
         7)
-            echo -e "${YELLOW}Removing MikroTik container and image...${NC}"
+            log "INFO" "Removing MikroTik container..."
+            docker stop mikrotik_router 2>/dev/null || true
+            docker rm mikrotik_router 2>/dev/null || true
+            log "INFO" "MikroTik container removed"
+            ;;
+        8)
+            log "INFO" "Removing MikroTik container and image..."
             docker stop mikrotik_router 2>/dev/null || true
             docker rm mikrotik_router 2>/dev/null || true
             docker rmi livekadeh_com_mikrotik7_7 2>/dev/null || true
-            echo -e "INFO" "MikroTik container and image removed"
+            log "INFO" "MikroTik container and image removed"
             ;;
-        8)
+        9)
+            log "INFO" "Removing MikroTik container, image and volume..."
+            docker stop mikrotik_router 2>/dev/null || true
+            docker rm mikrotik_router 2>/dev/null || true
+            docker rmi livekadeh_com_mikrotik7_7 2>/dev/null || true
+            docker volume rm mikrotik_data 2>/dev/null || true
+            log "INFO" "MikroTik container, image and volume removed"
+            ;;
+        10)
             echo -e "${RED}==========================================${NC}"
             echo -e "${RED}        WARNING: NUCLEAR OPTION${NC}"
             echo -e "${RED}==========================================${NC}"
@@ -988,7 +1064,7 @@ cleanup_system() {
             echo ""
             read -p "Type 'DELETE EVERYTHING' to confirm: " confirmation
             if [[ "$confirmation" == "DELETE EVERYTHING" ]]; then
-                echo -e "${RED}Removing ALL Docker data...${NC}"
+                log "INFO" "Removing ALL Docker data..."
                 
                 # Remove all containers
                 docker rm -f $(docker ps -aq) 2>/dev/null || true
@@ -1005,17 +1081,18 @@ cleanup_system() {
                 # Full system prune
                 docker system prune -af --volumes
                 
-                echo -e "INFO" "ALL Docker data removed"
+                log "INFO" "ALL Docker data removed"
             else
-                echo "Nuclear cleanup cancelled"
+                log "INFO" "Nuclear cleanup cancelled"
             fi
             ;;
-        9)
+        11)
             echo -e "${RED}==========================================${NC}"
             echo -e "${RED}    COMPLETE MIKROTIK CLEANUP${NC}"
             echo -e "${RED}==========================================${NC}"
             echo "This will remove:"
             echo "✓ All MikroTik Docker containers/images"
+            echo "✓ All MikroTik volumes"
             echo "✓ All leftover MikroTik files"
             echo "✓ All downloaded MikroTik images"
             echo "✓ All temporary files"
@@ -1023,21 +1100,19 @@ cleanup_system() {
             echo ""
             read -p "Type 'CLEAN MIKROTIK' to confirm: " confirmation
             if [[ "$confirmation" == "CLEAN MIKROTIK" ]]; then
-                echo -e "${RED}Removing ALL MikroTik files...${NC}"
-                 # Remove all containers
-                docker rm -f $(docker ps -aq) 2>/dev/null || true
-                # Remove all images
-                docker rmi -f $(docker images -aq) 2>/dev/null || true
-                # Remove all volumes
-                docker volume rm -f $(docker volume ls -q) 2>/dev/null || true
-                # Remove all networks (except defaults)
-                docker network rm $(docker network ls -q --filter type=custom) 2>/dev/null || true
-                # Full system prune
-                docker system prune -af --volumes
+                log "INFO" "Removing ALL MikroTik files..."
+                
                 # Stop and remove MikroTik containers
                 docker stop mikrotik_router 2>/dev/null || true
                 docker rm mikrotik_router 2>/dev/null || true
+                
+                # Remove all MikroTik images
                 docker rmi livekadeh_com_mikrotik7_7 2>/dev/null || true
+                docker rmi evilfreelancer/docker-routeros:latest 2>/dev/null || true
+                docker rmi mehdi682007/docker7.7:latest 2>/dev/null || true
+                
+                # Remove MikroTik volumes
+                docker volume rm mikrotik_data 2>/dev/null || true
                 
                 # Remove downloaded image files (KEEP 7z files)
                 rm -f /root/mikrotik7.7_docker_livekadeh.com 2>/dev/null || true
@@ -1061,51 +1136,14 @@ cleanup_system() {
                 rm -f docker-compose.*.yml 2>/dev/null || true
                 rm -f .env 2>/dev/null || true
                 
-                # Remove setup scripts
-                rm -f setup_*.sh 2>/dev/null || true
-                
                 # Clean Docker system
                 docker system prune -af 2>/dev/null || true
                 
-                # Force containerd cleanup - EMPTY ENTIRE CONTAINERD DIRECTORY
-                echo "Cleaning containerd data..."
-                if systemctl is-active --quiet containerd; then
-                    echo "Stopping containerd..."
-                    systemctl stop containerd
-                    
-                    # Empty the entire containerd directory
-                    if [[ -d "/var/lib/containerd" ]]; then
-                        echo "Emptying /var/lib/containerd..."
-                        # Remove all contents but keep the directory structure
-                        find /var/lib/containerd -mindepth 1 -delete 2>/dev/null || true
-                    fi
-                    
-                    echo "Starting containerd..."
-                    systemctl start containerd
-                    
-                    # Wait for containerd to initialize
-                    sleep 5
-                fi
-                
-                # Also clean any temporary containerd directories
-                if [[ -d "/var/lib/containerd" ]]; then
-                    # Ensure the directory exists and has proper structure
-                    mkdir -p /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots
-                    mkdir -p /var/lib/containerd/io.containerd.content.v1.content/blobs/sha256
-                    chown -R root:root /var/lib/containerd 2>/dev/null || true
-                fi
-                
-                # Method 2: Use ctr command if available
-                if command -v ctr &> /dev/null; then
-                    echo "Using ctr to clean images..."
-                    ctr -n moby images rm $(ctr -n moby images ls -q) 2>/dev/null || true
-                fi
-                
-                echo -e "INFO" "ALL MikroTik files removed"
-                echo -e "${GREEN}Cleanup complete! Freed up ~5GB+ of space.${NC}"
-                echo -e "${YELLOW}Note: Downloaded .7z files were kept for future use.${NC}"
+                log "INFO" "ALL MikroTik files removed"
+                log "INFO" "Cleanup complete! Freed up significant disk space."
+                log "INFO" "Note: Downloaded .7z files were kept for future use."
             else
-                echo "MikroTik cleanup cancelled"
+                log "INFO" "MikroTik cleanup cancelled"
             fi
             ;;
         0) return ;;
