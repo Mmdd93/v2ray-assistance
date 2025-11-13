@@ -385,7 +385,7 @@ check_port_availability() {
 create_mikrotik_container() {
     local container_name="mikrotik_router"
     
-    # Simple image selection directly in the function
+# Simple image selection directly in the function
     clear
     echo -e "${GREEN}Select MikroTik Docker Image:${NC}"
     echo "=========================================="
@@ -409,12 +409,20 @@ create_mikrotik_container() {
     echo "   - RAM: Medium (~512MB)"
     echo "   - Disk: Medium (~500MB)"
     echo "   - Features: Full licensed, optimized, all capabilities"
+    echo ""
+    echo "0) Return to Main Menu"
     echo "=========================================="
-    
+
     local choice
-    read -p "Select [1]: " choice
-    choice=${choice:-1}
-    
+    read -p "Select [0-3]: " choice
+    choice=${choice:-0}
+
+    # Handle return option
+    if [[ $choice == 0 ]]; then
+        log "INFO" "Returning to main menu..."
+        main_menu
+    fi
+
     local image_choice
     local image_name
     case $choice in
@@ -595,7 +603,7 @@ create_mikrotik_container() {
 setup_docker_compose() {
     log "INFO" "Setting up Docker Compose..."
     
-    # Simple image selection directly in the function
+# Simple image selection directly in the function
     clear
     echo -e "${GREEN}Select MikroTik Docker Image:${NC}"
     echo "=========================================="
@@ -619,13 +627,20 @@ setup_docker_compose() {
     echo "   - RAM: Medium (~512MB)"
     echo "   - Disk: Medium (~500MB)"
     echo "   - Features: Full licensed, optimized, all capabilities"
+    echo ""
+    echo "0) Return to Main Menu"
     echo "=========================================="
-    
-    
+
     local choice
-    read -p "Select [1]: " choice
-    choice=${choice:-1}
-    
+    read -p "Select [0-3]: " choice
+    choice=${choice:-0}
+
+    # Handle return option
+    if [[ $choice == 0 ]]; then
+        log "INFO" "Returning to main menu..."
+        main_menu
+    fi
+
     local image_choice
     local image_name
     case $choice in
@@ -1150,6 +1165,199 @@ cleanup_system() {
         *) echo "Invalid option" ;;
     esac
 
+    done
+}
+manage_container() {
+    local action
+    local container_name="mikrotik_router"
+    
+    while true; do
+        clear
+        echo -e "${GREEN}Container Management${NC}"
+        echo "=========================================="
+        echo "1) Start Container"
+        echo "2) Stop Container" 
+        echo "3) Restart Container"
+        echo "4) View Container Logs"
+        echo "5) Execute Shell in Container"
+        echo "6) View Container Info"
+        echo "7) Remove Container"
+        echo "8) Remove Container & Image"
+        echo "0) Back to Main Menu"
+        echo ""
+        
+        read -p "Select action [0-8]: " action
+        
+        case $action in
+            1)
+                if docker start "$container_name"; then
+                    log "INFO" "Container started successfully"
+                else
+                    log "ERROR" "Failed to start container"
+                fi
+                ;;
+            2)
+                if docker stop "$container_name"; then
+                    log "INFO" "Container stopped successfully"
+                else
+                    log "ERROR" "Failed to stop container"
+                fi
+                ;;
+            3)
+                if docker restart "$container_name"; then
+                    log "INFO" "Container restarted successfully"
+                else
+                    log "ERROR" "Failed to restart container"
+                fi
+                ;;
+            4)
+                echo -e "${YELLOW}Showing container logs (Ctrl+C to exit):${NC}"
+                docker logs -f "$container_name"
+                ;;
+            5)
+                echo -e "${YELLOW}Opening shell in container...${NC}"
+                docker exec -it "$container_name" /bin/bash || \
+                docker exec -it "$container_name" /bin/sh || \
+                echo "Cannot access container shell"
+                ;;
+            6)
+                echo -e "${GREEN}Container Information:${NC}"
+                echo "=========================================="
+                docker inspect "$container_name" | jq '.[] | {Name: .Name, State: .State.Status, Image: .Config.Image, IP: .NetworkSettings.IPAddress, Ports: .NetworkSettings.Ports}' 2>/dev/null || \
+                docker inspect "$container_name"
+                ;;
+            7)
+                read -p "Are you sure you want to remove the container? (y/n): " confirm
+                if [[ "$confirm" == "y" ]]; then
+                    docker stop "$container_name" 2>/dev/null
+                    if docker rm "$container_name"; then
+                        log "INFO" "Container removed successfully"
+                    else
+                        log "ERROR" "Failed to remove container"
+                    fi
+                fi
+                ;;
+            8)
+                read -p "This will remove container AND image. Continue? (y/n): " confirm
+                if [[ "$confirm" == "y" ]]; then
+                    docker stop "$container_name" 2>/dev/null
+                    docker rm "$container_name" 2>/dev/null
+                    # Try to remove all possible MikroTik images
+                    docker rmi livekadeh_com_mikrotik7_7 2>/dev/null || true
+                    docker rmi evilfreelancer/docker-routeros:latest 2>/dev/null || true
+                    docker rmi mehdi682007/docker7.7:latest 2>/dev/null || true
+                    log "INFO" "Container and images removed successfully"
+                fi
+                ;;
+            0) 
+                return 
+                ;;
+            *) 
+                echo "Invalid option" 
+                ;;
+        esac
+        
+        echo ""
+        read -p "Press Enter to continue..."
+    done
+}
+
+manage_compose() {
+    local action
+    
+    # Check if docker-compose.yml exists
+    if [[ ! -f "docker-compose.yml" ]]; then
+        log "ERROR" "docker-compose.yml not found in current directory"
+        read -p "Press Enter to continue..."
+        return 1
+    fi
+    
+    while true; do
+        clear
+        echo -e "${GREEN}Docker Compose Management${NC}"
+        echo "=========================================="
+        echo "1) Start Services"
+        echo "2) Stop Services"
+        echo "3) Restart Services"
+        echo "4) View Logs"
+        echo "5) Down (Stop & Remove)"
+        echo "6) Recreate Services"
+        echo "7) View Compose Status"
+        echo "0) Back to Main Menu"
+        echo ""
+        
+        read -p "Select action [0-7]: " action
+        
+        # Determine which compose command to use
+        local compose_cmd
+        if command -v docker-compose &> /dev/null; then
+            compose_cmd="docker-compose"
+        elif docker compose version &> /dev/null; then
+            compose_cmd="docker compose"
+        else
+            log "ERROR" "Docker Compose not found!"
+            read -p "Press Enter to continue..."
+            return 1
+        fi
+        
+        case $action in
+            1)
+                if $compose_cmd start; then
+                    log "INFO" "Services started successfully"
+                else
+                    log "ERROR" "Failed to start services"
+                fi
+                ;;
+            2)
+                if $compose_cmd stop; then
+                    log "INFO" "Services stopped successfully"
+                else
+                    log "ERROR" "Failed to stop services"
+                fi
+                ;;
+            3)
+                if $compose_cmd restart; then
+                    log "INFO" "Services restarted successfully"
+                else
+                    log "ERROR" "Failed to restart services"
+                fi
+                ;;
+            4)
+                echo -e "${YELLOW}Showing compose logs (Ctrl+C to exit):${NC}"
+                $compose_cmd logs -f
+                ;;
+            5)
+                read -p "This will stop and remove all containers. Continue? (y/n): " confirm
+                if [[ "$confirm" == "y" ]]; then
+                    if $compose_cmd down; then
+                        log "INFO" "Services stopped and removed"
+                    else
+                        log "ERROR" "Failed to stop services"
+                    fi
+                fi
+                ;;
+            6)
+                if $compose_cmd up -d --force-recreate; then
+                    log "INFO" "Services recreated successfully"
+                else
+                    log "ERROR" "Failed to recreate services"
+                fi
+                ;;
+            7)
+                echo -e "${GREEN}Compose Services Status:${NC}"
+                echo "=========================================="
+                $compose_cmd ps
+                ;;
+            0) 
+                return 
+                ;;
+            *) 
+                echo "Invalid option" 
+                ;;
+        esac
+        
+        echo ""
+        read -p "Press Enter to continue..."
     done
 }
 show_main_menu() {
