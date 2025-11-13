@@ -15,7 +15,7 @@ TEMP_DIR="/tmp/mikrotik_installer"
 BACKUP_DIR="./mikrotik_backups"
 
 # Default ports
-DEFAULT_PORTS="80 123 8291 22 443 53 1701 1723 1812 1813 2000 3784 3799 4500 4784 500 1194 5678 5679 8728 8729 60594 8080 20561 8900 8999 9999 21 23 110 995 143 993 25 465 587 3306 5432 3389 5900"
+DEFAULT_PORTS="47 50 80 123 8291 22 443 53 1701 1723 1812 1813 2000 3784 3799 4500 4784 500 1194 5678 5679 8728 8729 60594 8080 20561 8900 8999 9999 21 23 110 995 143 993 25 465 587 3306 5432 3389 5900"
 
 # ==============================================================================
 # CORE FUNCTIONS
@@ -240,6 +240,7 @@ ensure_docker_running() {
     fi
     
     log "INFO" "Docker is running and accessible"
+    sleep 2
 }
 
 # ==============================================================================
@@ -460,7 +461,7 @@ create_mikrotik_container() {
     # Define port mappings with alternatives
     declare -A port_mappings
     port_mappings=(
-        ["80"]="8080" ["8291"]="8292" ["22"]="2222" ["443"]="8443" ["53"]="5353"
+        ["80"]="8080" ["50"]="150" ["47"]="147" ["8291"]="8292" ["22"]="2222" ["443"]="8443" ["53"]="5353"
         ["1701"]="11701" ["1723"]="11723" ["1812"]="11812" ["1813"]="11813"
         ["2000"]="12000" ["3784"]="13784" ["3799"]="13799" ["4500"]="14500"
         ["4784"]="14784" ["500"]="1500" ["1194"]="11194" ["5678"]="15678"
@@ -542,15 +543,15 @@ create_mikrotik_container() {
         log "WARN" "Persistent storage disabled - configuration will be lost on container restart"
     fi
     
-    # Add time volume
-    volume_mappings+=" -v /etc/localtime:/etc/localtime:ro"
+    # Add  volume
+    volume_mappings+=" -v /etc/localtime:/etc/localtime:ro -v /lib/modules:/lib/modules:ro"
 
     # Ask for timezone
     read -p "Enter timezone [UTC]: " timezone
     timezone=${timezone:-UTC}
     
     # Add all capabilities and devices
-    local capabilities="--cap-add=NET_ADMIN --cap-add=SYS_MODULE --cap-add=SYS_RAWIO --cap-add=SYS_TIME --cap-add=SYS_NICE --cap-add=IPC_LOCK"
+    local capabilities="--cap-add=NET_ADMIN --cap-add=SYS_MODULE --cap-add=SYS_RAWIO --cap-add=SYS_TIME  --cap-add=NET_RAW --cap-add=SYS_NICE --cap-add=IPC_LOCK"
     local devices="--device=/dev/net/tun --device=/dev/kvm --device=/dev/ppp"
     local ulimits="--ulimit nproc=65535 --ulimit nofile=65535:65535"
     
@@ -695,7 +696,7 @@ setup_docker_compose() {
     # Define port mappings with alternatives
     declare -A port_mappings
     port_mappings=(
-        ["80"]="8080" ["8291"]="8292" ["22"]="2222" ["443"]="8443" ["53"]="5353"
+        ["80"]="8080" ["50"]="150" ["147"]="47" ["8291"]="8292" ["22"]="2222" ["443"]="8443" ["53"]="5353"
         ["1701"]="11701" ["1723"]="11723" ["1812"]="11812" ["1813"]="11813"
         ["2000"]="12000" ["3784"]="13784" ["3799"]="13799" ["4500"]="14500"
         ["4784"]="14784" ["500"]="1500" ["1194"]="11194" ["5678"]="15678"
@@ -775,7 +776,8 @@ setup_docker_compose() {
       - mikrotik_data:/flash
       - mikrotik_data:/rw
       - mikrotik_data:/storage
-      - /etc/localtime:/etc/localtime:ro"
+      - /etc/localtime:/etc/localtime:ro
+      - /lib/modules:/lib/modules:ro"
         
         volumes_definition="
 volumes:
@@ -802,6 +804,7 @@ services:
 $network_section
     cap_add:
       - NET_ADMIN
+      - NET_RAW
       - SYS_MODULE
       - SYS_RAWIO
       - SYS_TIME
@@ -831,6 +834,8 @@ networks:
     driver: bridge
 EOF
 
+
+
     log "INFO" "Docker Compose file created"
     
     # Show configuration
@@ -859,17 +864,7 @@ EOF
     deploy_now=${deploy_now:-Y}
     
     if [[ "$deploy_now" =~ ^[Yy]$ ]]; then
-        deploy_with_compose
-    else
-        log "INFO" "Docker Compose file created. Run 'docker-compose up -d' to deploy later."
-    fi
-}
-
-deploy_with_compose() {
-    ensure_docker_running
-    setup_docker_compose
-    
-    # Use the correct compose command
+        # Use the correct compose command
     if command -v docker-compose &> /dev/null; then
         docker-compose up -d
     elif docker compose version &> /dev/null; then
@@ -877,9 +872,12 @@ deploy_with_compose() {
     else
         error_exit "Docker Compose not available"
     fi
-    
-    log "INFO" "MikroTik deployed with Docker Compose"
+    else
+        log "INFO" "Docker Compose file created. Run 'docker-compose up -d' to deploy later."
+    fi
 }
+
+
 
 # ==============================================================================
 # BACKUP FUNCTION
@@ -1535,7 +1533,7 @@ main_menu() {
                 ;;
             3) 
                 ensure_docker_running
-                deploy_with_compose 
+                setup_docker_compose 
                 ;;
             4) container_status ;;
             5) backup_config ;;
