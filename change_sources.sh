@@ -1,5 +1,6 @@
 change_sources_list() {
     while true; do
+    clear
         # Detect codename and distribution with better error handling
         if [ -f /etc/os-release ]; then
             . /etc/os-release
@@ -28,36 +29,33 @@ change_sources_list() {
             echo -e "\033[1;33m⚠️  No sources file found, will create new one\033[0m"
         fi
 
-        echo -e "\n\033[1;36m╔══════════════════════════════════════════════════════════════╗\033[0m"
-        echo -e "\033[1;36m║                   APT MIRROR SELECTION                      ║\033[0m"
-        echo -e "\033[1;36m╚══════════════════════════════════════════════════════════════╝\033[0m"
-        echo
-        echo -e "\033[1;33m┌──────────────────────────────────────────────────────────────┐\033[0m"
-        echo -e "\033[1;33m│                     AVAILABLE OPTIONS                       │\033[0m"
-        echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
-        echo -e "\033[1;32m│  1. Test and select fastest mirror (ping + download)       │\033[0m"
-        echo -e "\033[1;34m│  2. Set mirror manually (offline selection)                 │\033[0m"
-        echo -e "\033[1;33m│  3. View current sources                                    │\033[0m"
-        echo -e "\033[1;35m│  4. Restore from backup                                     │\033[0m"
-        echo -e "\033[1;36m│  5. Test specific mirror                                    │\033[0m"
-        echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
-        echo -e "\033[1;31m│  0. Return to main menu                                     │\033[0m"
-        echo -e "\033[1;33m└──────────────────────────────────────────────────────────────┘\033[0m"
-        echo
-        echo -e "\033[1;35m📋 Detected: $distro_id $distro_codename\033[0m"
-        echo -e "\033[1;35m📁 Using: $sources_file\033[0m"
 
-        read -p "$(echo -e '\033[1;32mSelect an option [0-5]: \033[0m')" main_choice
+echo -e "\033[1;36m==================================================\033[0m"
+echo -e "\033[1;36m              AVAILABLE OPTIONS\033[0m"
+echo -e "\033[1;36m==================================================\033[0m"
+echo -e "\033[1;32m1. Test and select fastest mirror (ping + download)\033[0m"
+echo -e "\033[1;34m2. Set mirror manually (offline selection)\033[0m"
+echo -e "\033[1;33m3. View current sources\033[0m"
+echo -e "\033[1;35m4. Restore from backup\033[0m"
+echo -e "\033[1;36m5. Test specific mirror\033[0m"
+echo -e "\033[1;90m--------------------------------------------------\033[0m"
+echo -e "\033[1;31m0. Return to main menu\033[0m"
+echo -e "\033[1;36m==================================================\033[0m"
+echo
+echo -e "\033[1;35mDetected: $distro_id $distro_codename\033[0m"
+echo -e "\033[1;35mUsing: $sources_file\033[0m"
 
-        case $main_choice in
-            1) test_and_select_fastest_mirror "$sources_file" ;;
-            2) set_mirror_manually "$sources_file" ;;
-            3) view_current_sources "$sources_file" ;;
-            4) restore_from_backup "$sources_file" ;;
-            5) test_specific_mirror "$sources_file" ;;
-            0) echo -e "\033[1;33mReturning to main menu...\033[0m"; return ;;
-            *) echo -e "\033[1;31m❌ Invalid option. Please try again.\033[0m"; continue ;;
-        esac
+read -p "$(echo -e '\033[1;32mSelect an option [0-5]: \033[0m')" main_choice
+
+case $main_choice in
+    1) test_and_select_fastest_mirror "$sources_file" ;;
+    2) set_mirror_manually "$sources_file" ;;
+    3) view_current_sources "$sources_file" ;;
+    4) restore_from_backup "$sources_file" ;;
+    5) test_specific_mirror "$sources_file" ;;
+    0) echo -e "\033[1;33mReturning to main menu...\033[0m"; return ;;
+    *) echo -e "\033[1;31m❌ Invalid option. Please try again.\033[0m"; continue ;;
+esac
 
         echo -e "\n\033[1;34m⏎ Press Enter to continue...\033[0m"
         read
@@ -67,7 +65,7 @@ change_sources_list() {
 test_and_select_fastest_mirror() {
     local sources_file="$1"
     
-    echo -e "\n\033[1;36m🔄 Testing mirror availability and speed...\033[0m"
+    echo -e "\n\033[1;36m🔍 Testing mirror availability and speed...\033[0m"
     
     # Comprehensive mirror list with global options
     local mirrors=(
@@ -135,11 +133,14 @@ test_and_select_fastest_mirror() {
     echo -e "\n\033[1;36m📊 Testing download speeds for fastest mirrors...\033[0m"
     
     # Sort by ping time and take top 5
-    local sorted_by_ping=($(
+    local sorted_by_ping=()
+    while IFS= read -r line; do
+        sorted_by_ping+=("$line")
+    done < <(
         for mirror in "${available_mirrors[@]}"; do
             echo "$mirror ${mirror_ping_times[$mirror]}"
         done | sort -k2 -n | head -5 | awk '{print $1}'
-    ))
+    )
 
     for mirror in "${sorted_by_ping[@]}"; do
         local domain=$(echo "$mirror" | awk -F/ '{print $3}')
@@ -152,7 +153,7 @@ test_and_select_fastest_mirror() {
         if curl -s --max-time 10 "$test_url" | head -c 1048576 > /dev/null 2>&1; then
             local end_time=$(date +%s%N)
             local duration_ms=$(( (end_time - start_time) / 1000000 ))
-            local speed_mbps=$(echo "scale=2; 8 / ($duration_ms / 1000)" | bc -l)
+            local speed_mbps=$(echo "scale=2; 8 / ($duration_ms / 1000)" | bc -l 2>/dev/null || echo "0")
             mirror_download_speeds["$mirror"]=$speed_mbps
             echo -e "\033[1;32m✓ ${speed_mbps} Mbps\033[0m"
         else
@@ -163,7 +164,7 @@ test_and_select_fastest_mirror() {
 
     # Display results
     echo -e "\n\033[1;36m🏆 Top Mirrors (Ping + Download Speed):\033[0m"
-    echo -e "\033[1;33m┌──────────────────────────────────────────────────────────────┐\033[0m"
+    echo -e "\033[1;33m┌────────────────────────────────────────────────────────────────┐\033[0m"
     
     local index=1
     for mirror in "${sorted_by_ping[@]}"; do
@@ -178,15 +179,15 @@ test_and_select_fastest_mirror() {
         fi
         ((index++))
     done
-    echo -e "\033[1;33m└──────────────────────────────────────────────────────────────┘\033[0m"
+    echo -e "\033[1;33m└────────────────────────────────────────────────────────────────┘\033[0m"
 
     # Selection
-    read -p "$(echo -e '\033[1;32mSelect mirror (1-${#sorted_by_ping[@]}, 0 to cancel): \033[0m')" choice
+    read -p "$(echo -e '\033[1;32mSelect mirror (1-'"${#sorted_by_ping[@]}"', 0 to cancel): \033[0m')" choice
     
-    if [[ $choice -eq 0 ]]; then
+    if [[ "$choice" -eq 0 ]]; then
         echo -e "\033[1;33mCancelled.\033[0m"
         return
-    elif [[ $choice -ge 1 && $choice -le ${#sorted_by_ping[@]} ]]; then
+    elif [[ "$choice" -ge 1 && "$choice" -le ${#sorted_by_ping[@]} ]]; then
         selected_mirror="${sorted_by_ping[$((choice - 1))]}"
         apply_mirror "$selected_mirror" "$sources_file"
     else
@@ -204,7 +205,7 @@ apply_mirror() {
     selected_mirror=$(echo "$selected_mirror" | sed 's/\/$//')
     
     echo -e "\n\033[1;32m✅ Selected: $selected_mirror\033[0m"
-    echo -e "\033[1;32m📁 Updating: $sources_file\033[0m"
+    echo -e "\033[1;32m🔄 Updating: $sources_file\033[0m"
 
     # Determine repository components based on distribution
     local main_components="main"
@@ -260,7 +261,7 @@ view_current_sources() {
     local sources_file="$1"
     
     echo -e "\n\033[1;36m📄 CURRENT SOURCES ($sources_file):\033[0m"
-    echo -e "\033[1;33m┌──────────────────────────────────────────────────────────────┐\033[0m"
+    echo -e "\033[1;33m┌────────────────────────────────────────────────────────────────┐\033[0m"
     
     if [ -f "$sources_file" ]; then
         if [[ "$sources_file" == "/etc/apt/sources.list.d/ubuntu.sources" ]]; then
@@ -290,7 +291,7 @@ view_current_sources() {
         echo -e "\033[1;31m│ No sources file found at $sources_file!\033[0m"
     fi
     
-    echo -e "\033[1;33m└──────────────────────────────────────────────────────────────┘\033[0m"
+    echo -e "\033[1;33m└────────────────────────────────────────────────────────────────┘\033[0m"
 }
 
 restore_from_backup() {
@@ -316,19 +317,19 @@ restore_from_backup() {
         fi
     fi
 
-    echo -e "\n\033[1;36m📦 Available Backups:\033[0m"
+    echo -e "\n\033[1;36m📚 Available Backups:\033[0m"
     for i in "${!backups[@]}"; do
         backup_date=$(echo "${backups[i]}" | grep -oE '[0-9]{8}_[0-9]{6}')
         human_date=$(echo "$backup_date" | sed 's/\(....\)\(..\)\(..\)_\(..\)\(..\)\(..\)/\1-\2-\3 \4:\5:\6/')
         echo -e "\033[1;32m$((i+1)). ${backups[i]} ($human_date)\033[0m"
     done
 
-    read -p "$(echo -e '\033[1;32mSelect backup to restore (1-${#backups[@]}, 0 to cancel): \033[0m')" choice
+    read -p "$(echo -e '\033[1;32mSelect backup to restore (1-'"${#backups[@]}"', 0 to cancel): \033[0m')" choice
 
-    if [[ $choice -eq 0 ]]; then
+    if [[ "$choice" -eq 0 ]]; then
         echo -e "\033[1;33mCancelled.\033[0m"
         return
-    elif [[ $choice -ge 1 && $choice -le ${#backups[@]} ]]; then
+    elif [[ "$choice" -ge 1 && "$choice" -le ${#backups[@]} ]]; then
         selected_backup="${backups[$((choice - 1))]}"
         sudo cp "$selected_backup" "$sources_file"
         echo -e "\033[1;32m✓ Restored from $selected_backup\033[0m"
@@ -342,8 +343,9 @@ restore_from_backup() {
     fi
 }
 
-
 test_specific_mirror() {
+    local sources_file="$1"
+    
     read -p "$(echo -e '\033[1;32mEnter mirror URL to test: \033[0m')" test_mirror
     
     # Validate URL format
@@ -351,16 +353,16 @@ test_specific_mirror() {
         test_mirror="http://$test_mirror"
     fi
     
-    echo -e "\n\033[1;36m🧪 Testing mirror: $test_mirror\033[0m"
+    echo -e "\n\033[1;36mðŸ§ª Testing mirror: $test_mirror\033[0m"
     
     # Ping test
     local domain=$(echo "$test_mirror" | awk -F/ '{print $3}')
     echo -ne "\033[1;34mPing test: \033[0m"
     if ping -c 4 -W 2 "$domain" &>/dev/null; then
         local ping_time=$(ping -c 4 -W 2 "$domain" | tail -1 | awk -F'/' '{print $5}')
-        echo -e "\033[1;32m✓ ${ping_time}ms\033[0m"
+        echo -e "\033[1;32mâœ" ${ping_time}ms\033[0m"
     else
-        echo -e "\033[1;31m✗ unreachable\033[0m"
+        echo -e "\033[1;31mâœ— unreachable\033[0m"
         return 1
     fi
     
@@ -373,19 +375,20 @@ test_specific_mirror() {
         local end_time=$(date +%s%N)
         local duration_ms=$(( (end_time - start_time) / 1000000 ))
         local speed_mbps=$(echo "scale=2; 4 / ($duration_ms / 1000)" | bc -l)
-        echo -e "\033[1;32m✓ ${speed_mbps} Mbps (512KB test)\033[0m"
+        echo -e "\033[1;32mâœ" ${speed_mbps} Mbps (512KB test)\033[0m"
     else
-        echo -e "\033[1;31m✗ download failed\033[0m"
+        echo -e "\033[1;31mâœ— download failed\033[0m"
         return 1
     fi
     
     read -p "$(echo -e '\033[1;32mUse this mirror? (y/N): \033[0m')" use_mirror
     if [[ "$use_mirror" =~ ^[Yy]$ ]]; then
-        apply_mirror "$test_mirror"
+        apply_mirror "$test_mirror" "$sources_file"
     fi
 }
 
 set_mirror_manually() {
+    local sources_file="$1"
     local offline_mirrors=(
         "http://mirror.arvancloud.ir/ubuntu"
         "https://ir.ubuntu.sindad.cloud/ubuntu"
@@ -410,28 +413,29 @@ set_mirror_manually() {
         "https://ftp.de.debian.org/debian"
     )
 
-    echo -e "\n\033[1;36m🌐 Available Mirrors:\033[0m"
-    echo -e "\033[1;33m┌──────────────────────────────────────────────────────────────┐\033[0m"
+    echo -e "\n\033[1;36m🌍 Available Mirrors:\033[0m"
+    echo -e "\033[1;33m┌────────────────────────────────────────────────────────────────┐\033[0m"
     
     for i in "${!offline_mirrors[@]}"; do
         mirror_domain=$(echo "${offline_mirrors[i]}" | cut -d'/' -f3)
         echo -e "\033[1;32m│ $((i+1)). $mirror_domain\033[0m"
     done
-    echo -e "\033[1;33m├──────────────────────────────────────────────────────────────┤\033[0m"
-    echo -e "\033[1;34m│ 99. Enter custom mirror URL                                  │\033[0m"
-    echo -e "\033[1;33m└──────────────────────────────────────────────────────────────┘\033[0m"
 
-    read -p "$(echo -e '\033[1;32mSelect mirror (1-${#offline_mirrors[@]}, 99 for custom): \033[0m')" choice
+    echo -e "\033[1;33m├────────────────────────────────────────────────────────────────┤\033[0m"
+    echo -e "\033[1;34m│ 99. Enter custom mirror URL                                  │\033[0m"
+    echo -e "\033[1;33m└────────────────────────────────────────────────────────────────┘\033[0m"
+
+    read -p "$(echo -e '\033[1;32mSelect mirror (1-'"${#offline_mirrors[@]}"', 99 for custom): \033[0m')" choice
 
     case $choice in
         99)
             read -p "$(echo -e '\033[1;32mEnter custom mirror URL: \033[0m')" custom_mirror
-            apply_mirror "$custom_mirror"
+            apply_mirror "$custom_mirror" "$sources_file"
             ;;
         [1-9]|[1-9][0-9])
             if [[ $choice -le ${#offline_mirrors[@]} ]]; then
                 selected_mirror="${offline_mirrors[$((choice - 1))]}"
-                apply_mirror "$selected_mirror"
+                apply_mirror "$selected_mirror" "$sources_file"
             else
                 echo -e "\033[1;31m❌ Invalid selection.\033[0m"
             fi
