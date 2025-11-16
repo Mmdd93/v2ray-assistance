@@ -1576,7 +1576,8 @@ bloatware() {
         echo "16) Exit"
         echo
         
-        read -p "Enter your choice [1-16]: " choice
+        read -p "Enter your choice default[14]: " choice
+    choice=${choice:-14}
         
         case $choice in
             1)
