@@ -3586,21 +3586,21 @@ main_menu() {
         echo
         
         # Marzban section - LIGHT_BLUE
-        echo -e "${LIGHT_BLUE} MARZBAN ${NC}"
-        echo -e "${LIGHT_BLUE} 39.${NC} ${LIGHT_BLUE}Marzban ${RED}[Multi]${NC}${NC}"
+        echo -e "${LIGHT_BLUE} MARZBAN ${RED}[Multi]${NC}${NC}"
+        echo -e "${LIGHT_BLUE} 39.${NC} ${LIGHT_BLUE}Marzban ${NC}"
         echo -e "${LIGHT_BLUE} 40.${NC} ${LIGHT_BLUE}Marzban node by v2${NC}"
         echo -e "${LIGHT_BLUE} 53.${NC} ${LIGHT_BLUE}Marzban node official script${NC}"
         echo -e "${LIGHT_BLUE} 52.${NC} ${LIGHT_BLUE}Marzban node by Mehrdad${NC}"
         echo
         
         # Remnawave section - GREEN
-        echo -e "${GREEN} REMNAWAVE ${NC}"
-        echo -e "${GREEN} 48.${NC} ${GREEN}Remnawave ${RED}[Multi]${NC}${NC}"
+        echo -e "${GREEN} REMNAWAVE ${RED}[Multi]${NC}${NC}"
+        echo -e "${GREEN} 48.${NC} ${GREEN}Remnawave ${NC}"
         echo
         
         # Marzneshin section - ORANGE
-        echo -e "${ORANGE} MARZNESHIN ${NC}"
-        echo -e "${ORANGE} 49.${NC} ${ORANGE}Marzneshin ${RED}[Multi]${NC}${NC}"
+        echo -e "${ORANGE} MARZNESHIN ${RED}[Multi]${NC}${NC}"
+        echo -e "${ORANGE} 49.${NC} ${ORANGE}Marzneshin ${NC}"
         echo -e "${ORANGE} 50.${NC} ${ORANGE}Marzneshin node by ErfJab${NC}"
         echo -e "${ORANGE} 51.${NC} ${ORANGE}Marzneshin node by Mehrdad${NC}"
         echo
