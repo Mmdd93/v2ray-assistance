@@ -521,25 +521,28 @@ install_packages() {
         ["vim"]=false
     )
 
+    # Create sorted package names array for consistent ordering
+    local package_names=($(printf '%s\n' "${!packages[@]}" | sort))
+
     # Function to display package selection menu
     show_package_menu() {
         clear
         echo_green "Package Selection Menu"
         echo "========================"
-        echo "Select packages to install (Space to toggle, Enter to confirm, A to select all, N to select none)"
+        echo "Select packages to install (Numbers to toggle, A=all, N=none, I=install, Q=quit)"
+        echo "Examples: '1' or '1,3,5' or '1-5' or '2,7-9,14'"
         echo ""
 
-        local i=1
-        for package in "${!packages[@]}"; do
+        for ((i=0; i<${#package_names[@]}; i++)); do
+            local package="${package_names[$i]}"
             local status="[ ]"
             [[ "${selected[$package]}" == "true" ]] && status="[✓]"
-            printf "%2d. %s %-25s - %s\n" "$i" "$status" "$package" "${packages[$package]}"
-            ((i++))
+            printf "%2d. %s %-25s - %s\n" "$((i+1))" "$status" "$package" "${packages[$package]}"
         done
 
         echo ""
         echo_yellow "Selected packages: $(get_selected_count)/${#packages[@]}"
-        echo "Commands: [Space]Toggle [A]Select All [N]Select None [Enter]Install [Q]Quit"
+        echo "Commands: [1] [1,3,5] [1-5] [2,7-9,14] [A]ll [N]one [I]nstall [Q]uit"
     }
 
     # Function to get count of selected packages
@@ -556,9 +559,37 @@ install_packages() {
         local package_name="$1"
         if [[ "${selected[$package_name]}" == "true" ]]; then
             selected["$package_name"]=false
+            echo_yellow "Unselected: $package_name"
         else
             selected["$package_name"]=true
+            echo_green "Selected: $package_name"
         fi
+    }
+
+    # Function to process number ranges (e.g., 1-5, 2,4,6)
+    process_number_input() {
+        local input="$1"
+        local numbers=()
+        
+        # Remove spaces and split by comma
+        input=$(echo "$input" | tr -d ' ')
+        IFS=',' read -ra parts <<< "$input"
+        
+        for part in "${parts[@]}"; do
+            if [[ "$part" =~ ^[0-9]+-[0-9]+$ ]]; then
+                # Handle range (e.g., 1-5)
+                local start=${part%-*}
+                local end=${part#*-}
+                for ((i=start; i<=end; i++)); do
+                    numbers+=("$i")
+                done
+            elif [[ "$part" =~ ^[0-9]+$ ]]; then
+                # Handle single number
+                numbers+=("$part")
+            fi
+        done
+        
+        printf '%s\n' "${numbers[@]}"
     }
 
     # Function to select all packages
@@ -566,6 +597,7 @@ install_packages() {
         for package in "${!selected[@]}"; do
             selected["$package"]=true
         done
+        echo_green "All packages selected"
     }
 
     # Function to select no packages
@@ -573,6 +605,7 @@ install_packages() {
         for package in "${!selected[@]}"; do
             selected["$package"]=false
         done
+        echo_yellow "All packages unselected"
     }
 
     # Function to get selected packages array
@@ -588,32 +621,55 @@ install_packages() {
     while true; do
         show_package_menu
         
-        # Create array for package names for selection
-        local package_names=($(printf '%s\n' "${!packages[@]}" | sort))
+        echo ""
+        echo -n "Enter your choice: "
+        read -r input
         
-        read -rsn1 key
-        
-        case "$key" in
-            " ")  # Space bar - toggle selection
-                echo ""
-                read -p "Enter package number to toggle: " package_num
-                if [[ "$package_num" =~ ^[0-9]+$ ]] && [ "$package_num" -ge 1 ] && [ "$package_num" -le "${#package_names[@]}" ]; then
-                    local selected_package="${package_names[$((package_num-1))]}"
-                    toggle_package "$selected_package"
-                fi
-                ;;
+        case "$input" in
             "a"|"A")  # Select all
                 select_all_packages
+
                 ;;
             "n"|"N")  # Select none
                 select_no_packages
+
+                ;;
+            "i"|"I")  # Install
+                break
                 ;;
             "q"|"Q")  # Quit
                 echo_red "Installation cancelled."
                 return 1
                 ;;
-            "")  # Enter - proceed with installation
-                break
+            *)  # Number input (single, multiple, or ranges)
+                if [[ -n "$input" ]]; then
+                    local numbers=($(process_number_input "$input"))
+                    if [ ${#numbers[@]} -eq 0 ]; then
+                        echo_red "Invalid input: $input"
+                        sleep 2
+
+                    else
+                        local valid_selection=false
+                        for num in "${numbers[@]}"; do
+                            if [ "$num" -ge 1 ] && [ "$num" -le "${#package_names[@]}" ]; then
+                                local selected_package="${package_names[$((num-1))]}"
+                                toggle_package "$selected_package"
+                                valid_selection=true
+                            else
+                                echo_red "Invalid package number: $num"
+                                sleep 2
+                            fi
+                        done
+                        if [ "$valid_selection" = true ]; then
+                            
+                            sleep 2
+                        fi
+                    fi
+                else
+                    echo_red "Please enter a valid option"
+                    echo "Press any key to continue..."
+                    sleep 2
+                fi
                 ;;
         esac
     done
@@ -671,7 +727,7 @@ install_packages() {
         echo "  - Start docker service: sudo systemctl enable docker && sudo systemctl start docker"
     fi
 
-    if [[ " ${packackages_to_install[@]} " =~ " ufw " ]]; then
+    if [[ " ${packages_to_install[@]} " =~ " ufw " ]]; then
         echo ""
         echo_yellow "UFW Tips:"
         echo "  - Enable UFW: sudo ufw enable"
