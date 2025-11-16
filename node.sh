@@ -3489,6 +3489,7 @@ display_header() {
     clear
     echo -e "${BLUE}github.com/Mmdd93/v2ray-assistance${NC}"
     echo -e "${YELLOW}Telegram: @tlgrmv2 | Version: 25.11.4${NC}"
+	echo
 }
 
 # Main menu function
