@@ -622,8 +622,9 @@ install_packages() {
         show_package_menu
         
         echo ""
-        echo -n "Enter your choice: "
+        echo -n "Enter your choice default[i]: "
         read -r input
+        input=${input:-i}
         
         case "$input" in
             "a"|"A")  # Select all
