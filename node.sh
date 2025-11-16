@@ -429,8 +429,21 @@ update_system() {
  
 }
 
-# Function to install necessary packages
 install_packages() {
+    # Color definitions
+    local GREEN='\033[1;32m'
+    local RED='\033[1;31m'
+    local YELLOW='\033[1;33m'
+    local BLUE='\033[1;34m'
+    local NC='\033[0m' # No Color
+    
+    # Helper functions for colored output
+    echo_color() { echo -e "${1}${2}${NC}"; }
+    echo_green() { echo_color "$GREEN" "$1"; }
+    echo_red() { echo_color "$RED" "$1"; }
+    echo_yellow() { echo_color "$YELLOW" "$1"; }
+    echo_blue() { echo_color "$BLUE" "$1"; }
+
     echo_green "Advanced Package Installation Manager"
     echo "=========================================="
 
@@ -462,7 +475,6 @@ install_packages() {
         ["unzip"]="Extract compressed files in a ZIP archive"
         ["tar"]="Tape archiving program"
         ["tmux"]="Terminal multiplexer"
-        ["htop"]="Interactive process viewer"
         ["ncdu"]="Disk usage analyzer with an ncurses interface"
         ["tree"]="Display directory tree structure"
         ["apt-transport-https"]="HTTPS transport for APT"
@@ -472,7 +484,6 @@ install_packages() {
         ["python3"]="Python programming language"
         ["python3-pip"]="Python package installer"
         ["vim"]="Vi IMproved - enhanced vi editor"
-        ["htop"]="Interactive process viewer"
     )
 
     # Default selections (true/false)
@@ -631,21 +642,26 @@ install_packages() {
         return 1
     fi
 
-    # Install selected packages
+    # Install selected packages with check for existing installation
     echo_green "Installing selected packages..."
     
     for package in "${packages_to_install[@]}"; do
-        echo_blue "Installing $package..."
-        if sudo apt-get install "$package" -y; then
-            echo_green "✓ $package installed successfully"
+        # Check if package is already installed
+        if dpkg -l | grep -q "^ii  $package "; then
+            echo_yellow "$package is already installed."
         else
-            echo_red "✗ Failed to install $package"
+            echo_blue "Installing $package..."
+            if sudo apt-get install "$package" -y; then
+                echo_green "✓ $package installed successfully"
+            else
+                echo_red "✗ Failed to install $package"
+            fi
         fi
         echo ""
     done
 
     echo_green "Package installation completed!"
-    echo "Installed ${#packages_to_install[@]} packages."
+    echo "Processed ${#packages_to_install[@]} packages."
 
     # Show post-installation tips
     if [[ " ${packages_to_install[@]} " =~ " docker.io " ]]; then
@@ -655,42 +671,12 @@ install_packages() {
         echo "  - Start docker service: sudo systemctl enable docker && sudo systemctl start docker"
     fi
 
-    if [[ " ${packages_to_install[@]} " =~ " ufw " ]]; then
+    if [[ " ${packackages_to_install[@]} " =~ " ufw " ]]; then
         echo ""
         echo_yellow "UFW Tips:"
         echo "  - Enable UFW: sudo ufw enable"
         echo "  - Allow SSH: sudo ufw allow ssh"
     fi
-}
-
-# Helper functions for colored output (define these elsewhere in your script)
-echo_green() {
-    echo -e "\033[1;32m$1\033[0m"
-}
-
-echo_red() {
-    echo -e "\033[1;31m$1\033[0m"
-}
-
-echo_yellow() {
-    echo -e "\033[1;33m$1\033[0m"
-}
-
-echo_blue() {
-    echo -e "\033[1;34m$1\033[0m"
-}
-
-    # Install packages if not already installed
-    for package in "${necessary_packages[@]}"; do
-        if ! dpkg -l | grep -q "$package"; then
-            sudo apt-get install "$package" -y
-            echo_green "$package installed."
-        else
-            echo_yellow "$package is already installed."
-        fi
-    done
-
-   
 }
 
 
