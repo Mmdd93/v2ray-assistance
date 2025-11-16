@@ -693,11 +693,12 @@ install_packages() {
     done
     echo ""
     
-    read -p "Proceed with installation? (y/N): " confirm
-    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-        echo_red "Installation cancelled."
-        return 1
-    fi
+read -p "Proceed with installation? (Y/n)  [Y]: " confirm
+confirm=${confirm:-y}
+if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+    echo_red "Installation cancelled."
+    return 1
+fi
 
     # Install selected packages with check for existing installation
     echo_green "Installing selected packages..."
