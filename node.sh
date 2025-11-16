@@ -431,32 +431,254 @@ update_system() {
 
 # Function to install necessary packages
 install_packages() {
-    echo_green "Checking and installing necessary packages..."
+    echo_green "Advanced Package Installation Manager"
+    echo "=========================================="
 
-    # Update the package list
+    # Update the package list first
+    echo_yellow "Updating package list..."
     sudo apt-get update
 
-    # List of necessary packages
-    necessary_packages=(
-        curl
-        socat
-        nano
-        cron
-        dos2unix
-        git
-        wget
-        net-tools
-        iputils-ping
-        traceroute
-        jq
-        rsync
-        build-essential
-        docker.io
-        docker-compose
-        btop
-        htop
-        ufw
+    # Comprehensive package list with descriptions
+    declare -A packages=(
+        ["curl"]="Command line tool for transferring data with URL syntax"
+        ["socat"]="Multipurpose relay tool for bidirectional data transfer"
+        ["nano"]="Small, friendly text editor inspired by Pico"
+        ["cron"]="Time-based job scheduler"
+        ["dos2unix"]="Text file format converter"
+        ["git"]="Distributed version control system"
+        ["wget"]="Non-interactive network downloader"
+        ["net-tools"]="Network administration tools (ifconfig, netstat, etc.)"
+        ["iputils-ping"]="Tools to test network connectivity"
+        ["traceroute"]="Tool to track the route packets take"
+        ["jq"]="Lightweight and flexible command-line JSON processor"
+        ["rsync"]="Fast, versatile, remote (and local) file-copying tool"
+        ["build-essential"]="Informational list of build-essential packages"
+        ["docker.io"]="Docker container runtime"
+        ["docker-compose"]="Tool for defining and running multi-container Docker applications"
+        ["btop"]="Resource monitor that shows usage and stats"
+        ["htop"]="Interactive process viewer"
+        ["ufw"]="Uncomplicated firewall"
+        ["zip"]="Package and compress (archive) files"
+        ["unzip"]="Extract compressed files in a ZIP archive"
+        ["tar"]="Tape archiving program"
+        ["tmux"]="Terminal multiplexer"
+        ["htop"]="Interactive process viewer"
+        ["ncdu"]="Disk usage analyzer with an ncurses interface"
+        ["tree"]="Display directory tree structure"
+        ["apt-transport-https"]="HTTPS transport for APT"
+        ["ca-certificates"]="Common CA certificates"
+        ["gnupg"]="GNU privacy guard - a free PGP replacement"
+        ["software-properties-common"]="Software properties common files"
+        ["python3"]="Python programming language"
+        ["python3-pip"]="Python package installer"
+        ["vim"]="Vi IMproved - enhanced vi editor"
+        ["htop"]="Interactive process viewer"
     )
+
+    # Default selections (true/false)
+    declare -A selected=(
+        ["curl"]=true
+        ["git"]=true
+        ["wget"]=true
+        ["nano"]=true
+        ["ufw"]=true
+        ["zip"]=true
+        ["unzip"]=true
+        ["tar"]=true
+        ["docker.io"]=false
+        ["docker-compose"]=false
+        ["build-essential"]=false
+        ["socat"]=false
+        ["cron"]=true
+        ["dos2unix"]=true
+        ["net-tools"]=false
+        ["iputils-ping"]=false
+        ["traceroute"]=false
+        ["jq"]=false
+        ["rsync"]=false
+        ["btop"]=true
+        ["htop"]=true
+        ["tmux"]=false
+        ["ncdu"]=false
+        ["tree"]=false
+        ["apt-transport-https"]=false
+        ["ca-certificates"]=false
+        ["gnupg"]=false
+        ["software-properties-common"]=false
+        ["python3"]=false
+        ["python3-pip"]=false
+        ["vim"]=false
+    )
+
+    # Function to display package selection menu
+    show_package_menu() {
+        clear
+        echo_green "Package Selection Menu"
+        echo "========================"
+        echo "Select packages to install (Space to toggle, Enter to confirm, A to select all, N to select none)"
+        echo ""
+
+        local i=1
+        for package in "${!packages[@]}"; do
+            local status="[ ]"
+            [[ "${selected[$package]}" == "true" ]] && status="[✓]"
+            printf "%2d. %s %-25s - %s\n" "$i" "$status" "$package" "${packages[$package]}"
+            ((i++))
+        done
+
+        echo ""
+        echo_yellow "Selected packages: $(get_selected_count)/${#packages[@]}"
+        echo "Commands: [Space]Toggle [A]Select All [N]Select None [Enter]Install [Q]Quit"
+    }
+
+    # Function to get count of selected packages
+    get_selected_count() {
+        local count=0
+        for package in "${!selected[@]}"; do
+            [[ "${selected[$package]}" == "true" ]] && ((count++))
+        done
+        echo "$count"
+    }
+
+    # Function to toggle package selection
+    toggle_package() {
+        local package_name="$1"
+        if [[ "${selected[$package_name]}" == "true" ]]; then
+            selected["$package_name"]=false
+        else
+            selected["$package_name"]=true
+        fi
+    }
+
+    # Function to select all packages
+    select_all_packages() {
+        for package in "${!selected[@]}"; do
+            selected["$package"]=true
+        done
+    }
+
+    # Function to select no packages
+    select_no_packages() {
+        for package in "${!selected[@]}"; do
+            selected["$package"]=false
+        done
+    }
+
+    # Function to get selected packages array
+    get_selected_packages() {
+        local selected_list=()
+        for package in "${!selected[@]}"; do
+            [[ "${selected[$package]}" == "true" ]] && selected_list+=("$package")
+        done
+        printf '%s\n' "${selected_list[@]}"
+    }
+
+    # Main menu loop
+    while true; do
+        show_package_menu
+        
+        # Create array for package names for selection
+        local package_names=($(printf '%s\n' "${!packages[@]}" | sort))
+        
+        read -rsn1 key
+        
+        case "$key" in
+            " ")  # Space bar - toggle selection
+                echo ""
+                read -p "Enter package number to toggle: " package_num
+                if [[ "$package_num" =~ ^[0-9]+$ ]] && [ "$package_num" -ge 1 ] && [ "$package_num" -le "${#package_names[@]}" ]; then
+                    local selected_package="${package_names[$((package_num-1))]}"
+                    toggle_package "$selected_package"
+                fi
+                ;;
+            "a"|"A")  # Select all
+                select_all_packages
+                ;;
+            "n"|"N")  # Select none
+                select_no_packages
+                ;;
+            "q"|"Q")  # Quit
+                echo_red "Installation cancelled."
+                return 1
+                ;;
+            "")  # Enter - proceed with installation
+                break
+                ;;
+        esac
+    done
+
+    # Get final selected packages
+    local packages_to_install=($(get_selected_packages))
+    
+    if [ ${#packages_to_install[@]} -eq 0 ]; then
+        echo_red "No packages selected for installation."
+        return 1
+    fi
+
+    # Show final selection and confirm
+    clear
+    echo_green "Final Package Selection"
+    echo "========================"
+    echo "The following packages will be installed:"
+    for package in "${packages_to_install[@]}"; do
+        echo "  ✓ $package - ${packages[$package]}"
+    done
+    echo ""
+    
+    read -p "Proceed with installation? (y/N): " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        echo_red "Installation cancelled."
+        return 1
+    fi
+
+    # Install selected packages
+    echo_green "Installing selected packages..."
+    
+    for package in "${packages_to_install[@]}"; do
+        echo_blue "Installing $package..."
+        if sudo apt-get install "$package" -y; then
+            echo_green "✓ $package installed successfully"
+        else
+            echo_red "✗ Failed to install $package"
+        fi
+        echo ""
+    done
+
+    echo_green "Package installation completed!"
+    echo "Installed ${#packages_to_install[@]} packages."
+
+    # Show post-installation tips
+    if [[ " ${packages_to_install[@]} " =~ " docker.io " ]]; then
+        echo ""
+        echo_yellow "Docker Tips:"
+        echo "  - Add your user to docker group: sudo usermod -aG docker \$USER"
+        echo "  - Start docker service: sudo systemctl enable docker && sudo systemctl start docker"
+    fi
+
+    if [[ " ${packages_to_install[@]} " =~ " ufw " ]]; then
+        echo ""
+        echo_yellow "UFW Tips:"
+        echo "  - Enable UFW: sudo ufw enable"
+        echo "  - Allow SSH: sudo ufw allow ssh"
+    fi
+}
+
+# Helper functions for colored output (define these elsewhere in your script)
+echo_green() {
+    echo -e "\033[1;32m$1\033[0m"
+}
+
+echo_red() {
+    echo -e "\033[1;31m$1\033[0m"
+}
+
+echo_yellow() {
+    echo -e "\033[1;33m$1\033[0m"
+}
+
+echo_blue() {
+    echo -e "\033[1;34m$1\033[0m"
+}
 
     # Install packages if not already installed
     for package in "${necessary_packages[@]}"; do
