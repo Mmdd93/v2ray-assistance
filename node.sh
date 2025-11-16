@@ -3539,7 +3539,7 @@ main_menu() {
         echo -e "${LIGHT_GREEN} 36.${NC} ${LIGHT_GREEN}Cron job management${NC}"
         echo -e "${LIGHT_GREEN} 37.${NC} ${LIGHT_GREEN}File management tools${NC}"
         echo -e "${LIGHT_GREEN} 71.${NC} ${LIGHT_GREEN}Abuse Defender (Hetzner)${NC}"
-		 echo -e "${LIGHT_GREEN} 84.${NC} ${LIGHT_GREEN}MikroTik (CHR/DOCKER MODE)${NC}"
+		 
         echo
        
         # Tunnel section - CYAN
@@ -3569,7 +3569,8 @@ main_menu() {
         echo -e "${CYAN} 76.${NC} ${CYAN}ZEX Tunnel Waterwall                     ${WHITE}[github.com/izex/ZEX-Tunnel]${NC}"
         echo -e "${CYAN} 79.${NC} ${CYAN}Pingtunnel Manager                       ${WHITE}[github.com/hoseinlolready]${NC}"
         echo
-        
+		echo -e "${WHITE} MikroTik ${NC}"
+		echo -e "${WHITE} 84.${NC} ${WHITE}Install MikroTik (CHR/DOCKER MODE)${NC}"
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
         echo -e "${MAGENTA} 38.${NC} ${MAGENTA}X-UI panels [MHSanaei,alireza,tx-ui] ${GREEN}[Single]${NC}${NC}"
