@@ -3487,10 +3487,8 @@ NC='\033[0m' # No Color
 # Header function
 display_header() {
     clear
-    echo -e "${PURPLE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}                github.com/Mmdd93/v2ray-assistance              ${NC}"
-    echo -e "${YELLOW}             Telegram: @tlgrmv2 | Version: 25.11.4            ${NC}"
-    echo -e "${PURPLE}╚══════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${BLUE}github.com/Mmdd93/v2ray-assistance${NC}"
+    echo -e "${YELLOW}Telegram: @tlgrmv2 | Version: 25.11.4${NC}"
 }
 
 # Main menu function
@@ -3499,9 +3497,7 @@ main_menu() {
         display_header
         
         # System section - BLUE
-        echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${BLUE} SYSTEM MANAGEMENT  ${NC}"
-        echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
+		echo -e "${BLUE} SYSTEM MANAGEMENT  ${NC}"
         echo -e "${BLUE}  1.${NC} ${BLUE}Update and upgrade system + install packages${NC}"
         echo -e "${BLUE}  2.${NC} ${BLUE}Fix Update Issues (broken apt/dependencies)${NC}"
         echo -e "${BLUE}  3.${NC} ${BLUE}Change update and package sources to Iran or global${NC}"
@@ -3514,9 +3510,7 @@ main_menu() {
         echo
         
         # Tools section - GREEN
-        echo -e "${LIGHT_GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${LIGHT_GREEN} TOOLS  ${NC}"
-        echo -e "${LIGHT_GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${LIGHT_GREEN}  7.${NC} ${LIGHT_GREEN}ISP defender (allow/block Iran ISPs)${NC}"
         echo -e "${LIGHT_GREEN}  9.${NC} ${LIGHT_GREEN}Speed test and benchmark${NC}"
         echo -e "${LIGHT_GREEN} 10.${NC} ${LIGHT_GREEN}Port management (in-use ports, connected IPs)${NC}"
@@ -3548,9 +3542,7 @@ main_menu() {
         echo
        
         # Tunnel section - CYAN
-        echo -e "${CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${CYAN} TUNNEL SERVICES ${NC}"
-        echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${YELLOW}Combine local tunnels [SIT,GRE,GENEVE,VXLAN] with:${NC}"
         echo -e "${YELLOW}dokodemo,Rathole,Backhaul,GOST,etc... for enhanced stealth${NC}"
         echo -e "${CYAN} 26.${NC} ${CYAN}SIT tunnel 6to4 (IPv6 local)             ${WHITE}[github.com/Mmdd93]${NC}"
@@ -3578,9 +3570,7 @@ main_menu() {
         echo
         
         # XUI section - MAGENTA
-        echo -e "${MAGENTA}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${MAGENTA} XUI ${NC}"
-        echo -e "${MAGENTA}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${MAGENTA} 38.${NC} ${MAGENTA}X-UI panels [MHSanaei,alireza,tx-ui] ${GREEN}[Single]${NC}${NC}"
         echo -e "${MAGENTA} 74.${NC} ${MAGENTA}s-ui Sing-box/SagerNet panel [alireza] ${GREEN}[Single]${NC}   ${WHITE}[github.com/alireza0]${NC}"
         echo -e "${MAGENTA} 73.${NC} ${MAGENTA}X-UI panel ${RED}[Multi]${NC}                                ${WHITE}[github.com/azavaxhuman]${NC}"
@@ -3588,17 +3578,13 @@ main_menu() {
         echo
         
         # Telegram Bot section - WHITE
-        echo -e "${WHITE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${WHITE} TELEGRAM BOT ${NC}"
-        echo -e "${WHITE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${WHITE} 75.${NC} ${WHITE}Mirza Bot Pro VPN Sale ${RED}[Multi]${NC} ${WHITE}[github.com/mahdiMGF2]${NC}"
         echo -e "${WHITE} 77.${NC} ${WHITE}mtproto proxy (telegram proxy) ${WHITE}[github.com/seriyps]${NC}"
         echo
         
         # Marzban section - LIGHT_BLUE
-        echo -e "${LIGHT_BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${LIGHT_BLUE} MARZBAN ${NC}"
-        echo -e "${LIGHT_BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${LIGHT_BLUE} 39.${NC} ${LIGHT_BLUE}Marzban ${RED}[Multi]${NC}${NC}"
         echo -e "${LIGHT_BLUE} 40.${NC} ${LIGHT_BLUE}Marzban node by v2${NC}"
         echo -e "${LIGHT_BLUE} 53.${NC} ${LIGHT_BLUE}Marzban node official script${NC}"
@@ -3606,25 +3592,19 @@ main_menu() {
         echo
         
         # Remnawave section - GREEN
-        echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${GREEN} REMNAWAVE ${NC}"
-        echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${GREEN} 48.${NC} ${GREEN}Remnawave ${RED}[Multi]${NC}${NC}"
         echo
         
         # Marzneshin section - ORANGE
-        echo -e "${ORANGE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${ORANGE} MARZNESHIN ${NC}"
-        echo -e "${ORANGE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${ORANGE} 49.${NC} ${ORANGE}Marzneshin ${RED}[Multi]${NC}${NC}"
         echo -e "${ORANGE} 50.${NC} ${ORANGE}Marzneshin node by ErfJab${NC}"
         echo -e "${ORANGE} 51.${NC} ${ORANGE}Marzneshin node by Mehrdad${NC}"
         echo
         
         # WireGuard/OpenVPN section - LIGHT_CYAN
-        echo -e "${LIGHT_CYAN}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${LIGHT_CYAN} WIREGUARD-OPENVPN-L2TP-SSTP ${NC}"
-        echo -e "${LIGHT_CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${LIGHT_CYAN} 60.${NC} ${LIGHT_CYAN}WireGuard Dashboard ${GREEN}[Single]${NC}   ${WHITE}[github.com/WGDashboard]${NC}"
         echo -e "${LIGHT_CYAN} 54.${NC} ${LIGHT_CYAN}SoftEther RTX-VPN ${GREEN}[Single]${NC}     ${WHITE}[github.com/Sir-MmD]${NC}"
         echo -e "${LIGHT_CYAN} 57.${NC} ${LIGHT_CYAN}OPEN VPN ${RED}[Multi]${NC}               ${WHITE}[github.com/eylandoo]${NC}"
@@ -3633,25 +3613,19 @@ main_menu() {
         echo
         
         # Panel Backup section - YELLOW
-        echo -e "${YELLOW}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${YELLOW} PANEL BACKUP ${NC}"
-        echo -e "${YELLOW}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${YELLOW} 41.${NC} ${YELLOW}Panel Backup (Marzban, X-UI, Hiddify)${NC}"
         echo -e "${YELLOW} 42.${NC} ${YELLOW}Auto panel restart${NC}"
         echo
         
         # Monitoring section - WHITE
-        echo -e "${WHITE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${WHITE} MONITORING ${NC}"
-        echo -e "${WHITE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e "${WHITE} 59.${NC} ${WHITE}Uptime Kuma monitoring${NC}"
         echo
         
         # Footer section
-        echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${BLUE} 00.${NC} ${BLUE}Update scripts${NC}"
         echo -e "${BLUE}  0.${NC} ${BLUE}Exit${NC}"
-        echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
         echo -e " $(netspeed)"
 		echo
         read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
