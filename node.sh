@@ -3571,6 +3571,7 @@ main_menu() {
         echo
 		echo -e "${WHITE} MikroTik ${NC}"
 		echo -e "${WHITE} 84.${NC} ${WHITE}Install MikroTik (CHR/DOCKER MODE)${NC}"
+		echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
         echo -e "${MAGENTA} 38.${NC} ${MAGENTA}X-UI panels [MHSanaei,alireza,tx-ui] ${GREEN}[Single]${NC}${NC}"
