@@ -536,7 +536,7 @@ install_packages() {
         for ((i=0; i<${#package_names[@]}; i++)); do
             local package="${package_names[$i]}"
             local status="[ ]"
-            [[ "${selected[$package]}" == "true" ]] && status="[✓]"
+            [[ "${selected[$package]}" == "true" ]] && status="[x]"
             printf "%2d. %s %-25s - %s\n" "$((i+1))" "$status" "$package" "${packages[$package]}"
         done
 
@@ -688,7 +688,7 @@ install_packages() {
     echo "========================"
     echo "The following packages will be installed:"
     for package in "${packages_to_install[@]}"; do
-        echo "  ✓ $package - ${packages[$package]}"
+        echo "$package - ${packages[$package]}"
     done
     echo ""
     
@@ -719,21 +719,11 @@ install_packages() {
     echo_green "Package installation completed!"
     echo "Processed ${#packages_to_install[@]} packages."
 
-    # Show post-installation tips
-    if [[ " ${packages_to_install[@]} " =~ " docker.io " ]]; then
-        echo ""
-        echo_yellow "Docker Tips:"
-        echo "  - Add your user to docker group: sudo usermod -aG docker \$USER"
-        echo "  - Start docker service: sudo systemctl enable docker && sudo systemctl start docker"
-    fi
 
-    if [[ " ${packages_to_install[@]} " =~ " ufw " ]]; then
-        echo ""
-        echo_yellow "UFW Tips:"
-        echo "  - Enable UFW: sudo ufw enable"
-        echo "  - Allow SSH: sudo ufw allow ssh"
-    fi
+
+
 }
+
 
 
 # isp blocker
