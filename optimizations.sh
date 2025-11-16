@@ -1573,7 +1573,7 @@ bloatware() {
         echo "13) Clean system (autoremove)"
         echo "14) Remove ALL bloatware (Comprehensive)"
         echo "15) Update system"
-        echo "16) Exit"
+        echo "0) Exit"
         echo
         
         read -p "Enter your choice default[14]: " choice
@@ -1632,7 +1632,7 @@ bloatware() {
             15)
                 update_system
                 ;;
-            16)
+            0)
                 print_status "Exiting..."
                 exit 0
                 ;;
