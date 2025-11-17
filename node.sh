@@ -3632,6 +3632,7 @@ main_menu() {
         # Footer section
         echo -e "${BLUE} 00.${NC} ${BLUE}Update scripts${NC}"
         echo -e "${BLUE}  0.${NC} ${BLUE}Exit${NC}"
+		echo
         echo -e " $(netspeed)"
 		echo
         read -p "$(echo -e ${GREEN}"Enter your choice: "${NC})" choice
