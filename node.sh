@@ -3572,9 +3572,6 @@ main_menu() {
         echo -e "${CYAN} 76.${NC} ${CYAN}ZEX Tunnel Waterwall                     ${WHITE}[github.com/izex/ZEX-Tunnel]${NC}"
         echo -e "${CYAN} 79.${NC} ${CYAN}Pingtunnel Manager                       ${WHITE}[github.com/hoseinlolready]${NC}"
         echo
-		echo -e "${WHITE} MikroTik ${NC}"
-		echo -e "${WHITE} 84.${NC} ${WHITE}Install MikroTik (CHR/DOCKER MODE)${NC}"
-		echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
         echo -e "${MAGENTA} 38.${NC} ${MAGENTA}X-UI panels [MHSanaei,alireza,tx-ui] ${GREEN}[Single]${NC}${NC}"
@@ -3616,6 +3613,7 @@ main_menu() {
         echo -e "${LIGHT_CYAN} 57.${NC} ${LIGHT_CYAN}OPEN VPN ${RED}[Multi]${NC}               ${WHITE}[github.com/eylandoo]${NC}"
         echo -e "${LIGHT_CYAN} 81.${NC} ${LIGHT_CYAN}OV-Panel ${RED}[Multi]${NC}               ${WHITE}[github.com/primeZdev/ov-panel]${NC}"
         echo -e "${LIGHT_CYAN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC}           ${WHITE}[github.com/amiridev-org]${NC}"
+		echo -e "${LIGHT_CYAN} 84.${NC} ${LIGHT_CYAN}Install MikroTik (CHR/DOCKER MODE)${NC}"    ${WHITE}[github.com/Mmdd93]${NC}"
         echo
         
         # Panel Backup section - YELLOW
