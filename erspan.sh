@@ -82,7 +82,6 @@ generate_random_ipv4() {
 
     # Save the generated or custom IPv4 address to a text file
     echo "ipv4=$ipv4_address" > /root/ipv4.txt
-    echo -e "\n\033[1;33mIPv4 address saved to ipv4.txt\033[0m"
     sleep 1
 
     source /root/ipv4.txt
@@ -232,8 +231,9 @@ create_erspan_tunnel() {
     echo -e "${YELLOW}════════════════════════════════════════════════════════════════════════${RESET}"
     echo -e "${RED}The following parameters MUST be EXACTLY THE SAME on both servers:${RESET}"
     echo -e ""
-    echo -e "${CYAN}ERSPAN ID:${RESET} ${greEN}$erspan_id${RESET}"
+    
     echo -e "${CYAN}Key:${RESET} ${greEN}$erspan_key${RESET}"
+    echo -e "${CYAN}ERSPAN ID:${RESET} ${greEN}$erspan_id${RESET}"
     echo -e "${CYAN}Version:${RESET} ${greEN}$erspan_version${RESET}"
     if [[ "$erspan_version" == "2" ]]; then
         echo -e "${CYAN}Hardware ID:${RESET} ${greEN}$erspan_hwid${RESET}"
