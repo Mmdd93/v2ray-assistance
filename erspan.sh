@@ -197,6 +197,7 @@ create_erspan_tunnel() {
     fi
 
        # Ask for ERSPAN version
+       # Ask for ERSPAN version
     echo -e "\n${greEN}Select ERSPAN version:${RESET}"
     echo -e "1. ERSPAN Version 1 (Simple)"
     echo -e "2. ERSPAN Version 2 (More features)"
@@ -208,19 +209,55 @@ create_erspan_tunnel() {
     read -p "Enter key (default: 100): " erspan_key
     erspan_key=${erspan_key:-100}
 
+    # Generate random ERSPAN ID (100-999)
+    random_erspan_id=$((100 + RANDOM % 900))
+    
+    # Ask for ERSPAN ID with random as default
+    echo -e "\n${greEN}Enter ERSPAN ID:${RESET}"
+    read -p "Enter ERSPAN ID (default: $random_erspan_id): " erspan_id
+    erspan_id=${erspan_id:-$random_erspan_id}
+
+    # Generate random ERSPAN HW ID (1-7) for Version 2
+    random_erspan_hwid=$((1 + RANDOM % 7))
+    
+    # Ask for ERSPAN HW ID with random as default (only for Version 2)
+    if [[ "$erspan_version" == "2" ]]; then
+        echo -e "\n${greEN}Enter ERSPAN Hardware ID (1-7):${RESET}"
+        read -p "Enter HW ID (default: $random_erspan_hwid): " erspan_hwid
+        erspan_hwid=${erspan_hwid:-$random_erspan_hwid}
+    fi
+
+    # CRITICAL WARNING - MUST MATCH ON BOTH SERVERS
+    echo -e "\n${RED}CRITICAL CONFIGURATION WARNING 🚨${RESET}"
+    echo -e "${YELLOW}════════════════════════════════════════════════════════════════════════${RESET}"
+    echo -e "${RED}The following parameters MUST be EXACTLY THE SAME on both servers:${RESET}"
+    echo -e ""
+    echo -e "${CYAN}ERSPAN ID:${RESET} ${greEN}$erspan_id${RESET}"
+    echo -e "${CYAN}Key:${RESET} ${greEN}$erspan_key${RESET}"
+    echo -e "${CYAN}Version:${RESET} ${greEN}$erspan_version${RESET}"
+    if [[ "$erspan_version" == "2" ]]; then
+        echo -e "${CYAN}Hardware ID:${RESET} ${greEN}$erspan_hwid${RESET}"
+        echo -e "${CYAN}Direction:${RESET} ${greEN}1${RESET}"
+    fi
+    echo -e ""
+    echo -e "${YELLOW}IMPORTANT: Use these EXACT values when configuring the remote server!${RESET}"
+    echo -e "${YELLOW}════════════════════════════════════════════════════════════════════════${RESET}"
+    echo -e ""
+    read -p "Press Enter ONLY after you have noted these values for the remote server configuration..."
+
     # Generate the systemd service file for ERSPAN tunnel
     echo -e "\n${greEN}Creating systemd service file for $service_name...${RESET}"
     
     if [[ "$erspan_version" == "1" ]]; then
         cat <<EOF > "$service_file"
 [Unit]
-Description=ERSPAN Tunnel $service_name (Version 1)
+Description=ERSPAN Tunnel $service_name (Version 1 - ID:$erspan_id)
 After=network.target
 
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/env sh -c '\
-    /sbin/ip link add $service_name type erspan seq key $erspan_key local $local_ip remote $remote_ip erspan_ver 1 erspan 123 && \
+    /sbin/ip link add $service_name type erspan seq key $erspan_key local $local_ip remote $remote_ip erspan_ver 1 erspan $erspan_id && \
     /sbin/ip link set $service_name up && \
     /sbin/ip addr add $ipv4_address dev $service_name && \
     /sbin/ip route add $route_network dev $service_name'
@@ -230,16 +267,17 @@ RemainAfterExit=true
 [Install]
 WantedBy=multi-user.target
 EOF
+        echo -e "${CYAN}Using ERSPAN Version 1 with ID: $erspan_id${RESET}"
     else
         cat <<EOF > "$service_file"
 [Unit]
-Description=ERSPAN Tunnel $service_name (Version 2)
+Description=ERSPAN Tunnel $service_name (Version 2 - ID:$erspan_id HW:$erspan_hwid)
 After=network.target
 
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/env sh -c '\
-    /sbin/ip link add $service_name type erspan seq key $erspan_key local $local_ip remote $remote_ip erspan_ver 2 erspan_dir 1 erspan_hwid 7 && \
+    /sbin/ip link add $service_name type erspan seq key $erspan_key local $local_ip remote $remote_ip erspan_ver 2 erspan_dir 1 erspan_hwid $erspan_hwid && \
     /sbin/ip link set $service_name up && \
     /sbin/ip addr add $ipv4_address dev $service_name && \
     /sbin/ip route add $route_network dev $service_name'
@@ -249,6 +287,7 @@ RemainAfterExit=true
 [Install]
 WantedBy=multi-user.target
 EOF
+        echo -e "${CYAN}Using ERSPAN Version 2 with ID: $erspan_id and HW ID: $erspan_hwid${RESET}"
     fi
 
     # Reload systemd and enable the service
