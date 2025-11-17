@@ -3544,12 +3544,15 @@ main_menu() {
        
         # Tunnel section - CYAN
         echo -e "${CYAN} TUNNEL SERVICES ${NC}"
-        echo -e "${YELLOW}Combine local tunnels [SIT,GRE,GENEVE,VXLAN] with:${NC}"
-        echo -e "${YELLOW}dokodemo,Rathole,Backhaul,GOST,etc... for enhanced stealth${NC}"
+		echo -e "${RED}Use Local IP instead of public IP for enhanced stealth:${NC}"
+        echo -e "${YELLOW}Local Tunnel [SIT,GRE,GENEVE,VXLAN,IPIP,ERSPAN]:${NC}"
         echo -e "${CYAN} 26.${NC} ${CYAN}SIT tunnel 6to4 (IPv6 local)             ${WHITE}[github.com/Mmdd93]${NC}"
         echo -e "${CYAN} 28.${NC} ${CYAN}GRE tunnel (IPv4/IPv6 local)             ${WHITE}[github.com/Mmdd93]${NC}"
         echo -e "${CYAN} 45.${NC} ${CYAN}GENEVE tunnel (IPv4 local)               ${WHITE}[github.com/Mmdd93]${NC}"
         echo -e "${CYAN} 46.${NC} ${CYAN}VXLAN tunnel (IPv4 local)                ${WHITE}[github.com/Mmdd93]${NC}"
+		echo -e "${CYAN} 85.${NC} ${CYAN}IPIP tunnel (IPv4 local)                ${WHITE}[github.com/Mmdd93]${NC}"
+		echo -e "${CYAN} 86.${NC} ${CYAN}ERSPAN tunnel (IPv4 local)                ${WHITE}[github.com/Mmdd93]${NC}"
+		echo -e "${YELLOW}Port-Forwarding Tunnel${NC}"
         echo -e "${CYAN} 31.${NC} ${CYAN}HAProxy tunnel                           ${WHITE}[github.com/Mmdd93]${NC}"
         echo -e "${CYAN} 27.${NC} ${CYAN}Backhaul tunnel                          ${WHITE}[github.com/Mmdd93]${NC}"
         echo -e "${CYAN} 44.${NC} ${CYAN}GOST tunnel by                           ${WHITE}[github.com/Mmdd93]${NC}"
@@ -3980,6 +3983,18 @@ sudo bash zex-tunnel-install.sh
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/MikroTik.sh -o MikroTik.sh
                 sudo bash MikroTik.sh
+                ;;
+						85)
+                echo -e "${YELLOW}ipip.sh...${NC}"
+				sleep 1
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/ipip.sh -o ipip.sh
+                sudo bash ipip.sh
+                ;;
+						86)
+                echo -e "${YELLOW}erspan.sh...${NC}"
+				sleep 1
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/erspan.sh -o erspan.sh
+                sudo bash erspan.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
