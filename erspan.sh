@@ -196,12 +196,17 @@ create_erspan_tunnel() {
         echo -e "${CYAN}Resolved domain $remote_input to IP: $remote_ip${RESET}"
     fi
 
-    # Ask for ERSPAN version
+       # Ask for ERSPAN version
     echo -e "\n${greEN}Select ERSPAN version:${RESET}"
     echo -e "1. ERSPAN Version 1 (Simple)"
     echo -e "2. ERSPAN Version 2 (More features)"
     read -p "Enter choice (1 or 2, default 1): " erspan_version
     erspan_version=${erspan_version:-1}
+
+    # Ask for ERSPAN key
+    echo -e "\n${greEN}Enter ERSPAN key value:${RESET}"
+    read -p "Enter key (default: 100): " erspan_key
+    erspan_key=${erspan_key:-100}
 
     # Generate the systemd service file for ERSPAN tunnel
     echo -e "\n${greEN}Creating systemd service file for $service_name...${RESET}"
@@ -215,7 +220,7 @@ After=network.target
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/env sh -c '\
-    /sbin/ip link add $service_name type erspan seq key 100 local $local_ip remote $remote_ip erspan_ver 1 erspan 123 && \
+    /sbin/ip link add $service_name type erspan seq key $erspan_key local $local_ip remote $remote_ip erspan_ver 1 erspan 123 && \
     /sbin/ip link set $service_name up && \
     /sbin/ip addr add $ipv4_address dev $service_name && \
     /sbin/ip route add $route_network dev $service_name'
@@ -234,7 +239,7 @@ After=network.target
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/env sh -c '\
-    /sbin/ip link add $service_name type erspan seq key 100 local $local_ip remote $remote_ip erspan_ver 2 erspan_dir 1 erspan_hwid 7 && \
+    /sbin/ip link add $service_name type erspan seq key $erspan_key local $local_ip remote $remote_ip erspan_ver 2 erspan_dir 1 erspan_hwid 7 && \
     /sbin/ip link set $service_name up && \
     /sbin/ip addr add $ipv4_address dev $service_name && \
     /sbin/ip route add $route_network dev $service_name'
