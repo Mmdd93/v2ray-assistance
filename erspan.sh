@@ -77,8 +77,8 @@ generate_random_ipv4() {
     ipv4_address=${user_ipv4_address:-$ipv4_address}
 
     # Display the final IPv4 address
-    echo -e "\033[1;31m!! Save and copy > $ipv4_address < (use it for routing in remote server)!!\033[0m"
-    echo -e "\n\033[1;32mLocal IPv4 address:\033[0m $ipv4_address"
+    echo -e "\033[1;31m!! Save and copy >\033[1;33m $ipv4_address \033[0m < (use it for routing in remote server)!!\033[0m"
+
 
     # Save the generated or custom IPv4 address to a text file
     echo "ipv4=$ipv4_address" > /root/ipv4.txt
@@ -159,7 +159,7 @@ create_erspan_tunnel() {
     fi
 
     # Use the function to generate or select a custom IPv4 address
-    echo -e "\n${greEN}Configuring the IPv4 address for the tunnel.${RESET}"
+
     generate_random_ipv4
     local ipv4_address=$ipv4
 
