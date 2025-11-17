@@ -3613,7 +3613,7 @@ main_menu() {
         echo -e "${LIGHT_CYAN} 57.${NC} ${LIGHT_CYAN}OPEN VPN ${RED}[Multi]${NC}               ${WHITE}[github.com/eylandoo]${NC}"
         echo -e "${LIGHT_CYAN} 81.${NC} ${LIGHT_CYAN}OV-Panel ${RED}[Multi]${NC}               ${WHITE}[github.com/primeZdev/ov-panel]${NC}"
         echo -e "${LIGHT_CYAN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC}           ${WHITE}[github.com/amiridev-org]${NC}"
-		echo -e "${LIGHT_CYAN} 84.${NC} ${LIGHT_CYAN}Install MikroTik (CHR/DOCKER MODE)${NC}"    ${WHITE}[github.com/Mmdd93]${NC}"
+		echo -e "${LIGHT_CYAN} 84.${NC} ${LIGHT_CYAN}Install MikroTik (CHR/DOCKER MODE)${NC}    ${WHITE}[github.com/Mmdd93]${NC}"
         echo
         
         # Panel Backup section - YELLOW
