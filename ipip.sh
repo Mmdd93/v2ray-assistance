@@ -576,7 +576,6 @@ while true; do
             create_ipip_tunnel_ipv4
             ;;
 
-            ;;
         2)
             manage_ipip_tunnels
             ;;
