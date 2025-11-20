@@ -3123,7 +3123,7 @@ initial_menu() {
 
         case $choice in
             1)
-                echo -e "\n\033[1;32mYou selected to kill a process using a port.\033[0m"
+                echo -e "\n\033[1;32mRefresh...\033[0m"
                 initial_menu
                 ;;
 
