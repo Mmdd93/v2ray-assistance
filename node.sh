@@ -3114,22 +3114,28 @@ initial_menu() {
         echo -e "\033[1;36m===========================\033[0m"
         echo -e "\033[1;32mSelect an option from the menu below:\033[0m"
         echo -e "\033[1;36m===========================\033[0m"
-        echo -e "\033[1;34m1)\033[0m \033[1;33mKill process\033[0m"
-        echo -e "\033[1;34m2)\033[0m \033[1;33mView established IP connections\033[0m"
-        echo -e "\033[1;34m3)\033[0m \033[1;33mReturn\033[0m"
+		echo -e "\033[1;34m1)\033[0m \033[1;33mRefresh\033[0m"
+        echo -e "\033[1;34m2)\033[0m \033[1;33mKill process\033[0m"
+        echo -e "\033[1;34m3)\033[0m \033[1;33mView established IP connections\033[0m"
+        echo -e "\033[1;34m0)\033[0m \033[1;33mReturn\033[0m"
         echo -e "\033[1;36m===========================\033[0m"
         read -p "Your choice: " choice
 
         case $choice in
             1)
                 echo -e "\n\033[1;32mYou selected to kill a process using a port.\033[0m"
+                initial_menu
+                ;;
+
+			2)
+                echo -e "\n\033[1;32mYou selected to kill a process using a port.\033[0m"
                 kill_process
                 ;;
-            2)
+            3)
                 echo -e "\n\033[1;32mYou selected to view established IP connections.\033[0m"
                 used_ports_and_select
                 ;;
-            3)
+            0)
                 echo -e "\n\033[1;32mReturningu...\033[0m"
                 return  # Exit the menu and return to port selection
                 ;;
