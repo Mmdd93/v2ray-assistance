@@ -292,8 +292,7 @@ disable_log() {
     return_to_menu
 }
 enable_ufw() {
-
- if ! command -v ufw &> /dev/null; then
+    if ! command -v ufw &> /dev/null; then
         apt update
         apt install -y ufw
     fi
@@ -316,7 +315,11 @@ enable_ufw() {
     # Ensure SSH port is allowed before enabling UFW
     if ! ufw status | grep -q "Status: active"; then
         echo "UFW is currently inactive."
-        read -p "Do you want to allow SSH port $ssh_port before enabling UFW? [Y/N] : " allow_ssh
+        
+        # Default YES for SSH port
+        echo -n "Do you want to allow SSH port $ssh_port before enabling UFW? [Y/n] Default[Y]: "
+        read allow_ssh
+        allow_ssh=${allow_ssh:-Y}  # Default to Y if empty
         
         if [[ $allow_ssh == [Yy]* ]]; then
             ufw allow $ssh_port/tcp comment "SSH access"
@@ -324,14 +327,43 @@ enable_ufw() {
         fi
         
         echo ""
-        read -p "Do you want to allow other currently in-use ports? [Y/N] : " allow_ports
+        # Default YES for in-use ports
+        echo -n "Do you want to allow other currently in-use ports? [Y/n] Default[Y]: "
+        read allow_ports
+        allow_ports=${allow_ports:-Y}  # Default to Y if empty
         
         if [[ $allow_ports == [Yy]* ]]; then
             find_and_allow_ports
         fi
-      fi  
-    sudo ufw enable
-    echo -e "\033[0;32mUFW has been enabled.\033[0m"
+        
+        echo ""
+        # Default YES for enabling UFW
+        echo -n "Ready to enable UFW? [Y/n] Default[Y]: "
+        read enable_ufw_confirm
+        enable_ufw_confirm=${enable_ufw_confirm:-Y}  # Default to Y if empty
+        
+        if [[ $enable_ufw_confirm == [Yy]* ]]; then
+            sudo ufw --force enable
+            echo -e "\033[0;32mUFW has been enabled.\033[0m"
+        else
+            echo -e "\033[0;33mUFW was not enabled.\033[0m"
+        fi
+    else
+        echo "UFW is already active."
+        # Check if SSH port is already allowed
+        if ! ufw status | grep -q "$ssh_port/tcp"; then
+            # Default YES for SSH port
+            echo -n "SSH port $ssh_port is not allowed. Do you want to allow it? [Y/n] Default[Y]: "
+            read allow_ssh
+            allow_ssh=${allow_ssh:-Y}  # Default to Y if empty
+            
+            if [[ $allow_ssh == [Yy]* ]]; then
+                ufw allow $ssh_port/tcp comment "SSH access"
+                echo "SSH port $ssh_port has been allowed."
+            fi
+        fi
+        echo -e "\033[0;32mUFW is already enabled.\033[0m"
+    fi
     
     return_to_menu
 }
