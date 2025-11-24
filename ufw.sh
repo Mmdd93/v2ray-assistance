@@ -431,7 +431,7 @@ delete_rule() {
                 read -p "$(echo -e "\033[1;33mThis cannot be undone! [y/N]: \033[0m")" confirm_reset
                 
                 if [[ $confirm_reset == [Yy] ]]; then
-                    sudo ufw reset --force
+                    sudo ufw reset
                     echo -e "\033[0;31mAll UFW rules have been deleted, and UFW has been reset to defaults.\033[0m"
                     read -p "$(echo -e "\033[1;33mPress Enter to continue...\033[0m")"
                 else
