@@ -431,7 +431,7 @@ delete_rule() {
                 read -p "$(echo -e "\033[1;33mThis cannot be undone! [y/N]: \033[0m")" confirm_reset
                 
                 if [[ $confirm_reset == [Yy] ]]; then
-                    sudo ufw reset
+                    sudo ufw reset --force
                     echo -e "\033[0;31mAll UFW rules have been deleted, and UFW has been reset to defaults.\033[0m"
                     read -p "$(echo -e "\033[1;33mPress Enter to continue...\033[0m")"
                 else
@@ -458,7 +458,7 @@ delete_rule() {
                         for rule_number in "${sorted_rules[@]}"; do
                             # Check if each entry is a valid number
                             if [[ $rule_number =~ ^[0-9]+$ ]]; then
-                                sudo ufw delete "$rule_number"
+                                sudo ufw --force delete "$rule_number"
                                 echo -e "\033[0;32mDeleted rule number $rule_number.\033[0m"
                                 deleted_count=$((deleted_count + 1))
                             else
@@ -480,7 +480,6 @@ delete_rule() {
                 done
                 ;;
             2)
-            clear
                 while true; do
                     echo -e "\033[1;33mAvailable comments in UFW rules:\033[0m"
                     
@@ -529,9 +528,9 @@ delete_rule() {
                             
                             if [[ -n "$rule_numbers" ]]; then
                                 count=0
+                                # Delete all rules at once without asking for each one
                                 for rule_number in $rule_numbers; do
-                                    sudo ufw delete "$rule_number"
-                                    echo -e "\033[0;32mDeleted rule number $rule_number\033[0m"
+                                    sudo ufw --force delete "$rule_number"
                                     count=$((count + 1))
                                 done
                                 echo -e "\033[0;32mSuccessfully deleted $count rules with comment: '$selected_comment'\033[0m"
