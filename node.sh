@@ -3577,6 +3577,8 @@ main_menu() {
         echo -e "${CYAN} 70.${NC} ${CYAN}FRP Tunnel by Mehrad                     ${WHITE}[github.com/mikeesierrah]${NC}" 
         echo -e "${CYAN} 76.${NC} ${CYAN}ZEX Tunnel Waterwall                     ${WHITE}[github.com/izex/ZEX-Tunnel]${NC}"
         echo -e "${CYAN} 79.${NC} ${CYAN}Pingtunnel Manager                       ${WHITE}[github.com/hoseinlolready]${NC}"
+		echo -e "${CYAN} 87.${NC} ${CYAN}WSS/WS Reverse tunnel                    ${WHITE}[github.com/snsinfu/reverse-tunnel]${NC}"
+		echo -e "${CYAN} 88.${NC} ${CYAN}WSS/WS Reverse tunnel 69learn            ${WHITE}[github.com/69learn/wstunnel]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -3927,7 +3929,7 @@ main_menu() {
                 sudo bash Nodex.sh 
                 ;;
 			74) 
-   echo -e "${YELLOW}Running sui...${NC}"
+   				echo -e "${YELLOW}Running sui...${NC}"
 				sleep 1
                 sui ;;
 			75) 
@@ -3938,9 +3940,9 @@ main_menu() {
 			76) 
                 echo -e "${YELLOW}Running ZEX-Tunnel...${NC}"
                 git clone https://github.com/izex/ZEX-Tunnel.git
-cd ZEX-Tunnel
-chmod +x *
-sudo bash zex-tunnel-install.sh
+				cd ZEX-Tunnel
+				chmod +x *
+				sudo bash zex-tunnel-install.sh
                 ;;
 			77) 
                 echo -e "${YELLOW}Running mtp_install.sh...${NC}"
@@ -3952,32 +3954,32 @@ sudo bash zex-tunnel-install.sh
 				cd ovpn-admin
 				./start.sh
 				;;
-				79)
+			79)
                 echo -e "${YELLOW}Running Pingtunnel Manager...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/hoseinlolready/Pingtunnel_manager/refs/heads/main/Source/bash.sh -o Pingtunnel_manager.sh
                 sudo bash Pingtunnel_manager.sh
                 ;;
-               80)
+            80)
                 echo -e "${YELLOW}Running Blitz Panel...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/ReturnFI/Blitz/main/install.sh -o Blitz.sh
                 sudo bash Blitz.sh
                 ;;
-				81)
+			81)
                 echo -e "${YELLOW}Running OV-Panel...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/primeZdev/ov-panel/refs/heads/main/install.sh -o OV-Panel.sh
                 sudo bash OV-Panel.sh
                 ;;
-				82)
+			82)
                 echo -e "${YELLOW}Running OV-Panel...${NC}"
 				sleep 1
 				git clone https://github.com/AmiriDev-ORG/IranGate-OV.git
                 curl -Ls https://raw.githubusercontent.com/AmiriDev-ORG/IranGate-OV/refs/heads/CyrusTheGreat/install.sh -o IranGate-OV.sh
                 sudo bash IranGate-OV.sh
                 ;;
-				83)
+			83)
                 echo -e "${YELLOW}Cleanup...${NC}"
 				sleep 1
                 curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/Cleanup.sh -o Cleanup.sh
@@ -3989,17 +3991,29 @@ sudo bash zex-tunnel-install.sh
                 curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/MikroTik.sh -o MikroTik.sh
                 sudo bash MikroTik.sh
                 ;;
-						85)
+			85)
                 echo -e "${YELLOW}ipip.sh...${NC}"
 				sleep 1
                 curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/ipip.sh -o ipip.sh
                 sudo bash ipip.sh
                 ;;
-						86)
+			86)
                 echo -e "${YELLOW}erspan.sh...${NC}"
 				sleep 1
                 curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/erspan.sh -o erspan.sh
                 sudo bash erspan.sh
+                ;;
+			87)
+                echo -e "${YELLOW}erebe wstunnel...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/ws-reverse-tunnel.sh -o ws-reverse-tunnel.sh
+                sudo bash ws-reverse-tunnel.sh
+                ;;
+			88)
+                echo -e "${YELLOW}69learn Websocket Tunnel...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/69learn/wstunnel/main/wstunnel.sh -o ws-reverse-69learn.sh
+                sudo bash ws-reverse-69learn.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
