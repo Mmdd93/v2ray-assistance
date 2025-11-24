@@ -776,7 +776,97 @@ show_status_bar() {
     echo -e "${BLUE}│${NC}    UFW STATUS: $status                                  ${BLUE}│${NC}"
     echo -e "${BLUE}└─────────────────────────────────────────────────────────┘${NC}"
 }
+function block_ips {
+    clear
+    if ! command -v iptables &> /dev/null; then
+        apt update
+        apt install -y iptables
+    fi
 
+    if ! dpkg -s iptables-persistent &> /dev/null; then
+        apt update
+        apt install -y iptables-persistent
+    fi
+
+    if ! iptables -L abuse-defender -n >/dev/null 2>&1; then
+        iptables -N abuse-defender
+    fi
+
+    if ! iptables -L abuse-defender-custom -n >/dev/null 2>&1; then
+        iptables -N abuse-defender-custom
+    fi
+
+    if ! iptables -L abuse-defender-whitelist -n >/dev/null 2>&1; then
+        iptables -N abuse-defender-whitelist
+    fi
+
+
+    if ! iptables -L OUTPUT -n | awk '{print $1}' | grep -wq "^abuse-defender$"; then
+        iptables -I OUTPUT -j abuse-defender
+    fi
+
+    if ! iptables -L OUTPUT -n | awk '{print $1}' | grep -wq "^abuse-defender-custom$"; then
+        iptables -I OUTPUT -j abuse-defender-custom
+    fi
+
+    if ! iptables -L OUTPUT -n | awk '{print $1}' | grep -wq "^abuse-defender-whitelist$"; then
+        iptables -I OUTPUT -j abuse-defender-whitelist
+    fi
+
+    clear
+    read -p "Are you sure about blocking abuse IP-Ranges? [Y/N] : " confirm
+
+    if [[ $confirm == [Yy]* ]]; then
+        clear
+        read -p "Do you want to delete the previous rules? [Y/N] : " clear_rules
+        if [[ $clear_rules == [Yy]* ]]; then
+            iptables -F abuse-defender
+            iptables -F abuse-defender-custom
+            iptables -F abuse-defender-whitelist
+        fi
+
+        IP_LIST=$(curl -s 'https://raw.githubusercontent.com/Mmdd93/Abuse-Defender/main/abuse-ips.ipv4')
+
+        if [ $? -ne 0 ] || [ -z "$IP_LIST" ]; then
+            echo "Failed to fetch the IP-Ranges list..."
+            read -p "Press enter to return to Menu" dummy
+            ufw_menu
+        fi
+
+        for IP in $IP_LIST; do
+            iptables -A abuse-defender -d $IP -j DROP
+        done
+
+        echo '127.0.0.1 appclick.co' | tee -a /etc/hosts >/dev/null
+        echo '127.0.0.1 pushnotificationws.com' | tee -a /etc/hosts >/dev/null
+        iptables-save > /etc/iptables/rules.v4
+
+        clear
+        echo "Abuse IP-Ranges blocked successfully."
+
+
+        read -p "Press enter to return to Menu" dummy
+        ufw_menu
+    else
+        echo "Cancelled."
+        read -p "Press enter to return to Menu" dummy
+        ufw_menu
+    fi
+}
+function clear_block_ips {
+    clear
+    iptables -F abuse-defender
+    iptables -F abuse-defender-custom
+    iptables -F abuse-defender-whitelist
+    sed -i '/127.0.0.1 appclick.co/d' /etc/hosts
+    sed -i '/127.0.0.1 pushnotificationws.com/d' /etc/hosts
+    crontab -l | grep -v "/root/abuse-defender-update.sh" | crontab -
+    iptables-save > /etc/iptables/rules.v4
+    clear
+    echo "All Rules cleared successfully."
+    read -p "Press enter to return to Menu" dummy
+    main_menu
+}
 ufw_menu() {
     while true; do
         clear
@@ -793,15 +883,17 @@ ufw_menu() {
         echo -e "\033[1;32m  8. \033[0m View UFW status"
         echo -e "\033[1;32m  9. \033[0m View UFW rules"
         echo -e "\033[1;32m 10. \033[0m Reload UFW"
-        echo -e "\033[1;32m 11. \033[0m Set default incoming policy"
-        echo -e "\033[1;32m 12. \033[0m Set default outgoing policy"
+        echo -e "\033[1;32m 11. \033[0m Set default Incoming"
+        echo -e "\033[1;32m 12. \033[0m Set default Outgoing"
         echo -e "\033[1;32m 13. \033[0m Reset UFW to defaults"
         echo -e "\033[1;32m 14. \033[0m Allow in-use ports"
         echo -e "\033[1;32m 16. \033[0m View in-use ports"
         echo -e "\033[1;32m 17. \033[0m Allow ip"
         echo -e "\033[1;32m 18. \033[0m Deny ip"
 		echo -e "\033[1;32m 19. \033[0m Disable logs (better performance)"
-		echo -e "\033[1;32m 20. \033[0m Allow Gaming Ports"
+		echo -e "\033[1;32m 20. \033[0m Allow Gaming Ports [out]"
+		echo -e "\033[1;32m 21. \033[0m Block Abuse IP-Ranges"
+		echo -e "\033[1;32m 22. \033[0m Clear Abuse IP-Ranges"
         echo -e "\033[1;32m 0. \033[0m Return to main menu"
         echo -e "\033[1;36m===============================================\033[0m"
         echo -n "Select an option : "
@@ -828,6 +920,8 @@ ufw_menu() {
             18) deny_ip ;;
 	    	19) disable_log ;;
 			20) gaming_ports ;;
+			21) block_ips ;;
+			22) clear_block_ips ;;
             0) exit ;;  # Return to main menu
             *) echo -e "\033[0;31mInvalid option. Please select between 0-18.\033[0m"
 	    return_to_menu ;;
