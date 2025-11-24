@@ -178,11 +178,11 @@ allow_ports() {
     IFS=',' read -ra PORTS <<< "$ports"
     for port in "${PORTS[@]}"; do
         case "$direction" in
-            1) sudo ufw allow "$port" && echo -e "\033[0;32mAllowed incoming port $port.\033[0m" ;;
-            2) sudo ufw allow out "$port" && echo -e "\033[0;32mAllowed outgoing port $port.\033[0m" ;;
+            1) sudo ufw allow "$port" comment "custom allow" && echo -e "\033[0;32mAllowed incoming port $port.\033[0m" ;;
+            2) sudo ufw allow out "$port" comment "custom allow" && echo -e "\033[0;32mAllowed outgoing port $port.\033[0m" ;;
             3) 
-                sudo ufw allow "$port"
-                sudo ufw allow out "$port"
+                sudo ufw allow "$port" comment "custom allow"
+                sudo ufw allow out "$port" comment "custom allow"
                 echo -e "\033[0;32mAllowed both directions for port $port.\033[0m"
                 ;;
             0) 
@@ -208,11 +208,11 @@ deny_ports() {
     IFS=',' read -ra PORTS <<< "$ports"
     for port in "${PORTS[@]}"; do
         case "$direction" in
-            1) sudo ufw deny "$port" && echo -e "\033[0;31mDenied incoming port $port.\033[0m" ;;
-            2) sudo ufw deny out "$port" && echo -e "\033[0;31mDenied outgoing port $port.\033[0m" ;;
+            1) sudo ufw deny "$port" comment "custom deny" && echo -e "\033[0;31mDenied incoming port $port.\033[0m" ;;
+            2) sudo ufw deny out "$port" comment "custom deny" && echo -e "\033[0;31mDenied outgoing port $port.\033[0m" ;;
             3) 
-                sudo ufw deny "$port"
-                sudo ufw deny out "$port"
+                sudo ufw deny "$port" comment "custom deny"
+                sudo ufw deny out "$port" comment "custom deny"
                 echo -e "\033[0;31mDenied both directions for port $port.\033[0m"
                 ;;
             0) 
@@ -238,11 +238,11 @@ allow_services() {
     IFS=',' read -ra SERVICES <<< "$services"
     for service in "${SERVICES[@]}"; do
         case "$direction" in
-            1) sudo ufw allow "$service" && echo -e "\033[0;32mAllowed incoming service $service.\033[0m" ;;
-            2) sudo ufw allow out "$service" && echo -e "\033[0;32mAllowed outgoing service $service.\033[0m" ;;
+            1) sudo ufw allow "$service" comment "custom allow" && echo -e "\033[0;32mAllowed incoming service $service.\033[0m" ;;
+            2) sudo ufw allow out "$service" comment "custom allow" && echo -e "\033[0;32mAllowed outgoing service $service.\033[0m" ;;
             3) 
-                sudo ufw allow "$service"
-                sudo ufw allow out "$service"
+                sudo ufw allow "$service" comment "custom allow"
+                sudo ufw allow out "$service" comment "custom allow"
                 echo -e "\033[0;32mAllowed both directions for service $service.\033[0m"
                 ;;
             0) 
@@ -268,11 +268,11 @@ deny_services() {
     IFS=',' read -ra SERVICES <<< "$services"
     for service in "${SERVICES[@]}"; do
         case "$direction" in
-            1) sudo ufw deny "$service" && echo -e "\033[0;31mDenied incoming service $service.\033[0m" ;;
-            2) sudo ufw deny out "$service" && echo -e "\033[0;31mDenied outgoing service $service.\033[0m" ;;
+            1) sudo ufw deny "$service" comment "custom deny" && echo -e "\033[0;31mDenied incoming service $service.\033[0m" ;;
+            2) sudo ufw deny out "$service" comment "custom deny" && echo -e "\033[0;31mDenied outgoing service $service.\033[0m" ;;
             3) 
-                sudo ufw deny "$service"
-                sudo ufw deny out "$service"
+                sudo ufw deny "$service" comment "custom deny"
+                sudo ufw deny out "$service" comment "custom deny"
                 echo -e "\033[0;31mDenied both directions for service $service.\033[0m"
                 ;;
             0) 
@@ -355,11 +355,11 @@ deny_ip() {
     IFS=',' read -ra IPS <<< "$ips"
     for ip in "${IPS[@]}"; do
         case "$direction" in
-            1) sudo ufw deny from "$ip" && echo -e "\033[0;31mDenied incoming IP $ip.\033[0m" ;;
-            2) sudo ufw deny out to "$ip" && echo -e "\033[0;31mDenied outgoing IP $ip.\033[0m" ;;
+            1) sudo ufw deny from "$ip" comment "custom deny" && echo -e "\033[0;31mDenied incoming IP $ip.\033[0m" ;;
+            2) sudo ufw deny out to "$ip" comment "custom deny" && echo -e "\033[0;31mDenied outgoing IP $ip.\033[0m" ;;
             3) 
-                sudo ufw deny from "$ip"
-                sudo ufw deny out to "$ip"
+                sudo ufw deny from "$ip" comment "custom deny"
+                sudo ufw deny out to "$ip" comment "custom deny"
                 echo -e "\033[0;31mDenied both directions for IP $ip.\033[0m"
                 ;;
             0) 
@@ -385,11 +385,11 @@ allow_ip() {
     IFS=',' read -ra IPS <<< "$ips"
     for ip in "${IPS[@]}"; do
         case "$direction" in
-            1) sudo ufw allow from "$ip" && echo -e "\033[0;32mAllowed incoming IP $ip.\033[0m" ;;
-            2) sudo ufw allow out to "$ip" && echo -e "\033[0;32mAllowed outgoing IP $ip.\033[0m" ;;
+            1) sudo ufw allow from "$ip" comment "custom allow" && echo -e "\033[0;32mAllowed incoming IP $ip.\033[0m" ;;
+            2) sudo ufw allow out to "$ip" comment "custom allow" && echo -e "\033[0;32mAllowed outgoing IP $ip.\033[0m" ;;
             3) 
-                sudo ufw allow from "$ip"
-                sudo ufw allow out to "$ip"
+                sudo ufw allow from "$ip" comment "custom allow"
+                sudo ufw allow out to "$ip" comment "custom allow"
                 echo -e "\033[0;32mAllowed both directions for IP $ip.\033[0m"
                 ;;
             0) 
@@ -983,8 +983,8 @@ ufw_menu() {
         echo -e "\033[1;32m  5. \033[0m Allow services"
         echo -e "\033[1;32m  6. \033[0m Deny services"
         echo -e "\033[1;32m  7. \033[0m Delete a rule"
-        echo -e "\033[1;32m  8. \033[0m View UFW status"
-        echo -e "\033[1;32m  9. \033[0m View UFW rules"
+        echo -e "\033[1;32m  8. \033[0m View UFW status verbose"
+        echo -e "\033[1;32m  9. \033[0m View UFW rules numbered"
         echo -e "\033[1;32m 10. \033[0m Reload UFW"
         echo -e "\033[1;32m 11. \033[0m Set default Incoming"
         echo -e "\033[1;32m 12. \033[0m Set default Outgoing"
