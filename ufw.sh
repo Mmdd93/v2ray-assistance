@@ -442,68 +442,7 @@ return_to_menu() {
     read -p "Enter to continue... "
     ufw_menu  # Call the main menu function to return
 }
-stop_port_scanning() {
-    echo -e "${BLUE}🔒 BLOCKING PORT SCANNING CAPABILITY${NC}"
-    echo ""
-    
-    # Reset to safe defaults
-    sudo ufw --force reset
-    sudo ufw default deny incoming
-    sudo ufw default deny outgoing
-    
-    # Essential ports (always allowed)
-    sudo ufw allow out 53 comment 'DNS'
-    sudo ufw allow out 80 comment 'HTTP'
-    sudo ufw allow out 443 comment 'HTTPS'
-    sudo ufw allow out 123 comment 'NTP'
-    sudo ufw allow in 22 comment 'SSH'
-    
-    echo "Current allowed: 53, 80, 443, 123/udp (out) + 22 (in)"
-    echo ""
-    
-    # Ask for additional OUTBOUND ports
-    echo ""
-    echo -e "${YELLOW}Add more multiple OUTBOUND ports (comma-separated)${NC}"
-    echo "Example: 993,465,995,587,8000,9000"
-    
-    read -p "Enter ports (or press Enter to skip): " port_input
-    
-    if [[ -n "$port_input" ]]; then
-        IFS=',' read -ra ports <<< "$port_input"
-        
-        for port in "${ports[@]}"; do
-            port=$(echo "$port" | tr -d ' ')  # Remove spaces
-            
-            if [[ "$port" =~ ^[0-9]+$ ]] && [[ "$port" -ge 1 ]] && [[ "$port" -le 65535 ]]; then
-                sudo ufw allow out $port
-                echo -e "${GREEN}✅ Added OUTBOUND port $port${NC}"
-            else
-                echo -e "${RED}Invalid port: $port${NC}"
-            fi
-        done
-    fi
-    
-    # ASK before auto-detecting services
-    echo ""
-    read -p "Do you want to auto-detect and allow running services ports? (y/N): " detect_services
-    if [[ $detect_services =~ ^[Yy]$ ]]; then
-        echo -e "${YELLOW}🔍 Auto-detecting running services...${NC}"
-        find_and_allow_ports
-    else
-        echo -e "${YELLOW}⚠️  Skipping service detection${NC}"
-    fi
-    
-    # Enable firewall
-    sudo ufw enable
-    
-    echo ""
-    echo -e "${GREEN}✅ PORT SCANNING COMPLETELY BLOCKED${NC}"
-    echo ""
-    sudo ufw status numbered
-    echo ""
-    return_to_menu
 
-}
 # Gaming Ports Function
 gaming_ports() {
     while true; do
@@ -862,8 +801,7 @@ ufw_menu() {
         echo -e "\033[1;32m 17. \033[0m Allow ip"
         echo -e "\033[1;32m 18. \033[0m Deny ip"
 		echo -e "\033[1;32m 19. \033[0m Disable logs (better performance)"
-		echo -e "\033[1;32m 20. \033[0m stop port scanning"
-		echo -e "\033[1;32m 21. \033[0m 🎮 Gaming Ports"
+		echo -e "\033[1;32m 20. \033[0m Allow Gaming Ports"
         echo -e "\033[1;32m 0. \033[0m Return to main menu"
         echo -e "\033[1;36m===============================================\033[0m"
         echo -n "Select an option : "
@@ -889,8 +827,7 @@ ufw_menu() {
             17) allow_ip ;;
             18) deny_ip ;;
 	    	19) disable_log ;;
-			20) stop_port_scanning ;;
-			21) gaming_ports ;;
+			20) gaming_ports ;;
             0) exit ;;  # Return to main menu
             *) echo -e "\033[0;31mInvalid option. Please select between 0-18.\033[0m"
 	    return_to_menu ;;
