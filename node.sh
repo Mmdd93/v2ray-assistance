@@ -4006,8 +4006,8 @@ main_menu() {
 			87)
                 echo -e "${YELLOW}erebe wstunnel...${NC}"
 				sleep 1
-                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/ws-reverse-tunnel.sh -o ws-reverse-tunnel.sh
-                sudo bash ws-reverse-tunnel.sh
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/wss-revers.sh -o wss-revers.sh
+                sudo bash wss-revers.sh
                 ;;
 			88)
                 echo -e "${YELLOW}69learn Websocket Tunnel...${NC}"
