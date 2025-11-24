@@ -80,18 +80,18 @@ find_and_allow_ports() {
             case "$direction" in
                 1) 
                     for port in "${ports_array[@]}"; do
-                        sudo ufw allow "$port"
+                        sudo ufw allow "$port" comment "In Use Ports"
                     done
                     ;;
                 2)
                     for port in "${ports_array[@]}"; do
-                        sudo ufw allow out "$port"
+                        sudo ufw allow out "$port" comment "In Use Ports"
                     done
                     ;;
                 3)
                     for port in "${ports_array[@]}"; do
-                        sudo ufw allow "$port"
-                        sudo ufw allow out "$port"
+                        sudo ufw allow "$port" comment "In Use Ports"
+                        sudo ufw allow out "$port" comment "In Use Ports"
                     done
                     ;;
                 0) 
@@ -129,11 +129,11 @@ find_and_allow_ports() {
                 if [[ "$num" =~ ^[0-9]+$ ]] && [ "$num" -ge 1 ] && [ "$num" -le "${#ports_array[@]}" ]; then
                     port="${ports_array[$((num-1))]}"
                     case "$direction" in
-                        1) sudo ufw allow "$port" ;;
-                        2) sudo ufw allow out "$port" ;;
+                        1) sudo ufw allow "$port" comment "In Use Ports" ;;
+                        2) sudo ufw allow out "$port" comment "In Use Ports" ;;
                         3) 
-                            sudo ufw allow "$port"
-                            sudo ufw allow out "$port"
+                            sudo ufw allow "$port" comment "In Use Ports"
+                            sudo ufw allow out "$port" comment "In Use Ports"
                             ;;
                         0) 
                             echo -e "\033[1;31mReturn\033[0m"
@@ -285,6 +285,44 @@ disable_log() {
     return_to_menu
 }
 enable_ufw() {
+
+ if ! command -v ufw &> /dev/null; then
+        apt update
+        apt install -y ufw
+    fi
+
+    # Check if UFW is active
+    ufw_status=$(ufw status | grep "Status:")
+    
+    # Find SSH port
+    ssh_port=$(grep -E "^Port\s+[0-9]+" /etc/ssh/sshd_config 2>/dev/null | awk '{print $2}')
+    if [ -z "$ssh_port" ]; then
+        ssh_port=22  # Default SSH port
+    fi
+    
+    clear
+    echo "=== UFW Configuration Check ==="
+    echo "Detected SSH port: $ssh_port"
+    echo "Current UFW status: $ufw_status"
+    echo ""
+    
+    # Ensure SSH port is allowed before enabling UFW
+    if ! ufw status | grep -q "Status: active"; then
+        echo "UFW is currently inactive."
+        read -p "Do you want to allow SSH port $ssh_port before enabling UFW? [Y/N] : " allow_ssh
+        
+        if [[ $allow_ssh == [Yy]* ]]; then
+            ufw allow $ssh_port/tcp comment "SSH access"
+            echo "SSH port $ssh_port has been allowed."
+        fi
+        
+        echo ""
+        read -p "Do you want to allow other currently in-use ports? [Y/N] : " allow_ports
+        
+        if [[ $allow_ports == [Yy]* ]]; then
+            find_and_allow_ports
+        fi
+      fi  
     sudo ufw enable
     echo -e "\033[0;32mUFW has been enabled.\033[0m"
     
@@ -448,7 +486,7 @@ gaming_ports() {
     while true; do
         clear
         show_status_bar
-        echo -e "${CYAN}🎮 GAMING PORTS SELECTION${NC}"
+        echo -e "${CYAN}ðŸŽ® GAMING PORTS SELECTION${NC}"
         echo -e "${BLUE}=================================${NC}"
         echo -e "${GREEN}1.${NC} Steam & PC Gaming"
         echo -e "${GREEN}2.${NC} Minecraft"
@@ -477,32 +515,32 @@ gaming_ports() {
                 sudo ufw allow out 27036:27037/tcp
                 sudo ufw allow out 4380/udp
                 sudo ufw allow out 27014:27050/tcp
-                echo -e "${GREEN}✅ Steam gaming ports added${NC}"
+                echo -e "${GREEN}âœ… Steam gaming ports added${NC}"
                 ;;
             2)
                 echo -e "${YELLOW}Adding Minecraft ports...${NC}"
                 sudo ufw allow out 25565/tcp
-                echo -e "${GREEN}✅ Minecraft port added${NC}"
+                echo -e "${GREEN}âœ… Minecraft port added${NC}"
                 ;;
             3)
                 echo -e "${YELLOW}Adding Counter-Strike ports...${NC}"
                 sudo ufw allow out 27015/tcp
                 sudo ufw allow out 27015/udp
                 sudo ufw allow out 27020/udp
-                echo -e "${GREEN}✅ Counter-Strike ports added${NC}"
+                echo -e "${GREEN}âœ… Counter-Strike ports added${NC}"
                 ;;
             4)
                 echo -e "${YELLOW}Adding Call of Duty ports...${NC}"
                 sudo ufw allow out 3074/tcp
                 sudo ufw allow out 3074/udp
                 sudo ufw allow out 3075:3076/tcp
-                echo -e "${GREEN}✅ Call of Duty ports added${NC}"
+                echo -e "${GREEN}âœ… Call of Duty ports added${NC}"
                 ;;
             5)
                 echo -e "${YELLOW}Adding Battlefield ports...${NC}"
                 sudo ufw allow out 3659/udp
                 sudo ufw allow out 10000:20000/udp
-                echo -e "${GREEN}✅ Battlefield ports added${NC}"
+                echo -e "${GREEN}âœ… Battlefield ports added${NC}"
                 ;;
             6)
                 echo -e "${YELLOW}Adding Fortnite ports...${NC}"
@@ -510,20 +548,20 @@ gaming_ports() {
                 sudo ufw allow out 5223/tcp
                 sudo ufw allow out 3478:3479/udp
                 sudo ufw allow out 3074:4380/udp
-                echo -e "${GREEN}✅ Fortnite ports added${NC}"
+                echo -e "${GREEN}âœ… Fortnite ports added${NC}"
                 ;;
             7)
                 echo -e "${YELLOW}Adding GTA Online ports...${NC}"
                 sudo ufw allow out 6672/udp
                 sudo ufw allow out 61455:61458/udp
                 sudo ufw allow out 1000:2000/udp
-                echo -e "${GREEN}✅ GTA Online ports added${NC}"
+                echo -e "${GREEN}âœ… GTA Online ports added${NC}"
                 ;;
             8)
                 echo -e "${YELLOW}Adding Rainbow Six Siege ports...${NC}"
                 sudo ufw allow out 6015:6016/tcp
                 sudo ufw allow out 10000:20000/udp
-                echo -e "${GREEN}✅ Rainbow Six Siege ports added${NC}"
+                echo -e "${GREEN}âœ… Rainbow Six Siege ports added${NC}"
                 ;;
             9)
                 echo -e "${YELLOW}Adding Valorant ports...${NC}"
@@ -532,7 +570,7 @@ gaming_ports() {
                 sudo ufw allow out 8080/tcp
                 sudo ufw allow out 8443/tcp
                 sudo ufw allow out 5000:5500/udp
-                echo -e "${GREEN}✅ Valorant ports added${NC}"
+                echo -e "${GREEN}âœ… Valorant ports added${NC}"
                 ;;
             10)
                 echo -e "${YELLOW}Adding Apex Legends ports...${NC}"
@@ -540,27 +578,27 @@ gaming_ports() {
                 sudo ufw allow out 3216/udp
                 sudo ufw allow out 9960:9969/udp
                 sudo ufw allow out 18000:18100/udp
-                echo -e "${GREEN}✅ Apex Legends ports added${NC}"
+                echo -e "${GREEN}âœ… Apex Legends ports added${NC}"
                 ;;
             11)
                 echo -e "${YELLOW}Adding Overwatch ports...${NC}"
                 sudo ufw allow out 1119:1120/udp
                 sudo ufw allow out 3724/tcp
                 sudo ufw allow out 4000:4001/tcp
-                echo -e "${GREEN}✅ Overwatch ports added${NC}"
+                echo -e "${GREEN}âœ… Overwatch ports added${NC}"
                 ;;
             12)
                 echo -e "${YELLOW}Adding PlayStation Network ports...${NC}"
                 sudo ufw allow out 3478:3480/tcp
                 sudo ufw allow out 3478:3479/udp
                 sudo ufw allow out 10070:10080/tcp
-                echo -e "${GREEN}✅ PlayStation Network ports added${NC}"
+                echo -e "${GREEN}âœ… PlayStation Network ports added${NC}"
                 ;;
             13)
                 echo -e "${YELLOW}Adding Xbox Live ports...${NC}"
                 sudo ufw allow out 3074/tcp
                 sudo ufw allow out 3074/udp
-                echo -e "${GREEN}✅ Xbox Live ports added${NC}"
+                echo -e "${GREEN}âœ… Xbox Live ports added${NC}"
                 ;;
             14)
                 echo -e "${YELLOW}Adding Minimal Gaming Setup...${NC}"
@@ -571,15 +609,15 @@ gaming_ports() {
                 sudo ufw allow out 3074/udp
                 sudo ufw allow out 27015:27030/tcp
                 sudo ufw allow out 27015:27030/udp
-                echo -e "${GREEN}✅ Minimal gaming ports added${NC}"
+                echo -e "${GREEN}âœ… Minimal gaming ports added${NC}"
                 ;;
             15)
-                echo -e "${YELLOW}⚠️  Adding Maximum Gaming Ports (Wide Range)...${NC}"
+                echo -e "${YELLOW}âš ï¸  Adding Maximum Gaming Ports (Wide Range)...${NC}"
                 read -p "Are you sure? This opens many ports! (y/N): " confirm
                 if [[ $confirm =~ ^[Yy]$ ]]; then
                     sudo ufw allow out 1000:65000/udp
                     sudo ufw allow out 1000:65000/tcp
-                    echo -e "${GREEN}✅ Maximum gaming ports added${NC}"
+                    echo -e "${GREEN}âœ… Maximum gaming ports added${NC}"
                 else
                     echo -e "${YELLOW}Operation cancelled${NC}"
                 fi
@@ -605,7 +643,7 @@ gaming_ports() {
     while true; do
         clear
         show_status_bar
-        echo -e "${CYAN}🎮 GAMING PORTS SELECTION${NC}"
+        echo -e "${CYAN}ðŸŽ® GAMING PORTS SELECTION${NC}"
         echo -e "${BLUE}=================================${NC}"
         echo -e "${GREEN}1.${NC} Steam & PC Gaming"
         echo -e "${GREEN}2.${NC} Minecraft"
@@ -634,32 +672,32 @@ gaming_ports() {
                 sudo ufw allow out 27036:27037/tcp
                 sudo ufw allow out 4380/udp
                 sudo ufw allow out 27014:27050/tcp
-                echo -e "${GREEN}✅ Steam gaming ports added${NC}"
+                echo -e "${GREEN}âœ… Steam gaming ports added${NC}"
                 ;;
             2)
                 echo -e "${YELLOW}Adding Minecraft ports...${NC}"
                 sudo ufw allow out 25565/tcp
-                echo -e "${GREEN}✅ Minecraft port added${NC}"
+                echo -e "${GREEN}âœ… Minecraft port added${NC}"
                 ;;
             3)
                 echo -e "${YELLOW}Adding Counter-Strike ports...${NC}"
                 sudo ufw allow out 27015/tcp
                 sudo ufw allow out 27015/udp
                 sudo ufw allow out 27020/udp
-                echo -e "${GREEN}✅ Counter-Strike ports added${NC}"
+                echo -e "${GREEN}âœ… Counter-Strike ports added${NC}"
                 ;;
             4)
                 echo -e "${YELLOW}Adding Call of Duty ports...${NC}"
                 sudo ufw allow out 3074/tcp
                 sudo ufw allow out 3074/udp
                 sudo ufw allow out 3075:3076/tcp
-                echo -e "${GREEN}✅ Call of Duty ports added${NC}"
+                echo -e "${GREEN}âœ… Call of Duty ports added${NC}"
                 ;;
             5)
                 echo -e "${YELLOW}Adding Battlefield ports...${NC}"
                 sudo ufw allow out 3659/udp
                 sudo ufw allow out 10000:20000/udp
-                echo -e "${GREEN}✅ Battlefield ports added${NC}"
+                echo -e "${GREEN}âœ… Battlefield ports added${NC}"
                 ;;
             6)
                 echo -e "${YELLOW}Adding Fortnite ports...${NC}"
@@ -667,20 +705,20 @@ gaming_ports() {
                 sudo ufw allow out 5223/tcp
                 sudo ufw allow out 3478:3479/udp
                 sudo ufw allow out 3074:4380/udp
-                echo -e "${GREEN}✅ Fortnite ports added${NC}"
+                echo -e "${GREEN}âœ… Fortnite ports added${NC}"
                 ;;
             7)
                 echo -e "${YELLOW}Adding GTA Online ports...${NC}"
                 sudo ufw allow out 6672/udp
                 sudo ufw allow out 61455:61458/udp
                 sudo ufw allow out 1000:2000/udp
-                echo -e "${GREEN}✅ GTA Online ports added${NC}"
+                echo -e "${GREEN}âœ… GTA Online ports added${NC}"
                 ;;
             8)
                 echo -e "${YELLOW}Adding Rainbow Six Siege ports...${NC}"
                 sudo ufw allow out 6015:6016/tcp
                 sudo ufw allow out 10000:20000/udp
-                echo -e "${GREEN}✅ Rainbow Six Siege ports added${NC}"
+                echo -e "${GREEN}âœ… Rainbow Six Siege ports added${NC}"
                 ;;
             9)
                 echo -e "${YELLOW}Adding Valorant ports...${NC}"
@@ -689,7 +727,7 @@ gaming_ports() {
                 sudo ufw allow out 8080/tcp
                 sudo ufw allow out 8443/tcp
                 sudo ufw allow out 5000:5500/udp
-                echo -e "${GREEN}✅ Valorant ports added${NC}"
+                echo -e "${GREEN}âœ… Valorant ports added${NC}"
                 ;;
             10)
                 echo -e "${YELLOW}Adding Apex Legends ports...${NC}"
@@ -697,26 +735,26 @@ gaming_ports() {
                 sudo ufw allow out 3216/udp
                 sudo ufw allow out 9960:9969/udp
                 sudo ufw allow out 18000:18100/udp
-                echo -e "${GREEN}✅ Apex Legends ports added${NC}"
+                echo -e "${GREEN}âœ… Apex Legends ports added${NC}"
                 ;;
             11)
                 echo -e "${YELLOW}Adding Overwatch ports...${NC}"
                 sudo ufw allow out 1119:1120/udp
                 sudo ufw allow out 3724/tcp
                 sudo ufw allow out 4000:4001/tcp
-                echo -e "${GREEN}✅ Overwatch ports added${NC}"
+                echo -e "${GREEN}âœ… Overwatch ports added${NC}"
                 ;;
             12)
                 echo -e "${YELLOW}Adding PlayStation Network ports...${NC}"
                 sudo ufw allow out 3478:3480/tcp
                 sudo ufw allow out 3478:3479/udp
                 sudo ufw allow out 10070:10080/tcp
-                echo -e "${GREEN}✅ PlayStation Network ports added${NC}"
+                echo -e "${GREEN}âœ… PlayStation Network ports added${NC}"
                 ;;
             13)
                 echo -e "${YELLOW}Adding Xbox Live ports...${NC}"
                 sudo ufw allow out 3074
-                echo -e "${GREEN}✅ Xbox Live ports added${NC}"
+                echo -e "${GREEN}âœ… Xbox Live ports added${NC}"
                 ;;
             14)
                 echo -e "${YELLOW}Adding Minimal Gaming Setup...${NC}"
@@ -725,15 +763,15 @@ gaming_ports() {
                 sudo ufw allow out 443
                 sudo ufw allow out 3074
                 sudo ufw allow out 27015:27030
-                echo -e "${GREEN}✅ Minimal gaming ports added${NC}"
+                echo -e "${GREEN}âœ… Minimal gaming ports added${NC}"
                 ;;
             15)
-                echo -e "${YELLOW}⚠️  Adding Maximum Gaming Ports (Wide Range)...${NC}"
+                echo -e "${YELLOW}âš ï¸  Adding Maximum Gaming Ports (Wide Range)...${NC}"
                 read -p "Are you sure? This opens many ports! (y/N): " confirm
                 if [[ $confirm =~ ^[Yy]$ ]]; then
                     sudo ufw allow out 1000:65000/udp
                     sudo ufw allow out 1000:65000/tcp
-                    echo -e "${GREEN}✅ Maximum gaming ports added${NC}"
+                    echo -e "${GREEN}âœ… Maximum gaming ports added${NC}"
                 else
                     echo -e "${YELLOW}Operation cancelled${NC}"
                 fi
@@ -772,10 +810,13 @@ get_ufw_status() {
 # Function to display status bar
 show_status_bar() {
     local status=$(get_ufw_status)
-    echo -e "\n${BLUE}┌─────────────────────────────────────────────────────────┐${NC}"
-    echo -e "${BLUE}│${NC}    UFW STATUS: $status                                  ${BLUE}│${NC}"
-    echo -e "${BLUE}└─────────────────────────────────────────────────────────┘${NC}"
+    echo -e "\n${BLUE}â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”${NC}"
+    echo -e "${BLUE}â”‚${NC}    UFW STATUS: $status                                  ${BLUE}â”‚${NC}"
+    echo -e "${BLUE}â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜${NC}"
 }
+
+
+
 function block_ips {
     clear
     if ! command -v ufw &> /dev/null; then
@@ -783,16 +824,63 @@ function block_ips {
         apt install -y ufw
     fi
 
-    # Enable UFW if not already enabled
-    if ! ufw status | grep -q "Status: active"; then
-        ufw enable
+    # Check if UFW is active
+    ufw_status=$(ufw status | grep "Status:")
+    
+    # Find SSH port
+    ssh_port=$(grep -E "^Port\s+[0-9]+" /etc/ssh/sshd_config 2>/dev/null | awk '{print $2}')
+    if [ -z "$ssh_port" ]; then
+        ssh_port=22  # Default SSH port
     fi
+    
 
-    clear
+    echo "=== UFW Configuration Check ==="
+    echo "Detected SSH port: $ssh_port"
+    echo "Current UFW status: $ufw_status"
+    echo ""
+    
+    # Ensure SSH port is allowed before enabling UFW
+    if ! ufw status | grep -q "Status: active"; then
+        echo "UFW is currently inactive."
+        read -p "Do you want to allow SSH port $ssh_port before enabling UFW? [Y/N] : " allow_ssh
+        
+        if [[ $allow_ssh == [Yy]* ]]; then
+            ufw allow $ssh_port/tcp comment "SSH access"
+            echo "SSH port $ssh_port has been allowed."
+        fi
+        
+
+        
+        echo ""
+        read -p "Ready to enable UFW? [Y/N] : " enable_ufw
+        if [[ $enable_ufw == [Yy]* ]]; then
+            ufw --force enable
+            echo "UFW has been enabled."
+        else
+            echo "UFW remains disabled. Continuing with rule setup..."
+        fi
+    else
+        echo "UFW is already active."
+        # Check if SSH port is already allowed
+        if ! ufw status | grep -q "$ssh_port/tcp"; then
+            read -p "SSH port $ssh_port is not allowed. Do you want to allow it? [Y/N] : " allow_ssh
+            if [[ $allow_ssh == [Yy]* ]]; then
+                ufw allow $ssh_port/tcp comment "SSH access"
+                echo "SSH port $ssh_port has been allowed."
+            fi
+        fi
+    fi
+        echo ""
+        read -p "Do you want to allow other currently in-use ports? [Y/N] : " allow_ports
+        
+        if [[ $allow_ports == [Yy]* ]]; then
+            find_and_allow_ports
+        fi
+    # REMOVED the clear command from here - this was the problem!
+    
     read -p "Are you sure about blocking abuse IP-Ranges? [Y/N] : " confirm
 
     if [[ $confirm == [Yy]* ]]; then
-        clear
         read -p "Do you want to delete the previous rules? [Y/N] : " clear_rules
         if [[ $clear_rules == [Yy]* ]]; then
             # Remove all existing abuse-defender rules
@@ -800,17 +888,25 @@ function block_ips {
                 yes | ufw delete $num
             done
         fi
-
+        
+        sudo ufw default allow outgoing
+        echo -e "\033[0;32mSet default outgoing policy to Allow.\033[0m"
+        echo -e "\033[0;32mFetching abuse IP ranges...\033[0m"
+        
         IP_LIST=$(curl -s 'https://raw.githubusercontent.com/Mmdd93/Abuse-Defender/main/abuse-ips.ipv4')
 
         if [ $? -ne 0 ] || [ -z "$IP_LIST" ]; then
-            echo "Failed to fetch the IP-Ranges list..."
-            read -p "Press enter to return to Menu" dummy
-            ufw_menu
+            echo "Failed to fetch the IP-Ranges list from GitHub, using built-in list..."
+            # Fallback to inline IP ranges
+            IP_LIST="10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 100.64.0.0/10 198.18.0.0/15 169.254.0.0/16 192.0.0.0/24 192.0.2.0/24 192.88.99.0/24 198.51.100.0/24 203.0.113.0/24 224.0.0.0/4 233.252.0.0/24 102.0.0.0/8 25.0.0.0/8 240.0.0.0/24 185.235.86.0/24 185.235.87.0/24 114.208.187.0/24 216.218.185.0/24 206.191.152.0/24 45.14.174.0/24 195.137.167.0/24 103.58.50.0/24 103.58.82.0/24 103.29.38.0/24 103.49.99.0/24 25.214.65.0/24 185.158.175.2 141.101.0.0/16 173.245.0.0/16 1.39.95.0/24 128.0.0.0/8 13.0.0.0/8 14.128.226.0/24 14.131.185.0/24 14.15.84.0/24 15.0.0.0/8 16.0.0.0/8 18.24.123.0/24 18.65.165.0/24 19.0.0.0/8 2.2.234.0/24 2.31.64.0/24 20.147.24.0/24 20.179.40.0/24 20.183.240.0/24 23.0.0.0/8 24.239.188.0/24 24.27.139.0/24 27.112.27.0/24 31.0.0.0/8 32.0.0.0/8 35.46.240.0/24 36.193.191.0/24 36.193.239.0/24 36.194.137.0/24 36.195.197.0/24 36.207.138.0/24 36.254.82.0/24 37.128.17.0/24 4.135.150.0/24 4.139.120.0/24 40.0.0.0/8 41.16.199.0/24 42.0.0.0/8 43.103.13.0/24 43.28.22.0/24 43.30.165.0/24 43.5.185.0/24 43.75.166.0/24 46.62.156.0/24 5.154.150.0/24 5.199.31.0/24 5.221.177.0/24 5.60.108.0/24 6.3.224.0/24 6.3.90.0/24 6.5.233.0/24 8.151.29.0/24 8.167.36.0/24 8.170.190.0/24 8.229.180.0/24 8.236.21.0/24 9.0.0.0/8 62.213.0.0/16"
         fi
 
+        echo -e "\033[0;32mAdding blocking rules for $(echo "$IP_LIST" | wc -w) IP ranges...\033[0m"        
+        count=0
         for IP in $IP_LIST; do
             ufw deny out from any to $IP comment "abuse-defender"
+            count=$((count + 1))
+            echo -ne "Progress: $count IP ranges blocked\r"
         done
 
         echo '127.0.0.1 appclick.co' | tee -a /etc/hosts >/dev/null
@@ -818,6 +914,7 @@ function block_ips {
 
         clear
         echo "Abuse IP-Ranges blocked successfully."
+        echo "Total IP ranges blocked: $count"
 
         read -p "Press enter to return to Menu" dummy
         ufw_menu
@@ -827,7 +924,6 @@ function block_ips {
         ufw_menu
     fi
 }
-
 function clear_block_ips {
     clear
     # Remove all abuse-defender rules
@@ -861,7 +957,7 @@ ufw_menu() {
         echo -e "\033[1;32m 10. \033[0m Reload UFW"
         echo -e "\033[1;32m 11. \033[0m Set default Incoming"
         echo -e "\033[1;32m 12. \033[0m Set default Outgoing"
-        echo -e "\033[1;32m 13. \033[0m Reset UFW to defaults"
+        echo -e "\033[1;32m 13. \033[0m clear all UFW rules"
         echo -e "\033[1;32m 14. \033[0m Allow in-use ports"
         echo -e "\033[1;32m 16. \033[0m View in-use ports"
         echo -e "\033[1;32m 17. \033[0m Allow ip"
@@ -869,7 +965,7 @@ ufw_menu() {
 		echo -e "\033[1;32m 19. \033[0m Disable logs (better performance)"
 		echo -e "\033[1;32m 20. \033[0m Allow Gaming Ports [out]"
 		echo -e "\033[1;32m 21. \033[0m Block Abuse IP-Ranges"
-		echo -e "\033[1;32m 22. \033[0m Clear Abuse IP-Ranges"
+		echo -e "\033[1;32m 22. \033[0m Clear Abuse IP-Ranges rules"
         echo -e "\033[1;32m 0. \033[0m Return to main menu"
         echo -e "\033[1;36m===============================================\033[0m"
         echo -n "Select an option : "
