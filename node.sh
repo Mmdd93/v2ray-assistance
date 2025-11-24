@@ -3491,12 +3491,7 @@ LIGHT_CYAN='\033[1;96m'
 NC='\033[0m' # No Color
 
 # Header function
-display_header() {
-    clear
-    echo -e "${BLUE}github.com/Mmdd93/v2ray-assistance${NC}"
-    echo -e "${YELLOW}Telegram: @tlgrmv2 | Version: 25.11.4${NC}"
-	echo
-}
+
 
 # Main menu function
 main_menu() {
@@ -4065,6 +4060,12 @@ netspeed() {
    echo -e "${GREEN}CPU: ${cpu}%${NC} ${YELLOW}RAM: ${mem}%${NC} ${RED}DISK: ${disk}%${NC} ${CYAN}NET: ↓${rx_speed}MB/s ↑${tx_speed}MB/s${NC}"
 }
 # Start the main menu
+display_header() {
+    clear
+    echo -e "${BLUE}github.com/Mmdd93/v2ray-assistance${NC}"
+    echo -e "${YELLOW}Telegram: @tlgrmv2 | Version: 25.11.24${NC}"
+	echo
+}
 main_menu
 
 
