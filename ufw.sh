@@ -178,11 +178,11 @@ allow_ports() {
     IFS=',' read -ra PORTS <<< "$ports"
     for port in "${PORTS[@]}"; do
         case "$direction" in
-            1) sudo ufw allow "$port" comment "custom allow" && echo -e "\033[0;32mAllowed incoming port $port.\033[0m" ;;
-            2) sudo ufw allow out "$port" comment "custom allow" && echo -e "\033[0;32mAllowed outgoing port $port.\033[0m" ;;
+            1) sudo ufw allow "$port" comment "custom allow ports" && echo -e "\033[0;32mAllowed incoming port $port.\033[0m" ;;
+            2) sudo ufw allow out "$port" comment "custom allow ports" && echo -e "\033[0;32mAllowed outgoing port $port.\033[0m" ;;
             3) 
-                sudo ufw allow "$port" comment "custom allow"
-                sudo ufw allow out "$port" comment "custom allow"
+                sudo ufw allow "$port" comment "custom allow ports"
+                sudo ufw allow out "$port" comment "custom allow ports"
                 echo -e "\033[0;32mAllowed both directions for port $port.\033[0m"
                 ;;
             0) 
@@ -208,11 +208,11 @@ deny_ports() {
     IFS=',' read -ra PORTS <<< "$ports"
     for port in "${PORTS[@]}"; do
         case "$direction" in
-            1) sudo ufw deny "$port" comment "custom deny" && echo -e "\033[0;31mDenied incoming port $port.\033[0m" ;;
-            2) sudo ufw deny out "$port" comment "custom deny" && echo -e "\033[0;31mDenied outgoing port $port.\033[0m" ;;
+            1) sudo ufw deny "$port" comment "custom deny ports" && echo -e "\033[0;31mDenied incoming port $port.\033[0m" ;;
+            2) sudo ufw deny out "$port" comment "custom deny ports" && echo -e "\033[0;31mDenied outgoing port $port.\033[0m" ;;
             3) 
-                sudo ufw deny "$port" comment "custom deny"
-                sudo ufw deny out "$port" comment "custom deny"
+                sudo ufw deny "$port" comment "custom deny ports"
+                sudo ufw deny out "$port" comment "custom deny ports"
                 echo -e "\033[0;31mDenied both directions for port $port.\033[0m"
                 ;;
             0) 
@@ -238,11 +238,11 @@ allow_services() {
     IFS=',' read -ra SERVICES <<< "$services"
     for service in "${SERVICES[@]}"; do
         case "$direction" in
-            1) sudo ufw allow "$service" comment "custom allow" && echo -e "\033[0;32mAllowed incoming service $service.\033[0m" ;;
-            2) sudo ufw allow out "$service" comment "custom allow" && echo -e "\033[0;32mAllowed outgoing service $service.\033[0m" ;;
+            1) sudo ufw allow "$service" comment "custom allow services" && echo -e "\033[0;32mAllowed incoming service $service.\033[0m" ;;
+            2) sudo ufw allow out "$service" comment "custom allow services" && echo -e "\033[0;32mAllowed outgoing service $service.\033[0m" ;;
             3) 
-                sudo ufw allow "$service" comment "custom allow"
-                sudo ufw allow out "$service" comment "custom allow"
+                sudo ufw allow "$service" comment "custom allow services"
+                sudo ufw allow out "$service" comment "custom allow services"
                 echo -e "\033[0;32mAllowed both directions for service $service.\033[0m"
                 ;;
             0) 
@@ -268,11 +268,11 @@ deny_services() {
     IFS=',' read -ra SERVICES <<< "$services"
     for service in "${SERVICES[@]}"; do
         case "$direction" in
-            1) sudo ufw deny "$service" comment "custom deny" && echo -e "\033[0;31mDenied incoming service $service.\033[0m" ;;
-            2) sudo ufw deny out "$service" comment "custom deny" && echo -e "\033[0;31mDenied outgoing service $service.\033[0m" ;;
+            1) sudo ufw deny "$service" comment "custom deny services" && echo -e "\033[0;31mDenied incoming service $service.\033[0m" ;;
+            2) sudo ufw deny out "$service" comment "custom deny services" && echo -e "\033[0;31mDenied outgoing service $service.\033[0m" ;;
             3) 
-                sudo ufw deny "$service" comment "custom deny"
-                sudo ufw deny out "$service" comment "custom deny"
+                sudo ufw deny "$service" comment "custom deny services"
+                sudo ufw deny out "$service" comment "custom deny services"
                 echo -e "\033[0;31mDenied both directions for service $service.\033[0m"
                 ;;
             0) 
@@ -355,11 +355,11 @@ deny_ip() {
     IFS=',' read -ra IPS <<< "$ips"
     for ip in "${IPS[@]}"; do
         case "$direction" in
-            1) sudo ufw deny from "$ip" comment "custom deny" && echo -e "\033[0;31mDenied incoming IP $ip.\033[0m" ;;
-            2) sudo ufw deny out to "$ip" comment "custom deny" && echo -e "\033[0;31mDenied outgoing IP $ip.\033[0m" ;;
+            1) sudo ufw deny from "$ip" comment "custom deny ip" && echo -e "\033[0;31mDenied incoming IP $ip.\033[0m" ;;
+            2) sudo ufw deny out to "$ip" comment "custom deny ip" && echo -e "\033[0;31mDenied outgoing IP $ip.\033[0m" ;;
             3) 
-                sudo ufw deny from "$ip" comment "custom deny"
-                sudo ufw deny out to "$ip" comment "custom deny"
+                sudo ufw deny from "$ip" comment "custom deny ip"
+                sudo ufw deny out to "$ip" comment "custom deny ip"
                 echo -e "\033[0;31mDenied both directions for IP $ip.\033[0m"
                 ;;
             0) 
@@ -385,11 +385,11 @@ allow_ip() {
     IFS=',' read -ra IPS <<< "$ips"
     for ip in "${IPS[@]}"; do
         case "$direction" in
-            1) sudo ufw allow from "$ip" comment "custom allow" && echo -e "\033[0;32mAllowed incoming IP $ip.\033[0m" ;;
-            2) sudo ufw allow out to "$ip" comment "custom allow" && echo -e "\033[0;32mAllowed outgoing IP $ip.\033[0m" ;;
+            1) sudo ufw allow from "$ip" comment "custom allow ip" && echo -e "\033[0;32mAllowed incoming IP $ip.\033[0m" ;;
+            2) sudo ufw allow out to "$ip" comment "custom allow ip" && echo -e "\033[0;32mAllowed outgoing IP $ip.\033[0m" ;;
             3) 
-                sudo ufw allow from "$ip" comment "custom allow"
-                sudo ufw allow out to "$ip" comment "custom allow"
+                sudo ufw allow from "$ip" comment "custom allow ip"
+                sudo ufw allow out to "$ip" comment "custom allow ip"
                 echo -e "\033[0;32mAllowed both directions for IP $ip.\033[0m"
                 ;;
             0) 
@@ -488,6 +488,7 @@ return_to_menu() {
     ufw_menu  # Call the main menu function to return
 }
 
+
 # Gaming Ports Function
 gaming_ports() {
     while true; do
@@ -517,267 +518,110 @@ gaming_ports() {
         case $game_choice in
             1)
                 echo -e "${YELLOW}Adding Steam & PC Gaming ports...${NC}"
-                sudo ufw allow out 27015:27030/tcp
-                sudo ufw allow out 27015:27030/udp
-                sudo ufw allow out 27036:27037/tcp
-                sudo ufw allow out 4380/udp
-                sudo ufw allow out 27014:27050/tcp
+                sudo ufw allow out 27015:27030/tcp comment "Gaming ports"
+                sudo ufw allow out 27015:27030/udp comment "Gaming ports"
+                sudo ufw allow out 27036:27037/tcp comment "Gaming ports"
+                sudo ufw allow out 4380/udp comment "Gaming ports"
+                sudo ufw allow out 27014:27050/tcp comment "Gaming ports"
                 echo -e "${GREEN}âœ… Steam gaming ports added${NC}"
                 ;;
             2)
                 echo -e "${YELLOW}Adding Minecraft ports...${NC}"
-                sudo ufw allow out 25565/tcp
+                sudo ufw allow out 25565/tcp comment "Gaming ports"
                 echo -e "${GREEN}âœ… Minecraft port added${NC}"
                 ;;
             3)
                 echo -e "${YELLOW}Adding Counter-Strike ports...${NC}"
-                sudo ufw allow out 27015/tcp
-                sudo ufw allow out 27015/udp
-                sudo ufw allow out 27020/udp
+                sudo ufw allow out 27015/tcp comment "Gaming ports"
+                sudo ufw allow out 27015/udp comment "Gaming ports"
+                sudo ufw allow out 27020/udp comment "Gaming ports"
                 echo -e "${GREEN}âœ… Counter-Strike ports added${NC}"
                 ;;
             4)
                 echo -e "${YELLOW}Adding Call of Duty ports...${NC}"
-                sudo ufw allow out 3074/tcp
-                sudo ufw allow out 3074/udp
-                sudo ufw allow out 3075:3076/tcp
+                sudo ufw allow out 3074/tcp comment "Gaming ports"
+                sudo ufw allow out 3074/udp comment "Gaming ports"
+                sudo ufw allow out 3075:3076/tcp comment "Gaming ports"
                 echo -e "${GREEN}âœ… Call of Duty ports added${NC}"
                 ;;
             5)
                 echo -e "${YELLOW}Adding Battlefield ports...${NC}"
-                sudo ufw allow out 3659/udp
-                sudo ufw allow out 10000:20000/udp
+                sudo ufw allow out 3659/udp comment "Gaming ports"
+                sudo ufw allow out 10000:20000/udp comment "Gaming ports"
                 echo -e "${GREEN}âœ… Battlefield ports added${NC}"
                 ;;
             6)
                 echo -e "${YELLOW}Adding Fortnite ports...${NC}"
-                sudo ufw allow out 5222/tcp
-                sudo ufw allow out 5223/tcp
-                sudo ufw allow out 3478:3479/udp
-                sudo ufw allow out 3074:4380/udp
+                sudo ufw allow out 5222/tcp comment "Gaming ports"
+                sudo ufw allow out 5223/tcp comment "Gaming ports"
+                sudo ufw allow out 3478:3479/udp comment "Gaming ports"
+                sudo ufw allow out 3074:4380/udp comment "Gaming ports"
                 echo -e "${GREEN}âœ… Fortnite ports added${NC}"
                 ;;
             7)
                 echo -e "${YELLOW}Adding GTA Online ports...${NC}"
-                sudo ufw allow out 6672/udp
-                sudo ufw allow out 61455:61458/udp
-                sudo ufw allow out 1000:2000/udp
+                sudo ufw allow out 6672/udp comment "Gaming ports"
+                sudo ufw allow out 61455:61458/udp comment "Gaming ports"
+                sudo ufw allow out 1000:2000/udp comment "Gaming ports"
                 echo -e "${GREEN}âœ… GTA Online ports added${NC}"
                 ;;
             8)
                 echo -e "${YELLOW}Adding Rainbow Six Siege ports...${NC}"
-                sudo ufw allow out 6015:6016/tcp
-                sudo ufw allow out 10000:20000/udp
+                sudo ufw allow out 6015:6016/tcp comment "Gaming ports"
+                sudo ufw allow out 10000:20000/udp comment "Gaming ports"
                 echo -e "${GREEN}âœ… Rainbow Six Siege ports added${NC}"
                 ;;
             9)
                 echo -e "${YELLOW}Adding Valorant ports...${NC}"
-                sudo ufw allow out 5223/tcp
-                sudo ufw allow out 2099/tcp
-                sudo ufw allow out 8080/tcp
-                sudo ufw allow out 8443/tcp
-                sudo ufw allow out 5000:5500/udp
+                sudo ufw allow out 5223/tcp comment "Gaming ports"
+                sudo ufw allow out 2099/tcp comment "Gaming ports"
+                sudo ufw allow out 8080/tcp comment "Gaming ports"
+                sudo ufw allow out 8443/tcp comment "Gaming ports"
+                sudo ufw allow out 5000:5500/udp comment "Gaming ports"
                 echo -e "${GREEN}âœ… Valorant ports added${NC}"
                 ;;
             10)
                 echo -e "${YELLOW}Adding Apex Legends ports...${NC}"
-                sudo ufw allow out 1024:1124/udp
-                sudo ufw allow out 3216/udp
-                sudo ufw allow out 9960:9969/udp
-                sudo ufw allow out 18000:18100/udp
+                sudo ufw allow out 1024:1124/udp comment "Gaming ports"
+                sudo ufw allow out 3216/udp comment "Gaming ports"
+                sudo ufw allow out 9960:9969/udp comment "Gaming ports"
+                sudo ufw allow out 18000:18100/udp comment "Gaming ports"
                 echo -e "${GREEN}âœ… Apex Legends ports added${NC}"
                 ;;
             11)
                 echo -e "${YELLOW}Adding Overwatch ports...${NC}"
-                sudo ufw allow out 1119:1120/udp
-                sudo ufw allow out 3724/tcp
-                sudo ufw allow out 4000:4001/tcp
+                sudo ufw allow out 1119:1120/udp comment "Gaming ports"
+                sudo ufw allow out 3724/tcp comment "Gaming ports"
+                sudo ufw allow out 4000:4001/tcp comment "Gaming ports"
                 echo -e "${GREEN}âœ… Overwatch ports added${NC}"
                 ;;
             12)
                 echo -e "${YELLOW}Adding PlayStation Network ports...${NC}"
-                sudo ufw allow out 3478:3480/tcp
-                sudo ufw allow out 3478:3479/udp
-                sudo ufw allow out 10070:10080/tcp
+                sudo ufw allow out 3478:3480/tcp comment "Gaming ports"
+                sudo ufw allow out 3478:3479/udp comment "Gaming ports"
+                sudo ufw allow out 10070:10080/tcp comment "Gaming ports"
                 echo -e "${GREEN}âœ… PlayStation Network ports added${NC}"
                 ;;
             13)
                 echo -e "${YELLOW}Adding Xbox Live ports...${NC}"
-                sudo ufw allow out 3074/tcp
-                sudo ufw allow out 3074/udp
+                sudo ufw allow out 3074 comment "Gaming ports"
                 echo -e "${GREEN}âœ… Xbox Live ports added${NC}"
                 ;;
             14)
                 echo -e "${YELLOW}Adding Minimal Gaming Setup...${NC}"
-                sudo ufw allow out 53
-                sudo ufw allow out 80/tcp
-                sudo ufw allow out 443/tcp
-                sudo ufw allow out 3074/tcp
-                sudo ufw allow out 3074/udp
-                sudo ufw allow out 27015:27030/tcp
-                sudo ufw allow out 27015:27030/udp
+                sudo ufw allow out 53 comment "Gaming ports"
+                sudo ufw allow out 80 comment "Gaming ports"
+                sudo ufw allow out 443 comment "Gaming ports"
+                sudo ufw allow out 3074 comment "Gaming ports"
+                sudo ufw allow out 27015:27030 comment "Gaming ports"
                 echo -e "${GREEN}âœ… Minimal gaming ports added${NC}"
                 ;;
             15)
                 echo -e "${YELLOW}âš ï¸  Adding Maximum Gaming Ports (Wide Range)...${NC}"
                 read -p "Are you sure? This opens many ports! (y/N): " confirm
                 if [[ $confirm =~ ^[Yy]$ ]]; then
-                    sudo ufw allow out 1000:65000/udp
-                    sudo ufw allow out 1000:65000/tcp
-                    echo -e "${GREEN}âœ… Maximum gaming ports added${NC}"
-                else
-                    echo -e "${YELLOW}Operation cancelled${NC}"
-                fi
-                ;;
-            0)
-                echo -e "${YELLOW}Returning to main menu...${NC}"
-                break
-                ;;
-            *)
-                echo -e "${RED}Invalid option${NC}"
-                ;;
-        esac
-        
-        echo ""
-        echo -e "${CYAN}Current UFW Rules:${NC}"
-        sudo ufw status numbered | grep -E "(ALLOW OUT|Game|Steam)" | head -10
-        echo ""
-        read -p "Press Enter to continue..."
-    done
-}
-# Gaming Ports Function
-gaming_ports() {
-    while true; do
-        clear
-        show_status_bar
-        echo -e "${CYAN}ðŸŽ® GAMING PORTS SELECTION${NC}"
-        echo -e "${BLUE}=================================${NC}"
-        echo -e "${GREEN}1.${NC} Steam & PC Gaming"
-        echo -e "${GREEN}2.${NC} Minecraft"
-        echo -e "${GREEN}3.${NC} Counter-Strike / Source Games"
-        echo -e "${GREEN}4.${NC} Call of Duty"
-        echo -e "${GREEN}5.${NC} Battlefield Series"
-        echo -e "${GREEN}6.${NC} Fortnite"
-        echo -e "${GREEN}7.${NC} GTA Online / Rockstar"
-        echo -e "${GREEN}8.${NC} Rainbow Six Siege"
-        echo -e "${GREEN}9.${NC} Valorant"
-        echo -e "${GREEN}10.${NC} Apex Legends"
-        echo -e "${GREEN}11.${NC} Overwatch"
-        echo -e "${GREEN}12.${NC} PlayStation Network"
-        echo -e "${GREEN}13.${NC} Xbox Live"
-        echo -e "${GREEN}14.${NC} Minimal Gaming Setup"
-        echo -e "${GREEN}15.${NC} Maximum Gaming (All Ports)"
-        echo -e "${RED}0.${NC} Return to Main Menu"
-        echo -e "${BLUE}=================================${NC}"
-        read -p "Select gaming option [0-15]: " game_choice
-
-        case $game_choice in
-            1)
-                echo -e "${YELLOW}Adding Steam & PC Gaming ports...${NC}"
-                sudo ufw allow out 27015:27030/tcp
-                sudo ufw allow out 27015:27030/udp
-                sudo ufw allow out 27036:27037/tcp
-                sudo ufw allow out 4380/udp
-                sudo ufw allow out 27014:27050/tcp
-                echo -e "${GREEN}âœ… Steam gaming ports added${NC}"
-                ;;
-            2)
-                echo -e "${YELLOW}Adding Minecraft ports...${NC}"
-                sudo ufw allow out 25565/tcp
-                echo -e "${GREEN}âœ… Minecraft port added${NC}"
-                ;;
-            3)
-                echo -e "${YELLOW}Adding Counter-Strike ports...${NC}"
-                sudo ufw allow out 27015/tcp
-                sudo ufw allow out 27015/udp
-                sudo ufw allow out 27020/udp
-                echo -e "${GREEN}âœ… Counter-Strike ports added${NC}"
-                ;;
-            4)
-                echo -e "${YELLOW}Adding Call of Duty ports...${NC}"
-                sudo ufw allow out 3074/tcp
-                sudo ufw allow out 3074/udp
-                sudo ufw allow out 3075:3076/tcp
-                echo -e "${GREEN}âœ… Call of Duty ports added${NC}"
-                ;;
-            5)
-                echo -e "${YELLOW}Adding Battlefield ports...${NC}"
-                sudo ufw allow out 3659/udp
-                sudo ufw allow out 10000:20000/udp
-                echo -e "${GREEN}âœ… Battlefield ports added${NC}"
-                ;;
-            6)
-                echo -e "${YELLOW}Adding Fortnite ports...${NC}"
-                sudo ufw allow out 5222/tcp
-                sudo ufw allow out 5223/tcp
-                sudo ufw allow out 3478:3479/udp
-                sudo ufw allow out 3074:4380/udp
-                echo -e "${GREEN}âœ… Fortnite ports added${NC}"
-                ;;
-            7)
-                echo -e "${YELLOW}Adding GTA Online ports...${NC}"
-                sudo ufw allow out 6672/udp
-                sudo ufw allow out 61455:61458/udp
-                sudo ufw allow out 1000:2000/udp
-                echo -e "${GREEN}âœ… GTA Online ports added${NC}"
-                ;;
-            8)
-                echo -e "${YELLOW}Adding Rainbow Six Siege ports...${NC}"
-                sudo ufw allow out 6015:6016/tcp
-                sudo ufw allow out 10000:20000/udp
-                echo -e "${GREEN}âœ… Rainbow Six Siege ports added${NC}"
-                ;;
-            9)
-                echo -e "${YELLOW}Adding Valorant ports...${NC}"
-                sudo ufw allow out 5223/tcp
-                sudo ufw allow out 2099/tcp
-                sudo ufw allow out 8080/tcp
-                sudo ufw allow out 8443/tcp
-                sudo ufw allow out 5000:5500/udp
-                echo -e "${GREEN}âœ… Valorant ports added${NC}"
-                ;;
-            10)
-                echo -e "${YELLOW}Adding Apex Legends ports...${NC}"
-                sudo ufw allow out 1024:1124/udp
-                sudo ufw allow out 3216/udp
-                sudo ufw allow out 9960:9969/udp
-                sudo ufw allow out 18000:18100/udp
-                echo -e "${GREEN}âœ… Apex Legends ports added${NC}"
-                ;;
-            11)
-                echo -e "${YELLOW}Adding Overwatch ports...${NC}"
-                sudo ufw allow out 1119:1120/udp
-                sudo ufw allow out 3724/tcp
-                sudo ufw allow out 4000:4001/tcp
-                echo -e "${GREEN}âœ… Overwatch ports added${NC}"
-                ;;
-            12)
-                echo -e "${YELLOW}Adding PlayStation Network ports...${NC}"
-                sudo ufw allow out 3478:3480/tcp
-                sudo ufw allow out 3478:3479/udp
-                sudo ufw allow out 10070:10080/tcp
-                echo -e "${GREEN}âœ… PlayStation Network ports added${NC}"
-                ;;
-            13)
-                echo -e "${YELLOW}Adding Xbox Live ports...${NC}"
-                sudo ufw allow out 3074
-                echo -e "${GREEN}âœ… Xbox Live ports added${NC}"
-                ;;
-            14)
-                echo -e "${YELLOW}Adding Minimal Gaming Setup...${NC}"
-                sudo ufw allow out 53
-                sudo ufw allow out 80
-                sudo ufw allow out 443
-                sudo ufw allow out 3074
-                sudo ufw allow out 27015:27030
-                echo -e "${GREEN}âœ… Minimal gaming ports added${NC}"
-                ;;
-            15)
-                echo -e "${YELLOW}âš ï¸  Adding Maximum Gaming Ports (Wide Range)...${NC}"
-                read -p "Are you sure? This opens many ports! (y/N): " confirm
-                if [[ $confirm =~ ^[Yy]$ ]]; then
-                    sudo ufw allow out 1000:65000/udp
-                    sudo ufw allow out 1000:65000/tcp
+                    sudo ufw allow out 1000:65000/udp comment "Gaming ports"
+                    sudo ufw allow out 1000:65000/tcp comment "Gaming ports"
                     echo -e "${GREEN}âœ… Maximum gaming ports added${NC}"
                 else
                     echo -e "${YELLOW}Operation cancelled${NC}"
@@ -982,7 +826,7 @@ ufw_menu() {
         echo -e "\033[1;32m  4. \033[0m Deny ports"
         echo -e "\033[1;32m  5. \033[0m Allow services"
         echo -e "\033[1;32m  6. \033[0m Deny services"
-        echo -e "\033[1;32m  7. \033[0m Delete a rule"
+        echo -e "\033[1;32m  7. \033[0m Delete rules"
         echo -e "\033[1;32m  8. \033[0m View UFW status verbose"
         echo -e "\033[1;32m  9. \033[0m View UFW rules numbered"
         echo -e "\033[1;32m 10. \033[0m Reload UFW"
