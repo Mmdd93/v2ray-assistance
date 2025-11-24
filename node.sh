@@ -3911,7 +3911,7 @@ main_menu() {
             71) 
                 echo -e "${YELLOW}Running Abuse Defender...${NC}"
 				sleep 1
-                curl -Ls https://raw.githubusercontent.com/Kiya6955/Abuse-Defender/main/abuse-defender.sh -o abuse-defender.sh
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/Abuse-Defender/refs/heads/main/abuse-defender.sh -o abuse-defender.sh
                 sudo bash abuse-defender.sh 
                 ;;
             72) 
