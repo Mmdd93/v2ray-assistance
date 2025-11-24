@@ -406,33 +406,158 @@ allow_ip() {
 
 # Updated delete_rule function with option 0 to delete all rules
 delete_rule() {
-    echo -e "\033[1;36mCurrent UFW rules:\033[0m"
-    sudo ufw status numbered  # Show numbered rules for easy selection
+    while true; do
+        clear
+        echo -e "\033[1;36mCurrent UFW rules:\033[0m"
+        sudo ufw status numbered  # Show numbered rules for easy selection
 
-    echo -e "\033[1;33mEnter the rule numbers to delete (comma-separated, e.g., 1,3,5) or\033[0m"
-    echo -e "\033[1;31mEnter 0 to delete all rules and reset UFW:\033[0m"
-    
-    read -p "$(echo -e "\033[1;33mYour choice: \033[0m")" rule_numbers
+        echo -e "\033[1;33mChoose deletion method:\033[0m"
+        echo -e "  \033[1;32m1\033[0m - Delete by rule numbers (comma-separated, e.g., 1,3,5)"
+        echo -e "  \033[1;32m2\033[0m - Delete by comment (select from list)"
+        echo -e "  \033[1;31m0\033[0m - Delete all rules and reset UFW"
+        echo -e "  \033[1;35mr\033[0m - Return to main menu"
+        
+        read -p "$(echo -e "\033[1;33mYour choice [0-2/r]: \033[0m")" choice
 
-    if [[ $rule_numbers == 0 ]]; then
-        # Delete all rules by resetting UFW
-        sudo ufw reset
-        echo -e "\033[0;31mAll UFW rules have been deleted, and UFW has been reset to defaults.\033[0m"
-    else
-        # Delete specific rules
-        IFS=',' read -ra RULES <<< "$rule_numbers"  # Split input by comma
-        for rule_number in "${RULES[@]}"; do
-            # Check if each entry is a valid number
-            if [[ $rule_number =~ ^[0-9]+$ ]]; then
-                sudo ufw delete "$rule_number"
-                echo -e "\033[0;32mDeleted rule number $rule_number.\033[0m"
-            else
-                echo -e "\033[0;31mInvalid input. Please enter valid rule numbers.\033[0m"
-            fi
-        done
-    fi
+        case $choice in
+            r|R)
+                echo -e "\033[0;33mReturning to main menu...\033[0m"
+                return_to_menu
+                return
+                ;;
+            0)
+                # Delete all rules by resetting UFW
+                echo -e "\033[1;31mAre you sure you want to delete ALL rules and reset UFW?\033[0m"
+                read -p "$(echo -e "\033[1;33mThis cannot be undone! [y/N]: \033[0m")" confirm_reset
+                
+                if [[ $confirm_reset == [Yy] ]]; then
+                    sudo ufw reset
+                    echo -e "\033[0;31mAll UFW rules have been deleted, and UFW has been reset to defaults.\033[0m"
+                    read -p "$(echo -e "\033[1;33mPress Enter to continue...\033[0m")"
+                else
+                    echo -e "\033[0;33mReset cancelled.\033[0m"
+                    read -p "$(echo -e "\033[1;33mPress Enter to continue...\033[0m")"
+                fi
+                ;;
+            1)
+                while true; do
+                    echo -e "\033[1;33mEnter the rule numbers to delete (comma-separated, e.g., 1,3,5):\033[0m"
+                    echo -e "  \033[1;35mr\033[0m - Return to deletion method menu"
+                    read -p "$(echo -e "\033[1;33mRule numbers: \033[0m")" rule_numbers
 
-    return_to_menu
+                    if [[ $rule_numbers == [rR] ]]; then
+                        break
+                    fi
+
+                    if [[ -n "$rule_numbers" ]]; then
+                        IFS=',' read -ra RULES <<< "$rule_numbers"  # Split input by comma
+                        # Sort in reverse order to avoid renumbering issues
+                        sorted_rules=($(printf '%s\n' "${RULES[@]}" | sort -nr))
+                        
+                        deleted_count=0
+                        for rule_number in "${sorted_rules[@]}"; do
+                            # Check if each entry is a valid number
+                            if [[ $rule_number =~ ^[0-9]+$ ]]; then
+                                sudo ufw delete "$rule_number"
+                                echo -e "\033[0;32mDeleted rule number $rule_number.\033[0m"
+                                deleted_count=$((deleted_count + 1))
+                            else
+                                echo -e "\033[0;31mInvalid input: '$rule_number'. Please enter valid rule numbers.\033[0m"
+                            fi
+                        done
+                        
+                        if [[ $deleted_count -gt 0 ]]; then
+                            echo -e "\033[0;32mSuccessfully deleted $deleted_count rules.\033[0m"
+                        fi
+                        
+                        read -p "$(echo -e "\033[1;33mPress Enter to continue or 'r' to return: \033[0m")" continue_choice
+                        if [[ $continue_choice == [rR] ]]; then
+                            break
+                        fi
+                    else
+                        echo -e "\033[0;31mNo rule numbers entered.\033[0m"
+                    fi
+                done
+                ;;
+            2)
+            clear
+                while true; do
+                    echo -e "\033[1;33mAvailable comments in UFW rules:\033[0m"
+                    
+                    # Get unique comments without counts
+                    comments_list=()
+                    i=1
+                    while IFS= read -r comment; do
+                        if [[ -n "$comment" ]]; then
+                            comments_list[$i]="$comment"
+                            echo -e "  \033[1;32m$i\033[0m - $comment"
+                            ((i++))
+                        fi
+                    done <<< "$(sudo ufw status numbered | grep -oP '# \K.*' | sort -u)"
+                    
+                    total_comments=$((i-1))
+                    
+                    if [[ $total_comments -eq 0 ]]; then
+                        echo -e "\033[0;31mNo comments found in UFW rules.\033[0m"
+                        read -p "$(echo -e "\033[1;33mPress Enter to return...\033[0m")"
+                        break
+                    fi
+                    
+                    echo -e "  \033[1;32m0\033[0m - Refresh list"
+                    echo -e "  \033[1;35mr\033[0m - Return to deletion method menu"
+                    echo -e "\033[1;33mSelect a comment to delete all rules with that comment:\033[0m"
+                    read -p "$(echo -e "\033[1;33mEnter choice [0-$total_comments/r]: \033[0m")" comment_choice
+
+                    if [[ $comment_choice == [rR] ]]; then
+                        break
+                    elif [[ $comment_choice -eq 0 ]]; then
+                        echo -e "\033[0;33mRefreshing comment list...\033[0m"
+                        continue
+                    elif [[ $comment_choice -ge 1 && $comment_choice -le $total_comments ]]; then
+                        selected_comment="${comments_list[$comment_choice]}"
+                        
+                        # Show how many rules will be deleted
+                        rule_count=$(sudo ufw status numbered | grep -F "# $selected_comment" | wc -l)
+                        echo -e "\033[1;31mThis will delete $rule_count rules with comment: '$selected_comment'\033[0m"
+                        
+                        # Confirm deletion
+                        read -p "$(echo -e "\033[1;33mConfirm deletion [y/N]: \033[0m")" confirm_delete
+                        
+                        if [[ $confirm_delete == [Yy] ]]; then
+                            # Get rule numbers with the specified comment (in reverse order)
+                            rule_numbers=$(sudo ufw status numbered | grep -F "# $selected_comment" | awk -F'[][]' '{print $2}' | sort -nr)
+                            
+                            if [[ -n "$rule_numbers" ]]; then
+                                count=0
+                                for rule_number in $rule_numbers; do
+                                    sudo ufw delete "$rule_number"
+                                    echo -e "\033[0;32mDeleted rule number $rule_number\033[0m"
+                                    count=$((count + 1))
+                                done
+                                echo -e "\033[0;32mSuccessfully deleted $count rules with comment: '$selected_comment'\033[0m"
+                            else
+                                echo -e "\033[0;31mNo rules found with comment: '$selected_comment'\033[0m"
+                            fi
+                        else
+                            echo -e "\033[0;33mDeletion cancelled.\033[0m"
+                        fi
+                        
+                        read -p "$(echo -e "\033[1;33mPress Enter to continue or 'r' to return: \033[0m")" continue_choice
+                        if [[ $continue_choice == [rR] ]]; then
+                            break
+                        fi
+                    else
+                        echo -e "\033[0;31mInvalid choice. Please enter a number between 0 and $total_comments or 'r' to return.\033[0m"
+                        read -p "$(echo -e "\033[1;33mPress Enter to continue...\033[0m")"
+                    fi
+                done
+                ;;
+            *)
+                echo -e "\033[0;31mInvalid choice. Please enter 0, 1, 2, or 'r'.\033[0m"
+                read -p "$(echo -e "\033[1;33mPress Enter to continue...\033[0m")"
+                ;;
+        esac
+    done
 }
 
 view_status() {
