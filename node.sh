@@ -3530,7 +3530,7 @@ main_menu() {
         echo -e "${LIGHT_GREEN} 17.${NC} ${LIGHT_GREEN}Desktop + Firefox on Ubuntu server${NC}"
         echo -e "${LIGHT_GREEN} 18.${NC} ${LIGHT_GREEN}Server monthly traffic limit${NC}"
         echo -e "${LIGHT_GREEN} 19.${NC} ${LIGHT_GREEN}CPU/RAM monitoring${NC}"
-        echo -e "${LIGHT_GREEN} 20.${NC} ${LIGHT_GREEN}UFW firewall management${NC}"
+        echo -e "${LIGHT_GREEN} 20.${NC} ${LIGHT_GREEN}Firewall Management + Abuse Defender (UFW)${NC}"
         echo -e "${LIGHT_GREEN} 21.${NC} ${LIGHT_GREEN}Cloudflare auto IP changer${NC}"
         echo -e "${LIGHT_GREEN} 22.${NC} ${LIGHT_GREEN}IP quality checks${NC}"
         echo -e "${LIGHT_GREEN} 23.${NC} ${LIGHT_GREEN}Nginx management${NC}"
@@ -3544,7 +3544,7 @@ main_menu() {
         echo -e "${LIGHT_GREEN} 35.${NC} ${LIGHT_GREEN}AWS CLI installation${NC}"
         echo -e "${LIGHT_GREEN} 36.${NC} ${LIGHT_GREEN}Cron job management${NC}"
         echo -e "${LIGHT_GREEN} 37.${NC} ${LIGHT_GREEN}File management tools${NC}"
-        echo -e "${LIGHT_GREEN} 71.${NC} ${LIGHT_GREEN}Abuse Defender (Hetzner)${NC}"
+        
 		 
         echo
        
