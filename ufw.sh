@@ -961,7 +961,7 @@ function clear_block_ips {
     clear
     # Remove all abuse-defender rules
     ufw status numbered | grep "abuse-defender" | awk -F"[][]" '{print $2}' | sort -rn | while read num; do
-        yes | ufw delete $num
+        yes | sudo ufw --force delete $num
     done
     
     sed -i '/127.0.0.1 appclick.co/d' /etc/hosts
