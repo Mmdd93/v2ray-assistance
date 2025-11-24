@@ -716,8 +716,9 @@ function block_ips {
     
     # Ensure SSH port is allowed before enabling UFW
     if ! ufw status | grep -q "Status: active"; then
+        echo ""
         echo "UFW is currently inactive."
-        read -p "Do you want to allow SSH port $ssh_port before enabling UFW? [Y/N] : " allow_ssh
+        read -p "Do you want to allow SSH port $ssh_port before enabling UFW? [Y/N] default[N]: " allow_ssh
         
         if [[ $allow_ssh == [Yy]* ]]; then
             ufw allow $ssh_port/tcp comment "SSH access"
@@ -738,7 +739,7 @@ function block_ips {
         echo "UFW is already active."
         # Check if SSH port is already allowed
         if ! ufw status | grep -q "$ssh_port/tcp"; then
-            read -p "SSH port $ssh_port is not allowed. Do you want to allow it? [Y/N] : " allow_ssh
+            read -p "SSH port $ssh_port is not allowed. Do you want to allow it? [Y/N] default[N]: " allow_ssh
             if [[ $allow_ssh == [Yy]* ]]; then
                 ufw allow $ssh_port/tcp comment "SSH access"
                 echo "SSH port $ssh_port has been allowed."
@@ -746,17 +747,18 @@ function block_ips {
         fi
     fi
         echo ""
-        read -p "Do you want to allow other currently in-use ports? [Y/N] : " allow_ports
+        read -p "Do you want to allow other currently in-use ports? [Y/N] default[N]: " allow_ports
         
         if [[ $allow_ports == [Yy]* ]]; then
             find_and_allow_ports
         fi
     # REMOVED the clear command from here - this was the problem!
-    
-    read -p "Are you sure about blocking abuse IP-Ranges? [Y/N] : " confirm
+    echo ""
+    read -p "Are you sure about blocking abuse IP-Ranges? [Y/N] default[N]: " confirm
 
     if [[ $confirm == [Yy]* ]]; then
-        read -p "Do you want to delete the previous rules? [Y/N] : " clear_rules
+    echo ""
+        read -p "Do you want to delete the previous rules? [Y/N] default[N]: " clear_rules
         if [[ $clear_rules == [Yy]* ]]; then
             # Remove all existing abuse-defender rules
             ufw status numbered | grep "abuse-defender" | awk -F"[][]" '{print $2}' | sort -rn | while read num; do
