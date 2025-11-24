@@ -821,7 +821,7 @@ ufw_menu() {
         clear
 		show_status_bar
         echo -e "\033[1;36m================= UFW MENU ===================\033[0m"
-        echo -e "\033[15;32m 15. \033[0m Install UFW"
+        
         echo -e "\033[1;32m  1. \033[0m Enable UFW"
         echo -e "\033[1;32m  2. \033[0m Disable UFW"
         echo -e "\033[1;32m  3. \033[0m Allow ports"
@@ -836,6 +836,7 @@ ufw_menu() {
         echo -e "\033[1;32m 12. \033[0m Set default Outgoing"
         echo -e "\033[1;32m 13. \033[0m clear all UFW rules"
         echo -e "\033[1;32m 14. \033[0m Allow in-use ports"
+        echo -e "\033[15;32m 15. \033[0m Install UFW"
         echo -e "\033[1;32m 16. \033[0m View in-use ports"
         echo -e "\033[1;32m 17. \033[0m Allow ip"
         echo -e "\033[1;32m 18. \033[0m Deny ip"
@@ -880,3 +881,4 @@ ufw_menu() {
 
 # Call the ufw_menu function to display the menu
 ufw_menu
+install_ufw
