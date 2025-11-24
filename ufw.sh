@@ -944,10 +944,10 @@ function block_ips {
 
         echo '127.0.0.1 appclick.co' | tee -a /etc/hosts >/dev/null
         echo '127.0.0.1 pushnotificationws.com' | tee -a /etc/hosts >/dev/null
+		
+		echo -e "\033[0;32mAbuse IP-Ranges blocked successfully.\033[0m"
+		echo -e "\033[0;32mTotal IP ranges blocked: $count\033[0m"
 
-        clear
-        echo "Abuse IP-Ranges blocked successfully."
-        echo "Total IP ranges blocked: $count"
 
         read -p "Press enter to return to Menu" dummy
         ufw_menu
