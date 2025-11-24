@@ -1,6 +1,13 @@
 # UFW Operations
 #!/bin/bash
 # Function to list used ports with color-coded visibility
+# Color definitions
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
 used_ports() {
 
     echo -e "\n\033[1;33mListening Ports:\033[0m"
@@ -808,13 +815,37 @@ get_ufw_status() {
 }
 
 # Function to display status bar
+# Function to display status bar
 show_status_bar() {
-    local status=$(get_ufw_status)
-    echo -e "\n${BLUE}â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”${NC}"
-    echo -e "${BLUE}â”‚${NC}    UFW STATUS: $status                                  ${BLUE}â”‚${NC}"
-    echo -e "${BLUE}â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜${NC}"
+    local status=$(ufw status | grep "Status:" | awk '{print $2}')
+    local default_in=$(ufw status verbose | grep "Default:" | awk '{print $2}')
+    local default_out=$(ufw status verbose | grep "Default:" | awk '{print $4}')
+    
+    # Count different types of rules
+    local total_rules=$(ufw status numbered | grep -c "^\[")
+    local allowed_in=$(ufw status numbered | grep "ALLOW IN" | grep -c "^\[")
+    local allowed_out=$(ufw status numbered | grep "ALLOW OUT" | grep -c "^\[")
+    local denied_in=$(ufw status numbered | grep "DENY IN" | grep -c "^\[")
+    local denied_out=$(ufw status numbered | grep "DENY OUT" | grep -c "^\[")
+    
+    # Get unique comments and their counts
+    local comments_count=$(ufw status numbered | grep -oP '# \K.*' | sort | uniq -c | sort -rn)
+    
+    echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}${NC}UFW: ${GREEN}$status${NC} | Default: ${CYAN}In:$default_in${NC}/${CYAN}Out:$default_out${NC} | Total Rules: $total_rules${BLUE}${NC}"
+    echo -e "${BLUE}${NC}Allowed: ${GREEN}In:$allowed_in${NC}/${GREEN}Out:$allowed_out${NC} | Blocked: ${RED}In:$denied_in${NC}/${RED}Out:$denied_out${NC}${BLUE}${NC}"
+    
+    # Display top comments
+    while IFS= read -r line; do
+        if [ -n "$line" ]; then
+            count=$(echo "$line" | awk '{print $1}')
+            comment=$(echo "$line" | cut -d' ' -f2-)
+            echo -e "${BLUE}$comment${NC}"
+        fi
+    done <<< "$comments_count"
+    
+    echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
 }
-
 
 
 function block_ips {
@@ -943,7 +974,7 @@ ufw_menu() {
     while true; do
         clear
 		show_status_bar
-        echo -e "\n\033[1;36m================= UFW MENU ===================\033[0m"
+        echo -e "\033[1;36m================= UFW MENU ===================\033[0m"
         echo -e "\033[15;32m 15. \033[0m Install UFW"
         echo -e "\033[1;32m  1. \033[0m Enable UFW"
         echo -e "\033[1;32m  2. \033[0m Disable UFW"
