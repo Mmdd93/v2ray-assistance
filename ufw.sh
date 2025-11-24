@@ -778,39 +778,14 @@ show_status_bar() {
 }
 function block_ips {
     clear
-    if ! command -v iptables &> /dev/null; then
+    if ! command -v ufw &> /dev/null; then
         apt update
-        apt install -y iptables
+        apt install -y ufw
     fi
 
-    if ! dpkg -s iptables-persistent &> /dev/null; then
-        apt update
-        apt install -y iptables-persistent
-    fi
-
-    if ! iptables -L abuse-defender -n >/dev/null 2>&1; then
-        iptables -N abuse-defender
-    fi
-
-    if ! iptables -L abuse-defender-custom -n >/dev/null 2>&1; then
-        iptables -N abuse-defender-custom
-    fi
-
-    if ! iptables -L abuse-defender-whitelist -n >/dev/null 2>&1; then
-        iptables -N abuse-defender-whitelist
-    fi
-
-
-    if ! iptables -L OUTPUT -n | awk '{print $1}' | grep -wq "^abuse-defender$"; then
-        iptables -I OUTPUT -j abuse-defender
-    fi
-
-    if ! iptables -L OUTPUT -n | awk '{print $1}' | grep -wq "^abuse-defender-custom$"; then
-        iptables -I OUTPUT -j abuse-defender-custom
-    fi
-
-    if ! iptables -L OUTPUT -n | awk '{print $1}' | grep -wq "^abuse-defender-whitelist$"; then
-        iptables -I OUTPUT -j abuse-defender-whitelist
+    # Enable UFW if not already enabled
+    if ! ufw status | grep -q "Status: active"; then
+        ufw enable
     fi
 
     clear
@@ -820,9 +795,10 @@ function block_ips {
         clear
         read -p "Do you want to delete the previous rules? [Y/N] : " clear_rules
         if [[ $clear_rules == [Yy]* ]]; then
-            iptables -F abuse-defender
-            iptables -F abuse-defender-custom
-            iptables -F abuse-defender-whitelist
+            # Remove all existing abuse-defender rules
+            ufw status numbered | grep "abuse-defender" | awk -F"[][]" '{print $2}' | sort -rn | while read num; do
+                yes | ufw delete $num
+            done
         fi
 
         IP_LIST=$(curl -s 'https://raw.githubusercontent.com/Mmdd93/Abuse-Defender/main/abuse-ips.ipv4')
@@ -834,16 +810,14 @@ function block_ips {
         fi
 
         for IP in $IP_LIST; do
-            iptables -A abuse-defender -d $IP -j DROP
+            ufw deny out from any to $IP comment "abuse-defender"
         done
 
         echo '127.0.0.1 appclick.co' | tee -a /etc/hosts >/dev/null
         echo '127.0.0.1 pushnotificationws.com' | tee -a /etc/hosts >/dev/null
-        iptables-save > /etc/iptables/rules.v4
 
         clear
         echo "Abuse IP-Ranges blocked successfully."
-
 
         read -p "Press enter to return to Menu" dummy
         ufw_menu
@@ -853,19 +827,21 @@ function block_ips {
         ufw_menu
     fi
 }
+
 function clear_block_ips {
     clear
-    iptables -F abuse-defender
-    iptables -F abuse-defender-custom
-    iptables -F abuse-defender-whitelist
+    # Remove all abuse-defender rules
+    ufw status numbered | grep "abuse-defender" | awk -F"[][]" '{print $2}' | sort -rn | while read num; do
+        yes | ufw delete $num
+    done
+    
     sed -i '/127.0.0.1 appclick.co/d' /etc/hosts
     sed -i '/127.0.0.1 pushnotificationws.com/d' /etc/hosts
-    crontab -l | grep -v "/root/abuse-defender-update.sh" | crontab -
-    iptables-save > /etc/iptables/rules.v4
+    
     clear
     echo "All Rules cleared successfully."
     read -p "Press enter to return to Menu" dummy
-    main_menu
+    ufw_menu
 }
 ufw_menu() {
     while true; do
