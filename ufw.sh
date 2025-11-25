@@ -946,11 +946,13 @@ function block_ips {
             clear_rules="Y"
         fi
         
-        if [[ $clear_rules == [Yy]* ]]; then
+               if [[ $clear_rules == [Yy]* ]]; then
             # Remove all existing abuse-defender rules
             ufw status numbered | grep "abuse-defender" | awk -F"[][]" '{print $2}' | sort -rn | while read num; do
-                yes | ufw delete $num
+            yes | sudo ufw --force delete $num
             done
+            sed -i '/127.0.0.1 appclick.co/d' /etc/hosts
+            sed -i '/127.0.0.1 pushnotificationws.com/d' /etc/hosts
             echo "Previous abuse-defender rules have been deleted."
         fi
         
