@@ -863,7 +863,6 @@ function block_ips {
     if [ -z "$ssh_port" ]; then
         ssh_port=22  # Default SSH port
     fi
-    
 
     echo "=== UFW Configuration Check ==="
     echo "Detected SSH port: $ssh_port"
@@ -874,17 +873,26 @@ function block_ips {
     if ! ufw status | grep -q "Status: active"; then
         echo ""
         echo "UFW is currently inactive."
-        read -p "Do you want to allow SSH port $ssh_port before enabling UFW? [Y/N] default[N]: " allow_ssh
+        read -p "Do you want to allow SSH port $ssh_port before enabling UFW? [Y/N] default[Y]: " allow_ssh
+        
+        # Default to Y if empty
+        if [[ -z "$allow_ssh" ]]; then
+            allow_ssh="Y"
+        fi
         
         if [[ $allow_ssh == [Yy]* ]]; then
             ufw allow $ssh_port/tcp comment "SSH access"
             echo "SSH port $ssh_port has been allowed."
         fi
         
-
-        
         echo ""
-        read -p "Ready to enable UFW? [Y/N] : " enable_ufw
+        read -p "Ready to enable UFW? [Y/N] default[Y]: " enable_ufw
+        
+        # Default to Y if empty
+        if [[ -z "$enable_ufw" ]]; then
+            enable_ufw="Y"
+        fi
+        
         if [[ $enable_ufw == [Yy]* ]]; then
             ufw --force enable
             echo "UFW has been enabled."
@@ -895,31 +903,55 @@ function block_ips {
         echo "UFW is already active."
         # Check if SSH port is already allowed
         if ! ufw status | grep -q "$ssh_port/tcp"; then
-            read -p "SSH port $ssh_port is not allowed. Do you want to allow it? [Y/N] default[N]: " allow_ssh
+            read -p "SSH port $ssh_port is not allowed. Do you want to allow it? [Y/N] default[Y]: " allow_ssh
+            
+            # Default to Y if empty
+            if [[ -z "$allow_ssh" ]]; then
+                allow_ssh="Y"
+            fi
+            
             if [[ $allow_ssh == [Yy]* ]]; then
                 ufw allow $ssh_port/tcp comment "SSH access"
                 echo "SSH port $ssh_port has been allowed."
             fi
         fi
     fi
-        echo ""
-        read -p "Do you want to allow other currently in-use ports? [Y/N] default[N]: " allow_ports
-        
-        if [[ $allow_ports == [Yy]* ]]; then
-            find_and_allow_ports
-        fi
-    # REMOVED the clear command from here - this was the problem!
+    
     echo ""
-    read -p "Are you sure about blocking abuse IP-Ranges? [Y/N] default[N]: " confirm
+    read -p "Do you want to allow other currently in-use ports? [Y/N] default[Y]: " allow_ports
+    
+    # Default to Y if empty
+    if [[ -z "$allow_ports" ]]; then
+        allow_ports="Y"
+    fi
+    
+    if [[ $allow_ports == [Yy]* ]]; then
+        find_and_allow_ports
+    fi
+
+    echo ""
+    read -p "Are you sure about blocking abuse IP-Ranges? [Y/N] default[Y]: " confirm
+
+    # Default to Y if empty
+    if [[ -z "$confirm" ]]; then
+        confirm="Y"
+    fi
 
     if [[ $confirm == [Yy]* ]]; then
-    echo ""
-        read -p "Do you want to delete the previous rules? [Y/N] default[N]: " clear_rules
+        echo ""
+        read -p "Do you want to delete the previous rules? [Y/N] default[Y]: " clear_rules
+        
+        # Default to Y if empty
+        if [[ -z "$clear_rules" ]]; then
+            clear_rules="Y"
+        fi
+        
         if [[ $clear_rules == [Yy]* ]]; then
             # Remove all existing abuse-defender rules
             ufw status numbered | grep "abuse-defender" | awk -F"[][]" '{print $2}' | sort -rn | while read num; do
                 yes | ufw delete $num
             done
+            echo "Previous abuse-defender rules have been deleted."
         fi
         
         sudo ufw default allow outgoing
@@ -945,9 +977,8 @@ function block_ips {
         echo '127.0.0.1 appclick.co' | tee -a /etc/hosts >/dev/null
         echo '127.0.0.1 pushnotificationws.com' | tee -a /etc/hosts >/dev/null
 		
-		echo -e "\033[0;32mAbuse IP-Ranges blocked successfully.\033[0m"
-		echo -e "\033[0;32mTotal IP ranges blocked: $count\033[0m"
-
+        echo -e "\033[0;32mAbuse IP-Ranges blocked successfully.\033[0m"
+        echo -e "\033[0;32mTotal IP ranges blocked: $count\033[0m"
 
         read -p "Press enter to return to Menu" dummy
         ufw_menu
