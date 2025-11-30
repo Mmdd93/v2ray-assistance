@@ -536,7 +536,7 @@ auto_restart() {
                 else
                     # Define cron jobs
                     restart_cron="0 */$restart_interval * * * /usr/bin/docker restart snidust"
-                    reboot_cron="@reboot /usr/bin/docker start snidust"
+                    reboot_cron="@reboot sleep 30 && /usr/bin/docker start snidust"
 
                     # Remove any existing cron jobs for this service
                     (crontab -l 2>/dev/null | grep -v "/usr/bin/docker restart snidust" | grep -v "/usr/bin/docker start snidust") | crontab -
