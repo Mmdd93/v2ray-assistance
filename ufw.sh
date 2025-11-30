@@ -939,11 +939,11 @@ function block_ips {
 
     if [[ $confirm == [Yy]* ]]; then
         echo ""
-        read -p "Do you want to delete the previous rules? [Y/N] default[Y]: " clear_rules
+        read -p "Do you want to delete the previous rules? [Y/N] default[N]: " clear_rules
         
         # Default to Y if empty
         if [[ -z "$clear_rules" ]]; then
-            clear_rules="Y"
+            clear_rules="N"
         fi
         
                if [[ $clear_rules == [Yy]* ]]; then
