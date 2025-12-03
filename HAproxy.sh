@@ -128,7 +128,233 @@ remove_haproxy() {
   echo -e "\033[1;32mHAProxy removed successfully!\033[0m"
   read -p "Press Enter to continue..."
 }
+http_header_forward() {
+  echo -e "\033[1;34m--- Create HTTP Header-Dependent Port Forwarding ---\033[0m"
 
+  # Ensure global/defaults sections exist
+  if ! grep -q "^global" "$HAPROXY_CONFIG"; then
+    {
+      echo "global"
+      echo "    chroot /var/lib/haproxy"
+      echo "    stats socket /run/haproxy/admin.sock mode 660 level admin"
+      echo "    stats timeout 30s"
+      echo "    user haproxy"
+      echo "    group haproxy"
+      echo "    daemon"
+      echo -e "\ndefaults"
+      echo "    option dontlognull"
+      echo "    option dontlog-normal"
+      echo "    no log"
+      echo "    timeout connect 5000"
+      echo "    timeout client 50000"
+      echo "    timeout server 50000"
+    } >> "$HAPROXY_CONFIG"
+  fi
+
+  while true; do
+    # Get frontend details
+    while true; do
+      read -p "Enter HTTP Listen Port [default: 80]: " listen_port
+      listen_port=${listen_port:-80}
+      
+      if grep -q "bind \*:$listen_port" "$HAPROXY_CONFIG"; then
+        echo -e "\033[1;31mError: Port $listen_port already used in HAProxy!\033[0m"
+        grep -n "bind \*:$listen_port" "$HAPROXY_CONFIG"
+        continue
+      fi
+      
+      if lsof -i :$listen_port >/dev/null 2>&1 || ss -tuln | grep -q ":$listen_port"; then
+        echo -e "\033[1;31mError: Port $listen_port already in use by system!\033[0m"
+        lsof -i :$listen_port || ss -tulp | grep ":$listen_port"
+        continue
+      fi
+      break
+    done
+
+    frontend_name="frontend_${listen_port}"
+    
+    # Add frontend configuration
+    {
+      echo -e "\nfrontend $frontend_name"
+      echo "  mode tcp"
+      echo "  bind *:$listen_port"
+      echo "  tcp-request inspect-delay 5s"
+      echo "  tcp-request content capture req.hdr(Host) len 50"
+    } >> "$HAPROXY_CONFIG"
+
+    # Backend configuration loop
+    backend_count=0
+    while true; do
+      ((backend_count++))
+      echo -e "\n\033[1;36m--- Configuring Backend #$backend_count for $frontend_name ---\033[0m"
+      
+      # Generate backend name
+      backend_name="${frontend_name}_backend_${backend_count}"
+      read -p "Enter backend name (default: $backend_name): " user_backend_name
+      backend_name=${user_backend_name:-$backend_name}
+
+      # Get Host header pattern
+      read -p "Enter Host header pattern to match (e.g., example.com): " host_pattern
+      
+      if [ -z "$host_pattern" ]; then
+        echo -e "\033[1;31mHost pattern cannot be empty. Skipping...\033[0m"
+        ((backend_count--))
+        continue
+      fi
+      
+      echo "Host Match Type:"
+      echo "1) Ends with (example.com matches *.example.com)"
+      echo "2) Exact match"
+      echo "3) Regex match"
+      read -p "Choice [default: 1]: " match_choice
+      case $match_choice in
+        2) host_condition="{ req.hdr(Host) -m str $host_pattern }" ;;
+        3) host_condition="{ req.hdr(Host) -m reg $host_pattern }" ;;
+        *) host_condition="{ req.hdr(Host) -m end $host_pattern }" ;;
+      esac
+
+      # Get backend server details
+      server_entries=()
+      while true; do
+        echo -e "\n\033[1;36m--- Adding Server #$((${#server_entries[@]}+1)) ---\033[0m"
+        
+        # Get IP
+        while true; do
+          read -p "Enter Destination IP: " ip
+          [ -z "$ip" ] && break
+          
+          ip=$(echo "$ip" | xargs) # Trim whitespace
+          if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            : # Valid IPv4
+          elif [[ $ip =~ .*:.* ]]; then
+            ip="[$ip]" # Wrap IPv6
+          else
+            echo -e "\033[1;31mInvalid IP address format. Please try again.\033[0m"
+            continue
+          fi
+          
+          # Get Port for this IP
+          while true; do
+            read -p "Enter Destination Port for $ip: " dest_port
+            
+            if [[ $dest_port =~ ^[0-9]+$ ]] && [ "$dest_port" -ge 1 ] && [ "$dest_port" -le 65535 ]; then
+              server_entries+=("$ip:$dest_port")
+              break
+            else
+              echo -e "\033[1;31mInvalid port number (1-65535). Please try again.\033[0m"
+            fi
+          done
+          
+          break
+        done
+        
+        # Break if no IP entered or user doesn't want to add more
+        [ -z "$ip" ] && break
+        [ ${#server_entries[@]} -ge 1 ] && {
+          read -p "Add another server? (y/n) [default: n]: " add_more
+          [[ "$add_more" != "y" ]] && break
+        }
+      done
+
+      # Check if we have any servers
+      if [ ${#server_entries[@]} -eq 0 ]; then
+        echo -e "\033[1;31mNo servers added. Skipping backend configuration.\033[0m"
+        ((backend_count--))
+        continue
+      fi
+
+      # Configure load balancing if multiple servers
+      lb_method=""
+      if [ ${#server_entries[@]} -gt 1 ]; then
+        echo -e "\n\033[1;33mMultiple servers detected. Configuring load balancing...\033[0m"
+        echo "Select load balancing algorithm:"
+        echo "1) roundrobin (default)"
+        echo "2) leastconn"
+        echo "3) source"
+        echo "4) static-rr"
+        read -p "Enter choice [default roundrobin]: " lb_choice
+        
+        case $lb_choice in
+          1) lb_method="roundrobin" ;;
+          2) lb_method="leastconn" ;;
+          3) lb_method="source" ;;
+          4) lb_method="static-rr" ;;
+          *) lb_method="roundrobin" ;;
+        esac
+      fi
+
+      # Add backend configuration
+      {
+        echo -e "\nbackend $backend_name"
+        echo "  mode tcp"
+        [ -n "$lb_method" ] && echo "  balance $lb_method"
+        
+        for i in "${!server_entries[@]}"; do
+          echo "  server server$((i+1)) ${server_entries[i]} check"
+        done
+      } >> "$HAPROXY_CONFIG"
+
+      # Add use_backend rule to frontend
+      sed -i "/^frontend $frontend_name/a \  use_backend $backend_name if $host_condition" "$HAPROXY_CONFIG"
+
+      # Display configuration
+      echo -e "\n\033[1;32mBackend configured:\033[0m"
+      echo -e "  Name: \033[1;36m$backend_name\033[0m"
+      echo -e "  Host Pattern: \033[1;36m$host_pattern\033[0m"
+      echo -e "  Condition: \033[1;36m$host_condition\033[0m"
+      echo -e "  Servers:"
+      for entry in "${server_entries[@]}"; do
+        echo -e "    - \033[1;36m$entry\033[0m"
+      done
+      [ -n "$lb_method" ] && echo -e "  Load Balancing: \033[1;36m$lb_method\033[0m"
+
+      # Add another backend?
+      read -p "Add another backend to this frontend? (y/n) [default: n]: " add_another
+      [[ "$add_another" != "y" ]] && break
+    done
+
+    # Add default backend
+    if ! grep -q "^backend default_http" "$HAPROXY_CONFIG"; then
+      read -p "Configure default fallback backend? (y/n) [default: y]: " add_default
+      add_default=${add_default:-y}
+      
+      if [[ "$add_default" == "y" ]]; then
+        read -p "Default Fallback IP [default: 127.0.0.1]: " default_ip
+        default_ip=${default_ip:-127.0.0.1}
+        read -p "Default Fallback Port [default: 8182]: " default_port
+        default_port=${default_port:-8182}
+        
+        {
+          echo -e "\nbackend default_http"
+          echo "  mode tcp"
+          echo "  server default_server $default_ip:$default_port check"
+        } >> "$HAPROXY_CONFIG"
+        
+        sed -i "/^frontend $frontend_name/a \  default_backend default_http" "$HAPROXY_CONFIG"
+        
+        echo -e "\n\033[1;32mDefault backend configured:\033[0m"
+        echo -e "  Name: \033[1;36mdefault_http\033[0m"
+        echo -e "  Server: \033[1;36m$default_ip:$default_port\033[0m"
+      fi
+    else
+      sed -i "/^frontend $frontend_name/a \  default_backend default_http" "$HAPROXY_CONFIG"
+      echo -e "\n\033[1;33mUsing existing default_http backend\033[0m"
+    fi
+
+    # Display final configuration
+    echo -e "\n\033[1;32mHTTP Header-Dependent Port Forwarding configured:\033[0m"
+    echo -e "  Frontend: \033[1;36m$frontend_name\033[0m"
+    echo -e "  Listen Port: \033[1;36m$listen_port\033[0m"
+    echo -e "  Number of Backends: \033[1;36m$backend_count\033[0m"
+
+    # Add another frontend?
+    read -p "Create another HTTP frontend? (y/n) [default: n]: " another_frontend
+    [[ "$another_frontend" != "y" ]] && break
+  done
+
+  echo -e "\033[1;32m\nHTTP header-dependent forwarding setup completed!\033[0m"
+  restart_haproxy
+}
 create_backend() {
   echo -e "\033[1;34m--- Create Frontend with Multiple Backends (SNI Routing) ---\033[0m"
 
@@ -782,19 +1008,20 @@ haproxy_menu() {
     # Only show configuration options if installed
     if [ -n "$current_version" ]; then
       echo -e "\033[1;32m2.\033[0m Port Forwarding (Simple mode) "
-      echo -e "\033[1;32m3.\033[0m Port Forwarding (SNI-Dependent)"
-      echo -e "\033[1;32m4.\033[0m Check HAProxy Status"
-      echo -e "\033[1;32m5.\033[0m Backup HAProxy Configuration"
-      echo -e "\033[1;32m6.\033[0m Restore HAProxy Configuration"
-      echo -e "\033[1;32m7.\033[0m Restart HAProxy"
-      echo -e "\033[1;32m8.\033[0m Start HAProxy"
-      echo -e "\033[1;32m9.\033[0m Stop HAProxy"
-      echo -e "\033[1;32m10.\033[0m Edit HAProxy Configuration with nano"
-      echo -e "\033[1;32m11.\033[0m Reload HAProxy"
-      echo -e "\033[1;32m12.\033[0m Clear HAProxy Configuration"
-      echo -e "\033[1;32m13.\033[0m Remove HAProxy"
-      echo -e "\033[1;32m14.\033[0m Auto restart haproxy"
-      echo -e "\033[1;32m15.\033[0m Tune haproxy"
+      echo -e "\033[1;32m3.\033[0m Port Forwarding (HTTPS SNI-Dependent)"
+      echo -e "\033[1;32m4.\033[0m Port Forwarding (HTTP header-dependent)"
+      echo -e "\033[1;32m5.\033[0m Check HAProxy Status"
+      echo -e "\033[1;32m6.\033[0m Backup HAProxy Configuration"
+      echo -e "\033[1;32m7.\033[0m Restore HAProxy Configuration"
+      echo -e "\033[1;32m8.\033[0m Restart HAProxy"
+      echo -e "\033[1;32m9.\033[0m Start HAProxy"
+      echo -e "\033[1;32m10.\033[0m Stop HAProxy"
+      echo -e "\033[1;32m11.\033[0m Edit HAProxy Configuration with nano"
+      echo -e "\033[1;32m12.\033[0m Reload HAProxy"
+      echo -e "\033[1;32m13.\033[0m Clear HAProxy Configuration"
+      echo -e "\033[1;32m14.\033[0m Remove HAProxy"
+      echo -e "\033[1;32m18.\033[0m Auto restart haproxy"
+      echo -e "\033[1;32m16.\033[0m Tune haproxy"
     else
       echo -e "\033[1;90m2. Port Forwarding (simple mode) [Install HAProxy first]\033[0m"
       echo -e "\033[1;90m3. Port Forwarding (SNI mode) [Install HAProxy first]\033[0m"
@@ -825,7 +1052,7 @@ haproxy_menu() {
         ;;
       4) 
         if [ -n "$current_version" ]; then 
-          check_haproxy_status 
+          http_header_forward
         else
           echo -e "\033[1;31mPlease install HAProxy first!\033[0m"
           sleep 2
@@ -833,7 +1060,7 @@ haproxy_menu() {
         ;;
       5) 
         if [ -n "$current_version" ]; then 
-          backup_haproxy 
+          check_haproxy_status 
         else
           echo -e "\033[1;31mPlease install HAProxy first!\033[0m"
           sleep 2
@@ -841,7 +1068,7 @@ haproxy_menu() {
         ;;
       6) 
         if [ -n "$current_version" ]; then 
-          restore_haproxy 
+          backup_haproxy 
         else
           echo -e "\033[1;31mPlease install HAProxy first!\033[0m"
           sleep 2
@@ -849,7 +1076,7 @@ haproxy_menu() {
         ;;
       7) 
         if [ -n "$current_version" ]; then 
-          restart_haproxy 
+          restore_haproxy 
         else
           echo -e "\033[1;31mPlease install HAProxy first!\033[0m"
           sleep 2
@@ -857,7 +1084,7 @@ haproxy_menu() {
         ;;
       8) 
         if [ -n "$current_version" ]; then 
-          start_haproxy 
+          restart_haproxy 
         else
           echo -e "\033[1;31mPlease install HAProxy first!\033[0m"
           sleep 2
@@ -865,7 +1092,7 @@ haproxy_menu() {
         ;;
       9) 
         if [ -n "$current_version" ]; then 
-          stop_haproxy 
+          start_haproxy 
         else
           echo -e "\033[1;31mPlease install HAProxy first!\033[0m"
           sleep 2
@@ -873,7 +1100,7 @@ haproxy_menu() {
         ;;
       10) 
         if [ -n "$current_version" ]; then 
-          edit_haproxy 
+          stop_haproxy 
         else
           echo -e "\033[1;31mPlease install HAProxy first!\033[0m"
           sleep 2
@@ -881,7 +1108,7 @@ haproxy_menu() {
         ;;
       11) 
         if [ -n "$current_version" ]; then 
-          reload_haproxy 
+          edit_haproxy 
         else
           echo -e "\033[1;31mPlease install HAProxy first!\033[0m"
           sleep 2
@@ -889,13 +1116,21 @@ haproxy_menu() {
         ;;
       12) 
         if [ -n "$current_version" ]; then 
-          clear_haproxy_config 
+          reload_haproxy 
         else
           echo -e "\033[1;31mPlease install HAProxy first!\033[0m"
           sleep 2
         fi 
         ;;
       13) 
+        if [ -n "$current_version" ]; then 
+          clear_haproxy_config 
+        else
+          echo -e "\033[1;31mPlease install HAProxy first!\033[0m"
+          sleep 2
+        fi 
+        ;;
+      14) 
         if [ -n "$current_version" ]; then 
           remove_haproxy 
         else
@@ -904,7 +1139,7 @@ haproxy_menu() {
         fi 
         ;;
         
-      14)
+      15)
               if [ -n "$current_version" ]; then 
           auto_restart_haproxy 
         else
@@ -912,7 +1147,7 @@ haproxy_menu() {
           sleep 2
         fi 
        ;;
-      15)
+      16)
               if [ -n "$current_version" ]; then 
          tune_haproxy_config 
           read -p "Press Enter to continue..."
