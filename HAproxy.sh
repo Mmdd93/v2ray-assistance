@@ -382,26 +382,51 @@ create_backend() {
     } >> "$HAPROXY_CONFIG"
   fi
 
-  # Frontend configuration
+# Frontend configuration
+while true; do
+  # Get frontend details
   while true; do
-    # Get frontend details
-    while true; do
-      read -p "Enter Bind Port (listen port) [default: 443]: " frontend_port
-      frontend_port=${frontend_port:-443}
-      
-      if grep -q "bind \*:$frontend_port" "$HAPROXY_CONFIG"; then
-        echo -e "\033[1;31mError: Port $frontend_port already used in HAProxy!\033[0m"
-        grep -n "bind \*:$frontend_port" "$HAPROXY_CONFIG"
-        continue
-      fi
-      
-      if lsof -i :$frontend_port >/dev/null 2>&1 || ss -tuln | grep -q ":$frontend_port"; then
+    read -p "Enter Bind Port (listen port) [default: 443]: " frontend_port
+    frontend_port=${frontend_port:-443}
+    
+    # Check if port is already used in HAProxy config (exact match)
+    if grep -q "bind \*:$frontend_port\b" "$HAPROXY_CONFIG" || 
+       grep -q "bind \*:$frontend_port[^0-9]" "$HAPROXY_CONFIG" || 
+       grep -q "bind \*:$frontend_port$" "$HAPROXY_CONFIG"; then
+      echo -e "\033[1;31mError: Port $frontend_port already used in HAProxy!\033[0m"
+      grep -n "bind \*:$frontend_port" "$HAPROXY_CONFIG"
+      continue
+    fi
+    
+    # Check if port is already in use by system (exact match)
+    if lsof -i :$frontend_port >/dev/null 2>&1; then
+      echo -e "\033[1;31mError: Port $frontend_port already in use by system!\033[0m"
+      lsof -i :$frontend_port
+      continue
+    fi
+    
+    # More precise ss check using awk for exact port matching
+    if ss -tulnH 2>/dev/null | awk -v port="$frontend_port" '$5 ~ ":"port"$" {exit 1}'; then
+      : # Port is free, continue
+    else
+      echo -e "\033[1;31mError: Port $frontend_port already in use by system!\033[0m"
+      ss -tulnp 2>/dev/null | awk -v port="$frontend_port" '$5 ~ ":"port"$" {print}'
+      continue
+    fi
+    
+    # Alternative check with netstat (for older systems)
+    if command -v netstat >/dev/null 2>&1; then
+      if netstat -tuln 2>/dev/null | awk -v port=":$frontend_port$" '$4 ~ port {exit 1}'; then
+        : # Port is free
+      else
         echo -e "\033[1;31mError: Port $frontend_port already in use by system!\033[0m"
-        lsof -i :$frontend_port || ss -tulp | grep ":$frontend_port"
+        netstat -tulnp 2>/dev/null | grep ":$frontend_port\b"
         continue
       fi
-      break
-    done
+    fi
+    
+    break
+  done
 
     frontend_name="frontend_${frontend_port}"
     {
@@ -602,24 +627,36 @@ simple_port_forward() {
   fi
 
   while true; do
-    # Get frontend details
-    while true; do
-      read -p "Enter Listen Port [default 8080]: " listen_port
-      listen_port=${listen_port:-8080}
-      
-      if grep -q "bind \*:$listen_port" "$HAPROXY_CONFIG"; then
-        echo -e "\033[1;31mError: Port $listen_port already used in HAProxy!\033[0m"
-        grep -n "bind \*:$listen_port" "$HAPROXY_CONFIG"
-        continue
-      fi
-      
-      if lsof -i :$listen_port >/dev/null 2>&1 || ss -tuln | grep -q ":$listen_port"; then
-        echo -e "\033[1;31mError: Port $listen_port already in use by system!\033[0m"
-        lsof -i :$listen_port || ss -tulp | grep ":$listen_port"
-        continue
-      fi
-      break
-    done
+   # Get frontend details
+while true; do
+  read -p "Enter Listen Port [default 8080]: " listen_port
+  listen_port=${listen_port:-8080}
+  
+  # Check if port is already used in HAProxy config (exact match)
+  if grep -q "bind \*:$listen_port\b" "$HAPROXY_CONFIG" || 
+     grep -q "bind \*:$listen_port[[:space:]]" "$HAPROXY_CONFIG" || 
+     grep -q "bind \*:$listen_port$" "$HAPROXY_CONFIG"; then
+    echo -e "\033[1;31mError: Port $listen_port already used in HAProxy!\033[0m"
+    grep -n "bind \*:$listen_port" "$HAPROXY_CONFIG"
+    continue
+  fi
+  
+  # Check if port is already in use by system (exact match)
+  if lsof -i :$listen_port >/dev/null 2>&1; then
+    echo -e "\033[1;31mError: Port $listen_port already in use by system!\033[0m"
+    lsof -i :$listen_port 2>/dev/null
+    continue
+  fi
+  
+  # Check with ss (exact match using word boundary)
+  if ss -tuln 2>/dev/null | grep -q ":$listen_port\b"; then
+    echo -e "\033[1;31mError: Port $listen_port already in use by system!\033[0m"
+    ss -tulnp 2>/dev/null | grep ":$listen_port\b"
+    continue
+  fi
+  
+  break
+done
 
     frontend_name="frontend_${listen_port}"
     
