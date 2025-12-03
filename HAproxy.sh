@@ -151,21 +151,25 @@ http_header_forward() {
     } >> "$HAPROXY_CONFIG"
   fi
 
-  while true; do
+while true; do
     # Get frontend details
     while true; do
       read -p "Enter HTTP Listen Port [default: 80]: " listen_port
       listen_port=${listen_port:-80}
       
-      if grep -q "bind \*:$listen_port" "$HAPROXY_CONFIG"; then
+      # Check if port is already used in HAProxy config
+      if grep -q "bind \*:$listen_port[^0-9]" "$HAPROXY_CONFIG" || 
+         grep -q "bind \*:$listen_port$" "$HAPROXY_CONFIG"; then
         echo -e "\033[1;31mError: Port $listen_port already used in HAProxy!\033[0m"
         grep -n "bind \*:$listen_port" "$HAPROXY_CONFIG"
         continue
       fi
       
-      if lsof -i :$listen_port >/dev/null 2>&1 || ss -tuln | grep -q ":$listen_port"; then
+      # Check if port is already in use by system (exact match)
+      if lsof -i :$listen_port >/dev/null 2>&1 || 
+         ss -tuln | grep -q ":$listen_port\b"; then
         echo -e "\033[1;31mError: Port $listen_port already in use by system!\033[0m"
-        lsof -i :$listen_port || ss -tulp | grep ":$listen_port"
+        lsof -i :$listen_port 2>/dev/null || ss -tulnp | grep ":$listen_port\b"
         continue
       fi
       break
