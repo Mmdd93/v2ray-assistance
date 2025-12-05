@@ -3690,6 +3690,7 @@ main_menu() {
         echo -e "${CYAN} 79.${NC} ${CYAN}Pingtunnel Manager                       ${WHITE}[github.com/hoseinlolready]${NC}"
 		echo -e "${CYAN} 87.${NC} ${CYAN}WSS/WS Reverse tunnel                    ${WHITE}[github.com/snsinfu/reverse-tunnel]${NC}"
 		echo -e "${CYAN} 88.${NC} ${CYAN}WSS/WS Reverse tunnel 69learn            ${WHITE}[github.com/69learn/wstunnel]${NC}"
+		echo -e "${CYAN} 89.${NC} ${CYAN}SMITE [GOST,Backhaul,Rathole,Chisel,FRP] WEB UI           ${WHITE}[github.com/zZedix/Smite]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
