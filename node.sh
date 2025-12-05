@@ -3475,6 +3475,8 @@ show_status() {
     fi
 }
 
+#!/bin/bash
+
 # Colors for better visual organization
 RED='\033[1;31m'
 GREEN='\033[1;32m'
@@ -3491,6 +3493,120 @@ LIGHT_CYAN='\033[1;96m'
 NC='\033[0m' # No Color
 
 # Header function
+header() {
+    clear
+    echo -e "${PURPLE}========================================${NC}"
+    echo -e "${LIGHT_CYAN}           SMITE INSTALLER          ${NC}"
+    echo -e "${PURPLE}========================================${NC}"
+    echo ""
+}
+
+Smite() {
+    while true; do
+        local choice
+        local return_code=0
+        
+        header
+        
+        echo -e "${CYAN}========================================${NC}"
+        echo -e "${WHITE}        INSTALLATION OPTIONS         ${NC}"
+        echo -e "${CYAN}========================================${NC}"
+        echo ""
+        echo -e "${LIGHT_GREEN}[1]${NC} ${YELLOW}Install Ubuntu Docker${NC}"
+        echo -e "     ${LIGHT_BLUE}--${NC} ${WHITE}github.com/manageitir/docker${NC}"
+        echo ""
+        echo -e "${LIGHT_GREEN}[2]${NC} ${YELLOW}Install Smite Script${NC}"
+        echo -e "     ${LIGHT_BLUE}--${NC} ${WHITE}github.com/zZedix/Smite${NC}"
+        echo ""
+        echo -e "${LIGHT_GREEN}[3]${NC} ${YELLOW}Install Smite Node${NC}"
+        echo -e "     ${LIGHT_BLUE}--${NC} ${WHITE}github.com/zZedix/Smite${NC}"
+        echo ""
+        echo -e "${RED}[0]${NC} ${RED}Exit / Return to shell${NC}"
+        echo ""
+        echo -e "${CYAN}========================================${NC}"
+        
+        echo -ne "${MAGENTA}>>${NC} ${WHITE}Enter your choice (${GREEN}0-3${WHITE}): ${NC}"
+        read choice
+        
+        case $choice in
+            0)
+                echo ""
+                echo -e "${BLUE}Exiting Smite installer...${NC}"
+                echo -e "${GREEN}Returning to shell...${NC}"
+                echo ""
+                return 0
+                ;;
+            1)
+                header
+                echo -e "${BLUE}----------------------------------------${NC}"
+                echo -e "${LIGHT_CYAN}Installing Ubuntu Docker...${NC}"
+                echo -e "${BLUE}----------------------------------------${NC}"
+                echo ""
+				curl -Ls https://raw.githubusercontent.com/manageitir/docker/main/install-ubuntu.sh -o install-ubuntu.sh
+                sudo bash install-ubuntu.sh
+                return_code=$?
+                echo ""
+                if [ $return_code -eq 0 ]; then
+                    echo -e "${GREEN}[SUCCESS] Ubuntu Docker installation completed!${NC}"
+                else
+                    echo -e "${RED}[ERROR] Ubuntu Docker installation failed with code: $return_code${NC}"
+                fi
+                echo ""
+                echo -e "${YELLOW}Press Enter to continue...${NC}"
+                read
+                ;;
+            2)
+                header
+                echo -e "${BLUE}----------------------------------------${NC}"
+                echo -e "${LIGHT_CYAN}Installing Smite Script...${NC}"
+                echo -e "${BLUE}----------------------------------------${NC}"
+                echo ""
+				curl -Ls https://raw.githubusercontent.com/zZedix/Smite/main/scripts/install.sh -o smite.sh
+                sudo bash smite.sh
+                return_code=$?
+                echo ""
+                if [ $return_code -eq 0 ]; then
+                    echo -e "${GREEN}[SUCCESS] Smite Script installation completed!${NC}"
+                else
+                    echo -e "${RED}[ERROR] Smite Script installation failed with code: $return_code${NC}"
+                fi
+                echo ""
+                echo -e "${YELLOW}Press Enter to continue...${NC}"
+                read
+                ;;
+            3)
+                header
+                echo -e "${BLUE}----------------------------------------${NC}"
+                echo -e "${LIGHT_CYAN}Installing Smite Node...${NC}"
+                echo -e "${BLUE}----------------------------------------${NC}"
+                echo ""
+				curl -Ls https://raw.githubusercontent.com/zZedix/Smite/main/scripts/smite-node.sh -o smite-node.sh
+                sudo bash smite-node.sh
+                return_code=$?
+                echo ""
+                if [ $return_code -eq 0 ]; then
+                    echo -e "${GREEN}[SUCCESS] Smite Node installation completed!${NC}"
+                else
+                    echo -e "${RED}[ERROR] Smite Node installation failed with code: $return_code${NC}"
+                fi
+                echo ""
+                echo -e "${YELLOW}Press Enter to continue...${NC}"
+                read
+                ;;
+            *)
+                header
+                echo -e "${RED}========================================${NC}"
+                echo -e "${RED}ERROR: Invalid choice!${NC}"
+                echo -e "${YELLOW}Please select 0, 1, 2, or 3.${NC}"
+                echo -e "${RED}========================================${NC}"
+                echo ""
+                echo -e "${YELLOW}Press Enter to continue...${NC}"
+                read
+                ;;
+        esac
+    done
+}
+
 
 
 # Main menu function
@@ -4009,6 +4125,11 @@ main_menu() {
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/69learn/wstunnel/main/wstunnel.sh -o ws-reverse-69learn.sh
                 sudo bash ws-reverse-69learn.sh
+                ;;
+			89)
+                echo -e "${YELLOW}Smite Tunnel...${NC}"
+				sleep 1
+                Smite
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
