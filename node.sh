@@ -3507,7 +3507,7 @@ Smite() {
         local return_code=0
         
         header
-        echo -e "${LIGHT_GREEN}[1]${NC} ${YELLOW}Install Ubuntu Docker${NC}"
+        echo -e "${LIGHT_GREEN}[1]${NC} ${YELLOW}Install Docker${NC}"
         echo -e "${LIGHT_GREEN}[2]${NC} ${YELLOW}Install Smite Script${NC}"
         echo -e "${LIGHT_GREEN}[3]${NC} ${YELLOW}Install Smite Node${NC}"
         echo -e "${RED}[0]${NC} ${RED}Exit / Return to shell${NC}"
