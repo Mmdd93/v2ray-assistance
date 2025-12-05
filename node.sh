@@ -3496,7 +3496,7 @@ NC='\033[0m' # No Color
 header() {
     clear
     echo -e "${PURPLE}========================================${NC}"
-    echo -e "${LIGHT_CYAN}           SMITE INSTALLER          ${NC}"
+    echo -e "${LIGHT_CYAN}      github.com/zZedix/Smite          ${NC}"
     echo -e "${PURPLE}========================================${NC}"
     echo ""
 }
@@ -3507,22 +3507,10 @@ Smite() {
         local return_code=0
         
         header
-        
-        echo -e "${CYAN}========================================${NC}"
-        echo -e "${WHITE}        INSTALLATION OPTIONS         ${NC}"
-        echo -e "${CYAN}========================================${NC}"
-        echo ""
         echo -e "${LIGHT_GREEN}[1]${NC} ${YELLOW}Install Ubuntu Docker${NC}"
-        echo -e "     ${LIGHT_BLUE}--${NC} ${WHITE}github.com/manageitir/docker${NC}"
-        echo ""
         echo -e "${LIGHT_GREEN}[2]${NC} ${YELLOW}Install Smite Script${NC}"
-        echo -e "     ${LIGHT_BLUE}--${NC} ${WHITE}github.com/zZedix/Smite${NC}"
-        echo ""
         echo -e "${LIGHT_GREEN}[3]${NC} ${YELLOW}Install Smite Node${NC}"
-        echo -e "     ${LIGHT_BLUE}--${NC} ${WHITE}github.com/zZedix/Smite${NC}"
-        echo ""
         echo -e "${RED}[0]${NC} ${RED}Exit / Return to shell${NC}"
-        echo ""
         echo -e "${CYAN}========================================${NC}"
         
         echo -ne "${MAGENTA}>>${NC} ${WHITE}Enter your choice (${GREEN}0-3${WHITE}): ${NC}"
@@ -3538,9 +3526,6 @@ Smite() {
                 ;;
             1)
                 header
-                echo -e "${BLUE}----------------------------------------${NC}"
-                echo -e "${LIGHT_CYAN}Installing Ubuntu Docker...${NC}"
-                echo -e "${BLUE}----------------------------------------${NC}"
                 echo ""
 				curl -Ls https://raw.githubusercontent.com/manageitir/docker/main/install-ubuntu.sh -o install-ubuntu.sh
                 sudo bash install-ubuntu.sh
@@ -3557,9 +3542,6 @@ Smite() {
                 ;;
             2)
                 header
-                echo -e "${BLUE}----------------------------------------${NC}"
-                echo -e "${LIGHT_CYAN}Installing Smite Script...${NC}"
-                echo -e "${BLUE}----------------------------------------${NC}"
                 echo ""
 				curl -Ls https://raw.githubusercontent.com/zZedix/Smite/main/scripts/install.sh -o smite.sh
                 sudo bash smite.sh
@@ -3576,9 +3558,6 @@ Smite() {
                 ;;
             3)
                 header
-                echo -e "${BLUE}----------------------------------------${NC}"
-                echo -e "${LIGHT_CYAN}Installing Smite Node...${NC}"
-                echo -e "${BLUE}----------------------------------------${NC}"
                 echo ""
 				curl -Ls https://raw.githubusercontent.com/zZedix/Smite/main/scripts/smite-node.sh -o smite-node.sh
                 sudo bash smite-node.sh
