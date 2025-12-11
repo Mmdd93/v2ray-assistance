@@ -111,6 +111,7 @@ fi
             1)  install_docker
                 check_docker_compose
                 setup_marzban_node
+				manage_marzban_node
                 ;;
             2) change_node_ports ;;
             3) edit_node_certificates ;;
