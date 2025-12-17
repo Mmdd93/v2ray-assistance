@@ -4113,7 +4113,7 @@ main_menu() {
                 Smite
                 ;;
 			90)
-                echo -e "${YELLOW}Smite Tunnel...${NC}"
+                echo -e "${YELLOW}WaterWall Tunnel...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/Ptechgithub/WaterWall-Docs/main/install.sh -o WaterWall.sh
                 sudo bash WaterWall.sh
