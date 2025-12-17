@@ -3670,6 +3670,7 @@ main_menu() {
 		echo -e "${CYAN} 87.${NC} ${CYAN}WSS/WS Reverse tunnel                    ${WHITE}[github.com/snsinfu/reverse-tunnel]${NC}"
 		echo -e "${CYAN} 88.${NC} ${CYAN}WSS/WS Reverse tunnel 69learn            ${WHITE}[github.com/69learn/wstunnel]${NC}"
 		echo -e "${CYAN} 89.${NC} ${CYAN}SMITE [GOST,Backhaul,Rathole,Chisel,FRP] WEB UI           ${WHITE}[github.com/zZedix/Smite]${NC}"
+		echo -e "${CYAN} 90.${NC} ${CYAN}WaterWall Reverse tunnel           ${WHITE}[github.com/Ptechgithub/WaterWall-Docs]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4110,6 +4111,12 @@ main_menu() {
                 echo -e "${YELLOW}Smite Tunnel...${NC}"
 				sleep 1
                 Smite
+                ;;
+			90)
+                echo -e "${YELLOW}Smite Tunnel...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/Ptechgithub/WaterWall-Docs/main/install.sh -o WaterWall.sh
+                sudo bash WaterWall.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
