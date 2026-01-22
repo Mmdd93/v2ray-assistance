@@ -4118,6 +4118,12 @@ main_menu() {
                 curl -Ls https://raw.githubusercontent.com/Ptechgithub/WaterWall-Docs/main/install.sh -o WaterWall.sh
                 sudo bash WaterWall.sh
                 ;;
+			91)
+                echo -e "${YELLOW}WaterWall Tunnel...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/bugfloyd/dnstt-deploy/main/dnstt-deploy.sh -o dnstt-deploy.sh
+                sudo bash dnstt-deploy.sh
+                ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
                 update 
