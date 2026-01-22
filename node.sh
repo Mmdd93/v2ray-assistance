@@ -3714,6 +3714,7 @@ main_menu() {
         echo -e "${LIGHT_CYAN} 81.${NC} ${LIGHT_CYAN}OV-Panel ${RED}[Multi]${NC}            ${WHITE}[github.com/primeZdev/ov-panel]${NC}"
         echo -e "${LIGHT_CYAN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC}        ${WHITE}[github.com/amiridev-org]${NC}"
 		echo -e "${LIGHT_CYAN} 84.${NC} ${LIGHT_CYAN}MikroTik (CHR/DOCKER MODE)${NC}    ${WHITE}[github.com/Mmdd93]${NC}"
+		echo -e "${LIGHT_CYAN} 91.${NC} ${LIGHT_CYAN}dnstt${NC}    ${WHITE}[github.com/bugfloyd/dnstt-deploy]${NC}"
         echo
         
         # Panel Backup section - YELLOW
