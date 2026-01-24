@@ -3715,6 +3715,7 @@ main_menu() {
         echo -e "${LIGHT_CYAN} 82.${NC} ${LIGHT_CYAN}IranGate-OV ${GREEN}[Single]${NC}        ${WHITE}[github.com/amiridev-org]${NC}"
 		echo -e "${LIGHT_CYAN} 84.${NC} ${LIGHT_CYAN}MikroTik (CHR/DOCKER MODE)${NC}    ${WHITE}[github.com/Mmdd93]${NC}"
 		echo -e "${LIGHT_CYAN} 91.${NC} ${LIGHT_CYAN}dnstt${NC}    ${WHITE}[github.com/bugfloyd/dnstt-deploy]${NC}"
+		echo -e "${LIGHT_CYAN} 92.${NC} ${LIGHT_CYAN}Shahan Panel${NC}    ${WHITE}[github.com/HamedAp/ShahanPanel]${NC}"
         echo
         
         # Panel Backup section - YELLOW
@@ -4120,10 +4121,16 @@ main_menu() {
                 sudo bash WaterWall.sh
                 ;;
 			91)
-                echo -e "${YELLOW}WaterWall Tunnel...${NC}"
+                echo -e "${YELLOW}dnstt-deploy.sh...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/bugfloyd/dnstt-deploy/main/dnstt-deploy.sh -o dnstt-deploy.sh
                 sudo bash dnstt-deploy.sh
+                ;;
+			92)
+                echo -e "${YELLOW}shahan.sh...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/HamedAp/Ssh-User-management/master/install.sh -o shahan.sh
+                sudo bash shahan.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
