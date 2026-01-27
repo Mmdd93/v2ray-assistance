@@ -3716,6 +3716,7 @@ main_menu() {
 		echo -e "${LIGHT_CYAN} 84.${NC} ${LIGHT_CYAN}MikroTik (CHR/DOCKER MODE)${NC}    ${WHITE}[github.com/Mmdd93]${NC}"
 		echo -e "${LIGHT_CYAN} 91.${NC} ${LIGHT_CYAN}dnstt${NC}    ${WHITE}[github.com/bugfloyd/dnstt-deploy]${NC}"
 		echo -e "${LIGHT_CYAN} 92.${NC} ${LIGHT_CYAN}Shahan Panel${NC}    ${WHITE}[github.com/HamedAp/ShahanPanel]${NC}"
+		echo -e "${LIGHT_CYAN} 93.${NC} ${LIGHT_CYAN}SlipStream${NC}    ${WHITE}[github.com/mirzaaghazadeh/SlipStreamGUI]${NC}"
         echo
         
         # Panel Backup section - YELLOW
@@ -4131,6 +4132,12 @@ main_menu() {
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/HamedAp/Ssh-User-management/master/install.sh -o shahan.sh
                 sudo bash shahan.sh
+                ;;
+			93)
+                echo -e "${YELLOW}slipstream-rust...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/AliRezaBeigy/slipstream-rust-deploy/master/slipstream-rust-deploy.sh -o slipstream-rust-deploy.sh
+                sudo bash slipstream-rust-deploy.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
