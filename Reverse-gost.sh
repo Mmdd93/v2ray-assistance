@@ -132,7 +132,7 @@ configure_relay() {
             esac
 
 
-                GOST_OPTIONS="-L relay${TRANSMISSION}://:${lport_relay}?bind=true&keepAlive=true"
+                GOST_OPTIONS="-L relay${TRANSMISSION}://:${lport_relay}?bind=true&keepAlive=true&compress=true&mux=true"
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
@@ -241,7 +241,7 @@ configure_relay() {
 
     # Construct GOST options
     GOST_OPTIONS=" -L ${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}?keepAlive=true"
-    GOST_OPTIONS+=" -F relay${TRANSMISSION}://${relay_ip}:${relay_port}"
+    GOST_OPTIONS+=" -F relay${TRANSMISSION}://${relay_ip}:${relay_port}?compress=true&mux=true"
 
     echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
@@ -327,7 +327,7 @@ configure_socks5() {
             esac
 
 
-                GOST_OPTIONS="-L socks5${TRANSMISSION}://:${lport_socks5}?bind=true&keepAlive=true"
+                GOST_OPTIONS="-L socks5${TRANSMISSION}://:${lport_socks5}?bind=true&keepAlive=true&compress=true&mux=true"
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
@@ -432,7 +432,7 @@ configure_socks5() {
 
     # Build GOST options
     GOST_OPTIONS="-L ${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}?keepAlive=true"
-    GOST_OPTIONS+=" -F socks5${TRANSMISSION}://${socks5_ip}:${socks5_port}"
+    GOST_OPTIONS+=" -F socks5${TRANSMISSION}://${socks5_ip}:${socks5_port}?compress=true&mux=true"
 
     echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
