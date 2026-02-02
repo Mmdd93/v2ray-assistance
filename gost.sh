@@ -404,15 +404,26 @@ fi
 # Remove GOST
 remove_gost() {
     check_root
+
     if [[ -f "/usr/local/bin/gost" ]]; then
-        echo "Removing GOST..."
-        rm -f /usr/local/bin/gost
-        echo "GOST removed successfully!"
+        read -rp "Are you sure you want to remove GOST? [y/N]: " confirm
+        case "$confirm" in
+            [yY]|[yY][eE][sS])
+                echo "Removing GOST..."
+                rm -f /usr/local/bin/gost
+                echo "GOST removed successfully!"
+                ;;
+            *)
+                echo "Operation cancelled."
+                ;;
+        esac
     else
         echo "GOST is not installed!"
     fi
+
     read -p "Press Enter to continue..."
 }
+
 
 configure_port_forwarding() {
     echo -e "\033[1;34mConfigure Port Forwarding\033[0m"
@@ -822,9 +833,69 @@ configure_relay() {
                 17) TRANSMISSION="" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="+tcp" ;;
             esac
+            
+            # Ask about bind (for server side)
+            echo -e "\n\033[1;34mEnable Bind?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Bind to all interfaces)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' bind_choice
+            bind_choice=${bind_choice:-1}
+            
+            # Ask about keepAlive
+            echo -e "\n\033[1;34mEnable KeepAlive?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for persistent connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' keepalive_choice
+            keepalive_choice=${keepalive_choice:-1}
+            
+            # Ask about compression
+            echo -e "\n\033[1;34mEnable Compression?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for better performance)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' compress_choice
+            compress_choice=${compress_choice:-1}
+            
+            # Ask about multiplexing
+            echo -e "\n\033[1;34mEnable Multiplexing (mux)?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for multiple connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' mux_choice
+            mux_choice=${mux_choice:-1}
 
-
-                GOST_OPTIONS="-L relay${TRANSMISSION}://:${lport_relay}"
+            # Build GOST options
+            GOST_OPTIONS="-L relay${TRANSMISSION}://:${lport_relay}"
+            
+            # Build parameters string
+            PARAMS=""
+            if [[ "$bind_choice" == "1" ]]; then
+                PARAMS+="bind=true"
+            fi
+            
+            if [[ "$keepalive_choice" == "1" ]]; then
+                if [[ -n "$PARAMS" ]]; then
+                    PARAMS+="&"
+                fi
+                PARAMS+="keepAlive=true"
+            fi
+            
+            if [[ "$compress_choice" == "1" ]]; then
+                if [[ -n "$PARAMS" ]]; then
+                    PARAMS+="&"
+                fi
+                PARAMS+="compress=true"
+            fi
+            
+            if [[ "$mux_choice" == "1" ]]; then
+                if [[ -n "$PARAMS" ]]; then
+                    PARAMS+="&"
+                fi
+                PARAMS+="mux=true"
+            fi
+            
+            # Add parameters if any
+            if [[ -n "$PARAMS" ]]; then
+                GOST_OPTIONS+="?${PARAMS}"
+            fi
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
@@ -840,17 +911,16 @@ configure_relay() {
         2)
             # Client-side configuration
             echo -e "\n\033[1;34mConfigure Client-Side (Iran)\033[0m"
+            
             # Select listen type (TCP/UDP)
             echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
             echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
             echo -e "\033[1;32m2.\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
-            
             read -p $'\033[1;33mEnter listen transmission type: \033[0m' listen_choice
             
             case $listen_choice in
                 1) LISTEN_TRANSMISSION="tcp" ;;
                 2) LISTEN_TRANSMISSION="udp" ;;
-                
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
             esac
             
@@ -951,15 +1021,60 @@ configure_relay() {
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="+tcp" ;;
             esac
             
+            # Ask about keepAlive for listen ports
+            echo -e "\n\033[1;34mEnable KeepAlive for local ports?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for persistent connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' listen_keepalive_choice
+            listen_keepalive_choice=${listen_keepalive_choice:-1}
+            
+            # Ask about compression for relay
+            echo -e "\n\033[1;34mEnable Compression for relay?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for better performance)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' compress_choice
+            compress_choice=${compress_choice:-1}
+            
+            # Ask about multiplexing for relay
+            echo -e "\n\033[1;34mEnable Multiplexing (mux) for relay?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for multiple connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' mux_choice
+            mux_choice=${mux_choice:-1}
+
             # Construct multi-port -L parameters
             GOST_OPTIONS=""
             for lport in "${lport_array[@]}"; do
-                GOST_OPTIONS+="-L ${LISTEN_TRANSMISSION}://:${lport}/127.0.0.1:${lport}"
+                # Start building the listen URL
+                URL="${LISTEN_TRANSMISSION}://:${lport}/127.0.0.1:${lport}"
+                
+                # Add keepAlive if enabled for listen ports
+                if [[ "$listen_keepalive_choice" == "1" ]]; then
+                    URL+="?keepAlive=true"
+                fi
+                
+                GOST_OPTIONS+=" -L $URL"
             done
             
-
+            # Build parameters for relay (-F)
+            PARAMS=""
+            if [[ "$compress_choice" == "1" ]]; then
+                PARAMS+="compress=true"
+            fi
+            
+            if [[ "$mux_choice" == "1" ]]; then
+                if [[ -n "$PARAMS" ]]; then
+                    PARAMS+="&"
+                fi
+                PARAMS+="mux=true"
+            fi
+            
+            # Add the -F option with parameters
+            if [[ -n "$PARAMS" ]]; then
+                GOST_OPTIONS+=" -F relay${TRANSMISSION}://${relay_ip}:${relay_port}?${PARAMS}"
+            else
                 GOST_OPTIONS+=" -F relay${TRANSMISSION}://${relay_ip}:${relay_port}"
-
+            fi
             
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
             
@@ -980,16 +1095,16 @@ configure_relay() {
 }
 
 configure_forward() {
-      echo -e "\033[1;33mIs this the client or server side?\033[0m"
-      echo -e "\033[1;32m1.\033[0m \033[1;36mServer-Side (Kharej)\033[0m"
-      echo -e "\033[1;32m2.\033[0m \033[1;36mClient-Side (Iran)\033[0m"
-      read -p $'\033[1;33mEnter your choice: \033[0m' side_choice
-
+    echo -e "\033[1;33mIs this the client or server side?\033[0m"
+    echo -e "\033[1;32m1.\033[0m \033[1;36mServer-Side (Kharej)\033[0m"
+    echo -e "\033[1;32m2.\033[0m \033[1;36mClient-Side (Iran)\033[0m"
+    read -p $'\033[1;33mEnter your choice: \033[0m' side_choice
 
     case $side_choice in
         1)
             # Server-side configuration
             echo -e "\n\033[1;34m Configure Server-Side (Kharej)\033[0m"
+            
             # Prompt the user for a port until a free one is provided
             while true; do
                 read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' relay_port
@@ -1004,7 +1119,6 @@ configure_forward() {
             
             # Multiple inbound ports input
             read -p $'\033[1;33mEnter inbound (config) ports (only support one port): \033[0m' lport_client
-            
             
             # Ask for the transmission type
             echo -e "\n\033[1;34mSelect Transmission Type for Communication:\033[0m"
@@ -1025,7 +1139,6 @@ configure_forward() {
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
             read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
 
-
             case $trans_choice in
                 1) TRANSMISSION="kcp" ;;
                 2) TRANSMISSION="quic" ;;
@@ -1044,8 +1157,56 @@ configure_forward() {
                 15) TRANSMISSION="mws" ;;
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
+            
+            # Ask about keepAlive for server side
+            echo -e "\n\033[1;34mEnable KeepAlive?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for persistent connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' keepalive_choice
+            keepalive_choice=${keepalive_choice:-1}
+            
+            # Ask about compression for server side
+            echo -e "\n\033[1;34mEnable Compression?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for better performance)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' compress_choice
+            compress_choice=${compress_choice:-1}
+            
+            # Ask about multiplexing for server side
+            echo -e "\n\033[1;34mEnable Multiplexing (mux)?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for multiple connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' mux_choice
+            mux_choice=${mux_choice:-1}
 
+            # Build GOST options
             GOST_OPTIONS="-L ${TRANSMISSION}://:${relay_port}/:${lport_client}"
+            
+            # Build parameters string
+            PARAMS=""
+            if [[ "$keepalive_choice" == "1" ]]; then
+                PARAMS+="keepAlive=true"
+            fi
+            
+            if [[ "$compress_choice" == "1" ]]; then
+                if [[ -n "$PARAMS" ]]; then
+                    PARAMS+="&"
+                fi
+                PARAMS+="compress=true"
+            fi
+            
+            if [[ "$mux_choice" == "1" ]]; then
+                if [[ -n "$PARAMS" ]]; then
+                    PARAMS+="&"
+                fi
+                PARAMS+="mux=true"
+            fi
+            
+            # Add parameters if any
+            if [[ -n "$PARAMS" ]]; then
+                GOST_OPTIONS+="?${PARAMS}"
+            fi
+
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
@@ -1060,19 +1221,19 @@ configure_forward() {
         2)
             # Client-side configuration
             echo -e "\n\033[1;34mConfigure Client-Side (Iran)\033[0m"
-             # Select listen type (TCP/UDP)
+            
+            # Select listen type (TCP/UDP)
             echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
             echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
             echo -e "\033[1;32m2.\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
-
             read -p $'\033[1;33mEnter listen transmission type: \033[0m' listen_choice
             
             case $listen_choice in
                 1) LISTEN_TRANSMISSION="tcp" ;;
                 2) LISTEN_TRANSMISSION="udp" ;;
-
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
             esac
+            
             # Prompt the user for a port until a free one is provided
             while true; do
                 read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' relay_port
@@ -1084,28 +1245,25 @@ configure_forward() {
                     break  # Exit the loop if the port is free
                 fi
             done
-            
 
+            # Prompt the user for an inbound port until a free one is provided
+            while true; do
+                read -p $'\033[1;33mEnter inbound (config) port (only support one port): \033[0m' lport
+                
+                # Check if the entered port is numeric and validate it
+                if ! [[ "$lport" =~ ^[0-9]+$ ]]; then
+                    echo -e "\033[1;31mInvalid input! Please enter a valid numeric port.\033[0m"
+                    continue
+                fi
+                
+                if is_port_used $lport; then
+                    echo -e "\033[1;31mPort $lport is already in use. Please enter a different port.\033[0m"
+                else
+                    echo -e "\033[1;32mPort $lport is available.\033[0m"
+                    break  # Exit the loop if the port is free
+                fi
+            done
 
-              # Prompt the user for an inbound port until a free one is provided
-              while true; do
-                  read -p $'\033[1;33mEnter inbound (config) port (only support one port): \033[0m' lport
-                  
-                  # Check if the entered port is numeric and validate it
-                  if ! [[ "$lport" =~ ^[0-9]+$ ]]; then
-                      echo -e "\033[1;31mInvalid input! Please enter a valid numeric port.\033[0m"
-                      continue
-                  fi
-                  
-                  if is_port_used $lport_client; then
-                      echo -e "\033[1;31mPort $lport_client is already in use. Please enter a different port.\033[0m"
-                  else
-                      echo -e "\033[1;32mPort $lport_client is available.\033[0m"
-                      break  # Exit the loop if the port is free
-                  fi
-              done
-
-            
             read -p $'\033[1;33mEnter remote server IP (kharej): \033[0m' relay_ip
             
             # Check if input is an IPv6 address
@@ -1114,8 +1272,6 @@ configure_forward() {
             fi
             
             echo -e "\033[1;36mFormatted IP:\033[0m $relay_ip"
-            
-            
             
             # Select relay transmission type
             echo -e "\n\033[1;34mSelect Relay Transmission Type:\033[0m"
@@ -1134,7 +1290,6 @@ configure_forward() {
             echo -e "\033[1;32m13.\033[0m oTLS (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mTLS (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m MWS (Multiplex Websocket)"
-            
             read -p $'\033[1;33mEnter your choice for relay transmission type: \033[0m' trans_choice
             
             case $trans_choice in
@@ -1156,8 +1311,55 @@ configure_forward() {
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="tcp" ;;
             esac
             
-            # Construct multi-port -L parameters
-            GOST_OPTIONS="-L ${LISTEN_TRANSMISSION}://:${lport} -F forward+${TRANSMISSION}://${relay_ip}:${relay_port}"
+            # Ask about keepAlive for listen port
+            echo -e "\n\033[1;34mEnable KeepAlive for local port?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for persistent connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' listen_keepalive_choice
+            listen_keepalive_choice=${listen_keepalive_choice:-1}
+            
+            # Ask about compression for forward
+            echo -e "\n\033[1;34mEnable Compression for forward?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for better performance)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' compress_choice
+            compress_choice=${compress_choice:-1}
+            
+            # Ask about multiplexing for forward
+            echo -e "\n\033[1;34mEnable Multiplexing (mux) for forward?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for multiple connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' mux_choice
+            mux_choice=${mux_choice:-1}
+
+            # Build GOST options for listen port
+            GOST_OPTIONS="-L ${LISTEN_TRANSMISSION}://:${lport}"
+            
+            # Add keepAlive if enabled for listen port
+            if [[ "$listen_keepalive_choice" == "1" ]]; then
+                GOST_OPTIONS+="?keepAlive=true"
+            fi
+            
+            # Build parameters for forward (-F)
+            FORWARD_PARAMS=""
+            if [[ "$compress_choice" == "1" ]]; then
+                FORWARD_PARAMS+="compress=true"
+            fi
+            
+            if [[ "$mux_choice" == "1" ]]; then
+                if [[ -n "$FORWARD_PARAMS" ]]; then
+                    FORWARD_PARAMS+="&"
+                fi
+                FORWARD_PARAMS+="mux=true"
+            fi
+            
+            # Add the -F option with parameters
+            if [[ -n "$FORWARD_PARAMS" ]]; then
+                GOST_OPTIONS+=" -F forward+${TRANSMISSION}://${relay_ip}:${relay_port}?${FORWARD_PARAMS}"
+            else
+                GOST_OPTIONS+=" -F forward+${TRANSMISSION}://${relay_ip}:${relay_port}"
+            fi
+            
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
             
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
@@ -1168,7 +1370,6 @@ configure_forward() {
             start_service "$service_name"
             
             read -p "Press Enter to continue..."
-
             ;;
         
         *)
