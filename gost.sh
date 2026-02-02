@@ -1960,6 +1960,7 @@ manage_service_action() {
         echo -e " \033[1;34m5.\033[0m Remove the Service"
         echo -e " \033[1;34m6.\033[0m Edit the Service with nano"
         echo -e " \033[1;34m7.\033[0m Auto Restart Service (Cron)"
+        echo -e " \033[1;34m8.\033[0m Rename the Service"
         echo -e " \033[1;31m0.\033[0m Return"
         echo -e "\033[1;34m==============================\033[0m"
 
@@ -2093,6 +2094,103 @@ manage_service_action() {
     esac
     read -p "Press Enter to continue..."
     ;;
+
+                8)
+                # Rename the Service feature
+                echo -e "\n\033[1;34mRename Service:\033[0m"
+                
+                # Get current service information
+                service_file="/etc/systemd/system/$service_name"
+                
+                if [[ ! -f "$service_file" ]]; then
+                    echo -e "\033[1;31mError: Service file not found!\033[0m"
+                    read -p "Press Enter to continue..."
+                    continue
+                fi
+                
+                # Show current name
+                echo -e "Current service name: \033[1;36m$service_name\033[0m"
+                
+                # Ask for new name with validation
+                while true; do
+                    read -p $'\033[1;33mEnter new service name (must start with "gost-"): \033[0m' new_name
+                    
+                    # Validate the new name
+                    if [[ -z "$new_name" ]]; then
+                        echo -e "\033[1;31mService name cannot be empty!\033[0m"
+                        continue
+                    fi
+                    
+                    # Check if name starts with "gost-"
+                    if [[ ! "$new_name" =~ ^gost- ]]; then
+                        echo -e "\033[1;31mService name must start with 'gost-' prefix!\033[0m"
+                        echo -e "Example: gost-de-aeza-4540.service"
+                        continue
+                    fi
+                    
+                    # Check if name contains .service extension
+                    if [[ ! "$new_name" =~ \.service$ ]]; then
+                        new_name="$new_name.service"
+                    fi
+                    
+                    # Check if new name already exists
+                    if [[ -f "/etc/systemd/system/$new_name" ]]; then
+                        echo -e "\033[1;31mA service with name '$new_name' already exists!\033[0m"
+                        continue
+                    fi
+                    
+                    # Confirm the rename
+                    echo -e "\n\033[1;33mRenaming:\033[0m"
+                    echo -e "From: \033[1;31m$service_name\033[0m"
+                    echo -e "To:   \033[1;32m$new_name\033[0m"
+                    
+                    read -p $'\033[1;33mAre you sure you want to rename? [y/n] (default: n): \033[0m' confirm_rename
+                    confirm_rename="${confirm_rename:-n}"
+                    
+                    if [[ "$confirm_rename" != "y" && "$confirm_rename" != "yes" ]]; then
+                        echo -e "\033[1;33mRename cancelled.\033[0m"
+                        break
+                    fi
+                    
+                    # Stop the service first
+                    systemctl stop "$service_name" 2>/dev/null
+                    
+                    # Rename the service file
+                    mv "$service_file" "/etc/systemd/system/$new_name"
+                    
+                    # Update service references in the file
+                    sed -i "s/Description=Gost Service.*/Description=Gost Service - ${new_name%.service}/" "/etc/systemd/system/$new_name"
+                    
+                    # Reload systemd
+                    systemctl daemon-reload
+                    
+                    # Disable old service and enable new one
+                    systemctl disable "$service_name" 2>/dev/null
+                    systemctl enable "$new_name" 2>/dev/null
+                    
+                    # Update any cron jobs
+                    if crontab -l 2>/dev/null | grep -q "/bin/systemctl restart $service_name"; then
+                        (crontab -l 2>/dev/null | sed "s|/bin/systemctl restart $service_name|/bin/systemctl restart $new_name|g") | crontab -
+                    fi
+                    
+                    # Update the service_name variable for the current session
+                    service_name="$new_name"
+                    
+                    echo -e "\n\033[1;32m✓ Service renamed successfully!\033[0m"
+                    echo -e "\033[1;36mNew service name: $service_name\033[0m"
+                    
+                    # Ask if user wants to start the service
+                    read -p $'\033[1;33mDo you want to start the renamed service? [y/n] (default: y): \033[0m' start_choice
+                    start_choice="${start_choice:-y}"
+                    
+                    if [[ "$start_choice" == "y" || "$start_choice" == "yes" ]]; then
+                        systemctl start "$service_name" && echo -e "\033[1;32mService $service_name started.\033[0m"
+                    fi
+                    
+                    break
+                done
+                read -p "Press Enter to continue..."
+                ;;
 
 
 
