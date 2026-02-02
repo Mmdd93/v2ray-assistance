@@ -530,22 +530,22 @@ configure_port_forwarding() {
             
             # Mapping protocols - using + prefix for most protocols
             case $proto_choice in
-                1) proto="+kcp" ;;
-                2) proto="+quic" ;;
-                3) proto="+ws" ;;
-                4) proto="+wss" ;;
-                5) proto="+grpc" ;;
-                6) proto="+h2" ;;
-                7) proto="+ssh" ;;
-                8) proto="+tls" ;;
-                9) proto="+mwss" ;;
-                10) proto="+h2c" ;;
-                11) proto="+obfs4" ;;
-                12) proto="+ohttp" ;;
-                13) proto="+otls" ;;
-                14) proto="+mtls" ;;
-                15) proto="+mws" ;;
-                16) proto="+icmp" ;;
+                1) proto="kcp" ;;
+                2) proto="quic" ;;
+                3) proto="ws" ;;
+                4) proto="wss" ;;
+                5) proto="grpc" ;;
+                6) proto="h2" ;;
+                7) proto="ssh" ;;
+                8) proto="tls" ;;
+                9) proto="mwss" ;;
+                10) proto="h2c" ;;
+                11) proto="obfs4" ;;
+                12) proto="ohttp" ;;
+                13) proto="otls" ;;
+                14) proto="mtls" ;;
+                15) proto="mws" ;;
+                16) proto="icmp" ;;
                 *) echo -e "\033[1;31mInvalid protocol choice! Exiting...\033[0m"; return ;;
             esac
             
@@ -635,22 +635,22 @@ configure_port_forwarding() {
             
             # Mapping protocols for server-side
             case $proto_choice in
-                1) proto="+kcp" ;;
-                2) proto="+quic" ;;
-                3) proto="+ws" ;;
-                4) proto="+wss" ;;
-                5) proto="+grpc" ;;
-                6) proto="+h2" ;;
-                7) proto="+ssh" ;;
-                8) proto="+tls" ;;
-                9) proto="+mwss" ;;
-                10) proto="+h2c" ;;
-                11) proto="+obfs4" ;;
-                12) proto="+ohttp" ;;
-                13) proto="+otls" ;;
-                14) proto="+mtls" ;;
-                15) proto="+mws" ;;
-                16) proto="+icmp" ;;
+                1) proto="kcp" ;;
+                2) proto="quic" ;;
+                3) proto="ws" ;;
+                4) proto="wss" ;;
+                5) proto="grpc" ;;
+                6) proto="h2" ;;
+                7) proto="ssh" ;;
+                8) proto="tls" ;;
+                9) proto="mwss" ;;
+                10) proto="h2c" ;;
+                11) proto="obfs4" ;;
+                12) proto="ohttp" ;;
+                13) proto="otls" ;;
+                14) proto="mtls" ;;
+                15) proto="mws" ;;
+                16) proto="icmp" ;;
                 *) echo -e "\033[1;31mInvalid protocol choice!\033[0m"; return ;;
             esac
             
