@@ -3671,6 +3671,7 @@ main_menu() {
 		echo -e "${CYAN} 88.${NC} ${CYAN}WSS/WS Reverse tunnel 69learn            ${WHITE}[github.com/69learn/wstunnel]${NC}"
 		echo -e "${CYAN} 89.${NC} ${CYAN}SMITE [GOST,Backhaul,Rathole,Chisel,FRP] WEB UI           ${WHITE}[github.com/zZedix/Smite]${NC}"
 		echo -e "${CYAN} 90.${NC} ${CYAN}WaterWall Reverse tunnel           ${WHITE}[github.com/Ptechgithub/WaterWall-Docs]${NC}"
+		echo -e "${CYAN} 94.${NC} ${CYAN}DNS Tunnel Manager (dnstm)           ${WHITE}[github.com/Net2Share/dnstm]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4138,6 +4139,12 @@ main_menu() {
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/AliRezaBeigy/slipstream-rust-deploy/master/slipstream-rust-deploy.sh -o slipstream-rust-deploy.sh
                 sudo bash slipstream-rust-deploy.sh
+                ;;
+				94)
+                echo -e "${YELLOW}DNS Tunnel Manager (dnstm)...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/net2share/dnstm/main/install.sh -o dnstm.sh
+                sudo bash dnstm.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
