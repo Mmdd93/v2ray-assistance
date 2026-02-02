@@ -796,7 +796,7 @@ configure_port_forwarding() {
                 port=$(echo "$port" | xargs) # Trim spaces
                 if [[ -n "$port" ]]; then
                     # Add local listener with stability options
-                    GOST_OPTIONS+=" -L ${transport}://:${port}/127.0.0.1:${port}"
+                    GOST_OPTIONS+=" -L ${transport}://:${port}/127.0.0.1:${port}?timeout=${TIMEOUT_VALUE}&rwTimeout=${RWTIMEOUT_VALUE}&retries=${RETRY_VALUE}&heartbeat=${HEARTBEAT_VALUE}"
                 fi
             done
             
@@ -1083,6 +1083,63 @@ configure_relay() {
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="+tcp" ;;
             esac
             
+            # Ask about connection stability
+            echo -e "\n\033[1;34m🔧 Connection Stability Settings\033[0m"
+            echo -e "Do you want to configure connection stability options?"
+            echo -e "\033[1;32m1.\033[0m Yes - Configure advanced options"
+            echo -e "\033[1;32m2.\033[0m No - Use default settings"
+            read -p $'\033[1;33mEnter your choice (default: 2): \033[0m' stability_choice
+            stability_choice=${stability_choice:-2}
+            
+            # Set default values
+            TIMEOUT_VALUE="30s"
+            RWTIMEOUT_VALUE="30s"
+            RETRY_VALUE="3"
+            HEARTBEAT_VALUE="30s"
+            
+            # If user wants advanced options
+            if [[ "$stability_choice" == "1" ]]; then
+                echo -e "\n\033[1;34m⚡ Advanced Stability Options\033[0m"
+                
+                # Connection Timeout
+                read -p $'\033[1;33mEnter connection timeout in seconds (default: 30): \033[0m' custom_timeout
+                custom_timeout=${custom_timeout:-30}
+                TIMEOUT_VALUE="${custom_timeout}s"
+                
+                # Read/Write Timeout
+                read -p $'\033[1;33mEnter read/write timeout in seconds (default: 30): \033[0m' custom_rwtimeout
+                custom_rwtimeout=${custom_rwtimeout:-30}
+                RWTIMEOUT_VALUE="${custom_rwtimeout}s"
+                
+                # Retry attempts
+                echo -e "\n\033[1;34mRetry Attempts:\033[0m"
+                echo -e "\033[1;32m1.\033[0m 0 (No retry)"
+                echo -e "\033[1;32m2.\033[0m 3 (Default)"
+                echo -e "\033[1;32m3.\033[0m 5 (High retry)"
+                echo -e "\033[1;32m4.\033[0m -1 (Infinite retry)"
+                read -p $'\033[1;33mEnter your choice [1-4] (default: 2): \033[0m' retry_choice
+                retry_choice=${retry_choice:-2}
+                
+                case $retry_choice in
+                    1) RETRY_VALUE="0" ;;
+                    2) RETRY_VALUE="3" ;;
+                    3) RETRY_VALUE="5" ;;
+                    4) RETRY_VALUE="-1" ;;
+                    *) RETRY_VALUE="3" ;;
+                esac
+                
+                # Heartbeat interval
+                read -p $'\033[1;33mEnter heartbeat interval in seconds (default: 30): \033[0m' custom_heartbeat
+                custom_heartbeat=${custom_heartbeat:-30}
+                HEARTBEAT_VALUE="${custom_heartbeat}s"
+                
+                echo -e "\n\033[1;32m✅ Stability Settings:\033[0m"
+                echo -e "   • Timeout: $TIMEOUT_VALUE"
+                echo -e "   • Read/Write Timeout: $RWTIMEOUT_VALUE"
+                echo -e "   • Retries: $RETRY_VALUE"
+                echo -e "   • Heartbeat: $HEARTBEAT_VALUE"
+            fi
+            
             # Ask about bind (for server side)
             echo -e "\n\033[1;34mEnable Bind?\033[0m"
             echo -e "\033[1;32m1.\033[0m Yes (Bind to all interfaces)"
@@ -1114,31 +1171,30 @@ configure_relay() {
             # Build GOST options
             GOST_OPTIONS="-L relay${TRANSMISSION}://:${lport_relay}"
             
-            # Build parameters string
+            # Build parameters string with stability options first
             PARAMS=""
+            
+            # Add stability parameters
+            PARAMS+="timeout=${TIMEOUT_VALUE}"
+            PARAMS+="&rwTimeout=${RWTIMEOUT_VALUE}"
+            PARAMS+="&retries=${RETRY_VALUE}"
+            PARAMS+="&heartbeat=${HEARTBEAT_VALUE}"
+            
+            # Add other options
             if [[ "$bind_choice" == "1" ]]; then
-                PARAMS+="bind=true"
+                PARAMS+="&bind=true"
             fi
             
             if [[ "$keepalive_choice" == "1" ]]; then
-                if [[ -n "$PARAMS" ]]; then
-                    PARAMS+="&"
-                fi
-                PARAMS+="keepAlive=true"
+                PARAMS+="&keepAlive=true"
             fi
             
             if [[ "$compress_choice" == "1" ]]; then
-                if [[ -n "$PARAMS" ]]; then
-                    PARAMS+="&"
-                fi
-                PARAMS+="compress=true"
+                PARAMS+="&compress=true"
             fi
             
             if [[ "$mux_choice" == "1" ]]; then
-                if [[ -n "$PARAMS" ]]; then
-                    PARAMS+="&"
-                fi
-                PARAMS+="mux=true"
+                PARAMS+="&mux=true"
             fi
             
             # Add parameters if any
@@ -1149,7 +1205,7 @@ configure_relay() {
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
-            [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
+            [[ -z "$service_name" ]] && service_name="relay_server_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)"
 
             echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
             create_gost_service "$service_name"
@@ -1227,6 +1283,63 @@ configure_relay() {
                     break  # Exit the loop if the port is free
                 fi
             done
+            
+            # Ask about connection stability for client side
+            echo -e "\n\033[1;34m🔧 Connection Stability Settings\033[0m"
+            echo -e "Do you want to configure connection stability options?"
+            echo -e "\033[1;32m1.\033[0m Yes - Configure advanced options"
+            echo -e "\033[1;32m2.\033[0m No - Use default settings"
+            read -p $'\033[1;33mEnter your choice (default: 2): \033[0m' stability_choice
+            stability_choice=${stability_choice:-2}
+            
+            # Set default values
+            TIMEOUT_VALUE="30s"
+            RWTIMEOUT_VALUE="30s"
+            RETRY_VALUE="3"
+            HEARTBEAT_VALUE="30s"
+            
+            # If user wants advanced options
+            if [[ "$stability_choice" == "1" ]]; then
+                echo -e "\n\033[1;34m⚡ Advanced Stability Options\033[0m"
+                
+                # Connection Timeout
+                read -p $'\033[1;33mEnter connection timeout in seconds (default: 30): \033[0m' custom_timeout
+                custom_timeout=${custom_timeout:-30}
+                TIMEOUT_VALUE="${custom_timeout}s"
+                
+                # Read/Write Timeout
+                read -p $'\033[1;33mEnter read/write timeout in seconds (default: 30): \033[0m' custom_rwtimeout
+                custom_rwtimeout=${custom_rwtimeout:-30}
+                RWTIMEOUT_VALUE="${custom_rwtimeout}s"
+                
+                # Retry attempts
+                echo -e "\n\033[1;34mRetry Attempts:\033[0m"
+                echo -e "\033[1;32m1.\033[0m 0 (No retry)"
+                echo -e "\033[1;32m2.\033[0m 3 (Default)"
+                echo -e "\033[1;32m3.\033[0m 5 (High retry)"
+                echo -e "\033[1;32m4.\033[0m -1 (Infinite retry)"
+                read -p $'\033[1;33mEnter your choice [1-4] (default: 2): \033[0m' retry_choice
+                retry_choice=${retry_choice:-2}
+                
+                case $retry_choice in
+                    1) RETRY_VALUE="0" ;;
+                    2) RETRY_VALUE="3" ;;
+                    3) RETRY_VALUE="5" ;;
+                    4) RETRY_VALUE="-1" ;;
+                    *) RETRY_VALUE="3" ;;
+                esac
+                
+                # Heartbeat interval
+                read -p $'\033[1;33mEnter heartbeat interval in seconds (default: 30): \033[0m' custom_heartbeat
+                custom_heartbeat=${custom_heartbeat:-30}
+                HEARTBEAT_VALUE="${custom_heartbeat}s"
+                
+                echo -e "\n\033[1;32m✅ Stability Settings:\033[0m"
+                echo -e "   • Timeout: $TIMEOUT_VALUE"
+                echo -e "   • Read/Write Timeout: $RWTIMEOUT_VALUE"
+                echo -e "   • Retries: $RETRY_VALUE"
+                echo -e "   • Heartbeat: $HEARTBEAT_VALUE"
+            fi
                         
             # Select relay transmission type
             echo -e "\n\033[1;34mSelect Relay Transmission Type:\033[0m"
@@ -1297,38 +1410,41 @@ configure_relay() {
                 # Start building the listen URL
                 URL="${LISTEN_TRANSMISSION}://:${lport}/127.0.0.1:${lport}"
                 
+                # Add stability options to local listeners
+                URL+="?timeout=${TIMEOUT_VALUE}"
+                URL+="&rwTimeout=${RWTIMEOUT_VALUE}"
+                URL+="&retries=${RETRY_VALUE}"
+                URL+="&heartbeat=${HEARTBEAT_VALUE}"
+                
                 # Add keepAlive if enabled for listen ports
                 if [[ "$listen_keepalive_choice" == "1" ]]; then
-                    URL+="?keepAlive=true"
+                    URL+="&keepAlive=true"
                 fi
                 
                 GOST_OPTIONS+=" -L $URL"
             done
             
-            # Build parameters for relay (-F)
-            PARAMS=""
+            # Build parameters for relay (-F) with stability options
+            PARAMS="timeout=${TIMEOUT_VALUE}"
+            PARAMS+="&rwTimeout=${RWTIMEOUT_VALUE}"
+            PARAMS+="&retries=${RETRY_VALUE}"
+            PARAMS+="&heartbeat=${HEARTBEAT_VALUE}"
+            
             if [[ "$compress_choice" == "1" ]]; then
-                PARAMS+="compress=true"
+                PARAMS+="&compress=true"
             fi
             
             if [[ "$mux_choice" == "1" ]]; then
-                if [[ -n "$PARAMS" ]]; then
-                    PARAMS+="&"
-                fi
-                PARAMS+="mux=true"
+                PARAMS+="&mux=true"
             fi
             
             # Add the -F option with parameters
-            if [[ -n "$PARAMS" ]]; then
-                GOST_OPTIONS+=" -F relay${TRANSMISSION}://${relay_ip}:${relay_port}?${PARAMS}"
-            else
-                GOST_OPTIONS+=" -F relay${TRANSMISSION}://${relay_ip}:${relay_port}"
-            fi
+            GOST_OPTIONS+=" -F relay${TRANSMISSION}://${relay_ip}:${relay_port}?${PARAMS}"
             
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
             
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
-            [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
+            [[ -z "$service_name" ]] && service_name="relay_client_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)"
             
             echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
             create_gost_service "$service_name"
