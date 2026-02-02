@@ -73,7 +73,7 @@ configure_relay() {
 
     case $side_choice in
         1)
-            # Server-side configuration
+            # Client-side configuration (Iran)
             echo -e "\n\033[1;34m Configure Client-Side (iran)\033[0m"
 
             # Prompt the user for a port until a free one is provided
@@ -111,7 +111,6 @@ configure_relay() {
             read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
 
             case $trans_choice in
-
                 1) TRANSMISSION="+ws" ;;
                 2) TRANSMISSION="+wss" ;;
                 3) TRANSMISSION="+grpc" ;;
@@ -131,8 +130,44 @@ configure_relay() {
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="+tcp" ;;
             esac
 
+            # Ask about compression
+            echo -e "\n\033[1;34mEnable Compression?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for better performance)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' compress_choice
+            compress_choice=${compress_choice:-1}
+            
+            if [[ "$compress_choice" == "1" ]]; then
+                COMPRESS_OPTION="compress=true"
+            else
+                COMPRESS_OPTION=""
+            fi
 
-                GOST_OPTIONS="-L relay${TRANSMISSION}://:${lport_relay}?bind=true&keepAlive=true&compress=true&mux=true"
+            # Ask about multiplexing
+            echo -e "\n\033[1;34mEnable Multiplexing (mux)?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for multiple connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' mux_choice
+            mux_choice=${mux_choice:-1}
+            
+            if [[ "$mux_choice" == "1" ]]; then
+                MUX_OPTION="mux=true"
+            else
+                MUX_OPTION=""
+            fi
+
+            # Build GOST options
+            GOST_OPTIONS="-L relay${TRANSMISSION}://:${lport_relay}?bind=true&keepAlive=true"
+            
+            # Add compression if enabled
+            if [[ -n "$COMPRESS_OPTION" ]]; then
+                GOST_OPTIONS+="&${COMPRESS_OPTION}"
+            fi
+            
+            # Add multiplexing if enabled
+            if [[ -n "$MUX_OPTION" ]]; then
+                GOST_OPTIONS+="&${MUX_OPTION}"
+            fi
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
@@ -145,121 +180,154 @@ configure_relay() {
             read -p "Press Enter to continue..."
             ;;
         
-    2)
-    echo -e "\n\033[1;34mConfigure Server-Side (kharej)\033[0m"
+        2)
+            echo -e "\n\033[1;34mConfigure Server-Side (kharej)\033[0m"
 
-    # Select listen type (TCP/UDP)
-    echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
-    echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
-    echo -e "\033[1;32m2.\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
-    read -p $'\033[1;33mEnter listen transmission type: \033[0m' listen_choice
+            # Select listen type (TCP/UDP)
+            echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
+            echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
+            echo -e "\033[1;32m2.\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
+            read -p $'\033[1;33mEnter listen transmission type: \033[0m' listen_choice
 
-    case $listen_choice in
-        1) LISTEN_TRANSMISSION="rtcp" ;;
-        2) LISTEN_TRANSMISSION="rudp" ;;
-        *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
-    esac
+            case $listen_choice in
+                1) LISTEN_TRANSMISSION="rtcp" ;;
+                2) LISTEN_TRANSMISSION="rudp" ;;
+                *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
+            esac
 
-    # Inbound port input
-    while true; do
-        read -p $'\033[1;33mEnter inbound (config) port: \033[0m' config_port
-        if [[ "$config_port" =~ ^[0-9]+$ ]]; then
-            break
-        else
-            echo -e "\033[1;31mInvalid port: $config_port. Please enter a valid numeric port.\033[0m"
-        fi
-    done
+            # Inbound port input
+            while true; do
+                read -p $'\033[1;33mEnter inbound (config) port: \033[0m' config_port
+                if [[ "$config_port" =~ ^[0-9]+$ ]]; then
+                    break
+                else
+                    echo -e "\033[1;31mInvalid port: $config_port. Please enter a valid numeric port.\033[0m"
+                fi
+            done
 
-    # Listen port input
-    while true; do
-        read -p $'\033[1;33mEnter listen port: \033[0m' listen_port
-        if [[ "$listen_port" =~ ^[0-9]+$ ]]; then
-            break
-        else
-            echo -e "\033[1;31mInvalid port: $listen_port. Please enter a valid numeric port.\033[0m"
-        fi
-    done
+            # Listen port input
+            while true; do
+                read -p $'\033[1;33mEnter listen port: \033[0m' listen_port
+                if [[ "$listen_port" =~ ^[0-9]+$ ]]; then
+                    break
+                else
+                    echo -e "\033[1;31mInvalid port: $listen_port. Please enter a valid numeric port.\033[0m"
+                fi
+            done
 
-    echo -e "\033[1;32mInbound (config) port set to: $config_port\033[0m"
-    echo -e "\033[1;32mListen port set to: $listen_port\033[0m"
+            echo -e "\033[1;32mInbound (config) port set to: $config_port\033[0m"
+            echo -e "\033[1;32mListen port set to: $listen_port\033[0m"
 
-    # Remote server IP
-    read -p $'\033[1;33mEnter remote server IP (iran): \033[0m' relay_ip
-    [[ $relay_ip =~ : ]] && relay_ip="[$relay_ip]"
-    echo -e "\033[1;36mFormatted IP:\033[0m $relay_ip"
+            # Remote server IP
+            read -p $'\033[1;33mEnter remote server IP (iran): \033[0m' relay_ip
+            [[ $relay_ip =~ : ]] && relay_ip="[$relay_ip]"
+            echo -e "\033[1;36mFormatted IP:\033[0m $relay_ip"
 
-    # Remote server port
-    while true; do
-        read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' relay_port
-        relay_port=${relay_port:-9001}
-        if [[ "$relay_port" =~ ^[0-9]+$ ]]; then
-            break
-        else
-            echo -e "\033[1;31mInvalid port. Please enter a valid numeric port.\033[0m"
-        fi
-    done
+            # Remote server port
+            while true; do
+                read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' relay_port
+                relay_port=${relay_port:-9001}
+                if [[ "$relay_port" =~ ^[0-9]+$ ]]; then
+                    break
+                else
+                    echo -e "\033[1;31mInvalid port. Please enter a valid numeric port.\033[0m"
+                fi
+            done
 
-    # Relay transmission type
-    echo -e "\n\033[1;34mSelect Relay Transmission Type:\033[0m"
-    echo -e "\033[1;32m1.\033[0m WS (WebSocket)"
-    echo -e "\033[1;32m2.\033[0m WSS (WebSocket Secure)"
-    echo -e "\033[1;32m3.\033[0m gRPC"
-    echo -e "\033[1;32m4.\033[0m h2 (HTTP/2)"
-    echo -e "\033[1;32m5.\033[0m SSH"
-    echo -e "\033[1;32m6.\033[0m TLS"
-    echo -e "\033[1;32m7.\033[0m MWSS (Multiplex Websocket)"
-    echo -e "\033[1;32m8.\033[0m h2c (HTTP2 Cleartext)"
-    echo -e "\033[1;32m9.\033[0m OBFS4 (OBFS4)"
-    echo -e "\033[1;32m10.\033[0m oHTTP (HTTP Obfuscation)"
-    echo -e "\033[1;32m11.\033[0m oTLS (TLS Obfuscation)"
-    echo -e "\033[1;32m12.\033[0m mTLS (Multiplex TLS)"
-    echo -e "\033[1;32m13.\033[0m MWS (Multiplex Websocket)"
-    echo -e "\033[1;32m14.\033[0m icmp (ping tunnel)"
-    echo -e "\033[1;32m15.\033[0m relay"
-    echo -e "\033[1;32m16.\033[0m tcp"
-    read -p $'\033[1;33mEnter your choice for relay transmission type: \033[0m' trans_choice
+            # Relay transmission type
+            echo -e "\n\033[1;34mSelect Relay Transmission Type:\033[0m"
+            echo -e "\033[1;32m1.\033[0m WS (WebSocket)"
+            echo -e "\033[1;32m2.\033[0m WSS (WebSocket Secure)"
+            echo -e "\033[1;32m3.\033[0m gRPC"
+            echo -e "\033[1;32m4.\033[0m h2 (HTTP/2)"
+            echo -e "\033[1;32m5.\033[0m SSH"
+            echo -e "\033[1;32m6.\033[0m TLS"
+            echo -e "\033[1;32m7.\033[0m MWSS (Multiplex Websocket)"
+            echo -e "\033[1;32m8.\033[0m h2c (HTTP2 Cleartext)"
+            echo -e "\033[1;32m9.\033[0m OBFS4 (OBFS4)"
+            echo -e "\033[1;32m10.\033[0m oHTTP (HTTP Obfuscation)"
+            echo -e "\033[1;32m11.\033[0m oTLS (TLS Obfuscation)"
+            echo -e "\033[1;32m12.\033[0m mTLS (Multiplex TLS)"
+            echo -e "\033[1;32m13.\033[0m MWS (Multiplex Websocket)"
+            echo -e "\033[1;32m14.\033[0m icmp (ping tunnel)"
+            echo -e "\033[1;32m15.\033[0m relay"
+            echo -e "\033[1;32m16.\033[0m tcp"
+            read -p $'\033[1;33mEnter your choice for relay transmission type: \033[0m' trans_choice
 
-    case $trans_choice in
-        1)  TRANSMISSION="+ws" ;;
-        2)  TRANSMISSION="+wss" ;;
-        3)  TRANSMISSION="+grpc" ;;
-        4)  TRANSMISSION="+h2" ;;
-        5)  TRANSMISSION="+ssh" ;;
-        6)  TRANSMISSION="+tls" ;;
-        7)  TRANSMISSION="+mwss" ;;
-        8)  TRANSMISSION="+h2c" ;;
-        9)  TRANSMISSION="+obfs4" ;;
-        10) TRANSMISSION="+ohttp" ;;
-        11) TRANSMISSION="+otls" ;;
-        12) TRANSMISSION="+mtls" ;;
-        13) TRANSMISSION="+mws" ;;
-        14) TRANSMISSION="+icmp" ;;
-        15) TRANSMISSION="" ;;
-        16) TRANSMISSION="+tcp" ;;
-        *)  echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="+tcp" ;;
-    esac
+            case $trans_choice in
+                1)  TRANSMISSION="+ws" ;;
+                2)  TRANSMISSION="+wss" ;;
+                3)  TRANSMISSION="+grpc" ;;
+                4)  TRANSMISSION="+h2" ;;
+                5)  TRANSMISSION="+ssh" ;;
+                6)  TRANSMISSION="+tls" ;;
+                7)  TRANSMISSION="+mwss" ;;
+                8)  TRANSMISSION="+h2c" ;;
+                9)  TRANSMISSION="+obfs4" ;;
+                10) TRANSMISSION="+ohttp" ;;
+                11) TRANSMISSION="+otls" ;;
+                12) TRANSMISSION="+mtls" ;;
+                13) TRANSMISSION="+mws" ;;
+                14) TRANSMISSION="+icmp" ;;
+                15) TRANSMISSION="" ;;
+                16) TRANSMISSION="+tcp" ;;
+                *)  echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="+tcp" ;;
+            esac
 
-    # Construct GOST options
-    GOST_OPTIONS=" -L ${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}?keepAlive=true"
-    GOST_OPTIONS+=" -F relay${TRANSMISSION}://${relay_ip}:${relay_port}?compress=true&mux=true"
+            # Ask about compression for relay side
+            echo -e "\n\033[1;34mEnable Compression for relay?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for better performance)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' compress_choice
+            compress_choice=${compress_choice:-1}
+            
+            # Ask about multiplexing for relay side
+            echo -e "\n\033[1;34mEnable Multiplexing (mux) for relay?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for multiple connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' mux_choice
+            mux_choice=${mux_choice:-1}
 
-    echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+            # Construct GOST options
+            GOST_OPTIONS=" -L ${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}?keepAlive=true"
+            GOST_OPTIONS+=" -F relay${TRANSMISSION}://${relay_ip}:${relay_port}"
+            
+            # Add parameters if enabled
+            PARAMS=""
+            if [[ "$compress_choice" == "1" ]]; then
+                PARAMS+="compress=true"
+            fi
+            
+            if [[ "$mux_choice" == "1" ]]; then
+                if [[ -n "$PARAMS" ]]; then
+                    PARAMS+="&"
+                fi
+                PARAMS+="mux=true"
+            fi
+            
+            # Add parameters to GOST options if any
+            if [[ -n "$PARAMS" ]]; then
+                GOST_OPTIONS+="?${PARAMS}"
+            fi
 
-    read -p "Enter a custom name for this service (leave blank for a random name): " service_name
-    [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
+            echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
-    echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
-    create_gost_service "$service_name"
-    start_service "$service_name"
+            read -p "Enter a custom name for this service (leave blank for a random name): " service_name
+            [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
 
-    read -p "Press Enter to continue..."
-    ;;
-*)
-    echo -e "\033[1;31mInvalid choice! Exiting.\033[0m"
-    ;;
+            echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
+            create_gost_service "$service_name"
+            start_service "$service_name"
 
+            read -p "Press Enter to continue..."
+            ;;
+        *)
+            echo -e "\033[1;31mInvalid choice! Exiting.\033[0m"
+            ;;
     esac
 }
+
+
 configure_socks5() {
     echo -e "\033[1;33mIs this the client or server side?\033[0m"
     echo -e "\033[1;32m1.\033[0m \033[1;36mClient-Side (iran)\033[0m"
@@ -268,20 +336,14 @@ configure_socks5() {
 
     case $side_choice in
         1)
-            # Server-side configuration
+            # Client-side configuration (Iran)
             echo -e "\n\033[1;34m Configure Client-Side (iran)\033[0m"
 
-            # Prompt the user for a port until a free one is provided
+            # Prompt the user for a port
             while true; do
                 read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' lport_socks5
                 lport_socks5=${lport_socks5:-9001}
-                
-                #if is_port_used $lport_socks5; then
-                   # echo -e "\033[1;31mPort $lport_socks5 is already in use. Please enter a different port.\033[0m"
-               #else
-                   # echo -e "\033[1;32mPort $lport_socks5 is available.\033[0m"
-                    break  # Exit the loop if the port is free
-                #fi
+                break
             done
             
             # Ask for the transmission type
@@ -301,12 +363,11 @@ configure_socks5() {
             echo -e "\033[1;32m12.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m13.\033[0m mws (Multiplex Websocket)"
             echo -e "\033[1;32m14.\033[0m icmp (ping tunnel)"
-            echo -e "\033[1;32m15.\033[0m relay"
+            echo -e "\033[1;32m15.\033[0m socks5"
             echo -e "\033[1;32m16.\033[0m tcp"
             read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
 
             case $trans_choice in
-
                 1) TRANSMISSION="+ws" ;;
                 2) TRANSMISSION="+wss" ;;
                 3) TRANSMISSION="+grpc" ;;
@@ -326,8 +387,44 @@ configure_socks5() {
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="+tcp" ;;
             esac
 
+            # Ask about compression
+            echo -e "\n\033[1;34mEnable Compression?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for better performance)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' compress_choice
+            compress_choice=${compress_choice:-1}
+            
+            if [[ "$compress_choice" == "1" ]]; then
+                COMPRESS_OPTION="compress=true"
+            else
+                COMPRESS_OPTION=""
+            fi
 
-                GOST_OPTIONS="-L socks5${TRANSMISSION}://:${lport_socks5}?bind=true&keepAlive=true&compress=true&mux=true"
+            # Ask about multiplexing
+            echo -e "\n\033[1;34mEnable Multiplexing (mux)?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for multiple connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' mux_choice
+            mux_choice=${mux_choice:-1}
+            
+            if [[ "$mux_choice" == "1" ]]; then
+                MUX_OPTION="mux=true"
+            else
+                MUX_OPTION=""
+            fi
+
+            # Build GOST options
+            GOST_OPTIONS="-L socks5${TRANSMISSION}://:${lport_socks5}?bind=true&keepAlive=true"
+            
+            # Add compression if enabled
+            if [[ -n "$COMPRESS_OPTION" ]]; then
+                GOST_OPTIONS+="&${COMPRESS_OPTION}"
+            fi
+            
+            # Add multiplexing if enabled
+            if [[ -n "$MUX_OPTION" ]]; then
+                GOST_OPTIONS+="&${MUX_OPTION}"
+            fi
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
@@ -340,113 +437,144 @@ configure_socks5() {
             read -p "Press Enter to continue..."
             ;;
         
-       2)
-    echo -e "\n\033[1;34mConfigure Server-Side (kharej)\033[0m"
+        2)
+            echo -e "\n\033[1;34mConfigure Server-Side (kharej)\033[0m"
 
-    # Select Listen Type (TCP/UDP)
-    echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
-    echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
-    echo -e "\033[1;32m2.\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
-    read -p $'\033[1;33mEnter listen transmission type: \033[0m' listen_choice
+            # Select Listen Type (TCP/UDP)
+            echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
+            echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
+            echo -e "\033[1;32m2.\033[0m \033[1;36mUDP mode\033[0m (WireGuard, KCP, Hysteria, QUIC, etc.)"
+            read -p $'\033[1;33mEnter listen transmission type: \033[0m' listen_choice
 
-    case $listen_choice in
-        1) LISTEN_TRANSMISSION="rtcp" ;;
-        2) LISTEN_TRANSMISSION="rudp" ;;
-        *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
-    esac
+            case $listen_choice in
+                1) LISTEN_TRANSMISSION="rtcp" ;;
+                2) LISTEN_TRANSMISSION="rudp" ;;
+                *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; LISTEN_TRANSMISSION="tcp" ;;
+            esac
 
-    # Inbound port input
-    while true; do
-        read -p $'\033[1;33mEnter inbound (config) port: \033[0m' config_port
-        if [[ "$config_port" =~ ^[0-9]+$ ]]; then
-            break
-        else
-            echo -e "\033[1;31mInvalid port. Please enter a numeric value.\033[0m"
-        fi
-    done
+            # Inbound port input
+            while true; do
+                read -p $'\033[1;33mEnter inbound (config) port: \033[0m' config_port
+                if [[ "$config_port" =~ ^[0-9]+$ ]]; then
+                    break
+                else
+                    echo -e "\033[1;31mInvalid port. Please enter a numeric value.\033[0m"
+                fi
+            done
 
-    # Listen port input
-    while true; do
-        read -p $'\033[1;33mEnter listen port: \033[0m' listen_port
-        if [[ "$listen_port" =~ ^[0-9]+$ ]]; then
-            break
-        else
-            echo -e "\033[1;31mInvalid port. Please enter a numeric value.\033[0m"
-        fi
-    done
+            # Listen port input
+            while true; do
+                read -p $'\033[1;33mEnter listen port: \033[0m' listen_port
+                if [[ "$listen_port" =~ ^[0-9]+$ ]]; then
+                    break
+                else
+                    echo -e "\033[1;31mInvalid port. Please enter a numeric value.\033[0m"
+                fi
+            done
 
-    echo -e "\033[1;32mInbound (config) port set to: $config_port\033[0m"
-    echo -e "\033[1;32mListen port set to: $listen_port\033[0m"
+            echo -e "\033[1;32mInbound (config) port set to: $config_port\033[0m"
+            echo -e "\033[1;32mListen port set to: $listen_port\033[0m"
 
-    # Remote server IP input
-    read -p $'\033[1;33mEnter remote server IP (iran): \033[0m' socks5_ip
-    [[ "$socks5_ip" =~ : ]] && socks5_ip="[$socks5_ip]"
-    echo -e "\033[1;36mFormatted IP:\033[0m $socks5_ip"
+            # Remote server IP input
+            read -p $'\033[1;33mEnter remote server IP (iran): \033[0m' socks5_ip
+            [[ "$socks5_ip" =~ : ]] && socks5_ip="[$socks5_ip]"
+            echo -e "\033[1;36mFormatted IP:\033[0m $socks5_ip"
 
-    # Server communication port input
-    while true; do
-        read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' socks5_port
-        socks5_port=${socks5_port:-9001}
-        break
-    done
+            # Server communication port input
+            while true; do
+                read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' socks5_port
+                socks5_port=${socks5_port:-9001}
+                break
+            done
 
-    # Select socks5 Transmission Type
-    echo -e "\n\033[1;34mSelect socks5 Transmission Type:\033[0m"
-    echo -e "\033[1;32m1.\033[0m WS (WebSocket)"
-    echo -e "\033[1;32m2.\033[0m WSS (WebSocket Secure)"
-    echo -e "\033[1;32m3.\033[0m gRPC"
-    echo -e "\033[1;32m4.\033[0m h2 (HTTP/2)"
-    echo -e "\033[1;32m5.\033[0m SSH"
-    echo -e "\033[1;32m6.\033[0m TLS"
-    echo -e "\033[1;32m7.\033[0m MWSS (Multiplex Websocket)"
-    echo -e "\033[1;32m8.\033[0m h2c (HTTP2 Cleartext)"
-    echo -e "\033[1;32m9.\033[0m OBFS4 (OBFS4)"
-    echo -e "\033[1;32m10.\033[0m oHTTP (HTTP Obfuscation)"
-    echo -e "\033[1;32m11.\033[0m oTLS (TLS Obfuscation)"
-    echo -e "\033[1;32m12.\033[0m mTLS (Multiplex TLS)"
-    echo -e "\033[1;32m13.\033[0m MWS (Multiplex Websocket)"
-    echo -e "\033[1;32m14.\033[0m icmp (ping tunnel)"
-    echo -e "\033[1;32m15.\033[0m socks5"
-    echo -e "\033[1;32m16.\033[0m tcp"
+            # Select socks5 Transmission Type
+            echo -e "\n\033[1;34mSelect socks5 Transmission Type:\033[0m"
+            echo -e "\033[1;32m1.\033[0m WS (WebSocket)"
+            echo -e "\033[1;32m2.\033[0m WSS (WebSocket Secure)"
+            echo -e "\033[1;32m3.\033[0m gRPC"
+            echo -e "\033[1;32m4.\033[0m h2 (HTTP/2)"
+            echo -e "\033[1;32m5.\033[0m SSH"
+            echo -e "\033[1;32m6.\033[0m TLS"
+            echo -e "\033[1;32m7.\033[0m MWSS (Multiplex Websocket)"
+            echo -e "\033[1;32m8.\033[0m h2c (HTTP2 Cleartext)"
+            echo -e "\033[1;32m9.\033[0m OBFS4 (OBFS4)"
+            echo -e "\033[1;32m10.\033[0m oHTTP (HTTP Obfuscation)"
+            echo -e "\033[1;32m11.\033[0m oTLS (TLS Obfuscation)"
+            echo -e "\033[1;32m12.\033[0m mTLS (Multiplex TLS)"
+            echo -e "\033[1;32m13.\033[0m MWS (Multiplex Websocket)"
+            echo -e "\033[1;32m14.\033[0m icmp (ping tunnel)"
+            echo -e "\033[1;32m15.\033[0m socks5"
+            echo -e "\033[1;32m16.\033[0m tcp"
 
-    read -p $'\033[1;33mEnter your choice for socks5 transmission type: \033[0m' trans_choice
-    case $trans_choice in
-        1) TRANSMISSION="+ws" ;;
-        2) TRANSMISSION="+wss" ;;
-        3) TRANSMISSION="+grpc" ;;
-        4) TRANSMISSION="+h2" ;;
-        5) TRANSMISSION="+ssh" ;;
-        6) TRANSMISSION="+tls" ;;
-        7) TRANSMISSION="+mwss" ;;
-        8) TRANSMISSION="+h2c" ;;
-        9) TRANSMISSION="+obfs4" ;;
-        10) TRANSMISSION="+ohttp" ;;
-        11) TRANSMISSION="+otls" ;;
-        12) TRANSMISSION="+mtls" ;;
-        13) TRANSMISSION="+mws" ;;
-        14) TRANSMISSION="+icmp" ;;
-        15) TRANSMISSION="" ;;
-        16) TRANSMISSION="+tcp" ;;
-        *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="+tcp" ;;
-    esac
+            read -p $'\033[1;33mEnter your choice for socks5 transmission type: \033[0m' trans_choice
+            case $trans_choice in
+                1) TRANSMISSION="+ws" ;;
+                2) TRANSMISSION="+wss" ;;
+                3) TRANSMISSION="+grpc" ;;
+                4) TRANSMISSION="+h2" ;;
+                5) TRANSMISSION="+ssh" ;;
+                6) TRANSMISSION="+tls" ;;
+                7) TRANSMISSION="+mwss" ;;
+                8) TRANSMISSION="+h2c" ;;
+                9) TRANSMISSION="+obfs4" ;;
+                10) TRANSMISSION="+ohttp" ;;
+                11) TRANSMISSION="+otls" ;;
+                12) TRANSMISSION="+mtls" ;;
+                13) TRANSMISSION="+mws" ;;
+                14) TRANSMISSION="+icmp" ;;
+                15) TRANSMISSION="" ;;
+                16) TRANSMISSION="+tcp" ;;
+                *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="+tcp" ;;
+            esac
 
-    # Build GOST options
-    GOST_OPTIONS="-L ${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}?keepAlive=true"
-    GOST_OPTIONS+=" -F socks5${TRANSMISSION}://${socks5_ip}:${socks5_port}?compress=true&mux=true"
+            # Ask about compression for socks5 side
+            echo -e "\n\033[1;34mEnable Compression for socks5?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for better performance)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' compress_choice
+            compress_choice=${compress_choice:-1}
+            
+            # Ask about multiplexing for socks5 side
+            echo -e "\n\033[1;34mEnable Multiplexing (mux) for socks5?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for multiple connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' mux_choice
+            mux_choice=${mux_choice:-1}
 
-    echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+            # Build GOST options
+            GOST_OPTIONS="-L ${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}?keepAlive=true"
+            GOST_OPTIONS+=" -F socks5${TRANSMISSION}://${socks5_ip}:${socks5_port}"
+            
+            # Add parameters if enabled
+            PARAMS=""
+            if [[ "$compress_choice" == "1" ]]; then
+                PARAMS+="compress=true"
+            fi
+            
+            if [[ "$mux_choice" == "1" ]]; then
+                if [[ -n "$PARAMS" ]]; then
+                    PARAMS+="&"
+                fi
+                PARAMS+="mux=true"
+            fi
+            
+            # Add parameters to GOST options if any
+            if [[ -n "$PARAMS" ]]; then
+                GOST_OPTIONS+="?${PARAMS}"
+            fi
 
-    # Prompt for custom service name
-    read -p "Enter a custom name for this service (leave blank for a random name): " service_name
-    [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
+            echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
-    echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
-    create_gost_service "$service_name"
-    start_service "$service_name"
+            # Prompt for custom service name
+            read -p "Enter a custom name for this service (leave blank for a random name): " service_name
+            [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
 
-    read -p "Press Enter to continue..."
-    ;;
+            echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
+            create_gost_service "$service_name"
+            start_service "$service_name"
 
+            read -p "Press Enter to continue..."
+            ;;
         
         *)
             echo -e "\033[1;31mInvalid choice! Exiting.\033[0m"
