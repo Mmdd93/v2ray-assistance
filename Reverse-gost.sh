@@ -404,7 +404,7 @@ configure_relay() {
             mux_choice=${mux_choice:-1}
 
             # Construct GOST options for listen side (first -L)
-            LISTEN_OPTIONS="${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}?keepAlive=true"
+            LISTEN_OPTIONS="${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}"
             
             # Add stability options to listen side
             LISTEN_OPTIONS+="&timeout=${TIMEOUT_VALUE}"
