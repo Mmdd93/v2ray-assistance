@@ -116,7 +116,6 @@ tcpudp_forwarding() {
     RWTIMEOUT_VALUE="30s"
     RETRY_VALUE="3"
     HEARTBEAT_VALUE="30s"
-    MAXCONN_VALUE="100"
     
     # If user has unstable connection, show advanced options
     if [[ "$stability_choice" == "1" ]]; then
@@ -210,35 +209,11 @@ tcpudp_forwarding() {
             *) HEARTBEAT_VALUE="10s" ;;
         esac
         
-        # Ask about max connections (for mux)
-        echo -e "\n\033[1;34mMax Connections (for multiplexing):\033[0m"
-        echo -e "\033[1;32m1.\033[0m Low (50 connections - less resource usage) 🔥"
-        echo -e "\033[1;32m2.\033[0m Default (100 connections)"
-        echo -e "\033[1;32m3.\033[0m Custom value"
-        read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' maxconn_choice
-        maxconn_choice=${maxconn_choice:-1}
-        
-        case $maxconn_choice in
-            1) MAXCONN_VALUE="50" ;;
-            2) MAXCONN_VALUE="100" ;;
-            3)
-                read -p "Enter max connections: " custom_maxconn
-                if [[ "$custom_maxconn" =~ ^[0-9]+$ ]]; then
-                    MAXCONN_VALUE="$custom_maxconn"
-                else
-                    echo -e "\033[1;31mInvalid input! Using 50.\033[0m"
-                    MAXCONN_VALUE="50"
-                fi
-                ;;
-            *) MAXCONN_VALUE="50" ;;
-        esac
-        
         # Display recommended settings
         echo -e "\n\033[1;32m✅ Optimized for unstable connections:\033[0m"
         echo -e "   • Timeout: $TIMEOUT_VALUE (quick disconnection detection)"
         echo -e "   • Retries: $RETRY_VALUE (auto-reconnect)"
         echo -e "   • Heartbeat: $HEARTBEAT_VALUE (frequent keepalive)"
-        echo -e "   • Max Connections: $MAXCONN_VALUE (lower resource usage)"
     fi
 
     # Basic options for all users
@@ -285,7 +260,6 @@ tcpudp_forwarding() {
     TIMEOUT_OPTION="timeout=${TIMEOUT_VALUE}"
     RWTIMEOUT_OPTION="rwTimeout=${RWTIMEOUT_VALUE}"
     RETRY_OPTION="retries=${RETRY_VALUE}"
-    MAXCONN_OPTION="maxConnections=${MAXCONN_VALUE}"
     HEARTBEAT_OPTION="heartbeat=${HEARTBEAT_VALUE}"
 
     # Generate multiple GOST forwarding rules
@@ -303,7 +277,6 @@ tcpudp_forwarding() {
         PARAMS+="$TIMEOUT_OPTION"
         PARAMS+="&$RWTIMEOUT_OPTION"
         PARAMS+="&$RETRY_OPTION"
-        PARAMS+="&$MAXCONN_OPTION"
         PARAMS+="&$HEARTBEAT_OPTION"
         
         # Add other options
@@ -340,7 +313,6 @@ tcpudp_forwarding() {
         echo -e "   • Read/Write Timeout: $RWTIMEOUT_VALUE"
         echo -e "   • Retries: $RETRY_VALUE"
         echo -e "   • Heartbeat: $HEARTBEAT_VALUE"
-        echo -e "   • Max Connections: $MAXCONN_VALUE"
     else
         echo -e "\n\033[1;36m📊 Using default stable connection settings\033[0m"
     fi
