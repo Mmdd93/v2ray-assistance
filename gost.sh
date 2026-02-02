@@ -6,6 +6,7 @@ check_root() {
         exit 1
     fi
 }
+
 # Function to check and install GOST if missing
 check_and_install_gost() {
     if [[ ! -f /usr/local/bin/gost ]]; then
@@ -16,6 +17,41 @@ check_and_install_gost() {
     fi
 }
 
+# Function to create a new GOST core binary
+create_gost_core() {
+    local core_name="$1"
+    local gost_binary="/usr/local/bin/$core_name"
+    
+    # Check if original gost exists
+    if [[ ! -f "/usr/local/bin/gost" ]]; then
+        echo -e "\033[1;31m✗ Original GOST binary not found. Please install GOST first.\033[0m"
+        return 1
+    fi
+    
+    # Check if core already exists
+    if [[ -f "$gost_binary" ]]; then
+        echo -e "\033[1;33m⚠ Using existing GOST core: $core_name\033[0m"
+        return 0
+    fi
+    
+    # Copy the original gost binary
+    echo -e "\033[1;32mCreating new GOST core: $core_name\033[0m"
+    if cp /usr/local/bin/gost "$gost_binary"; then
+        chmod +x "$gost_binary"
+        echo -e "\033[1;32m✓ Successfully created GOST core: $core_name\033[0m"
+        return 0
+    else
+        echo -e "\033[1;31m✗ Failed to create GOST core. Using original.\033[0m"
+        return 1
+    fi
+}
+
+# Function to list all GOST cores
+list_gost_cores() {
+    echo -e "\033[1;34m📋 List of GOST Cores:\033[0m"
+    echo -e "\033[1;33mAvailable cores in /usr/local/bin:\033[0m"
+    ls -la /usr/local/bin/gost* 2>/dev/null | grep -v "\.bak" || echo "No GOST cores found"
+}
 
 # Check if GOST is installed and get its version
 if command -v gost &> /dev/null; then
@@ -40,7 +76,8 @@ main_menu() {
         echo -e " \033[1;34m4.\033[0m forward + Transmissions (single port) "
         echo -e " \033[1;34m5.\033[0m simple port forward (only client-side) (multi-port)"
         echo -e " \033[1;34m6.\033[0m Manage Tunnels Services"
-        echo -e " \033[1;34m7.\033[0m Remove GOST"
+        echo -e " \033[1;34m7.\033[0m List GOST Cores"
+        echo -e " \033[1;34m8.\033[0m Remove GOST"
         
         echo -e " \033[1;31m0. Exit\033[0m"
         echo -e "\033[1;32m===================================\033[0m"
@@ -53,9 +90,9 @@ main_menu() {
             3) configure_relay ;;
             4) configure_forward ;;
             5) tcpudp_forwarding ;;
-            8) configure_sni ;;
             6) select_service_to_manage ;;
-            7) remove_gost ;;
+            7) list_gost_cores; read -p "Press Enter to continue..." ;;
+            8) remove_gost ;;
             
             
             0) 
@@ -70,9 +107,23 @@ main_menu() {
     done
 }
 
-
 tcpudp_forwarding() {
     echo -e "\033[1;34mConfigure Multi-Port Forwarding (Client Side Only)\033[0m"
+
+    # Ask for core name
+    echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+    read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-forward1, gost-tunnel2): \033[0m' core_name
+    if [[ -z "$core_name" ]]; then
+        core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
+        echo -e "\033[1;36mGenerated core name: $core_name\033[0m"
+    fi
+    
+    # Create GOST core
+    if ! create_gost_core "$core_name"; then
+        core_name="gost"  # Fallback to original
+    fi
+    
+    GOST_BINARY="/usr/local/bin/$core_name"
 
     # Ask for the protocol type
     echo -e "\033[1;33mSelect protocol type:\033[0m"
@@ -305,6 +356,7 @@ tcpudp_forwarding() {
     fi
 
     echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+    echo -e "\033[1;32mUsing GOST core:\033[0m $core_name"
     
     # Show summary
     if [[ "$stability_choice" == "1" ]]; then
@@ -318,245 +370,29 @@ tcpudp_forwarding() {
     fi
 
     # Call the function to create the service and start it
-    create_gost_service "$service_name"
+    create_gost_service "$service_name" "$GOST_BINARY"
     start_service "$service_name"
 
     read -p "Press Enter to continue..."
 }
 
-
-# Fetch the latest GOST releases from GitHub
-fetch_gost_versions() {
-    releases=$(curl -s https://api.github.com/repos/ginuerzh/gost/releases | jq -r '.[].tag_name' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$')
-    if [[ -z "$releases" ]]; then
-        echo -e "\033[1;31m? Error: Unable to fetch releases from GitHub!\033[0m"
-        exit 1
-    fi
-    echo "$releases"
-}
-# Fetch the latest GOST releases from GitHub
-fetch_gost_versions3() {
-    releases=$(curl -s https://api.github.com/repos/go-gost/gost/releases | jq -r '.[].tag_name' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$')
-    if [[ -z "$releases" ]]; then
-        echo -e "\033[1;31m? Error: Unable to fetch releases from GitHub!\033[0m"
-        exit 1
-    fi
-    echo "$releases"
-}
-
-install_gost() {
-    check_root
-
-    while true; do
-        echo -e "\033[1;34mSelect which version of GOST to install:\033[0m"
-        echo -e "1) GOST 2"
-        echo -e "2) GOST 3"
-        echo -e "0) Return to the main menu"
-        read -p "Enter your choice: " choice
-
-        case "$choice" in
-            1) install_gost2; break ;;
-            2) install_gost3; break ;;
-            0) return ;;
-            *) echo -e "\033[1;31mInvalid choice! Please select a valid option.\033[0m" ;;
-        esac
-    done
-}
-
-
-install_gost2() {
-    check_root
-
-    # Install dependencies
-    echo "Installing wget and nano..."
-    sudo apt install wget unzip nano lsof -y
-
-    # Fetch and display versions
-    versions=$(fetch_gost_versions)
-    if [[ -z "$versions" ]]; then
-        echo -e "\033[1;31m? No releases found! Exiting...\033[0m"
-        exit 1
-    fi
-
-    # Display available versions
-    echo -e "\n\033[1;34mAvailable GOST versions:\033[0m"
-    select version in $versions; do
-        if [[ -n "$version" ]]; then
-            echo -e "\033[1;32mYou selected: $version\033[0m"
-            break
-        else
-            echo -e "\033[1;31m? Invalid selection! Please select a valid version.\033[0m"
-        fi
-    done
-
-    # Define the correct GOST binary URL format
-    download_url="https://github.com/ginuerzh/gost/releases/download/$version/gost_${version//v/}_linux_amd64.tar.gz"
-
-    # Check if the URL is valid by testing with curl
-    echo "Checking URL: $download_url"
-    if ! curl --head --silent --fail "$download_url" > /dev/null; then
-        echo -e "\033[1;31m? The release URL does not exist! Please check the release version.\033[0m"
-        exit 1
-    fi
-
-    # Download and install the selected GOST version
-    echo "Downloading GOST $version..."
-    if ! sudo wget -q "$download_url"; then
-        echo -e "\033[1;31m? Failed to download GOST! Exiting...\033[0m"
-        exit 1
-    fi
-
-    # Extract the downloaded file
-    echo "Extracting GOST..."
-    if ! sudo tar -xvzf "gost_${version//v/}_linux_amd64.tar.gz"; then
-        echo -e "\033[1;31m? Failed to extract GOST! Exiting...\033[0m"
-        exit 1
-    fi
-
-    # Move the binary to /usr/local/bin and make it executable
-    echo "Installing GOST..."
-    sudo mv gost /usr/local/bin/gost
-    sudo chmod +x /usr/local/bin/gost
-
-    # Verify the installation
-    if [[ -f /usr/local/bin/gost ]]; then
-        echo -e "\033[1;32mGOST $version installed successfully!\033[0m"
-    else
-        echo -e "\033[1;31mError: GOST installation failed!\033[0m"
-        exit 1
-    fi
-
-    read -p "Press Enter to continue..."
-}
-
-
-install_gost3() {
-    check_root
-
-    # Install dependencies
-    echo "Installing wget and nano..."
-    sudo apt install wget unzip nano lsof -y
-
-   repo="go-gost/gost"
-base_url="https://api.github.com/repos/$repo/releases"
-
-# Function to download and install gost
-install_gost() {
-    version=$1
-    # Detect the operating system
-    if [[ "$(uname)" == "Linux" ]]; then
-        os="linux"
-    elif [[ "$(uname)" == "Darwin" ]]; then
-        os="darwin"
-    elif [[ "$(uname)" == "MINGW"* ]]; then
-        os="windows"
-    else
-        echo "Unsupported operating system."
-        exit 1
-    fi
-
-    # Detect the CPU architecture
-    arch=$(uname -m)
-    case $arch in
-    x86_64)
-        cpu_arch="amd64"
-        ;;
-    armv5*)
-        cpu_arch="armv5"
-        ;;
-    armv6*)
-        cpu_arch="armv6"
-        ;;
-    armv7*)
-        cpu_arch="armv7"
-        ;;
-    aarch64)
-        cpu_arch="arm64"
-        ;;
-    i686)
-        cpu_arch="386"
-        ;;
-    mips64*)
-        cpu_arch="mips64"
-        ;;
-    mips*)
-        cpu_arch="mips"
-        ;;
-    mipsel*)
-        cpu_arch="mipsle"
-        ;;
-    *)
-        echo "Unsupported CPU architecture."
-        exit 1
-        ;;
-    esac
-    get_download_url="$base_url/tags/$version"
-    download_url=$(curl -s "$get_download_url" | grep -Eo "\"browser_download_url\": \".*${os}.*${cpu_arch}.*\"" | awk -F'["]' '{print $4}')
-
-    # Download the binary
-    echo "Downloading gost version $version..."
-    curl -fsSL -o gost.tar.gz $download_url
-
-    # Extract and install the binary
-    echo "Installing gost..."
-    tar -xzf gost.tar.gz
-    chmod +x gost
-    mv gost /usr/local/bin/gost
-
-    echo "gost installation completed!"
-}
-
-# Retrieve available versions from GitHub API
-versions=$(curl -s "$base_url" | grep -oP 'tag_name": "\K[^"]+')
-
-# Check if --install option provided
-if [[ "$1" == "--install" ]]; then
-    # Install the latest version automatically
-    latest_version=$(echo "$versions" | head -n 1)
-    install_gost $latest_version
-else
-    # Display available versions to the user
-    echo "Available gost versions:"
-    select version in $versions; do
-        if [[ -n $version ]]; then
-            install_gost $version
-            break
-        else
-            echo "Invalid choice! Please select a valid option."
-        fi
-    done
-fi
-
-    read -p "Press Enter to continue..."
-}
-
-
-# Remove GOST
-remove_gost() {
-    check_root
-
-    if [[ -f "/usr/local/bin/gost" ]]; then
-        read -rp "Are you sure you want to remove GOST? [y/N]: " confirm
-        case "$confirm" in
-            [yY]|[yY][eE][sS])
-                echo "Removing GOST..."
-                rm -f /usr/local/bin/gost
-                echo "GOST removed successfully!"
-                ;;
-            *)
-                echo "Operation cancelled."
-                ;;
-        esac
-    else
-        echo "GOST is not installed!"
-    fi
-
-    read -p "Press Enter to continue..."
-}
-
-
 configure_port_forwarding() {
     echo -e "\033[1;34mConfigure Port Forwarding\033[0m"
+
+    # Ask for core name
+    echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+    read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-pf1, gost-tunnel2): \033[0m' core_name
+    if [[ -z "$core_name" ]]; then
+        core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
+        echo -e "\033[1;36mGenerated core name: $core_name\033[0m"
+    fi
+    
+    # Create GOST core
+    if ! create_gost_core "$core_name"; then
+        core_name="gost"  # Fallback to original
+    fi
+    
+    GOST_BINARY="/usr/local/bin/$core_name"
 
     # Ask whether the setup is for the client or server
     echo -e "\033[1;33mIs this the client or server side?\033[0m"
@@ -1011,13 +847,15 @@ configure_port_forwarding() {
     fi
 
     echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+    echo -e "\033[1;32mUsing GOST core:\033[0m $core_name"
 
     # Call the function to create the service and start it
-    create_gost_service "$service_name"
+    create_gost_service "$service_name" "$GOST_BINARY"
     start_service "$service_name"
 
     read -p "Press Enter to continue..."
 }
+
 configure_relay() {
     echo -e "\033[1;33mIs this the client or server side?\033[0m"
     echo -e "\033[1;32m1.\033[0m \033[1;36mServer-Side (Kharej)\033[0m"
@@ -1028,6 +866,21 @@ configure_relay() {
         1)
             # Server-side configuration
             echo -e "\n\033[1;34m Configure Server-Side (Kharej)\033[0m"
+
+            # Ask for core name
+            echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+            read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-relay1, gost-tunnel2): \033[0m' core_name
+            if [[ -z "$core_name" ]]; then
+                core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
+                echo -e "\033[1;36mGenerated core name: $core_name\033[0m"
+            fi
+            
+            # Create GOST core
+            if ! create_gost_core "$core_name"; then
+                core_name="gost"  # Fallback to original
+            fi
+            
+            GOST_BINARY="/usr/local/bin/$core_name"
 
             # Prompt the user for a port until a free one is provided
             while true; do
@@ -1203,12 +1056,13 @@ configure_relay() {
             fi
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+            echo -e "\033[1;32mUsing GOST core:\033[0m $core_name"
 
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
             [[ -z "$service_name" ]] && service_name="relay_server_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)"
 
             echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
-            create_gost_service "$service_name"
+            create_gost_service "$service_name" "$GOST_BINARY"
             start_service "$service_name"
             read -p "Press Enter to continue..."
             ;;
@@ -1217,6 +1071,21 @@ configure_relay() {
             # Client-side configuration
             echo -e "\n\033[1;34mConfigure Client-Side (Iran)\033[0m"
             
+            # Ask for core name
+            echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+            read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-relay1, gost-tunnel2): \033[0m' core_name
+            if [[ -z "$core_name" ]]; then
+                core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
+                echo -e "\033[1;36mGenerated core name: $core_name\033[0m"
+            fi
+            
+            # Create GOST core
+            if ! create_gost_core "$core_name"; then
+                core_name="gost"  # Fallback to original
+            fi
+            
+            GOST_BINARY="/usr/local/bin/$core_name"
+
             # Select listen type (TCP/UDP)
             echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
             echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
@@ -1442,12 +1311,13 @@ configure_relay() {
             GOST_OPTIONS+=" -F relay${TRANSMISSION}://${relay_ip}:${relay_port}?${PARAMS}"
             
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+            echo -e "\033[1;32mUsing GOST core:\033[0m $core_name"
             
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
             [[ -z "$service_name" ]] && service_name="relay_client_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)"
             
             echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
-            create_gost_service "$service_name"
+            create_gost_service "$service_name" "$GOST_BINARY"
             start_service "$service_name"
             
             read -p "Press Enter to continue..."
@@ -1470,6 +1340,21 @@ configure_forward() {
             # Server-side configuration
             echo -e "\n\033[1;34m Configure Server-Side (Kharej)\033[0m"
             
+            # Ask for core name
+            echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+            read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-forward1, gost-tunnel2): \033[0m' core_name
+            if [[ -z "$core_name" ]]; then
+                core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
+                echo -e "\033[1;36mGenerated core name: $core_name\033[0m"
+            fi
+            
+            # Create GOST core
+            if ! create_gost_core "$core_name"; then
+                core_name="gost"  # Fallback to original
+            fi
+            
+            GOST_BINARY="/usr/local/bin/$core_name"
+
             # Prompt the user for a port until a free one is provided
             while true; do
                 read -p $'\033[1;33mEnter server communication port (default: 9001): \033[0m' relay_port
@@ -1632,12 +1517,13 @@ configure_forward() {
             fi
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+            echo -e "\033[1;32mUsing GOST core:\033[0m $core_name"
 
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
             [[ -z "$service_name" ]] && service_name="forward_server_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)"
 
             echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
-            create_gost_service "$service_name"
+            create_gost_service "$service_name" "$GOST_BINARY"
             start_service "$service_name"
             read -p "Press Enter to continue..."
             ;;
@@ -1646,6 +1532,21 @@ configure_forward() {
             # Client-side configuration
             echo -e "\n\033[1;34mConfigure Client-Side (Iran)\033[0m"
             
+            # Ask for core name
+            echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+            read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-forward1, gost-tunnel2): \033[0m' core_name
+            if [[ -z "$core_name" ]]; then
+                core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
+                echo -e "\033[1;36mGenerated core name: $core_name\033[0m"
+            fi
+            
+            # Create GOST core
+            if ! create_gost_core "$core_name"; then
+                core_name="gost"  # Fallback to original
+            fi
+            
+            GOST_BINARY="/usr/local/bin/$core_name"
+
             # Select listen type (TCP/UDP)
             echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
             echo -e "\033[1;32m1.\033[0m \033[1;36mTCP mode\033[0m (gRPC, XHTTP, WS, TCP, etc.)"
@@ -1844,12 +1745,13 @@ configure_forward() {
             GOST_OPTIONS+=" -F forward+${TRANSMISSION}://${relay_ip}:${relay_port}?${FORWARD_PARAMS}"
             
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+            echo -e "\033[1;32mUsing GOST core:\033[0m $core_name"
             
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
             [[ -z "$service_name" ]] && service_name="forward_client_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)"
             
             echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
-            create_gost_service "$service_name"
+            create_gost_service "$service_name" "$GOST_BINARY"
             start_service "$service_name"
             
             read -p "Press Enter to continue..."
@@ -1860,6 +1762,7 @@ configure_forward() {
             ;;
     esac
 }
+
 # Function to check if a port is already in use
 is_port_used() {
     local port=$1
@@ -1869,10 +1772,14 @@ is_port_used() {
         return 1  # Port is not in use
     fi
 }
+
 # Function to create a service for Gost (port forwarding or relay mode)
 create_gost_service() {
     local service_name=$1
+    local gost_binary="${2:-/usr/local/bin/gost}"  # Use custom binary if provided, else default
+    
     echo -e "\033[1;34mCreating Gost service for $service_name...\033[0m"
+    echo -e "\033[1;36mUsing binary: $gost_binary\033[0m"
 
     # Create the systemd service file
     cat <<EOF > /etc/systemd/system/gost-${service_name}.service
@@ -1882,7 +1789,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/gost ${GOST_OPTIONS}
+ExecStart=$gost_binary ${GOST_OPTIONS}
 Environment="GOST_LOGGER_LEVEL=fatal"
 StandardOutput=null
 StandardError=null
@@ -1918,7 +1825,6 @@ start_service() {
     sleep 1
 }
 
-
 # **Function to Select a Service to Manage**
 select_service_to_manage() {
     # Get a list of all GOST service files in /etc/systemd/system/ directory
@@ -1942,7 +1848,6 @@ select_service_to_manage() {
         fi
     done
 }
-
 
 # **Function to Perform Actions (start, stop, restart, etc.) on Selected Service**
 manage_service_action() {
@@ -2015,7 +1920,6 @@ manage_service_action() {
                 fi
             
                 read -p "Press Enter to continue..."
-
                 ;;
 7)
     echo -e "\n\033[1;34mManage Service Cron Jobs:\033[0m"
@@ -2204,6 +2108,248 @@ manage_service_action() {
         esac
     done
 }
+
+# Fetch the latest GOST releases from GitHub
+fetch_gost_versions() {
+    releases=$(curl -s https://api.github.com/repos/ginuerzh/gost/releases | jq -r '.[].tag_name' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$')
+    if [[ -z "$releases" ]]; then
+        echo -e "\033[1;31m? Error: Unable to fetch releases from GitHub!\033[0m"
+        exit 1
+    fi
+    echo "$releases"
+}
+# Fetch the latest GOST releases from GitHub
+fetch_gost_versions3() {
+    releases=$(curl -s https://api.github.com/repos/go-gost/gost/releases | jq -r '.[].tag_name' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$')
+    if [[ -z "$releases" ]]; then
+        echo -e "\033[1;31m? Error: Unable to fetch releases from GitHub!\033[0m"
+        exit 1
+    fi
+    echo "$releases"
+}
+
+install_gost() {
+    check_root
+
+    while true; do
+        echo -e "\033[1;34mSelect which version of GOST to install:\033[0m"
+        echo -e "1) GOST 2"
+        echo -e "2) GOST 3"
+        echo -e "0) Return to the main menu"
+        read -p "Enter your choice: " choice
+
+        case "$choice" in
+            1) install_gost2; break ;;
+            2) install_gost3; break ;;
+            0) return ;;
+            *) echo -e "\033[1;31mInvalid choice! Please select a valid option.\033[0m" ;;
+        esac
+    done
+}
+
+
+install_gost2() {
+    check_root
+
+    # Install dependencies
+    echo "Installing wget and nano..."
+    sudo apt install wget unzip nano lsof -y
+
+    # Fetch and display versions
+    versions=$(fetch_gost_versions)
+    if [[ -z "$versions" ]]; then
+        echo -e "\033[1;31m? No releases found! Exiting...\033[0m"
+        exit 1
+    fi
+
+    # Display available versions
+    echo -e "\n\033[1;34mAvailable GOST versions:\033[0m"
+    select version in $versions; do
+        if [[ -n "$version" ]]; then
+            echo -e "\033[1;32mYou selected: $version\033[0m"
+            break
+        else
+            echo -e "\033[1;31m? Invalid selection! Please select a valid version.\033[0m"
+        fi
+    done
+
+    # Define the correct GOST binary URL format
+    download_url="https://github.com/ginuerzh/gost/releases/download/$version/gost_${version//v/}_linux_amd64.tar.gz"
+
+    # Check if the URL is valid by testing with curl
+    echo "Checking URL: $download_url"
+    if ! curl --head --silent --fail "$download_url" > /dev/null; then
+        echo -e "\033[1;31m? The release URL does not exist! Please check the release version.\033[0m"
+        exit 1
+    fi
+
+    # Download and install the selected GOST version
+    echo "Downloading GOST $version..."
+    if ! sudo wget -q "$download_url"; then
+        echo -e "\033[1;31m? Failed to download GOST! Exiting...\033[0m"
+        exit 1
+    fi
+
+    # Extract the downloaded file
+    echo "Extracting GOST..."
+    if ! sudo tar -xvzf "gost_${version//v/}_linux_amd64.tar.gz"; then
+        echo -e "\033[1;31m? Failed to extract GOST! Exiting...\033[0m"
+        exit 1
+    fi
+
+    # Move the binary to /usr/local/bin and make it executable
+    echo "Installing GOST..."
+    sudo mv gost /usr/local/bin/gost
+    sudo chmod +x /usr/local/bin/gost
+
+    # Verify the installation
+    if [[ -f /usr/local/bin/gost ]]; then
+        echo -e "\033[1;32mGOST $version installed successfully!\033[0m"
+    else
+        echo -e "\033[1;31mError: GOST installation failed!\033[0m"
+        exit 1
+    fi
+
+    read -p "Press Enter to continue..."
+}
+
+
+install_gost3() {
+    check_root
+
+    # Install dependencies
+    echo "Installing wget and nano..."
+    sudo apt install wget unzip nano lsof -y
+
+   repo="go-gost/gost"
+base_url="https://api.github.com/repos/$repo/releases"
+
+# Function to download and install gost
+install_gost() {
+    version=$1
+    # Detect the operating system
+    if [[ "$(uname)" == "Linux" ]]; then
+        os="linux"
+    elif [[ "$(uname)" == "Darwin" ]]; then
+        os="darwin"
+    elif [[ "$(uname)" == "MINGW"* ]]; then
+        os="windows"
+    else
+        echo "Unsupported operating system."
+        exit 1
+    fi
+
+    # Detect the CPU architecture
+    arch=$(uname -m)
+    case $arch in
+    x86_64)
+        cpu_arch="amd64"
+        ;;
+    armv5*)
+        cpu_arch="armv5"
+        ;;
+    armv6*)
+        cpu_arch="armv6"
+        ;;
+    armv7*)
+        cpu_arch="armv7"
+        ;;
+    aarch64)
+        cpu_arch="arm64"
+        ;;
+    i686)
+        cpu_arch="386"
+        ;;
+    mips64*)
+        cpu_arch="mips64"
+        ;;
+    mips*)
+        cpu_arch="mips"
+        ;;
+    mipsel*)
+        cpu_arch="mipsle"
+        ;;
+    *)
+        echo "Unsupported CPU architecture."
+        exit 1
+        ;;
+    esac
+    get_download_url="$base_url/tags/$version"
+    download_url=$(curl -s "$get_download_url" | grep -Eo "\"browser_download_url\": \".*${os}.*${cpu_arch}.*\"" | awk -F'["]' '{print $4}')
+
+    # Download the binary
+    echo "Downloading gost version $version..."
+    curl -fsSL -o gost.tar.gz $download_url
+
+    # Extract and install the binary
+    echo "Installing gost..."
+    tar -xzf gost.tar.gz
+    chmod +x gost
+    mv gost /usr/local/bin/gost
+
+    echo "gost installation completed!"
+}
+
+# Retrieve available versions from GitHub API
+versions=$(curl -s "$base_url" | grep -oP 'tag_name": "\K[^"]+')
+
+# Check if --install option provided
+if [[ "$1" == "--install" ]]; then
+    # Install the latest version automatically
+    latest_version=$(echo "$versions" | head -n 1)
+    install_gost $latest_version
+else
+    # Display available versions to the user
+    echo "Available gost versions:"
+    select version in $versions; do
+        if [[ -n $version ]]; then
+            install_gost $version
+            break
+        else
+            echo "Invalid choice! Please select a valid option."
+        fi
+    done
+fi
+
+    read -p "Press Enter to continue..."
+}
+
+# Remove GOST
+remove_gost() {
+    check_root
+    echo -e "\033[1;31m⚠ Warning: This will remove ALL GOST binaries and services!\033[0m"
+    read -p $'\033[1;33mAre you sure you want to remove GOST? [y/n] (default: n): \033[0m' confirm_remove
+    confirm_remove="${confirm_remove:-n}"
+    
+    if [[ "$confirm_remove" != "y" && "$confirm_remove" != "yes" ]]; then
+        echo -e "\033[1;33mGOST removal cancelled.\033[0m"
+        read -p "Press Enter to continue..."
+        return
+    fi
+    
+    # Remove all GOST binaries
+    echo "Removing GOST binaries..."
+    rm -f /usr/local/bin/gost*
+    rm -f /usr/bin/gost*
+    
+    # Remove all GOST services
+    echo "Removing GOST services..."
+    for service_file in /etc/systemd/system/gost*.service; do
+        if [[ -f "$service_file" ]]; then
+            service_name=$(basename "$service_file")
+            systemctl stop "$service_name" 2>/dev/null
+            systemctl disable "$service_name" 2>/dev/null
+            rm -f "$service_file"
+        fi
+    done
+    
+    # Reload systemd
+    systemctl daemon-reload
+    
+    echo -e "\033[1;32m✓ GOST and all related files removed successfully!\033[0m"
+    read -p "Press Enter to continue..."
+}
+
 # Start the main menu
 check_and_install_gost
 
