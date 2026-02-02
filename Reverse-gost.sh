@@ -23,6 +23,42 @@ else
     gost_version="GOST not installed"
 fi
 
+# Function to create a new GOST core binary
+create_gost_core() {
+    local core_name="$1"
+    local gost_binary="/usr/local/bin/$core_name"
+    
+    # Check if original gost exists
+    if [[ ! -f "/usr/local/bin/gost" ]]; then
+        echo -e "\033[1;31m✗ Original GOST binary not found. Please install GOST first.\033[0m"
+        return 1
+    fi
+    
+    # Check if core already exists
+    if [[ -f "$gost_binary" ]]; then
+        echo -e "\033[1;33m⚠ Using existing GOST core: $core_name\033[0m"
+        return 0
+    fi
+    
+    # Copy the original gost binary
+    echo -e "\033[1;32mCreating new GOST core: $core_name\033[0m"
+    if cp /usr/local/bin/gost "$gost_binary"; then
+        chmod +x "$gost_binary"
+        echo -e "\033[1;32m✓ Successfully created GOST core: $core_name\033[0m"
+        return 0
+    else
+        echo -e "\033[1;31m✗ Failed to create GOST core. Using original.\033[0m"
+        return 1
+    fi
+}
+
+# Function to list all GOST cores
+list_gost_cores() {
+    echo -e "\033[1;34m📋 List of GOST Cores:\033[0m"
+    echo -e "\033[1;33mAvailable cores in /usr/local/bin:\033[0m"
+    ls -la /usr/local/bin/gost* 2>/dev/null | grep -v "\.bak" || echo "No GOST cores found"
+}
+
 # Main Menu Function
 main_menu() {
     while true; do
@@ -34,10 +70,11 @@ main_menu() {
         echo -e "          \033[1;36mReverse GOST\033[0m"
         echo -e "\033[1;32m===================================\033[0m"
         echo -e " \033[1;34m1.\033[0m Install GOST"
-        echo -e " \033[1;34m2.\033[0m rely mode (multi-port) "
+        echo -e " \033[1;34m2.\033[0m relay mode (multi-port) "
         echo -e " \033[1;34m3.\033[0m socks5 mode (multi-port) "
         echo -e " \033[1;34m4.\033[0m Manage Tunnels Services"
-        echo -e " \033[1;34m5.\033[0m Remove GOST"
+        echo -e " \033[1;34m5.\033[0m List GOST Cores"
+        echo -e " \033[1;34m6.\033[0m Remove GOST"
         
         echo -e " \033[1;31m0. Exit\033[0m"
         echo -e "\033[1;32m===================================\033[0m"
@@ -49,8 +86,8 @@ main_menu() {
             2) configure_relay ;;
             3) configure_socks5 ;;
             4) select_service_to_manage ;;
-            5) remove_gost ;;
-            
+            5) list_gost_cores; read -p "Press Enter to continue..." ;;
+            6) remove_gost ;;
             
             0) 
                 echo -e "\033[1;31mExiting... Goodbye!\033[0m"
@@ -64,7 +101,6 @@ main_menu() {
     done
 }
 
-
 configure_relay() {
     echo -e "\033[1;33mIs this the client or server side?\033[0m"
     echo -e "\033[1;32m1.\033[0m \033[1;36mClient-Side (Iran)\033[0m"
@@ -75,6 +111,21 @@ configure_relay() {
         1)
             # Client-side configuration (Iran)
             echo -e "\n\033[1;34m Configure Client-Side (iran)\033[0m"
+
+            # Ask for core name
+            echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+            read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-relay1, gost-tunnel2): \033[0m' core_name
+            if [[ -z "$core_name" ]]; then
+                core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
+                echo -e "\033[1;36mGenerated core name: $core_name\033[0m"
+            fi
+            
+            # Create GOST core
+            if ! create_gost_core "$core_name"; then
+                core_name="gost"  # Fallback to original
+            fi
+            
+            GOST_BINARY="/usr/local/bin/$core_name"
 
             # Prompt the user for a port until a free one is provided
             while true; do
@@ -228,18 +279,34 @@ configure_relay() {
             fi
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+            echo -e "\033[1;32mUsing GOST core:\033[0m $core_name"
 
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
             [[ -z "$service_name" ]] && service_name="relay_client_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)"
 
             echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
-            create_gost_service "$service_name"
+            create_gost_service "$service_name" "$GOST_BINARY"
             start_service "$service_name"
             read -p "Press Enter to continue..."
             ;;
         
         2)
             echo -e "\n\033[1;34mConfigure Server-Side (kharej)\033[0m"
+
+            # Ask for core name
+            echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+            read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-relay1, gost-tunnel2): \033[0m' core_name
+            if [[ -z "$core_name" ]]; then
+                core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
+                echo -e "\033[1;36mGenerated core name: $core_name\033[0m"
+            fi
+            
+            # Create GOST core
+            if ! create_gost_core "$core_name"; then
+                core_name="gost"  # Fallback to original
+            fi
+            
+            GOST_BINARY="/usr/local/bin/$core_name"
 
             # Select listen type (TCP/UDP)
             echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
@@ -406,8 +473,6 @@ configure_relay() {
             # Construct GOST options for listen side (first -L)
             LISTEN_OPTIONS="${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}"
             
-
-            
             # Construct GOST options for forward side (second -F)
             FORWARD_OPTIONS="relay${TRANSMISSION}://${relay_ip}:${relay_port}"
             
@@ -437,12 +502,13 @@ configure_relay() {
             GOST_OPTIONS="-L $LISTEN_OPTIONS -F $FORWARD_OPTIONS?$FORWARD_PARAMS"
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+            echo -e "\033[1;32mUsing GOST core:\033[0m $core_name"
 
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
             [[ -z "$service_name" ]] && service_name="relay_server_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)"
 
             echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
-            create_gost_service "$service_name"
+            create_gost_service "$service_name" "$GOST_BINARY"
             start_service "$service_name"
 
             read -p "Press Enter to continue..."
@@ -452,7 +518,6 @@ configure_relay() {
             ;;
     esac
 }
-
 
 configure_socks5() {
     echo -e "\033[1;33mIs this the client or server side?\033[0m"
@@ -464,6 +529,21 @@ configure_socks5() {
         1)
             # Client-side configuration (Iran)
             echo -e "\n\033[1;34m Configure Client-Side (iran)\033[0m"
+
+            # Ask for core name
+            echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+            read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-socks5-1, gost-socks5-2): \033[0m' core_name
+            if [[ -z "$core_name" ]]; then
+                core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
+                echo -e "\033[1;36mGenerated core name: $core_name\033[0m"
+            fi
+            
+            # Create GOST core
+            if ! create_gost_core "$core_name"; then
+                core_name="gost"  # Fallback to original
+            fi
+            
+            GOST_BINARY="/usr/local/bin/$core_name"
 
             # Prompt the user for a port
             while true; do
@@ -617,18 +697,34 @@ configure_socks5() {
             fi
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+            echo -e "\033[1;32mUsing GOST core:\033[0m $core_name"
 
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
             [[ -z "$service_name" ]] && service_name="socks5_client_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)"
 
             echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
-            create_gost_service "$service_name"
+            create_gost_service "$service_name" "$GOST_BINARY"
             start_service "$service_name"
             read -p "Press Enter to continue..."
             ;;
         
         2)
             echo -e "\n\033[1;34mConfigure Server-Side (kharej)\033[0m"
+
+            # Ask for core name
+            echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+            read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-socks5-1, gost-socks5-2): \033[0m' core_name
+            if [[ -z "$core_name" ]]; then
+                core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
+                echo -e "\033[1;36mGenerated core name: $core_name\033[0m"
+            fi
+            
+            # Create GOST core
+            if ! create_gost_core "$core_name"; then
+                core_name="gost"  # Fallback to original
+            fi
+            
+            GOST_BINARY="/usr/local/bin/$core_name"
 
             # Select Listen Type (TCP/UDP)
             echo -e "\n\033[1;34mSelect Listen Type:\033[0m"
@@ -791,8 +887,6 @@ configure_socks5() {
             # Construct GOST options for listen side (first -L)
             LISTEN_OPTIONS="${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}"
             
-
-            
             # Construct GOST options for forward side (second -F)
             FORWARD_OPTIONS="socks5${TRANSMISSION}://${socks5_ip}:${socks5_port}"
             
@@ -814,13 +908,14 @@ configure_socks5() {
             GOST_OPTIONS="-L $LISTEN_OPTIONS -F $FORWARD_OPTIONS?$FORWARD_PARAMS"
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+            echo -e "\033[1;32mUsing GOST core:\033[0m $core_name"
 
             # Prompt for custom service name
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
             [[ -z "$service_name" ]] && service_name="socks5_server_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)"
 
             echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
-            create_gost_service "$service_name"
+            create_gost_service "$service_name" "$GOST_BINARY"
             start_service "$service_name"
 
             read -p "Press Enter to continue..."
@@ -841,10 +936,14 @@ is_port_used() {
         return 1  # Port is not in use
     fi
 }
+
 # Function to create a service for Gost (port forwarding or relay mode)
 create_gost_service() {
     local service_name=$1
+    local gost_binary="${2:-/usr/local/bin/gost}"  # Use custom binary if provided, else default
+    
     echo -e "\033[1;34mCreating Gost service for $service_name...\033[0m"
+    echo -e "\033[1;36mUsing binary: $gost_binary\033[0m"
 
     # Create the systemd service file
     cat <<EOF > /etc/systemd/system/gost-${service_name}.service
@@ -854,7 +953,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/gost ${GOST_OPTIONS}
+ExecStart=$gost_binary ${GOST_OPTIONS}
 Environment="GOST_LOGGER_LEVEL=fatal"
 StandardOutput=null
 StandardError=null
@@ -891,7 +990,6 @@ start_service() {
     sleep 1
 }
 
-
 # **Function to Select a Service to Manage**
 select_service_to_manage() {
     # Get a list of all GOST service files in /etc/systemd/system/ directory
@@ -915,7 +1013,6 @@ select_service_to_manage() {
         fi
     done
 }
-
 
 # **Function to Perform Actions (start, stop, restart, etc.) on Selected Service**
 manage_service_action() {
@@ -988,7 +1085,6 @@ manage_service_action() {
                 fi
             
                 read -p "Press Enter to continue..."
-
                 ;;
 7)
     echo -e "\n\033[1;34mManage Service Cron Jobs:\033[0m"
@@ -1380,19 +1476,42 @@ fi
     read -p "Press Enter to continue..."
 }
 
-
 # Remove GOST
 remove_gost() {
     check_root
-    if [[ -f "/usr/local/bin/gost" ]]; then
-        echo "Removing GOST..."
-        rm -f /usr/local/bin/gost
-        echo "GOST removed successfully!"
-    else
-        echo "GOST is not installed!"
+    echo -e "\033[1;31m⚠ Warning: This will remove ALL GOST binaries and services!\033[0m"
+    read -p $'\033[1;33mAre you sure you want to remove GOST? [y/n] (default: n): \033[0m' confirm_remove
+    confirm_remove="${confirm_remove:-n}"
+    
+    if [[ "$confirm_remove" != "y" && "$confirm_remove" != "yes" ]]; then
+        echo -e "\033[1;33mGOST removal cancelled.\033[0m"
+        read -p "Press Enter to continue..."
+        return
     fi
+    
+    # Remove all GOST binaries
+    echo "Removing GOST binaries..."
+    rm -f /usr/local/bin/gost*
+    rm -f /usr/bin/gost*
+    
+    # Remove all GOST services
+    echo "Removing GOST services..."
+    for service_file in /etc/systemd/system/gost*.service; do
+        if [[ -f "$service_file" ]]; then
+            service_name=$(basename "$service_file")
+            systemctl stop "$service_name" 2>/dev/null
+            systemctl disable "$service_name" 2>/dev/null
+            rm -f "$service_file"
+        fi
+    done
+    
+    # Reload systemd
+    systemctl daemon-reload
+    
+    echo -e "\033[1;32m✓ GOST and all related files removed successfully!\033[0m"
     read -p "Press Enter to continue..."
 }
+
 # Start the main menu
 check_and_install_gost
 
