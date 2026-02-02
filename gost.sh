@@ -796,7 +796,7 @@ configure_port_forwarding() {
                 port=$(echo "$port" | xargs) # Trim spaces
                 if [[ -n "$port" ]]; then
                     # Add local listener with stability options
-                    GOST_OPTIONS+=" -L ${transport}://:${port}/127.0.0.1:${port}?timeout=${TIMEOUT_VALUE}&rwTimeout=${RWTIMEOUT_VALUE}&retries=${RETRY_VALUE}&heartbeat=${HEARTBEAT_VALUE}"
+                    GOST_OPTIONS+=" -L ${transport}://:${port}/127.0.0.1:${port}"
                 fi
             done
             
