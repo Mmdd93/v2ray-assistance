@@ -103,6 +103,147 @@ tcpudp_forwarding() {
     
     echo "Formatted IP: $raddr_ip"
 
+    # Ask about connection stability
+    echo -e "\n\033[1;34m🔧 Connection Stability\033[0m"
+    echo -e "Do you have an unstable connection or frequent disconnections?"
+    echo -e "\033[1;32m1.\033[0m \033[1;36mYes - I need stability options\033[0m"
+    echo -e "\033[1;32m2.\033[0m \033[1;36mNo - Use default settings\033[0m"
+    read -p $'\033[1;33mEnter your choice (default: 2): \033[0m' stability_choice
+    stability_choice=${stability_choice:-2}
+    
+    # Set default values
+    TIMEOUT_VALUE="30s"
+    RWTIMEOUT_VALUE="30s"
+    RETRY_VALUE="3"
+    HEARTBEAT_VALUE="30s"
+    MAXCONN_VALUE="100"
+    
+    # If user has unstable connection, show advanced options
+    if [[ "$stability_choice" == "1" ]]; then
+        echo -e "\n\033[1;34m⚡ Advanced Stability Options (for unstable connections)\033[0m"
+        
+        # Ask about timeout
+        echo -e "\n\033[1;34mConnection Timeout:\033[0m"
+        echo -e "\033[1;32m1.\033[0m Short (10 seconds - faster detection of disconnections) 🔥"
+        echo -e "\033[1;32m2.\033[0m Default (30 seconds)"
+        echo -e "\033[1;32m3.\033[0m Long (60 seconds - for unstable networks)"
+        echo -e "\033[1;32m4.\033[0m Custom value"
+        read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' timeout_choice
+        timeout_choice=${timeout_choice:-1}
+        
+        case $timeout_choice in
+            1) TIMEOUT_VALUE="10s" ;;
+            2) TIMEOUT_VALUE="30s" ;;
+            3) TIMEOUT_VALUE="60s" ;;
+            4)
+                read -p "Enter timeout in seconds (e.g., 15): " custom_timeout
+                if [[ "$custom_timeout" =~ ^[0-9]+$ ]]; then
+                    TIMEOUT_VALUE="${custom_timeout}s"
+                else
+                    echo -e "\033[1;31mInvalid input! Using 10s.\033[0m"
+                    TIMEOUT_VALUE="10s"
+                fi
+                ;;
+            *) TIMEOUT_VALUE="10s" ;;
+        esac
+        
+        # Ask about read/write timeout
+        echo -e "\n\033[1;34mRead/Write Timeout:\033[0m"
+        echo -e "\033[1;32m1.\033[0m Short (15 seconds) 🔥"
+        echo -e "\033[1;32m2.\033[0m Default (30 seconds)"
+        echo -e "\033[1;32m3.\033[0m Same as connection timeout ($TIMEOUT_VALUE)"
+        read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' rwtimeout_choice
+        rwtimeout_choice=${rwtimeout_choice:-1}
+        
+        case $rwtimeout_choice in
+            1) RWTIMEOUT_VALUE="15s" ;;
+            2) RWTIMEOUT_VALUE="30s" ;;
+            3) RWTIMEOUT_VALUE="$TIMEOUT_VALUE" ;;
+            *) RWTIMEOUT_VALUE="15s" ;;
+        esac
+        
+        # Ask about retry attempts
+        echo -e "\n\033[1;34mRetry Attempts (reconnect on failure):\033[0m"
+        echo -e "\033[1;32m1.\033[0m 5 retries (for very unstable connections) 🔥"
+        echo -e "\033[1;32m2.\033[0m Infinite retry (always reconnect)"
+        echo -e "\033[1;32m3.\033[0m 3 retries (normal)"
+        echo -e "\033[1;32m4.\033[0m Custom retry count"
+        read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' retry_choice
+        retry_choice=${retry_choice:-1}
+        
+        case $retry_choice in
+            1) RETRY_VALUE="5" ;;
+            2) RETRY_VALUE="-1" ;;
+            3) RETRY_VALUE="3" ;;
+            4)
+                read -p "Enter retry count (0 for no retry, -1 for infinite): " custom_retry
+                if [[ "$custom_retry" =~ ^-?[0-9]+$ ]]; then
+                    RETRY_VALUE="$custom_retry"
+                else
+                    echo -e "\033[1;31mInvalid input! Using 5 retries.\033[0m"
+                    RETRY_VALUE="5"
+                fi
+                ;;
+            *) RETRY_VALUE="5" ;;
+        esac
+        
+        # Ask about heartbeat (keepalive interval)
+        echo -e "\n\033[1;34mHeartbeat Interval (keepalive ping):\033[0m"
+        echo -e "\033[1;32m1.\033[0m Frequent (10 seconds - faster detection) 🔥"
+        echo -e "\033[1;32m2.\033[0m Default (30 seconds)"
+        echo -e "\033[1;32m3.\033[0m Custom interval"
+        read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' heartbeat_choice
+        heartbeat_choice=${heartbeat_choice:-1}
+        
+        case $heartbeat_choice in
+            1) HEARTBEAT_VALUE="10s" ;;
+            2) HEARTBEAT_VALUE="30s" ;;
+            3)
+                read -p "Enter heartbeat interval in seconds (e.g., 20): " custom_heartbeat
+                if [[ "$custom_heartbeat" =~ ^[0-9]+$ ]]; then
+                    HEARTBEAT_VALUE="${custom_heartbeat}s"
+                else
+                    echo -e "\033[1;31mInvalid input! Using 10s.\033[0m"
+                    HEARTBEAT_VALUE="10s"
+                fi
+                ;;
+            *) HEARTBEAT_VALUE="10s" ;;
+        esac
+        
+        # Ask about max connections (for mux)
+        echo -e "\n\033[1;34mMax Connections (for multiplexing):\033[0m"
+        echo -e "\033[1;32m1.\033[0m Low (50 connections - less resource usage) 🔥"
+        echo -e "\033[1;32m2.\033[0m Default (100 connections)"
+        echo -e "\033[1;32m3.\033[0m Custom value"
+        read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' maxconn_choice
+        maxconn_choice=${maxconn_choice:-1}
+        
+        case $maxconn_choice in
+            1) MAXCONN_VALUE="50" ;;
+            2) MAXCONN_VALUE="100" ;;
+            3)
+                read -p "Enter max connections: " custom_maxconn
+                if [[ "$custom_maxconn" =~ ^[0-9]+$ ]]; then
+                    MAXCONN_VALUE="$custom_maxconn"
+                else
+                    echo -e "\033[1;31mInvalid input! Using 50.\033[0m"
+                    MAXCONN_VALUE="50"
+                fi
+                ;;
+            *) MAXCONN_VALUE="50" ;;
+        esac
+        
+        # Display recommended settings
+        echo -e "\n\033[1;32m✅ Optimized for unstable connections:\033[0m"
+        echo -e "   • Timeout: $TIMEOUT_VALUE (quick disconnection detection)"
+        echo -e "   • Retries: $RETRY_VALUE (auto-reconnect)"
+        echo -e "   • Heartbeat: $HEARTBEAT_VALUE (frequent keepalive)"
+        echo -e "   • Max Connections: $MAXCONN_VALUE (lower resource usage)"
+    fi
+
+    # Basic options for all users
+    echo -e "\n\033[1;34m🔧 Basic Options\033[0m"
+    
     # Ask about keepAlive
     echo -e "\n\033[1;34mEnable KeepAlive?\033[0m"
     echo -e "\033[1;32m1.\033[0m Yes (Recommended for persistent connections)"
@@ -139,6 +280,13 @@ tcpudp_forwarding() {
     if [[ "$mux_choice" == "1" ]]; then
         MUX_OPTION="mux=true"
     fi
+    
+    # Build connection stability options
+    TIMEOUT_OPTION="timeout=${TIMEOUT_VALUE}"
+    RWTIMEOUT_OPTION="rwTimeout=${RWTIMEOUT_VALUE}"
+    RETRY_OPTION="retries=${RETRY_VALUE}"
+    MAXCONN_OPTION="maxConnections=${MAXCONN_VALUE}"
+    HEARTBEAT_OPTION="heartbeat=${HEARTBEAT_VALUE}"
 
     # Generate multiple GOST forwarding rules
     GOST_OPTIONS=""
@@ -148,33 +296,31 @@ tcpudp_forwarding() {
         # Start building the URL
         URL="${transport}://:${lport}/${raddr_ip}:${lport}?"
         
-        # Add options if enabled
+        # Build parameters string
         PARAMS=""
+        
+        # Add connection stability options
+        PARAMS+="$TIMEOUT_OPTION"
+        PARAMS+="&$RWTIMEOUT_OPTION"
+        PARAMS+="&$RETRY_OPTION"
+        PARAMS+="&$MAXCONN_OPTION"
+        PARAMS+="&$HEARTBEAT_OPTION"
+        
+        # Add other options
         if [[ -n "$KEEPALIVE_OPTION" ]]; then
-            PARAMS+="$KEEPALIVE_OPTION"
+            PARAMS+="&$KEEPALIVE_OPTION"
         fi
         
         if [[ -n "$COMPRESS_OPTION" ]]; then
-            if [[ -n "$PARAMS" ]]; then
-                PARAMS+="&"
-            fi
-            PARAMS+="$COMPRESS_OPTION"
+            PARAMS+="&$COMPRESS_OPTION"
         fi
         
         if [[ -n "$MUX_OPTION" ]]; then
-            if [[ -n "$PARAMS" ]]; then
-                PARAMS+="&"
-            fi
-            PARAMS+="$MUX_OPTION"
+            PARAMS+="&$MUX_OPTION"
         fi
         
         # Add the parameters to URL
-        if [[ -n "$PARAMS" ]]; then
-            URL+="$PARAMS"
-        else
-            # Remove the trailing '?' if no parameters
-            URL="${URL%?}"
-        fi
+        URL+="$PARAMS"
         
         GOST_OPTIONS+="-L $URL "
     done
@@ -186,6 +332,18 @@ tcpudp_forwarding() {
     fi
 
     echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+    
+    # Show summary
+    if [[ "$stability_choice" == "1" ]]; then
+        echo -e "\n\033[1;32m📊 Connection Settings Summary:\033[0m"
+        echo -e "   • Timeout: $TIMEOUT_VALUE"
+        echo -e "   • Read/Write Timeout: $RWTIMEOUT_VALUE"
+        echo -e "   • Retries: $RETRY_VALUE"
+        echo -e "   • Heartbeat: $HEARTBEAT_VALUE"
+        echo -e "   • Max Connections: $MAXCONN_VALUE"
+    else
+        echo -e "\n\033[1;36m📊 Using default stable connection settings\033[0m"
+    fi
 
     # Call the function to create the service and start it
     create_gost_service "$service_name"
