@@ -460,8 +460,8 @@ configure_relay() {
 
 configure_socks5() {
     echo -e "\033[1;33mIs this the client or server side?\033[0m"
-    echo -e "\033[1;32m1.\033[0m \033[1;36mClient-Side (iran)\033[0m"
-    echo -e "\033[1;32m2.\033[0m \033[1;36mServer-Side (kharej)\033[0m"
+    echo -e "\033[1;32m1.\033[0m \033[1;36mClient-Side (Iran)\033[0m"
+    echo -e "\033[1;32m2.\033[0m \033[1;36mServer-Side (Kharej)\033[0m"
     read -p $'\033[1;33mEnter your choice: \033[0m' side_choice
 
     case $side_choice in
@@ -517,6 +517,63 @@ configure_socks5() {
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="+tcp" ;;
             esac
 
+            # Ask about connection stability
+            echo -e "\n\033[1;34m🔧 Connection Stability Settings\033[0m"
+            echo -e "Do you want to configure connection stability options?"
+            echo -e "\033[1;32m1.\033[0m Yes - Configure advanced options"
+            echo -e "\033[1;32m2.\033[0m No - Use default settings"
+            read -p $'\033[1;33mEnter your choice (default: 2): \033[0m' stability_choice
+            stability_choice=${stability_choice:-2}
+            
+            # Set default values
+            TIMEOUT_VALUE="30s"
+            RWTIMEOUT_VALUE="30s"
+            RETRY_VALUE="3"
+            HEARTBEAT_VALUE="30s"
+            
+            # If user wants advanced options
+            if [[ "$stability_choice" == "1" ]]; then
+                echo -e "\n\033[1;34m⚡ Advanced Stability Options\033[0m"
+                
+                # Connection Timeout
+                read -p $'\033[1;33mEnter connection timeout in seconds (default: 30): \033[0m' custom_timeout
+                custom_timeout=${custom_timeout:-30}
+                TIMEOUT_VALUE="${custom_timeout}s"
+                
+                # Read/Write Timeout
+                read -p $'\033[1;33mEnter read/write timeout in seconds (default: 30): \033[0m' custom_rwtimeout
+                custom_rwtimeout=${custom_rwtimeout:-30}
+                RWTIMEOUT_VALUE="${custom_rwtimeout}s"
+                
+                # Retry attempts
+                echo -e "\n\033[1;34mRetry Attempts:\033[0m"
+                echo -e "\033[1;32m1.\033[0m 0 (No retry)"
+                echo -e "\033[1;32m2.\033[0m 3 (Default)"
+                echo -e "\033[1;32m3.\033[0m 5 (High retry)"
+                echo -e "\033[1;32m4.\033[0m -1 (Infinite retry)"
+                read -p $'\033[1;33mEnter your choice [1-4] (default: 2): \033[0m' retry_choice
+                retry_choice=${retry_choice:-2}
+                
+                case $retry_choice in
+                    1) RETRY_VALUE="0" ;;
+                    2) RETRY_VALUE="3" ;;
+                    3) RETRY_VALUE="5" ;;
+                    4) RETRY_VALUE="-1" ;;
+                    *) RETRY_VALUE="3" ;;
+                esac
+                
+                # Heartbeat interval
+                read -p $'\033[1;33mEnter heartbeat interval in seconds (default: 30): \033[0m' custom_heartbeat
+                custom_heartbeat=${custom_heartbeat:-30}
+                HEARTBEAT_VALUE="${custom_heartbeat}s"
+                
+                echo -e "\n\033[1;32m✅ Stability Settings:\033[0m"
+                echo -e "   • Timeout: $TIMEOUT_VALUE"
+                echo -e "   • Read/Write Timeout: $RWTIMEOUT_VALUE"
+                echo -e "   • Retries: $RETRY_VALUE"
+                echo -e "   • Heartbeat: $HEARTBEAT_VALUE"
+            fi
+
             # Ask about compression
             echo -e "\n\033[1;34mEnable Compression?\033[0m"
             echo -e "\033[1;32m1.\033[0m Yes (Recommended for better performance)"
@@ -543,8 +600,15 @@ configure_socks5() {
                 MUX_OPTION=""
             fi
 
-            # Build GOST options
-            GOST_OPTIONS="-L socks5${TRANSMISSION}://:${lport_socks5}?bind=true&keepAlive=true"
+            # Build GOST options with stability parameters
+            GOST_OPTIONS="-L socks5${TRANSMISSION}://:${lport_socks5}?bind=true"
+            
+            # Add stability options
+            GOST_OPTIONS+="&timeout=${TIMEOUT_VALUE}"
+            GOST_OPTIONS+="&rwTimeout=${RWTIMEOUT_VALUE}"
+            GOST_OPTIONS+="&retries=${RETRY_VALUE}"
+            GOST_OPTIONS+="&heartbeat=${HEARTBEAT_VALUE}"
+            GOST_OPTIONS+="&keepAlive=true"
             
             # Add compression if enabled
             if [[ -n "$COMPRESS_OPTION" ]]; then
@@ -559,7 +623,7 @@ configure_socks5() {
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
-            [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
+            [[ -z "$service_name" ]] && service_name="socks5_client_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)"
 
             echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
             create_gost_service "$service_name"
@@ -657,6 +721,63 @@ configure_socks5() {
                 *) echo -e "\033[1;31mInvalid choice! Defaulting to TCP.\033[0m"; TRANSMISSION="+tcp" ;;
             esac
 
+            # Ask about connection stability for server side
+            echo -e "\n\033[1;34m🔧 Connection Stability Settings\033[0m"
+            echo -e "Do you want to configure connection stability options?"
+            echo -e "\033[1;32m1.\033[0m Yes - Configure advanced options"
+            echo -e "\033[1;32m2.\033[0m No - Use default settings"
+            read -p $'\033[1;33mEnter your choice (default: 2): \033[0m' stability_choice
+            stability_choice=${stability_choice:-2}
+            
+            # Set default values
+            TIMEOUT_VALUE="30s"
+            RWTIMEOUT_VALUE="30s"
+            RETRY_VALUE="3"
+            HEARTBEAT_VALUE="30s"
+            
+            # If user wants advanced options
+            if [[ "$stability_choice" == "1" ]]; then
+                echo -e "\n\033[1;34m⚡ Advanced Stability Options\033[0m"
+                
+                # Connection Timeout
+                read -p $'\033[1;33mEnter connection timeout in seconds (default: 30): \033[0m' custom_timeout
+                custom_timeout=${custom_timeout:-30}
+                TIMEOUT_VALUE="${custom_timeout}s"
+                
+                # Read/Write Timeout
+                read -p $'\033[1;33mEnter read/write timeout in seconds (default: 30): \033[0m' custom_rwtimeout
+                custom_rwtimeout=${custom_rwtimeout:-30}
+                RWTIMEOUT_VALUE="${custom_rwtimeout}s"
+                
+                # Retry attempts
+                echo -e "\n\033[1;34mRetry Attempts:\033[0m"
+                echo -e "\033[1;32m1.\033[0m 0 (No retry)"
+                echo -e "\033[1;32m2.\033[0m 3 (Default)"
+                echo -e "\033[1;32m3.\033[0m 5 (High retry)"
+                echo -e "\033[1;32m4.\033[0m -1 (Infinite retry)"
+                read -p $'\033[1;33mEnter your choice [1-4] (default: 2): \033[0m' retry_choice
+                retry_choice=${retry_choice:-2}
+                
+                case $retry_choice in
+                    1) RETRY_VALUE="0" ;;
+                    2) RETRY_VALUE="3" ;;
+                    3) RETRY_VALUE="5" ;;
+                    4) RETRY_VALUE="-1" ;;
+                    *) RETRY_VALUE="3" ;;
+                esac
+                
+                # Heartbeat interval
+                read -p $'\033[1;33mEnter heartbeat interval in seconds (default: 30): \033[0m' custom_heartbeat
+                custom_heartbeat=${custom_heartbeat:-30}
+                HEARTBEAT_VALUE="${custom_heartbeat}s"
+                
+                echo -e "\n\033[1;32m✅ Stability Settings:\033[0m"
+                echo -e "   • Timeout: $TIMEOUT_VALUE"
+                echo -e "   • Read/Write Timeout: $RWTIMEOUT_VALUE"
+                echo -e "   • Retries: $RETRY_VALUE"
+                echo -e "   • Heartbeat: $HEARTBEAT_VALUE"
+            fi
+
             # Ask about compression for socks5 side
             echo -e "\n\033[1;34mEnable Compression for socks5?\033[0m"
             echo -e "\033[1;32m1.\033[0m Yes (Recommended for better performance)"
@@ -671,33 +792,41 @@ configure_socks5() {
             read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' mux_choice
             mux_choice=${mux_choice:-1}
 
-            # Build GOST options
-            GOST_OPTIONS="-L ${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}?keepAlive=true"
-            GOST_OPTIONS+=" -F socks5${TRANSMISSION}://${socks5_ip}:${socks5_port}"
+            # Construct GOST options for listen side (first -L)
+            LISTEN_OPTIONS="${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}"
             
-            # Add parameters if enabled
-            PARAMS=""
+            # Add stability and keepalive options to listen side
+            LISTEN_OPTIONS+="?timeout=${TIMEOUT_VALUE}"
+            LISTEN_OPTIONS+="&rwTimeout=${RWTIMEOUT_VALUE}"
+            LISTEN_OPTIONS+="&retries=${RETRY_VALUE}"
+            LISTEN_OPTIONS+="&heartbeat=${HEARTBEAT_VALUE}"
+            LISTEN_OPTIONS+="&keepAlive=true"
+            
+            # Construct GOST options for forward side (second -F)
+            FORWARD_OPTIONS="socks5${TRANSMISSION}://${socks5_ip}:${socks5_port}"
+            
+            # Build parameters for forward side
+            FORWARD_PARAMS="timeout=${TIMEOUT_VALUE}"
+            FORWARD_PARAMS+="&rwTimeout=${RWTIMEOUT_VALUE}"
+            FORWARD_PARAMS+="&retries=${RETRY_VALUE}"
+            FORWARD_PARAMS+="&heartbeat=${HEARTBEAT_VALUE}"
+            
             if [[ "$compress_choice" == "1" ]]; then
-                PARAMS+="compress=true"
+                FORWARD_PARAMS+="&compress=true"
             fi
             
             if [[ "$mux_choice" == "1" ]]; then
-                if [[ -n "$PARAMS" ]]; then
-                    PARAMS+="&"
-                fi
-                PARAMS+="mux=true"
+                FORWARD_PARAMS+="&mux=true"
             fi
             
-            # Add parameters to GOST options if any
-            if [[ -n "$PARAMS" ]]; then
-                GOST_OPTIONS+="?${PARAMS}"
-            fi
+            # Combine all options
+            GOST_OPTIONS="-L $LISTEN_OPTIONS -F $FORWARD_OPTIONS?$FORWARD_PARAMS"
 
             echo -e "\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
 
             # Prompt for custom service name
             read -p "Enter a custom name for this service (leave blank for a random name): " service_name
-            [[ -z "$service_name" ]] && service_name=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)
+            [[ -z "$service_name" ]] && service_name="socks5_server_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 6)"
 
             echo -e "\033[1;32mCreating Gost service for ${service_name}...\033[0m"
             create_gost_service "$service_name"
