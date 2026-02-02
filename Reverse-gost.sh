@@ -406,11 +406,7 @@ configure_relay() {
             # Construct GOST options for listen side (first -L)
             LISTEN_OPTIONS="${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}"
             
-            # Add stability options to listen side
-            LISTEN_OPTIONS+="&timeout=${TIMEOUT_VALUE}"
-            LISTEN_OPTIONS+="&rwTimeout=${RWTIMEOUT_VALUE}"
-            LISTEN_OPTIONS+="&retries=${RETRY_VALUE}"
-            LISTEN_OPTIONS+="&heartbeat=${HEARTBEAT_VALUE}"
+
             
             # Construct GOST options for forward side (second -F)
             FORWARD_OPTIONS="relay${TRANSMISSION}://${relay_ip}:${relay_port}"
@@ -795,12 +791,7 @@ configure_socks5() {
             # Construct GOST options for listen side (first -L)
             LISTEN_OPTIONS="${LISTEN_TRANSMISSION}://:${listen_port}/127.0.0.1:${config_port}"
             
-            # Add stability and keepalive options to listen side
-            LISTEN_OPTIONS+="?timeout=${TIMEOUT_VALUE}"
-            LISTEN_OPTIONS+="&rwTimeout=${RWTIMEOUT_VALUE}"
-            LISTEN_OPTIONS+="&retries=${RETRY_VALUE}"
-            LISTEN_OPTIONS+="&heartbeat=${HEARTBEAT_VALUE}"
-            LISTEN_OPTIONS+="&keepAlive=true"
+
             
             # Construct GOST options for forward side (second -F)
             FORWARD_OPTIONS="socks5${TRANSMISSION}://${socks5_ip}:${socks5_port}"
