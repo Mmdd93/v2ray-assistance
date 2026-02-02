@@ -95,16 +95,88 @@ tcpudp_forwarding() {
         echo -e "\033[1;31mError: All fields are required!\033[0m"
         return
     fi
-            # Check if input is an IPv6 address and format it properly
-            if [[ $raddr_ip =~ : ]]; then
-                raddr_ip="[$raddr_ip]"
-            fi
-echo "Formatted IP: $raddr_ip"
+    
+    # Check if input is an IPv6 address and format it properly
+    if [[ $raddr_ip =~ : ]]; then
+        raddr_ip="[$raddr_ip]"
+    fi
+    
+    echo "Formatted IP: $raddr_ip"
+
+    # Ask about keepAlive
+    echo -e "\n\033[1;34mEnable KeepAlive?\033[0m"
+    echo -e "\033[1;32m1.\033[0m Yes (Recommended for persistent connections)"
+    echo -e "\033[1;32m2.\033[0m No"
+    read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' keepalive_choice
+    keepalive_choice=${keepalive_choice:-1}
+    
+    # Ask about compression
+    echo -e "\n\033[1;34mEnable Compression?\033[0m"
+    echo -e "\033[1;32m1.\033[0m Yes (Recommended for better performance)"
+    echo -e "\033[1;32m2.\033[0m No"
+    read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' compress_choice
+    compress_choice=${compress_choice:-1}
+    
+    # Ask about multiplexing
+    echo -e "\n\033[1;34mEnable Multiplexing (mux)?\033[0m"
+    echo -e "\033[1;32m1.\033[0m Yes (Recommended for multiple connections)"
+    echo -e "\033[1;32m2.\033[0m No"
+    read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' mux_choice
+    mux_choice=${mux_choice:-1}
+
+    # Build base options
+    KEEPALIVE_OPTION=""
+    if [[ "$keepalive_choice" == "1" ]]; then
+        KEEPALIVE_OPTION="keepAlive=true"
+    fi
+    
+    COMPRESS_OPTION=""
+    if [[ "$compress_choice" == "1" ]]; then
+        COMPRESS_OPTION="compress=true"
+    fi
+    
+    MUX_OPTION=""
+    if [[ "$mux_choice" == "1" ]]; then
+        MUX_OPTION="mux=true"
+    fi
+
     # Generate multiple GOST forwarding rules
     GOST_OPTIONS=""
     IFS=',' read -ra PORT_ARRAY <<< "$lports"
+    
     for lport in "${PORT_ARRAY[@]}"; do
-        GOST_OPTIONS+="-L ${transport}://:${lport}/${raddr_ip}:${lport} "
+        # Start building the URL
+        URL="${transport}://:${lport}/${raddr_ip}:${lport}?"
+        
+        # Add options if enabled
+        PARAMS=""
+        if [[ -n "$KEEPALIVE_OPTION" ]]; then
+            PARAMS+="$KEEPALIVE_OPTION"
+        fi
+        
+        if [[ -n "$COMPRESS_OPTION" ]]; then
+            if [[ -n "$PARAMS" ]]; then
+                PARAMS+="&"
+            fi
+            PARAMS+="$COMPRESS_OPTION"
+        fi
+        
+        if [[ -n "$MUX_OPTION" ]]; then
+            if [[ -n "$PARAMS" ]]; then
+                PARAMS+="&"
+            fi
+            PARAMS+="$MUX_OPTION"
+        fi
+        
+        # Add the parameters to URL
+        if [[ -n "$PARAMS" ]]; then
+            URL+="$PARAMS"
+        else
+            # Remove the trailing '?' if no parameters
+            URL="${URL%?}"
+        fi
+        
+        GOST_OPTIONS+="-L $URL "
     done
 
     # Prompt for a custom service name
@@ -456,26 +528,67 @@ configure_port_forwarding() {
                 return
             fi
             
-            # Mapping protocols
+            # Mapping protocols - using + prefix for most protocols
             case $proto_choice in
-                1) proto="kcp" ;;
-                2) proto="quic" ;;
-                3) proto="ws" ;;
-                4) proto="wss" ;;
-                5) proto="grpc" ;;
-                6) proto="h2" ;;
-                7) proto="ssh" ;;
-                8) proto="tls" ;;
-                9) proto="mwss" ;;
-                10) proto="h2c" ;;
-                11) proto="obfs4" ;;
-                12) proto="ohttp" ;;
-                13) proto="otls" ;;
-                14) proto="mtls" ;;
-                15) proto="mws" ;;
-                16) proto="icmp" ;;
+                1) proto="+kcp" ;;
+                2) proto="+quic" ;;
+                3) proto="+ws" ;;
+                4) proto="+wss" ;;
+                5) proto="+grpc" ;;
+                6) proto="+h2" ;;
+                7) proto="+ssh" ;;
+                8) proto="+tls" ;;
+                9) proto="+mwss" ;;
+                10) proto="+h2c" ;;
+                11) proto="+obfs4" ;;
+                12) proto="+ohttp" ;;
+                13) proto="+otls" ;;
+                14) proto="+mtls" ;;
+                15) proto="+mws" ;;
+                16) proto="+icmp" ;;
                 *) echo -e "\033[1;31mInvalid protocol choice! Exiting...\033[0m"; return ;;
             esac
+            
+            # Ask about compression
+            echo -e "\n\033[1;34mEnable Compression?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for better performance)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' compress_choice
+            compress_choice=${compress_choice:-1}
+            
+            # Ask about multiplexing
+            echo -e "\n\033[1;34mEnable Multiplexing (mux)?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for multiple connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' mux_choice
+            mux_choice=${mux_choice:-1}
+            
+            # Ask about keepAlive
+            echo -e "\n\033[1;34mEnable KeepAlive?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for persistent connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' keepalive_choice
+            keepalive_choice=${keepalive_choice:-1}
+
+            # Build parameters string
+            PARAMS=""
+            if [[ "$keepalive_choice" == "1" ]]; then
+                PARAMS+="keepAlive=true"
+            fi
+            
+            if [[ "$compress_choice" == "1" ]]; then
+                if [[ -n "$PARAMS" ]]; then
+                    PARAMS+="&"
+                fi
+                PARAMS+="compress=true"
+            fi
+            
+            if [[ "$mux_choice" == "1" ]]; then
+                if [[ -n "$PARAMS" ]]; then
+                    PARAMS+="&"
+                fi
+                PARAMS+="mux=true"
+            fi
             
             # Generate multiple `-L` options
             GOST_OPTIONS=""
@@ -487,9 +600,12 @@ configure_port_forwarding() {
                 fi
             done
             
-
+            # Add the -F option with parameters
+            if [[ -n "$PARAMS" ]]; then
+                GOST_OPTIONS+=" -F ${proto}://${raddr_ip}:${raddr_port}?${PARAMS}"
+            else
                 GOST_OPTIONS+=" -F ${proto}://${raddr_ip}:${raddr_port}"
-
+            fi
             
             # Display the final GOST command
             echo -e "\033[1;34mGenerated GOST command:\033[0m"
@@ -497,6 +613,47 @@ configure_port_forwarding() {
             ;;
 
         2)  # Server-side configuration
+            # Select server communication protocol
+            echo -e "\033[1;33mSelect a protocol for communication between servers:\033[0m"
+            echo -e "\033[1;32m1.\033[0m KCP"
+            echo -e "\033[1;32m2.\033[0m QUIC"
+            echo -e "\033[1;32m3.\033[0m WS (WebSocket)"
+            echo -e "\033[1;32m4.\033[0m WSS (WebSocket Secure)"
+            echo -e "\033[1;32m5.\033[0m gRPC"
+            echo -e "\033[1;32m6.\033[0m h2 (HTTP/2)"
+            echo -e "\033[1;32m7.\033[0m SSH"
+            echo -e "\033[1;32m8.\033[0m TLS"
+            echo -e "\033[1;32m9.\033[0m MWSS (Multiplex Websocket)"
+            echo -e "\033[1;32m10.\033[0m h2c (HTTP2 Cleartext)"
+            echo -e "\033[1;32m11.\033[0m OBFS4"
+            echo -e "\033[1;32m12.\033[0m ohttp (HTTP Obfuscation)"
+            echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
+            echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
+            echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
+            echo -e "\033[1;32m16.\033[0m icmp (ping tunnel)"
+            read -p "Enter your choice: " proto_choice
+            
+            # Mapping protocols for server-side
+            case $proto_choice in
+                1) proto="+kcp" ;;
+                2) proto="+quic" ;;
+                3) proto="+ws" ;;
+                4) proto="+wss" ;;
+                5) proto="+grpc" ;;
+                6) proto="+h2" ;;
+                7) proto="+ssh" ;;
+                8) proto="+tls" ;;
+                9) proto="+mwss" ;;
+                10) proto="+h2c" ;;
+                11) proto="+obfs4" ;;
+                12) proto="+ohttp" ;;
+                13) proto="+otls" ;;
+                14) proto="+mtls" ;;
+                15) proto="+mws" ;;
+                16) proto="+icmp" ;;
+                *) echo -e "\033[1;31mInvalid protocol choice!\033[0m"; return ;;
+            esac
+            
             # Prompt the user for the server communication port
             while true; do
                 read -p "Enter server communication port (default: 9001): " sport
@@ -515,46 +672,69 @@ configure_port_forwarding() {
                     break  # Exit the loop if the port is free
                 fi
             done
-        
-            echo -e "\033[1;33mSelect a protocol for communication between servers:\033[0m"
-            echo -e "\033[1;32m1.\033[0m SSH"
-            echo -e "\033[1;32m2.\033[0m KCP"
-            echo -e "\033[1;32m3.\033[0m gRPC"
-            echo -e "\033[1;32m4.\033[0m QUIC"
-            echo -e "\033[1;32m5.\033[0m WS (WebSocket)"
-            echo -e "\033[1;32m6.\033[0m WSS (WebSocket Secure)"
-            echo -e "\033[1;32m7.\033[0m h2 (HTTP/2)"
-            echo -e "\033[1;32m8.\033[0m tls (TLS)"
-            echo -e "\033[1;32m9.\033[0m mwss (Multiplex Websocket)"
-            echo -e "\033[1;32m10.\033[0m h2c (HTTP2 Cleartext)"
-            echo -e "\033[1;32m11.\033[0m obfs4 (OBFS4)"
-            echo -e "\033[1;32m12.\033[0m ohttp (HTTP Obfuscation)"
-            echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
-            echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
-            echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
-            echo -e "\033[1;32m16.\033[0m icmp (ping tunnel)"
-            read -p "Enter your choice: " proto_choice
+            
+            # Ask about compression for server side
+            echo -e "\n\033[1;34mEnable Compression?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for better performance)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' compress_choice
+            compress_choice=${compress_choice:-1}
+            
+            # Ask about multiplexing for server side
+            echo -e "\n\033[1;34mEnable Multiplexing (mux)?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for multiple connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' mux_choice
+            mux_choice=${mux_choice:-1}
+            
+            # Ask about bind (only for server side)
+            echo -e "\n\033[1;34mEnable Bind?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Bind to all interfaces)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' bind_choice
+            bind_choice=${bind_choice:-1}
+            
+            # Ask about keepAlive for server side
+            echo -e "\n\033[1;34mEnable KeepAlive?\033[0m"
+            echo -e "\033[1;32m1.\033[0m Yes (Recommended for persistent connections)"
+            echo -e "\033[1;32m2.\033[0m No"
+            read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' keepalive_choice
+            keepalive_choice=${keepalive_choice:-1}
 
-            case $proto_choice in
-                1) GOST_OPTIONS="-L ssh://:${sport}" ;;
-                2) GOST_OPTIONS="-L kcp://:${sport}" ;;
-                3) GOST_OPTIONS="-L grpc://:${sport}" ;;
-                4) GOST_OPTIONS="-L quic://:${sport}" ;;
-                5) GOST_OPTIONS="-L ws://:${sport}" ;;
-                6) GOST_OPTIONS="-L wss://:${sport}" ;;
-                7) GOST_OPTIONS="-L h2://:${sport}" ;;
-                8) GOST_OPTIONS="-L tls://:${sport}" ;;
-                9) GOST_OPTIONS="-L mwss://:${sport}" ;;
-                10) GOST_OPTIONS="-L h2c://:${sport}" ;;
-                11) GOST_OPTIONS="-L obfs4://:${sport}" ;;
-                12) GOST_OPTIONS="-L ohttp://:${sport}" ;;
-                13) GOST_OPTIONS="-L otls://:${sport}" ;;
-                14) GOST_OPTIONS="-L mtls://:${sport}" ;;
-                15) GOST_OPTIONS="-L mws://:${sport}" ;;
-                16) GOST_OPTIONS="-L icmp://:${sport}" ;;
-                
-                *) echo -e "\033[1;31mInvalid protocol choice!\033[0m"; return ;;
-            esac
+            # Build GOST options for server side
+            GOST_OPTIONS="-L ${proto}://:${sport}"
+            
+            # Build parameters string
+            PARAMS=""
+            if [[ "$bind_choice" == "1" ]]; then
+                PARAMS+="bind=true"
+            fi
+            
+            if [[ "$keepalive_choice" == "1" ]]; then
+                if [[ -n "$PARAMS" ]]; then
+                    PARAMS+="&"
+                fi
+                PARAMS+="keepAlive=true"
+            fi
+            
+            if [[ "$compress_choice" == "1" ]]; then
+                if [[ -n "$PARAMS" ]]; then
+                    PARAMS+="&"
+                fi
+                PARAMS+="compress=true"
+            fi
+            
+            if [[ "$mux_choice" == "1" ]]; then
+                if [[ -n "$PARAMS" ]]; then
+                    PARAMS+="&"
+                fi
+                PARAMS+="mux=true"
+            fi
+            
+            # Add parameters if any
+            if [[ -n "$PARAMS" ]]; then
+                GOST_OPTIONS+="?${PARAMS}"
+            fi
             ;;
 
         *)
