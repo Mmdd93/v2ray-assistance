@@ -913,7 +913,7 @@ configure_relay() {
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
             echo -e "\033[1;32m16.\033[0m icmp (ping tunnel)"
             echo -e "\033[1;32m17.\033[0m relay"
-            read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
+            read -p $'\033[1;33m? Enter your choice [tcp]: \033[0m' trans_choice
 
             case $trans_choice in
                 1) TRANSMISSION="+kcp" ;;
@@ -1229,7 +1229,7 @@ configure_relay() {
             echo -e "\033[1;32m15.\033[0m MWS (Multiplex Websocket)"
             echo -e "\033[1;32m16.\033[0m icmp (ping tunnel)"
             echo -e "\033[1;32m17.\033[0m relay"
-            read -p $'\033[1;33mEnter your choice for relay transmission type: \033[0m' trans_choice
+            read -p $'\033[1;33mEnter your choice [tcp]: \033[0m' trans_choice
             
             case $trans_choice in
                 1) TRANSMISSION="+kcp" ;;
@@ -1387,7 +1387,7 @@ configure_forward() {
             echo -e "\033[1;32m13.\033[0m otls (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m mws (Multiplex Websocket)"
-            read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
+            read -p $'\033[1;33m? Enter your choice [tcp]: \033[0m' trans_choice
 
             case $trans_choice in
                 1) TRANSMISSION="kcp" ;;
@@ -1672,7 +1672,7 @@ configure_forward() {
             echo -e "\033[1;32m13.\033[0m oTLS (TLS Obfuscation)"
             echo -e "\033[1;32m14.\033[0m mTLS (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m MWS (Multiplex Websocket)"
-            read -p $'\033[1;33mEnter your choice for relay transmission type: \033[0m' trans_choice
+            read -p $'\033[1;33mEnter your choice [tcp]: \033[0m' trans_choice
             
             case $trans_choice in
                 1) TRANSMISSION="kcp" ;;
