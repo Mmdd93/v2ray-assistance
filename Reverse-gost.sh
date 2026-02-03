@@ -153,7 +153,7 @@ configure_relay() {
             echo -e "\033[1;32m14.\033[0m icmp (ping tunnel)"
             echo -e "\033[1;32m15.\033[0m relay"
             echo -e "\033[1;32m16.\033[0m tcp"
-            read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
+            read -p $'\033[1;33m? Enter your choice [tcp]: \033[0m' trans_choice
 
             case $trans_choice in
                 1) TRANSMISSION="+ws" ;;
@@ -377,7 +377,7 @@ configure_relay() {
             echo -e "\033[1;32m14.\033[0m icmp (ping tunnel)"
             echo -e "\033[1;32m15.\033[0m relay"
             echo -e "\033[1;32m16.\033[0m tcp"
-            read -p $'\033[1;33mEnter your choice for relay transmission type: \033[0m' trans_choice
+            read -p $'\033[1;33mEnter your choice [tcp]: \033[0m' trans_choice
 
             case $trans_choice in
                 1)  TRANSMISSION="+ws" ;;
@@ -571,7 +571,7 @@ configure_socks5() {
             echo -e "\033[1;32m14.\033[0m icmp (ping tunnel)"
             echo -e "\033[1;32m15.\033[0m socks5"
             echo -e "\033[1;32m16.\033[0m tcp"
-            read -p $'\033[1;33m? Enter your choice: \033[0m' trans_choice
+            read -p $'\033[1;33m? Enter your choice [tcp]: \033[0m' trans_choice
 
             case $trans_choice in
                 1) TRANSMISSION="+ws" ;;
@@ -792,7 +792,7 @@ configure_socks5() {
             echo -e "\033[1;32m15.\033[0m socks5"
             echo -e "\033[1;32m16.\033[0m tcp"
 
-            read -p $'\033[1;33mEnter your choice for socks5 transmission type: \033[0m' trans_choice
+            read -p $'\033[1;33mEnter your choice [tcp]: \033[0m' trans_choice
             case $trans_choice in
                 1) TRANSMISSION="+ws" ;;
                 2) TRANSMISSION="+wss" ;;
