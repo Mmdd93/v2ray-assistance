@@ -3672,7 +3672,7 @@ main_menu() {
 		echo -e "${CYAN} 89.${NC} ${CYAN}SMITE [GOST,Backhaul,Rathole,Chisel,FRP] WEB UI           ${WHITE}[github.com/zZedix/Smite]${NC}"
 		echo -e "${CYAN} 90.${NC} ${CYAN}WaterWall Reverse tunnel           ${WHITE}[github.com/Ptechgithub/WaterWall-Docs]${NC}"
 		echo -e "${CYAN} 94.${NC} ${CYAN}DNS Tunnel Manager (dnstm)           ${WHITE}[github.com/Net2Share/dnstm]${NC}"
-		echo -e "${CYAN} 95.${NC} ${CYAN}VortexL2            ${WHITE}[github.com/iliya-Developer/VortexL2]${NC}"
+		echo -e "${CYAN} 95.${NC} ${CYAN}VortexL2 L2TPv3 Ethernet Tunnel  ${WHITE}[github.com/iliya-Developer/VortexL2]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4148,7 +4148,7 @@ main_menu() {
                 sudo bash dnstm.sh
                 ;;
 			95)
-                echo -e "${YELLOW}DNS Tunnel Manager (dnstm)...${NC}"
+                echo -e "${YELLOW} VortexL2 L2TPv3 Ethernet Tunnel Manager...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/iliya-Developer/VortexL2/main/install.sh -o VortexL2
                 sudo bash VortexL2
