@@ -4151,8 +4151,8 @@ main_menu() {
 			95)
                 echo -e "${YELLOW} VortexL2 L2TPv3 Ethernet Tunnel Manager...${NC}"
 				sleep 1
-                curl -Ls https://raw.githubusercontent.com/iliya-Developer/VortexL2/main/install.sh -o VortexL2
-                sudo bash VortexL2
+                curl -Ls https://raw.githubusercontent.com/iliya-Developer/VortexL2/main/install.sh -o VortexL2.sh
+                sudo bash VortexL2.sh
 				sudo vortexl2
                 ;;
 			96)
