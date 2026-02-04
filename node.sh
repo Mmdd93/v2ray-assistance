@@ -3685,7 +3685,8 @@ main_menu() {
         
         # Telegram Bot section - WHITE
         echo -e "${WHITE} TELEGRAM BOT ${NC}"
-        echo -e "${WHITE} 75.${NC} ${WHITE}Mirza Bot Pro VPN Sale ${RED}[Multi]${NC} ${WHITE}[github.com/mahdiMGF2]${NC}"
+		echo -e "${WHITE} 97.${NC} ${WHITE}Mirza Bot Pro VPN Sale (oficial)${RED}[Multi]${NC} ${WHITE}[github.com/mahdiMGF2]${NC}"
+        echo -e "${WHITE} 75.${NC} ${WHITE}Mirza Bot Pro VPN Sale by v2 ${RED}[Multi]${NC} ${WHITE}[github.com/mahdiMGF2]${NC}"
         echo -e "${WHITE} 77.${NC} ${WHITE}mtproto proxy (telegram proxy) ${WHITE}[github.com/seriyps]${NC}"
         echo
         
@@ -4160,6 +4161,12 @@ main_menu() {
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/behzadea12/Paqet-Tunnel-Manager/main/paqet-manager.sh -o paqet-manager.sh
                 sudo bash paqet-manager.sh
+                ;;
+			97)
+                echo -e "${YELLOW} mirza-pro.sh...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/mahdiMGF2/mirzabot/main/install.sh -o mirza-pro.sh
+                sudo bash mirza-pro.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
