@@ -3674,6 +3674,7 @@ main_menu() {
 		echo -e "${CYAN} 94.${NC} ${CYAN}DNS Tunnel Manager (dnstm)           ${WHITE}[github.com/Net2Share/dnstm]${NC}"
 		echo -e "${CYAN} 95.${NC} ${CYAN}VortexL2 L2TPv3 Ethernet Tunnel  ${WHITE}[github.com/iliya-Developer/VortexL2]${NC}"
 		echo -e "${CYAN} 96.${NC} ${CYAN}Paqet-Tunnel-Manager  ${WHITE}[github.com/behzadea12/Paqet-Tunnel-Manager]${NC}"
+		echo -e "${CYAN} 98.${NC} ${CYAN}DaggerConnect Reverse tunnel  ${WHITE}[github.com/itsFLoKi/daggerConnect]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4167,6 +4168,12 @@ main_menu() {
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/mahdiMGF2/mirzabot/main/install.sh -o mirza-pro.sh
                 sudo bash mirza-pro.sh
+                ;;
+				98)
+                echo -e "${YELLOW} DaggerConnect...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/itsFLoKi/DaggerConnect/main/setup.sh -o DaggerConnect.sh
+                sudo bash DaggerConnect.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
