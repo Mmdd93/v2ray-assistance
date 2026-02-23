@@ -4180,7 +4180,8 @@ main_menu() {
                 echo -e "${YELLOW} Pahlavi-tunnel...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/Zehnovik/Pahlavi-tunnel/main/install.sh -o Pahlavi-tunnel.sh
-                sudo bash Pahlavi-tunnel.sh
+                sudo bash Pahlavi-tunnel.sh full
+				sudo pahlavi-tunnel
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
