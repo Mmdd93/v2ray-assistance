@@ -3675,6 +3675,7 @@ main_menu() {
 		echo -e "${CYAN} 95.${NC} ${CYAN}VortexL2 L2TPv3 Ethernet Tunnel  ${WHITE}[github.com/iliya-Developer/VortexL2]${NC}"
 		echo -e "${CYAN} 96.${NC} ${CYAN}Paqet-Tunnel-Manager  ${WHITE}[github.com/behzadea12/Paqet-Tunnel-Manager]${NC}"
 		echo -e "${CYAN} 98.${NC} ${CYAN}DaggerConnect Reverse tunnel  ${WHITE}[github.com/itsFLoKi/daggerConnect]${NC}"
+		echo -e "${CYAN} 99.${NC} ${CYAN}Pahlavi Reverse tunnel  ${WHITE}[github.com/Zehnovik/Pahlavi-tunnel]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4174,6 +4175,12 @@ main_menu() {
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/itsFLoKi/DaggerConnect/main/setup.sh -o DaggerConnect.sh
                 sudo bash DaggerConnect.sh
+                ;;
+				99)
+                echo -e "${YELLOW} Pahlavi-tunnel...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/Zehnovik/Pahlavi-tunnel/main/install.sh -o Pahlavi-tunnel.sh
+                sudo bash Pahlavi-tunnel.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
