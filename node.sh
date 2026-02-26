@@ -3676,6 +3676,7 @@ main_menu() {
 		echo -e "${CYAN} 96.${NC} ${CYAN}Paqet-Tunnel-Manager  ${WHITE}[github.com/behzadea12/Paqet-Tunnel-Manager]${NC}"
 		echo -e "${CYAN} 98.${NC} ${CYAN}DaggerConnect Reverse tunnel  ${WHITE}[github.com/itsFLoKi/daggerConnect]${NC}"
 		echo -e "${CYAN} 99.${NC} ${CYAN}Pahlavi Reverse tunnel  ${WHITE}[github.com/Zehnovik/Pahlavi-tunnel]${NC}"
+		echo -e "${CYAN} 100.${NC} ${CYAN}Ghost-wire Reverse tunnel  ${WHITE}[github.com/FrenchToblerone54/GhostwireInstaller]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4174,14 +4175,23 @@ main_menu() {
                 echo -e "${YELLOW} DaggerConnect...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/itsFLoKi/DaggerConnect/main/setup.sh -o DaggerConnect.sh
+				chmod +x DaggerConnect.sh
                 sudo bash DaggerConnect.sh
                 ;;
 				99)
                 echo -e "${YELLOW} Pahlavi-tunnel...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/Zehnovik/Pahlavi-tunnel/main/install.sh -o Pahlavi-tunnel.sh
+				chmod +x Pahlavi-tunnel.sh
                 sudo bash Pahlavi-tunnel.sh full
 				sudo pahlavi-tunnel
+                ;;
+			100)
+                echo -e "${YELLOW} Ghost-wire...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/FrenchToblerone54/GhostwireInstaller/main/setup.sh -o Ghost-wire.sh
+				chmod +x Ghost-wire.sh
+                sudo bash Ghost-wire.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
