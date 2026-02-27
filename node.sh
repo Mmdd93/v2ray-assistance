@@ -3677,6 +3677,7 @@ main_menu() {
 		echo -e "${CYAN} 98.${NC} ${CYAN}DaggerConnect Reverse tunnel  ${WHITE}[github.com/itsFLoKi/daggerConnect]${NC}"
 		echo -e "${CYAN} 99.${NC} ${CYAN}Pahlavi Reverse tunnel  ${WHITE}[github.com/Zehnovik/Pahlavi-tunnel]${NC}"
 		echo -e "${CYAN} 100.${NC} ${CYAN}Ghost-wire Reverse tunnel  ${WHITE}[github.com/FrenchToblerone54/GhostwireInstaller]${NC}"
+		echo -e "${CYAN} 101.${NC} ${CYAN}Paqet-X-Nulled tunnel  ${WHITE}[github.com/MrAminiDev/Paqet-X-Nulled]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4192,6 +4193,13 @@ main_menu() {
                 curl -Ls https://raw.githubusercontent.com/FrenchToblerone54/GhostwireInstaller/main/setup.sh -o Ghost-wire.sh
 				chmod +x Ghost-wire.sh
                 sudo bash Ghost-wire.sh
+                ;;
+			101)
+                echo -e "${YELLOW} Paqet-X-Nulled...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/MrAminiDev/Paqet-X-Nulled/main/install.sh -o Paqet-X-Nulled.sh
+				chmod +x Paqet-X-Nulled.sh
+                sudo bash Paqet-X-Nulled.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
