@@ -3725,6 +3725,7 @@ main_menu() {
 		echo -e "${LIGHT_CYAN} 91.${NC} ${LIGHT_CYAN}dnstt${NC}    ${WHITE}[github.com/bugfloyd/dnstt-deploy]${NC}"
 		echo -e "${LIGHT_CYAN} 92.${NC} ${LIGHT_CYAN}Shahan Panel${NC}    ${WHITE}[github.com/HamedAp/ShahanPanel]${NC}"
 		echo -e "${LIGHT_CYAN} 93.${NC} ${LIGHT_CYAN}SlipStream${NC}    ${WHITE}[github.com/mirzaaghazadeh/SlipStreamGUI]${NC}"
+		echo -e "${LIGHT_CYAN} 102.${NC} ${LIGHT_CYAN}MasterDnsVPN${NC}    ${WHITE}[github.com/masterking32/MasterDnsVPN]${NC}"
         echo
         
         # Panel Backup section - YELLOW
@@ -4200,6 +4201,13 @@ main_menu() {
                 curl -Ls https://raw.githubusercontent.com/MrAminiDev/Paqet-X-Nulled/main/install.sh -o Paqet-X-Nulled.sh
 				chmod +x Paqet-X-Nulled.sh
                 sudo bash Paqet-X-Nulled.sh
+                ;;
+			102)
+                echo -e "${YELLOW} MasterDnsVPN...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/masterking32/MasterDnsVPN/main/server_linux_install.sh -o MasterDnsVPN.sh
+				chmod +x MasterDnsVPN.sh
+                sudo bash MasterDnsVPN.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
