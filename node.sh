@@ -3678,6 +3678,7 @@ main_menu() {
 		echo -e "${CYAN} 99.${NC} ${CYAN}Pahlavi Reverse tunnel  ${WHITE}[github.com/Zehnovik/Pahlavi-tunnel]${NC}"
 		echo -e "${CYAN} 100.${NC} ${CYAN}Ghost-wire Reverse tunnel  ${WHITE}[github.com/FrenchToblerone54/GhostwireInstaller]${NC}"
 		echo -e "${CYAN} 101.${NC} ${CYAN}Paqet-X-Nulled tunnel  ${WHITE}[github.com/MrAminiDev/Paqet-X-Nulled]${NC}"
+		echo -e "${CYAN} 103.${NC} ${CYAN}Packet Tunnel — Web Panel  ${WHITE}[github.com/eris4444/packet-tunnel]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4208,6 +4209,13 @@ main_menu() {
                 curl -Ls https://raw.githubusercontent.com/masterking32/MasterDnsVPN/main/server_linux_install.sh -o MasterDnsVPN.sh
 				chmod +x MasterDnsVPN.sh
                 sudo bash MasterDnsVPN.sh
+                ;;
+			103)
+                echo -e "${YELLOW} Packet Tunnel — Web Panel...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/eris4444/packet-tunnel/main/install.sh -o packet-tunnel.sh
+				chmod +x packet-tunnel.sh
+                sudo bash packet-tunnel.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
