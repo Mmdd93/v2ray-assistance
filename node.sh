@@ -3679,6 +3679,7 @@ main_menu() {
 		echo -e "${CYAN} 100.${NC} ${CYAN}Ghost-wire Reverse tunnel  ${WHITE}[github.com/FrenchToblerone54/GhostwireInstaller]${NC}"
 		echo -e "${CYAN} 101.${NC} ${CYAN}Paqet-X-Nulled tunnel  ${WHITE}[github.com/MrAminiDev/Paqet-X-Nulled]${NC}"
 		echo -e "${CYAN} 103.${NC} ${CYAN}Packet Tunnel — Web Panel  ${WHITE}[github.com/eris4444/packet-tunnel]${NC}"
+		echo -e "${CYAN} 104.${NC} ${CYAN}T2HASH CORE Tunnel — Layer-0  ${WHITE}[github.com/T2HASH/T2HASH-CORE]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4217,6 +4218,13 @@ main_menu() {
 				chmod +x packet-tunnel.sh
                 sudo bash packet-tunnel.sh
                 ;;
+			104)
+                echo -e "${YELLOW} PT2HASH CORE...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/T2HASH/T2HASH-CORE/main/t2hash-deploy -o t2hash-deploy
+				chmod +x t2hash-deploy
+                sudo bash t2hash-deploy
+                ;; 
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
                 update 
