@@ -4223,7 +4223,7 @@ main_menu() {
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/T2HASH/T2HASH-CORE/main/t2hash-deploy -o t2hash-deploy
 				chmod +x t2hash-deploy
-                sudo bash t2hash-deploy
+                sudo ./t2hash-deploy
                 ;; 
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
