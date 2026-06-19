@@ -3703,7 +3703,11 @@ main_menu() {
         echo -e "${LIGHT_BLUE} 53.${NC} ${LIGHT_BLUE}Marzban node official script${NC}"
         echo -e "${LIGHT_BLUE} 52.${NC} ${LIGHT_BLUE}Marzban node by Mehrdad${NC}"
         echo
-        
+        # Rebecca Public section - ORANGE
+        echo -e "${ORANGE}Rebecca ${RED}[Multi]${NC}${NC}"
+        echo -e "${ORANGE} 105.${NC} ${ORANGE}Rebecca ${NC}"
+        echo -e "${ORANGE} 106.${NC} ${ORANGE}Rebecca node ${NC}"
+        echo
         # Remnawave section - GREEN
         echo -e "${GREEN} REMNAWAVE ${RED}[Multi]${NC}${NC}"
         echo -e "${GREEN} 48.${NC} ${GREEN}Remnawave ${NC}"
@@ -4224,6 +4228,18 @@ main_menu() {
                 curl -Ls https://raw.githubusercontent.com/T2HASH/T2HASH-CORE/main/t2hash-deploy -o t2hash-deploy
 				chmod +x t2hash-deploy
                 sudo ./t2hash-deploy
+                ;; 
+			105)
+                echo -e "${YELLOW} rebecca...${NC}"
+				sleep 1
+                sudo bash -c "$(curl -sL https://raw.githubusercontent.com/rebeccapanel/Rebecca/master/scripts/rebecca/rebecca.sh)" @ install-script
+				rebecca
+                ;; 
+			106)
+                echo -e "${YELLOW} Rebecca-node...${NC}"
+				sleep 1
+                sudo bash -c "$(curl -sL https://raw.githubusercontent.com/rebeccapanel/Rebecca/dev/scripts/rebecca/rebecca-node.sh)" @ install-script
+				Rebecca-node
                 ;; 
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
