@@ -4239,7 +4239,7 @@ main_menu() {
                 echo -e "${YELLOW} Rebecca-node...${NC}"
 				sleep 1
                 sudo bash -c "$(curl -sL https://raw.githubusercontent.com/rebeccapanel/Rebecca/dev/scripts/rebecca/rebecca-node.sh)" @ install-script
-				Rebecca-node
+				rebecca-node
                 ;; 
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
