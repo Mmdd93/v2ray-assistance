@@ -7,7 +7,7 @@ SYSCTL_CONF="/etc/sysctl.conf"
 LIMITS_CONF="/etc/security/limits.conf"
 BACKUP_DIR="/etc/optimizer_backups"
 TC_SCRIPT_NAME="tc_optimizer.sh"
-TC_SCRIPT_PATH="/usr/local/bin/$TC_SCRIPT_NAME"
+TC_SCRIPT_PATH="/root/$TC_SCRIPT_NAME"
 
 # =============================================================================
 # COLOR DEFINITIONS
