@@ -61,6 +61,7 @@ reload_sysctl() {
     fi
 }
 
+# IMPROVED: Safely handles keys with dots and special characters
 update_config() {
     local file="$1"
     local key="$2"
@@ -71,11 +72,12 @@ update_config() {
         touch "$file"
     fi
     
-    if grep -q "^$key" "$file"; then
-        if grep -q "^$key.*$value" "$file"; then
+    if grep -q "^$key\s*=" "$file"; then
+        local current_value=$(grep "^$key\s*=" "$file" | head -1 | sed 's/.*=\s*//')
+        if [[ "$current_value" == "$value" ]]; then
             echo -e "${YELLOW}Setting $key already configured${NC}"
         else
-            sed -i "s|^$key.*|$key = $value|" "$file"
+            sed -i "/^$key\s*=/c\\$key = $value" "$file"
             echo -e "${GREEN}Updated $key to $value${NC}"
         fi
     else
@@ -84,13 +86,29 @@ update_config() {
     fi
 }
 
+# NEW: Removes dangerous/obsolete settings that hurt gaming
+cleanup_bad_settings() {
+    echo -e "${YELLOW}Cleaning up obsolete/dangerous settings...${NC}"
+    # This line is deadly for gaming if set too low. Let kernel auto-tune it.
+    if grep -q "^net.ipv4.tcp_mem\s*=" "$SYSCTL_CONF"; then
+        sed -i "/^net.ipv4.tcp_mem\s*=/d" "$SYSCTL_CONF"
+        echo -e "${GREEN}Removed dangerously low net.ipv4.tcp_mem (kernel will auto-tune)${NC}"
+    fi
+    # Obsolete flag ignored by modern kernels
+    if grep -q "^net.ipv4.tcp_low_latency\s*=" "$SYSCTL_CONF"; then
+        sed -i "/^net.ipv4.tcp_low_latency\s*=/d" "$SYSCTL_CONF"
+        echo -e "${GREEN}Removed obsolete net.ipv4.tcp_low_latency${NC}"
+    fi
+}
+
 # =============================================================================
-# SYSCTL OPTIMIZATION PROFILES
+# SYSCTL OPTIMIZATION PROFILES (FIXED)
 # =============================================================================
 
 apply_gaming_optimizations() {
     echo -e "${CYAN}Applying GAMING Optimizations (Low Latency Focus)...${NC}"
     backup_configs
+    cleanup_bad_settings
 
     declare -A gaming_settings=(
         ["vm.swappiness"]="30"
@@ -104,7 +122,7 @@ apply_gaming_optimizations() {
         ["net.core.wmem_max"]="33554432"
         ["net.core.rmem_default"]="262144"
         ["net.core.wmem_default"]="262144"
-        ["net.core.netdev_max_backlog"]="2000"
+        ["net.core.netdev_max_backlog"]="1000"          # FIXED: Lowered for less jitter
         ["net.core.netdev_budget"]="600"
         ["net.core.somaxconn"]="65535"
         ["net.core.optmem_max"]="65536"
@@ -114,14 +132,16 @@ apply_gaming_optimizations() {
         ["net.core.default_qdisc"]="fq"
         ["net.ipv4.tcp_fastopen"]="3"
         ["net.ipv4.tcp_slow_start_after_idle"]="0"
-        ["net.ipv4.tcp_low_latency"]="1"
+        # ["net.ipv4.tcp_low_latency"]="1"  REMOVED: Obsolete
         ["net.ipv4.tcp_max_syn_backlog"]="8192"
         ["net.ipv4.tcp_max_tw_buckets"]="2000000"
         ["net.ipv4.tcp_tw_reuse"]="1"
         ["net.ipv4.tcp_fin_timeout"]="10"
-        ["net.ipv4.tcp_keepalive_time"]="300"
-        ["net.ipv4.tcp_keepalive_intvl"]="30"
-        ["net.ipv4.tcp_keepalive_probes"]="3"
+        ["net.ipv4.tcp_keepalive_time"]="180"          # FIXED: 3 minutes
+        ["net.ipv4.tcp_keepalive_intvl"]="15"          # FIXED: 15 seconds
+        ["net.ipv4.tcp_keepalive_probes"]="2"          # FIXED: 2 probes
+        ["net.ipv4.tcp_user_timeout"]="5000"           # NEW: 5 seconds abort
+        ["net.ipv4.tcp_notsent_lowat"]="16384"         # NEW: Low send queue
         ["net.ipv4.udp_rmem_min"]="8192"
         ["net.ipv4.udp_wmem_min"]="8192"
         ["net.ipv4.tcp_syncookies"]="1"
@@ -164,6 +184,7 @@ apply_gaming_optimizations() {
 apply_streaming_optimizations() {
     echo -e "${CYAN}Applying STREAMING Optimizations (High Throughput Focus)...${NC}"
     backup_configs
+    cleanup_bad_settings
 
     declare -A streaming_settings=(
         ["vm.swappiness"]="10"
@@ -190,6 +211,7 @@ apply_streaming_optimizations() {
         ["net.ipv4.tcp_tw_reuse"]="1"
         ["net.ipv4.tcp_fin_timeout"]="15"
         ["net.ipv4.tcp_keepalive_time"]="600"
+        ["net.ipv4.tcp_user_timeout"]="30000"          # NEW: 30s timeout for long downloads
         ["fs.file-max"]="4194304"
     )
 
@@ -225,6 +247,7 @@ apply_streaming_optimizations() {
 apply_general_optimizations() {
     echo -e "${CYAN}Applying GENERAL PURPOSE Optimizations (Balanced)...${NC}"
     backup_configs
+    cleanup_bad_settings
 
     declare -A general_settings=(
         ["vm.swappiness"]="60"
@@ -249,6 +272,7 @@ apply_general_optimizations() {
         ["net.ipv4.tcp_tw_reuse"]="1"
         ["net.ipv4.tcp_fin_timeout"]="30"
         ["net.ipv4.tcp_keepalive_time"]="7200"
+        ["net.ipv4.tcp_user_timeout"]="30000"          # NEW: 30s timeout
         ["net.ipv4.tcp_syncookies"]="1"
         ["fs.file-max"]="65536"
     )
@@ -285,6 +309,7 @@ apply_general_optimizations() {
 apply_competitive_gaming_optimizations() {
     echo -e "${CYAN}Applying COMPETITIVE GAMING Optimizations (Extreme Low Latency)...${NC}"
     backup_configs
+    cleanup_bad_settings
 
     declare -A comp_settings=(
         ["vm.swappiness"]="1"
@@ -308,7 +333,7 @@ apply_competitive_gaming_optimizations() {
         ["net.core.default_qdisc"]="fq"
         ["net.ipv4.tcp_fastopen"]="3"
         ["net.ipv4.tcp_slow_start_after_idle"]="0"
-        ["net.ipv4.tcp_low_latency"]="1"
+        # ["net.ipv4.tcp_low_latency"]="1"  REMOVED: Obsolete
         ["net.ipv4.tcp_no_metrics_save"]="1"
         ["net.ipv4.tcp_timestamps"]="0"
         ["net.ipv4.tcp_sack"]="0"
@@ -318,9 +343,11 @@ apply_competitive_gaming_optimizations() {
         ["net.ipv4.tcp_max_tw_buckets"]="1800000"
         ["net.ipv4.tcp_tw_reuse"]="1"
         ["net.ipv4.tcp_fin_timeout"]="5"
-        ["net.ipv4.tcp_keepalive_time"]="1800"
-        ["net.ipv4.tcp_keepalive_intvl"]="15"
-        ["net.ipv4.tcp_keepalive_probes"]="3"
+        ["net.ipv4.tcp_keepalive_time"]="120"          # FIXED: 2 minutes (aggressive)
+        ["net.ipv4.tcp_keepalive_intvl"]="10"          # FIXED: 10 seconds
+        ["net.ipv4.tcp_keepalive_probes"]="2"          # FIXED: 2 probes
+        ["net.ipv4.tcp_user_timeout"]="5000"           # NEW: 5 seconds abort
+        ["net.ipv4.tcp_notsent_lowat"]="16384"         # NEW: Low send queue
         ["net.ipv4.udp_rmem_min"]="4096"
         ["net.ipv4.udp_wmem_min"]="4096"
         ["fs.file-max"]="1048576"
@@ -336,10 +363,8 @@ apply_competitive_gaming_optimizations() {
 }
 
 # =============================================================================
-# TC OPTIMIZATION FUNCTIONS
+# TC OPTIMIZATION FUNCTIONS (No changes needed, already good)
 # =============================================================================
-
-
 
 # Function to detect available network interfaces
 detect_interfaces() {
@@ -551,7 +576,6 @@ ethtool -C "$INTERFACE" rx-usecs 0 tx-usecs 0 2>/dev/null && echo "✓ Interrupt
 # 5. TCP stack optimizations for gaming
 echo 10 > /proc/sys/net/ipv4/tcp_fin_timeout 2>/dev/null || true
 echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse 2>/dev/null || true
-echo 1 > /proc/sys/net/ipv4/tcp_low_latency 2>/dev/null || true
 
 # 6. TX queue length for low latency
 echo 256 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null && echo "✓ TX queue length set to 256" || echo "⚠ TX queue length not supported"
@@ -927,6 +951,7 @@ remove_all_optimizations() {
         "net.ipv4.tcp_fin_timeout" "net.ipv4.tcp_keepalive_time" "net.ipv4.tcp_keepalive_intvl"
         "net.ipv4.tcp_keepalive_probes" "net.ipv4.tcp_notsent_lowat" "net.ipv4.tcp_syncookies"
         "net.ipv4.udp_rmem_min" "net.ipv4.udp_wmem_min" "fs.file-max" "fs.nr_open"
+        "net.ipv4.tcp_user_timeout" # Added to cleanup
     )
 
     for key in "${sysctl_keys[@]}"; do
@@ -968,7 +993,7 @@ show_current_settings() {
     echo -e "${YELLOW}NETWORK SETTINGS:${NC}"
     echo -e "  Congestion Control: ${GREEN}$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null || echo 'default')${NC}"
     echo -e "  Queue Discipline:   ${GREEN}$(sysctl -n net.core.default_qdisc 2>/dev/null || echo 'default')${NC}"
-    echo -e "  TCP Low Latency:    ${GREEN}$(sysctl -n net.ipv4.tcp_low_latency 2>/dev/null || echo '0')${NC}"
+    echo -e "  TCP User Timeout:   ${GREEN}$(sysctl -n net.ipv4.tcp_user_timeout 2>/dev/null || echo 'N/A')${NC}"
     
     echo -e "\n${YELLOW}MEMORY SETTINGS:${NC}"
     echo -e "  Swappiness:         ${GREEN}$(sysctl -n vm.swappiness 2>/dev/null || echo '60')${NC}"
