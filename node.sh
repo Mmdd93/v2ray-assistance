@@ -3680,6 +3680,7 @@ main_menu() {
 		echo -e "${CYAN} 101.${NC} ${CYAN}Paqet-X-Nulled tunnel  ${WHITE}[github.com/MrAminiDev/Paqet-X-Nulled]${NC}"
 		echo -e "${CYAN} 103.${NC} ${CYAN}Packet Tunnel — Web Panel  ${WHITE}[github.com/eris4444/packet-tunnel]${NC}"
 		echo -e "${CYAN} 104.${NC} ${CYAN}T2HASH CORE Tunnel — Layer-0  ${WHITE}[github.com/T2HASH/T2HASH-CORE]${NC}"
+		echo -e "${CYAN} 107.${NC} ${CYAN}Phormal Tunnel  ${WHITE}[github.com/Schmi7zz/Phormal]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4240,6 +4241,13 @@ main_menu() {
 				sleep 1
                 sudo bash -c "$(curl -sL https://raw.githubusercontent.com/rebeccapanel/Rebecca/dev/scripts/rebecca/rebecca-node.sh)" @ install-script
 				rebecca-node
+                ;; 
+			107)
+                echo -e "${YELLOW} phormal...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/Schmi7zz/Phormal/main/phormal.sh -o phormal.sh
+				chmod +x phormal.sh
+                sudo bash phormal.sh
                 ;; 
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
