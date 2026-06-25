@@ -4251,7 +4251,7 @@ main_menu() {
                 sudo bash phormal.sh
                 ;; 
 			108)
-                echo -e "${YELLOW} phormal...${NC}"
+                echo -e "${YELLOW} paqctl...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/SamNet-dev/paqctl/main/paqctl.sh -o paqctl.sh
 				chmod +x paqctl.sh
