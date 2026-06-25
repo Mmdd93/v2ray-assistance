@@ -3681,6 +3681,7 @@ main_menu() {
 		echo -e "${CYAN} 103.${NC} ${CYAN}Packet Tunnel — Web Panel  ${WHITE}[github.com/eris4444/packet-tunnel]${NC}"
 		echo -e "${CYAN} 104.${NC} ${CYAN}T2HASH CORE Tunnel — Layer-0  ${WHITE}[github.com/T2HASH/T2HASH-CORE]${NC}"
 		echo -e "${CYAN} 107.${NC} ${CYAN}Phormal Tunnel  ${WHITE}[github.com/Schmi7zz/Phormal]${NC}"
+		echo -e "${CYAN} 108.${NC} ${CYAN}Paqctl Tunnel  ${WHITE}[github.com/SamNet-dev/paqctl]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4249,6 +4250,13 @@ main_menu() {
 				chmod +x phormal.sh
                 sudo bash phormal.sh
                 ;; 
+			108)
+                echo -e "${YELLOW} phormal...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/SamNet-dev/paqctl/main/paqctl.sh -o paqctl.sh
+				chmod +x paqctl.sh
+                sudo bash paqctl.sh
+                ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
                 update 
