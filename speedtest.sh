@@ -8,10 +8,10 @@ SPEEDTEST_BIN="speedtest"
 
 # Function to install dependencies and Speedtest CLI
 install_speedtest() {
-    echo -e "\033[1;32mChecking dependencies (curl, jq, wget)...\033[0m"
-    if ! command -v curl &> /dev/null || ! command -v jq &> /dev/null || ! command -v wget &> /dev/null; then
+    echo -e "\033[1;32mChecking dependencies (curl, jq, wget, iperf3)...\033[0m"
+    if ! command -v curl &> /dev/null || ! command -v jq &> /dev/null || ! command -v wget &> /dev/null || ! command -v iperf3 &> /dev/null; then
         echo -e "\033[1;33mInstalling missing dependencies...\033[0m"
-        apt-get update -y && apt-get install curl jq wget -y
+        apt-get update -y && apt-get install curl jq wget iperf3 -y
     fi
 
     if [ ! -d "$SPEEDTEST_DIR" ]; then
@@ -154,36 +154,50 @@ run_speedtest() {
     read -p "Press Enter to continue..."
 }
 
-# NEW FUNCTION: Direct Wget Speedtest (No Disk Space Used)
+# NEW/UPDATED FUNCTION: Direct HTTP & Network Benchmark (Wget & iPerf3)
 run_wget_speedtest() {
     clear
-    echo -e "\033[1;34m--- Direct HTTP Speedtest (wget to /dev/null) ---\033[0m"
-    echo -e "\033[1;32m1. Frankfurt, Germany (Linode)\033[0m"
-    echo -e "\033[1;32m2. Amsterdam, Netherlands (Linode)\033[0m"
-    echo -e "\033[1;32m3. London, United Kingdom (Linode)\033[0m"
-    echo -e "\033[1;32m4. Newark, USA (Linode)\033[0m"
-    echo -e "\033[1;32m5. Singapore (Linode)\033[0m"
+    echo -e "\033[1;34m--- Direct Network Speedtest Menu ---\033[0m"
+    echo -e "\033[1;35m[ DOWNLOAD TESTS (wget to /dev/null) ]\033[0m"
+    echo -e "  1. Frankfurt, Germany (Linode)"
+    echo -e "  2. Amsterdam, Netherlands (Linode)"
+    echo -e "  3. Newark, USA (Linode)"
+    echo -e "\033[1;35m[ UPLOAD TESTS (iperf3 Network Pump) ]\033[0m"
+    echo -e "  4. Upload Test to Germany (WTNET iPerf Server)"
+    echo -e "  5. Upload Test to France (Paris iPerf Server)"
+    echo -e "------------------------------------------------------------"
     echo -e "\033[1;31m0. Back to Main Menu\033[0m"
     read -p $'\033[1;36mSelect a test server (0-5): \033[0m' WGET_OPT
 
-    local url=""
     case $WGET_OPT in
         0) return ;;
-        1) url="http://speedtest.frankfurt.linode.com/100MB-frankfurt.bin" ;;
-        2) url="http://speedtest.amsterdam.linode.com/100MB-amsterdam.bin" ;;
-        3) url="http://speedtest.london.linode.com/100MB-london.bin" ;;
-        4) url="http://speedtest.newark.linode.com/100MB-newark.bin" ;;
-        5) url="http://speedtest.singapore.linode.com/100MB-singapore.bin" ;;
-        *) echo -e "\033[1;31mInvalid option.\033[0m"; sleep 1; return ;;
+        1)
+            echo -e "\n\033[1;33mDownloading 100MB from Frankfurt... (No disk write)\033[0m"
+            wget -O /dev/null http://speedtest.frankfurt.linode.com/100MB-frankfurt.bin
+            ;;
+        2)
+            echo -e "\n\033[1;33mDownloading 100MB from Amsterdam... (No disk write)\033[0m"
+            wget -O /dev/null http://speedtest.amsterdam.linode.com/100MB-amsterdam.bin
+            ;;
+        3)
+            echo -e "\n\033[1;33mDownloading 100MB from Newark, USA... (No disk write)\033[0m"
+            wget -O /dev/null http://speedtest.newark.linode.com/100MB-newark.bin
+            ;;
+        4)
+            if ! command -v iperf3 &> /dev/null; then apt-get install iperf3 -y; fi
+            echo -e "\n\033[1;33mRunning 10-second Upload test to Germany via iPerf3...\033[0m"
+            iperf3 -c speedtest.wtnet.de -R
+            ;;
+        5)
+            if ! command -v iperf3 &> /dev/null; then apt-get install iperf3 -y; fi
+            echo -e "\n\033[1;33mRunning 10-second Upload test to France (Paris) via iPerf3...\033[0m"
+            iperf3 -c paris.iperf3.fr -R
+            ;;
+        *)
+            echo -e "\033[1;31mInvalid option.\033[0m"; sleep 1; return ;;
     esac
-
-    echo -e "\n\033[1;33mStarting download test... (Output routed to /dev/null)\033[0m"
-    echo -e "\033[1;35mPlease check the progress and final speed below:\033[0m\n"
     
-    # Run wget, saving to /dev/null so it consumes 0 bytes of disk space
-    wget -O /dev/null "$url"
-    
-    echo -e "\n\033[1;32mTest completed. Disk space remained untouched.\033[0m"
+    echo -e "\n\033[1;32mTest completed successfully.\033[0m"
     read -p "Press Enter to continue..."
 }
 
@@ -202,10 +216,10 @@ remove_speedtest() {
 while true; do
     clear
     echo -e "\033[1;34mSpeedtest CLI Manager\033[0m"
-    echo -e "\033[1;32m1. Install/Update Speedtest CLI\033[0m"
+    echo -e "\033[1;32m1. Install/Update Speedtest CLI & Dependencies\033[0m"
     echo -e "\033[1;32m2. Run Ookla Speedtest Benchmark (Official CLI)\033[0m"
-    echo -e "\033[1;32m3. Run Direct HTTP Speedtest (wget - No Disk Space)\033[0m"
-    echo -e "\033[1;31m4. Remove Speedtest CLI\033[0m"
+    echo -e "\033[1;32m3. Run Direct HTTP/Network Speedtest (Download & Upload)\033[0m"
+    echo -e "\033[1;32m4. Remove Speedtest CLI\033[0m"
     echo -e "\033[1;31m0. Exit\033[0m"
     read -p $'\033[1;36mChoose an option (0-4): \033[0m' MAIN_OPTION
 
