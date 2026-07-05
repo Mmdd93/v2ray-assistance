@@ -34,7 +34,6 @@ install_speedtest() {
 
 # Function to run Speedtest CLI
 run_speedtest() {
-    # CRITICAL CHECK: Ensure curl and jq are available
     if ! command -v curl &> /dev/null || ! command -v jq &> /dev/null; then
         echo -e "\033[1;33mRequired tools (curl/jq) missing for Live API. Installing now...\033[0m"
         apt-get update -y && apt-get install curl jq -y
@@ -138,18 +137,18 @@ run_speedtest() {
 
     echo -e "\n\033[1;32mRunning Speedtest...\033[0m"
     
-    # Try testing with fallback to prevent firewall socket blockage
     if [ -z "$SERVER_ID" ]; then
         "$SPEEDTEST_DIR/$SPEEDTEST_BIN" --accept-license --accept-gdpr
     else
-        # Added execution routing fallback logic
-        echo -e "\033[1;33mAttempting primary route connection...\033[0m"
+        echo -e "\033[1;33mTrying selected Server ID: $SERVER_ID...\033[0m"
+        # Run standard official speedtest command without wrong protocol flags
         "$SPEEDTEST_DIR/$SPEEDTEST_BIN" --accept-license --accept-gdpr -s "$SERVER_ID"
         
-        # If the primary route fails with an error (like timeout), automatically switch to a broader network lookup
+        # Bench.sh logic: If target server drops out/timeouts, instantly pick the best responsive host nearby
         if [ $? -ne 0 ]; then
-            echo -e "\n\033[1;31mPrimary connection failed/timed out.\033[0m"
-            echo -e "\033[1;35mRouting through secondary dynamic fallback network engine...\033[0m"
+            echo -e "\n\033[1;31mTarget server timed out or network port is blocked.\033[0m"
+            echo -e "\033[1;35mBench.sh Fallback: Auto-routing to the best responsive server...\033[0m"
+            echo -e "------------------------------------------------------------"
             "$SPEEDTEST_DIR/$SPEEDTEST_BIN" --accept-license --accept-gdpr
         fi
     fi
