@@ -8,10 +8,10 @@ SPEEDTEST_BIN="speedtest"
 
 # Function to install dependencies and Speedtest CLI
 install_speedtest() {
-    echo -e "\033[1;32mChecking dependencies (curl, jq)...\033[0m"
-    if ! command -v curl &> /dev/null || ! command -v jq &> /dev/null; then
+    echo -e "\033[1;32mChecking dependencies (curl, jq, wget)...\033[0m"
+    if ! command -v curl &> /dev/null || ! command -v jq &> /dev/null || ! command -v wget &> /dev/null; then
         echo -e "\033[1;33mInstalling missing dependencies...\033[0m"
-        apt-get update -y && apt-get install curl jq -y
+        apt-get update -y && apt-get install curl jq wget -y
     fi
 
     if [ ! -d "$SPEEDTEST_DIR" ]; then
@@ -141,10 +141,8 @@ run_speedtest() {
         "$SPEEDTEST_DIR/$SPEEDTEST_BIN" --accept-license --accept-gdpr
     else
         echo -e "\033[1;33mTrying selected Server ID: $SERVER_ID...\033[0m"
-        # Run standard official speedtest command without wrong protocol flags
         "$SPEEDTEST_DIR/$SPEEDTEST_BIN" --accept-license --accept-gdpr -s "$SERVER_ID"
         
-        # Bench.sh logic: If target server drops out/timeouts, instantly pick the best responsive host nearby
         if [ $? -ne 0 ]; then
             echo -e "\n\033[1;31mTarget server timed out or network port is blocked.\033[0m"
             echo -e "\033[1;35mBench.sh Fallback: Auto-routing to the best responsive server...\033[0m"
@@ -153,6 +151,39 @@ run_speedtest() {
         fi
     fi
     echo ""
+    read -p "Press Enter to continue..."
+}
+
+# NEW FUNCTION: Direct Wget Speedtest (No Disk Space Used)
+run_wget_speedtest() {
+    clear
+    echo -e "\033[1;34m--- Direct HTTP Speedtest (wget to /dev/null) ---\033[0m"
+    echo -e "\033[1;32m1. Frankfurt, Germany (Linode)\033[0m"
+    echo -e "\033[1;32m2. Amsterdam, Netherlands (Linode)\033[0m"
+    echo -e "\033[1;32m3. London, United Kingdom (Linode)\033[0m"
+    echo -e "\033[1;32m4. Newark, USA (Linode)\033[0m"
+    echo -e "\033[1;32m5. Singapore (Linode)\033[0m"
+    echo -e "\033[1;31m0. Back to Main Menu\033[0m"
+    read -p $'\033[1;36mSelect a test server (0-5): \033[0m' WGET_OPT
+
+    local url=""
+    case $WGET_OPT in
+        0) return ;;
+        1) url="http://speedtest.frankfurt.linode.com/100MB-frankfurt.bin" ;;
+        2) url="http://speedtest.amsterdam.linode.com/100MB-amsterdam.bin" ;;
+        3) url="http://speedtest.london.linode.com/100MB-london.bin" ;;
+        4) url="http://speedtest.newark.linode.com/100MB-newark.bin" ;;
+        5) url="http://speedtest.singapore.linode.com/100MB-singapore.bin" ;;
+        *) echo -e "\033[1;31mInvalid option.\033[0m"; sleep 1; return ;;
+    esac
+
+    echo -e "\n\033[1;33mStarting download test... (Output routed to /dev/null)\033[0m"
+    echo -e "\033[1;35mPlease check the progress and final speed below:\033[0m\n"
+    
+    # Run wget, saving to /dev/null so it consumes 0 bytes of disk space
+    wget -O /dev/null "$url"
+    
+    echo -e "\n\033[1;32mTest completed. Disk space remained untouched.\033[0m"
     read -p "Press Enter to continue..."
 }
 
@@ -172,10 +203,11 @@ while true; do
     clear
     echo -e "\033[1;34mSpeedtest CLI Manager\033[0m"
     echo -e "\033[1;32m1. Install/Update Speedtest CLI\033[0m"
-    echo -e "\033[1;32m2. Run Speedtest Benchmark\033[0m"
-    echo -e "\033[1;32m3. Remove Speedtest CLI\033[0m"
+    echo -e "\033[1;32m2. Run Ookla Speedtest Benchmark (Official CLI)\033[0m"
+    echo -e "\033[1;32m3. Run Direct HTTP Speedtest (wget - No Disk Space)\033[0m"
+    echo -e "\033[1;31m4. Remove Speedtest CLI\033[0m"
     echo -e "\033[1;31m0. Exit\033[0m"
-    read -p $'\033[1;36mChoose an option (0-3): \033[0m' MAIN_OPTION
+    read -p $'\033[1;36mChoose an option (0-4): \033[0m' MAIN_OPTION
 
     case $MAIN_OPTION in
         1)
@@ -191,6 +223,9 @@ while true; do
             fi
             ;;
         3)
+            run_wget_speedtest
+            ;;
+        4)
             remove_speedtest
             read -p "Press Enter to continue..."
             ;;
