@@ -6,7 +6,7 @@ SPEEDTEST_URL="https://install.speedtest.net/app/cli/ookla-speedtest-1.2.0-linux
 SPEEDTEST_ARCHIVE="ookla-speedtest-1.2.0-linux-x86_64.tgz"
 SPEEDTEST_BIN="speedtest"
 
-# Function to install dependencies and Speedtest CLI
+# Function to install dependencies
 install_speedtest() {
     echo -e "\033[1;32mChecking dependencies (curl, jq, wget, iperf3)...\033[0m"
     if ! command -v curl &> /dev/null || ! command -v jq &> /dev/null || ! command -v wget &> /dev/null || ! command -v iperf3 &> /dev/null; then
@@ -32,16 +32,11 @@ install_speedtest() {
     echo -e "\033[1;32mSpeedtest CLI installed successfully.\033[0m"
 }
 
-# Function to run Speedtest CLI
+# Function to run Speedtest CLI (Ookla)
 run_speedtest() {
     if ! command -v curl &> /dev/null || ! command -v jq &> /dev/null; then
         echo -e "\033[1;33mRequired tools (curl/jq) missing for Live API. Installing now...\033[0m"
         apt-get update -y && apt-get install curl jq -y
-        if [ $? -ne 0 ]; then
-            echo -e "\033[1;31mFailed to install jq/curl. Cannot perform global search.\033[0m"
-            read -p "Press Enter to return..."
-            return
-        fi
     fi
 
     local countries=(
@@ -101,10 +96,7 @@ run_speedtest() {
                 break
                 ;;
             *)
-                echo -e "\033[1;31mInvalid option.\033[0m"
-                read -p "Press Enter to return..."
-                continue
-                ;;
+                echo -e "\033[1;31mInvalid option.\033[0m"; read -p "Press Enter to return..."; continue ;;
         esac
 
         if [ -n "$SEARCH_TERM" ]; then
@@ -114,7 +106,6 @@ run_speedtest() {
             echo -e "------------------------------------------------------------"
             
             local encoded_term=$(echo "$SEARCH_TERM" | sed 's/ /%20/g')
-            
             curl -s "https://www.speedtest.net/api/js/servers?search=$encoded_term&limit=15" | \
             jq -r '.[] | "\(.id)\t\(.sponsor)\t\(.name) (\(.country))"' | while IFS=$'\t' read -r id sponsor location; do
                 if [ -n "$id" ]; then
@@ -122,83 +113,157 @@ run_speedtest() {
                 fi
             done
             echo -e "------------------------------------------------------------"
-            
             read -p $'\033[1;36mEnter Server ID from the list above (or 0 to back): \033[0m' SERVER_ID
             if [ "$SERVER_ID" = "0" ] || [ -z "$SERVER_ID" ]; then continue; fi
             break
         fi
     done
 
-    if [ -n "$SERVER_ID" ] && ! [[ "$SERVER_ID" =~ ^[0-9]+$ ]]; then
-        echo -e "\033[1;31mInvalid server ID. Must be a number.\033[0m"
-        read -p "Press Enter to return..."
-        return
-    fi
-
     echo -e "\n\033[1;32mRunning Speedtest...\033[0m"
-    
     if [ -z "$SERVER_ID" ]; then
         "$SPEEDTEST_DIR/$SPEEDTEST_BIN" --accept-license --accept-gdpr
     else
-        echo -e "\033[1;33mTrying selected Server ID: $SERVER_ID...\033[0m"
         "$SPEEDTEST_DIR/$SPEEDTEST_BIN" --accept-license --accept-gdpr -s "$SERVER_ID"
-        
-        if [ $? -ne 0 ]; then
-            echo -e "\n\033[1;31mTarget server timed out or network port is blocked.\033[0m"
-            echo -e "\033[1;35mBench.sh Fallback: Auto-routing to the best responsive server...\033[0m"
-            echo -e "------------------------------------------------------------"
-            "$SPEEDTEST_DIR/$SPEEDTEST_BIN" --accept-license --accept-gdpr
-        fi
     fi
     echo ""
     read -p "Press Enter to continue..."
 }
 
-# NEW/UPDATED FUNCTION: Direct HTTP & Network Benchmark (Wget & iPerf3)
+# Function to run Wget Speedtest
 run_wget_speedtest() {
     clear
-    echo -e "\033[1;34m--- Direct Network Speedtest Menu ---\033[0m"
-    echo -e "\033[1;35m[ DOWNLOAD TESTS (wget to /dev/null) ]\033[0m"
+    echo -e "\033[1;34m--- Direct HTTP Download Test (wget) ---\033[0m"
     echo -e "  1. Frankfurt, Germany (Linode)"
     echo -e "  2. Amsterdam, Netherlands (Linode)"
     echo -e "  3. Newark, USA (Linode)"
-    echo -e "\033[1;35m[ UPLOAD TESTS (iperf3 Network Pump) ]\033[0m"
-    echo -e "  4. Upload Test to Germany (WTNET iPerf Server)"
-    echo -e "  5. Upload Test to France (Paris iPerf Server)"
     echo -e "------------------------------------------------------------"
     echo -e "\033[1;31m0. Back to Main Menu\033[0m"
-    read -p $'\033[1;36mSelect a test server (0-5): \033[0m' WGET_OPT
+    read -p $'\033[1;36mSelect a server (0-3): \033[0m' WGET_OPT
 
     case $WGET_OPT in
         0) return ;;
-        1)
-            echo -e "\n\033[1;33mDownloading 100MB from Frankfurt... (No disk write)\033[0m"
-            wget -O /dev/null http://speedtest.frankfurt.linode.com/100MB-frankfurt.bin
-            ;;
-        2)
-            echo -e "\n\033[1;33mDownloading 100MB from Amsterdam... (No disk write)\033[0m"
-            wget -O /dev/null http://speedtest.amsterdam.linode.com/100MB-amsterdam.bin
-            ;;
-        3)
-            echo -e "\n\033[1;33mDownloading 100MB from Newark, USA... (No disk write)\033[0m"
-            wget -O /dev/null http://speedtest.newark.linode.com/100MB-newark.bin
-            ;;
-        4)
-            if ! command -v iperf3 &> /dev/null; then apt-get install iperf3 -y; fi
-            echo -e "\n\033[1;33mRunning 10-second Upload test to Germany via iPerf3...\033[0m"
-            iperf3 -c speedtest.wtnet.de -R
-            ;;
-        5)
-            if ! command -v iperf3 &> /dev/null; then apt-get install iperf3 -y; fi
-            echo -e "\n\033[1;33mRunning 10-second Upload test to France (Paris) via iPerf3...\033[0m"
-            iperf3 -c paris.iperf3.fr -R
-            ;;
-        *)
-            echo -e "\033[1;31mInvalid option.\033[0m"; sleep 1; return ;;
+        1) wget -O /dev/null http://speedtest.frankfurt.linode.com/100MB-frankfurt.bin ;;
+        2) wget -O /dev/null http://speedtest.amsterdam.linode.com/100MB-amsterdam.bin ;;
+        3) wget -O /dev/null http://speedtest.newark.linode.com/100MB-newark.bin ;;
+        *) echo -e "\033[1;31mInvalid option.\033[0m"; sleep 1; return ;;
     esac
-    
-    echo -e "\n\033[1;32mTest completed successfully.\033[0m"
     read -p "Press Enter to continue..."
+}
+
+# NEW EXTENSIVE FUNCTION: Advanced iPerf3 Expert Panel
+run_iperf3_advanced() {
+    if ! command -v iperf3 &> /dev/null; then apt-get install iperf3 -y; fi
+
+    # Array of highly stable worldwide public iPerf3 servers
+    local servers=(
+        "speedtest.wtnet.de" "paris.iperf3.fr" "iperf.worldstream.nl" 
+        "iperf.biznetnetworks.com" "speedtest.uztelecom.uz" "iperf3.cc.columbia.edu"
+        "bouygues.testdebit.fr" "iperf3.velocityonline.net" "lon.iperf.hostkey.com"
+    )
+    local labels=(
+        "WilhelmTel (Germany)" "NextGen (Paris, France)" "Worldstream (Netherlands)"
+        "Biznet (Indonesia)" "UzTelecom (Uzbekistan)" "Columbia University (New York, USA)"
+        "Bouygues Telecom (France)" "Velocity Online (Florida, USA)" "Hostkey (London, UK)"
+    )
+
+    while true; do
+        clear
+        echo -e "\033[1;34m============================================================\033[0m"
+        echo -e "\033[1;34m               iPerf3 ADVANCED EXPERT PANEL                 \033[0m"
+        echo -e "\033[1;34m============================================================\033[0m"
+        echo -e "\033[1;35m[ AVAILABLE GLOBAL HIGH-SPEED SERVERS ]\033[0m"
+        for i in "${!servers[@]}"; do
+            printf "\033[1;32m%2d) %-30s -> %-25s\033[0m\n" $((i+1)) "${labels[$i]}" "${servers[$i]}"
+        done
+        echo -e "------------------------------------------------------------"
+        echo -e "\033[1;33mM1. [MULTI-SERVER] Dual-Server Simultaneous Test (Germany + France)\033[0m"
+        echo -e "\033[1;33mM2. [MULTI-SERVER] Triple-Server Stress Test (Germany + France + NL)\033[0m"
+        echo -e "------------------------------------------------------------"
+        echo -e "\033[1;31m0. Return to Main Menu\033[0m"
+        echo -e "------------------------------------------------------------"
+        read -p $'\033[1;36mSelect Server Number or Custom Option (0-9 / M1 / M2): \033[0m' CHOICE
+
+        if [ "$CHOICE" = "0" ]; then return; fi
+
+        # Advanced Tweak Variables (Defaults)
+        local mode="-R"      # Default to Upload test (Server to Client / Reverse)
+        local streams="4"    # Default 4 parallel threads
+        local time="10"      # Default 10 seconds duration
+        local proto=""       # Default TCP
+        local port="5201"    # Default iPerf port
+
+        # Multi-Server Core Engines
+        if [ "$CHOICE" = "M1" ] || [ "$CHOICE" = "m1" ] || [ "$CHOICE" = "M2" ] || [ "$CHOICE" = "m2" ]; then
+            echo -e "\n\033[1;35m--- Configure Multi-Server Tweak Parameters ---\033[0m"
+            read -p "1. Enter Direction [1: Upload(Pure Pump) / 2: Download] (Default 1): " DIRECT
+            [ "$DIRECT" = "2" ] && mode=""
+            
+            read -p "2. Enter Parallel Threads per server (1-10) (Default 4): " STRM
+            [[ "$STRM" =~ ^[0-9]+$ ]] && streams="$STRM"
+
+            read -p "3. Enter Duration in seconds (Default 10): " SEC
+            [[ "$SEC" =~ ^[0-9]+$ ]] && time="$SEC"
+
+            echo -e "\n\033[1;32mLaunching Multi-Server parallel pipelines. Splitting terminal views...\033[0m"
+            echo -e "----------------------------------------------------------------------"
+            
+            if [ "$CHOICE" = "M1" ] || [ "$CHOICE" = "m1" ]; then
+                echo -e "\033[1;33m[Job 1] Pumping to Germany (${servers[0]})\033[0m"
+                echo -e "\033[1;36m[Job 2] Pumping to France (${servers[1]})\033[0m"
+                iperf3 -c "${servers[0]}" $mode -P "$streams" -t "$time" --json | jq '.end.sum_received.bits_per_second / 1024 / 1024' | sed 's/^/Germany Output: /' &
+                PID1=$!
+                iperf3 -c "${servers[1]}" $mode -P "$streams" -t "$time" --json | jq '.end.sum_received.bits_per_second / 1024 / 1024' | sed 's/^/France Output: /' &
+                PID2=$!
+                wait $PID1 $PID2
+            else
+                echo -e "\033[1;33m[Job 1] Pumping to Germany (${servers[0]})\033[0m"
+                echo -e "\033[1;36m[Job 2] Pumping to France (${servers[1]})\033[0m"
+                echo -e "\033[1;35m[Job 3] Pumping to Netherlands (${servers[2]})\033[0m"
+                iperf3 -c "${servers[0]}" $mode -P "$streams" -t "$time" &
+                PID1=$!
+                iperf3 -c "${servers[1]}" $mode -P "$streams" -t "$time" &
+                PID2=$!
+                iperf3 -c "${servers[2]}" $mode -P "$streams" -t "$time" &
+                PID3=$!
+                wait $PID1 $PID2 $PID3
+            fi
+            echo -e "\n\033[1;32mParallel Multi-Server benchmark finalized.\033[0m"
+            read -p "Press Enter to continue..."
+            continue
+        fi
+
+        # Single Server Custom Engine Configurator
+        if [[ "$CHOICE" =~ ^[0-9]+$ ]] && [ "$CHOICE" -ge 1 ] && [ "$CHOICE" -le "${#servers[@]}" ]; then
+            local target_server="${servers[$((CHOICE-1))]}"
+            
+            clear
+            echo -e "\033[1;34m--- Tweak Performance Options for: $target_server ---\033[0m"
+            echo -e "\033[1;32m1. Test Mode:\033[0m [U] Upload (Reverse Network Pump) | [D] Download"
+            read -p "   Choose Mode (Default U): " TM
+            [ "$TM" = "D" ] || [ "$TM" = "d" ] && mode=""
+
+            echo -e "\033[1;32m2. Protocol Mode:\033[0m [T] TCP (Standard) | [U] UDP (Raw Stress)"
+            read -p "   Choose Protocol (Default T): " PM
+            [ "$PM" = "U" ] || [ "$PM" = "u" ] && proto="-u -b 1000M" # 1G bandwidth allocation for UDP
+
+            read -p "3. Enter Parallel Streams/Threads count (1-16) (Default 4): " THREADS
+            [[ "$THREADS" =~ ^[0-9]+$ ]] && streams="$THREADS"
+
+            read -p "4. Enter Test Time Frame/Duration (Seconds) (Default 10): " DUR
+            [[ "$DUR" =~ ^[0-9]+$ ]] && time="$DUR"
+
+            read -p "5. Custom Server Port (Hit Enter for Default 5201): " PRT
+            [[ "$PRT" =~ ^[0-9]+$ ]] && port="$PRT"
+
+            echo -e "\n\033[1;33mExecuting Custom Pipeline: iperf3 -c $target_server -p $port $mode -P $streams -t $time $proto\033[0m\n"
+            echo -e "------------------------------------------------------------"
+            iperf3 -c "$target_server" -p "$port" $mode -P "$streams" -t "$time" $proto
+            echo -e "------------------------------------------------------------"
+            read -p "Press Enter to continue..."
+        else
+            echo -e "\033[1;31mInvalid index choice.\033[0m"; sleep 1
+        fi
+    done
 }
 
 # Function to remove Speedtest CLI Safely
@@ -215,41 +280,23 @@ remove_speedtest() {
 # Main Menu
 while true; do
     clear
-    echo -e "\033[1;34mSpeedtest CLI Manager\033[0m"
-    echo -e "\033[1;32m1. Install/Update Speedtest CLI & Dependencies\033[0m"
-    echo -e "\033[1;32m2. Run Ookla Speedtest Benchmark (Official CLI)\033[0m"
-    echo -e "\033[1;32m3. Run Direct HTTP/Network Speedtest (Download & Upload)\033[0m"
-    echo -e "\033[1;32m4. Remove Speedtest CLI\033[0m"
+    echo -e "\033[1;34mSpeedtest & Network Infrastructure Tool\033[0m"
+    echo -e "\033[1;32m1. Install/Update Global Dependencies\033[0m"
+    echo -e "\033[1;32m2. Ookla Speedtest Engine (Official API / Global Search)\033[0m"
+    echo -e "\033[1;32m3. Direct Wget HTTP Speedtest (Download - 0MB Disk Allocation)\033[0m"
+    echo -e "\033[1;32m4. iPerf3 Advanced Expert Panel (Multi-Server, Custom TCP/UDP)\033[0m"
+    echo -e "\033[1;32m5. Uninstall Speedtest CLI\033[0m"
+    echo -e "------------------------------------------------------------"
     echo -e "\033[1;31m0. Exit\033[0m"
-    read -p $'\033[1;36mChoose an option (0-4): \033[0m' MAIN_OPTION
+    read -p $'\033[1;36mChoose an option (0-5): \033[0m' MAIN_OPTION
 
     case $MAIN_OPTION in
-        1)
-            install_speedtest
-            read -p "Press Enter to continue..."
-            ;;
-        2)
-            if [ -f "$SPEEDTEST_DIR/$SPEEDTEST_BIN" ]; then
-                run_speedtest
-            else
-                echo -e "\033[1;31mSpeedtest CLI is not installed. Please install it first.\033[0m"
-                read -p "Press Enter to continue..."
-            fi
-            ;;
-        3)
-            run_wget_speedtest
-            ;;
-        4)
-            remove_speedtest
-            read -p "Press Enter to continue..."
-            ;;
-        0)
-            echo -e "\033[1;32mExiting. Goodbye!\033[0m"
-            exit 0
-            ;;
-        *)
-            echo -e "\033[1;31mInvalid option. Please choose again.\033[0m"
-            read -p "Press Enter to continue..."
-            ;;
+        1) install_speedtest; read -p "Press Enter to continue..." ;;
+        2) if [ -f "$SPEEDTEST_DIR/$SPEEDTEST_BIN" ]; then run_speedtest; else echo -e "\033[1;31mPlease run Option 1 first.\033[0m"; read -p "Press Enter..."; fi ;;
+        3) run_wget_speedtest ;;
+        4) run_iperf3_advanced ;;
+        5) remove_speedtest; read -p "Press Enter to continue..." ;;
+        0) echo -e "\033[1;32mExiting. Goodbye!\033[0m"; exit 0 ;;
+        *) echo -e "\033[1;31mInvalid option.\033[0m"; read -p "Press Enter to continue..." ;;
     esac
 done
