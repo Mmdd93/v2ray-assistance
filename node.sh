@@ -3707,8 +3707,10 @@ main_menu() {
         echo
         # Rebecca Public section - ORANGE
         echo -e "${ORANGE}Rebecca ${RED}[Multi]${NC}${NC}"
-        echo -e "${ORANGE} 105.${NC} ${ORANGE}Rebecca ${NC}"
-        echo -e "${ORANGE} 106.${NC} ${ORANGE}Rebecca node ${NC}"
+		echo -e "${ORANGE} 109.${NC} ${ORANGE}Rebecca (binary) ${NC}"
+        echo -e "${ORANGE} 110.${NC} ${ORANGE}Rebecca node (binary) ${NC}"
+        echo -e "${ORANGE} 105.${NC} ${ORANGE}Rebecca (docker) ${NC}"
+        echo -e "${ORANGE} 106.${NC} ${ORANGE}Rebecca node (docker) ${NC}"
         echo
         # Remnawave section - GREEN
         echo -e "${GREEN} REMNAWAVE ${RED}[Multi]${NC}${NC}"
@@ -3786,6 +3788,7 @@ main_menu() {
             8) 
                 echo -e "${YELLOW}Running network optimization...${NC}"
                 curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/main/optimizations.sh -o optimizations.sh
+				chmod +x optimizations.sh 
                 sudo bash optimizations.sh 
                 ;;
             9) run_system_benchmark ;;
@@ -4243,6 +4246,22 @@ main_menu() {
                 sudo bash -c "$(curl -sL https://raw.githubusercontent.com/rebeccapanel/Rebecca/dev/scripts/rebecca/rebecca-node.sh)" @ install-script
 				rebecca-node
                 ;; 
+			109)
+                echo -e "${YELLOW} rebecca...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/rebeccapanel/Rebecca/master/scripts/rebecca/rebecca-binary.sh -o rebecca-binary.sh
+				chmod +x rebecca-binary.sh
+                sudo bash rebecca-binary.sh
+                ;; 
+ 
+			110)
+                echo -e "${YELLOW} Rebecca-node...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/rebeccapanel/Rebecca/master/scripts/rebecca/rebecca-node-binary.sh -o rebecca-node-binary.sh
+				chmod +x rebecca-node-binary.sh
+                sudo bash rebecca-node-binary.sh
+                ;; 
+                ;; 	
 			107)
                 echo -e "${YELLOW} phormal...${NC}"
 				sleep 1
