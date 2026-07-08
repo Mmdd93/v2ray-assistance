@@ -4260,8 +4260,7 @@ main_menu() {
                 curl -Ls https://raw.githubusercontent.com/rebeccapanel/Rebecca/master/scripts/rebecca/rebecca-node-binary.sh -o rebecca-node-binary.sh
 				chmod +x rebecca-node-binary.sh
                 sudo bash rebecca-node-binary.sh
-                ;; 
-                ;; 	
+                ;;  	
 			107)
                 echo -e "${YELLOW} phormal...${NC}"
 				sleep 1
