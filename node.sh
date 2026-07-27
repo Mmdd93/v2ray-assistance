@@ -4277,7 +4277,7 @@ main_menu() {
                 sudo bash paqctl.sh
                 ;;
 			111)
-                echo -e "${YELLOW} paqctl...${NC}"
+                echo -e "${YELLOW} xraymesh.sh...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/Erfan-XRay/XRayMesh/main/xraymesh.sh -o xraymesh.sh
 				chmod +x xraymesh.sh
