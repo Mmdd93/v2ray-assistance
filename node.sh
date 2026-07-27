@@ -3682,6 +3682,7 @@ main_menu() {
 		echo -e "${CYAN} 104.${NC} ${CYAN}T2HASH CORE Tunnel — Layer-0  ${WHITE}[github.com/T2HASH/T2HASH-CORE]${NC}"
 		echo -e "${CYAN} 107.${NC} ${CYAN}Phormal Tunnel  ${WHITE}[github.com/Schmi7zz/Phormal]${NC}"
 		echo -e "${CYAN} 108.${NC} ${CYAN}Paqctl Tunnel  ${WHITE}[github.com/SamNet-dev/paqctl]${NC}"
+		echo -e "${CYAN} 111.${NC} ${CYAN}XRayMesh Tunnel  ${WHITE}[github.com/Erfan-XRay/XRayMesh]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4274,6 +4275,13 @@ main_menu() {
                 curl -Ls https://raw.githubusercontent.com/SamNet-dev/paqctl/main/paqctl.sh -o paqctl.sh
 				chmod +x paqctl.sh
                 sudo bash paqctl.sh
+                ;;
+			111)
+                echo -e "${YELLOW} paqctl...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/Erfan-XRay/XRayMesh/main/xraymesh.sh -o xraymesh.sh
+				chmod +x xraymesh.sh
+                sudo bash xraymesh.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
