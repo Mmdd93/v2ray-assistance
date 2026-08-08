@@ -3683,6 +3683,7 @@ main_menu() {
 		echo -e "${CYAN} 107.${NC} ${CYAN}Phormal Tunnel  ${WHITE}[github.com/Schmi7zz/Phormal]${NC}"
 		echo -e "${CYAN} 108.${NC} ${CYAN}Paqctl Tunnel  ${WHITE}[github.com/SamNet-dev/paqctl]${NC}"
 		echo -e "${CYAN} 111.${NC} ${CYAN}XRayMesh Tunnel  ${WHITE}[github.com/Erfan-XRay/XRayMesh]${NC}"
+		echo -e "${CYAN} 112.${NC} ${CYAN}SNI-Spoofing-Go Tunnel  ${WHITE}[github.com/aleskxyz/SNI-Spoofing-Go]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4282,6 +4283,13 @@ main_menu() {
                 curl -Ls https://raw.githubusercontent.com/Erfan-XRay/XRayMesh/main/xraymesh.sh -o xraymesh.sh
 				chmod +x xraymesh.sh
                 sudo bash xraymesh.sh
+                ;;
+			112)
+                echo -e "${YELLOW} SNI-Spoofing-Go.sh...${NC}"
+				sleep 1
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/SNI-Spoofing-Go.sh -o SNI-Spoofing-Go.sh
+				chmod +x SNI-Spoofing-Go.sh
+                sudo bash SNI-Spoofing-Go.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
