@@ -3648,6 +3648,8 @@ main_menu() {
         echo -e "${CYAN} 46.${NC} ${CYAN}VXLAN tunnel (IPv4 local)                ${WHITE}[github.com/Mmdd93]${NC}"
 		echo -e "${CYAN} 85.${NC} ${CYAN}IPIP tunnel (IPv4 local)                ${WHITE}[github.com/Mmdd93]${NC}"
 		echo -e "${CYAN} 86.${NC} ${CYAN}ERSPAN tunnel (IPv4 local)                ${WHITE}[github.com/Mmdd93]${NC}"
+		echo -e "${CYAN} 113.${NC} ${CYAN}AES TUN tunnel  ${WHITE}[github.com/3aeidkhalili/AES-256-GCM-anti-DPI]${NC}"
+		echo -e "${CYAN} 114.${NC} ${CYAN}FOU GRE Tunnel  ${WHITE}[github.com/3aeidkhalili/AES-256-GCM-anti-DPI]${NC}"
 		echo -e "${YELLOW}Port-Forwarding Tunnel${NC}"
         echo -e "${CYAN} 31.${NC} ${CYAN}HAProxy tunnel                           ${WHITE}[github.com/Mmdd93]${NC}"
         echo -e "${CYAN} 27.${NC} ${CYAN}Backhaul tunnel                          ${WHITE}[github.com/Mmdd93]${NC}"
@@ -3684,8 +3686,7 @@ main_menu() {
 		echo -e "${CYAN} 108.${NC} ${CYAN}Paqctl Tunnel  ${WHITE}[github.com/SamNet-dev/paqctl]${NC}"
 		echo -e "${CYAN} 111.${NC} ${CYAN}XRayMesh Tunnel  ${WHITE}[github.com/Erfan-XRay/XRayMesh]${NC}"
 		echo -e "${CYAN} 112.${NC} ${CYAN}SNI-Spoofing-Go Tunnel  ${WHITE}[github.com/aleskxyz/SNI-Spoofing-Go]${NC}"
-		echo -e "${CYAN} 113.${NC} ${CYAN}aestun — AES-256-GCM Tunnel  ${WHITE}[github.com/3aeidkhalili/AES-256-GCM-anti-DPI]${NC}"
-		echo -e "${CYAN} 114.${NC} ${CYAN}fou gre Tunnel  ${WHITE}[github.com/3aeidkhalili/AES-256-GCM-anti-DPI]${NC}"
+
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
