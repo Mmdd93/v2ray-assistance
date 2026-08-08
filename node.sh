@@ -3649,7 +3649,7 @@ main_menu() {
 		echo -e "${CYAN} 85.${NC} ${CYAN}IPIP tunnel (IPv4 local)                ${WHITE}[github.com/Mmdd93]${NC}"
 		echo -e "${CYAN} 86.${NC} ${CYAN}ERSPAN tunnel (IPv4 local)                ${WHITE}[github.com/Mmdd93]${NC}"
 		echo -e "${CYAN} 113.${NC} ${CYAN}AES TUN tunnel  ${WHITE}[github.com/3aeidkhalili/AES-256-GCM-anti-DPI]${NC}"
-		echo -e "${CYAN} 114.${NC} ${CYAN}FOU GRE Tunnel  ${WHITE}[github.com/3aeidkhalili/AES-256-GCM-anti-DPI]${NC}"
+		echo -e "${CYAN} 114.${NC} ${CYAN}FOU GRE Tunnel  ${WHITE}[github.com/Mmdd93]${NC}"
 		echo -e "${YELLOW}Port-Forwarding Tunnel${NC}"
         echo -e "${CYAN} 31.${NC} ${CYAN}HAProxy tunnel                           ${WHITE}[github.com/Mmdd93]${NC}"
         echo -e "${CYAN} 27.${NC} ${CYAN}Backhaul tunnel                          ${WHITE}[github.com/Mmdd93]${NC}"
@@ -4324,9 +4324,9 @@ sudo ./aestun.sh
 			114)
                 echo -e "${YELLOW} Fou-tunnel.sh...${NC}"
 				sleep 1
-                curl -Ls https://raw.githubusercontent.com/3aeidkhalili/Fou-tunnel/main/setup_fou_tunnel.sh -o setup_fou_tunnel.sh
-				chmod +x setup_fou_tunnel.sh
-                sudo bash setup_fou_tunnel.sh
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/fou_tunnel.sh -o fou_tunnel.sh
+				chmod +x fou_tunnel.sh
+                sudo bash fou_tunnel.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
