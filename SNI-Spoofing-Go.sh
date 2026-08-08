@@ -300,11 +300,11 @@ do_install() {
     echo -e "${GREEN}         Installation Complete!${NC}"
     echo -e "${GREEN}════════════════════════════════════════════════════${NC}"
     
-    # Get server IPs
-    SERVER_IP=$(curl -s4 ifconfig.me 2>/dev/null || curl -s4 icanhazip.com 2>/dev/null || echo "Unknown")
-    SERVER_IP6=$(curl -s6 ifconfig.me 2>/dev/null || echo "")
+      # Get server local IP
+    SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+    [[ -z "$SERVER_IP" ]] && SERVER_IP=$(ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '127.0.0.1' | head -1)
+    [[ -z "$SERVER_IP" ]] && SERVER_IP="Unknown"
     
-    # Get listen port from config
     LISTEN_PORT=$(grep -E '^listen\s*=' "$CONFIG" 2>/dev/null | grep -oP ':\K\d+' || echo "40443")
     
     echo ""
