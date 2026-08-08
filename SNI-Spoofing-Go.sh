@@ -184,11 +184,11 @@ create_config_interactive() {
     read -p "Injector mode (active/passive) [active] : " INJECTOR
     INJECTOR=${INJECTOR:-active}
 
-    read -p "Enable fragment? (y/n) [n] : " FRAG
-    if [[ "$FRAG" =~ ^[yY]$ ]]; then
-        ENABLE_FRAGMENT="true"
-    else
+    read -p "Enable fragment? (y/n) [y] : " FRAG
+    if [[ "$FRAG" =~ ^[nN]$ ]]; then
         ENABLE_FRAGMENT="false"
+    else
+        ENABLE_FRAGMENT="true"
     fi
 
     read -p "Fragment delay [500ms] : " FRAGDELAY
@@ -300,7 +300,7 @@ do_install() {
     echo -e "${GREEN}         Installation Complete!${NC}"
     echo -e "${GREEN}════════════════════════════════════════════════════${NC}"
     
-      # Get server local IP
+    # Get server local IP
     SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
     [[ -z "$SERVER_IP" ]] && SERVER_IP=$(ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '127.0.0.1' | head -1)
     [[ -z "$SERVER_IP" ]] && SERVER_IP="Unknown"
@@ -311,7 +311,6 @@ do_install() {
     echo -e "${CYAN}Connection Information:${NC}"
     echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${GREEN}Server IPv4:${NC} ${SERVER_IP}:${LISTEN_PORT}"
-    [[ -n "$SERVER_IP6" ]] && echo -e "${GREEN}Server IPv6:${NC} [${SERVER_IP6}]:${LISTEN_PORT}"
     echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
     echo -e "${CYAN}Configuration Guide:${NC}"
