@@ -293,7 +293,37 @@ do_install() {
     fi
 
     install_service
-    info "Installation complete."
+    
+    # Show connection info
+    echo ""
+    echo -e "${GREEN}════════════════════════════════════════════════════${NC}"
+    echo -e "${GREEN}         Installation Complete!${NC}"
+    echo -e "${GREEN}════════════════════════════════════════════════════${NC}"
+    
+    # Get server IPs
+    SERVER_IP=$(curl -s4 ifconfig.me 2>/dev/null || curl -s4 icanhazip.com 2>/dev/null || echo "Unknown")
+    SERVER_IP6=$(curl -s6 ifconfig.me 2>/dev/null || echo "")
+    
+    # Get listen port from config
+    LISTEN_PORT=$(grep -E '^listen\s*=' "$CONFIG" 2>/dev/null | grep -oP ':\K\d+' || echo "40443")
+    
+    echo ""
+    echo -e "${CYAN}Connection Information:${NC}"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}Server IPv4:${NC} ${SERVER_IP}:${LISTEN_PORT}"
+    [[ -n "$SERVER_IP6" ]] && echo -e "${GREEN}Server IPv6:${NC} [${SERVER_IP6}]:${LISTEN_PORT}"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    echo -e "${CYAN}Configuration Guide:${NC}"
+    echo "  • In your client config, set:"
+    echo -e "    ${GREEN}Server Address:${NC} ${SERVER_IP}"
+    echo -e "    ${GREEN}Server Port:${NC} ${LISTEN_PORT}"
+    echo ""
+    echo -e "${CYAN}Config File:${NC} ${CONFIG}"
+    echo -e "${CYAN}Check Status:${NC} systemctl status ${SERVICE_NAME}"
+    echo -e "${CYAN}View Logs:${NC} journalctl -u ${SERVICE_NAME} -f"
+    echo ""
+    echo -e "${GREEN}════════════════════════════════════════════════════${NC}"
 }
 
 do_uninstall() {
