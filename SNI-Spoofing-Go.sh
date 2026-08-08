@@ -184,11 +184,11 @@ create_config_interactive() {
     read -p "Injector mode (active/passive) [active] : " INJECTOR
     INJECTOR=${INJECTOR:-active}
 
-    read -p "Enable fragment? (y/n) [y] : " FRAG
-    if [[ "$FRAG" =~ ^[nN]$ ]]; then
-        ENABLE_FRAGMENT="false"
-    else
+    read -p "Enable fragment? (y/n) [n] : " FRAG
+    if [[ "$FRAG" =~ ^[yY]$ ]]; then
         ENABLE_FRAGMENT="true"
+    else
+        ENABLE_FRAGMENT="false"
     fi
 
     read -p "Fragment delay [500ms] : " FRAGDELAY
