@@ -3684,6 +3684,7 @@ main_menu() {
 		echo -e "${CYAN} 108.${NC} ${CYAN}Paqctl Tunnel  ${WHITE}[github.com/SamNet-dev/paqctl]${NC}"
 		echo -e "${CYAN} 111.${NC} ${CYAN}XRayMesh Tunnel  ${WHITE}[github.com/Erfan-XRay/XRayMesh]${NC}"
 		echo -e "${CYAN} 112.${NC} ${CYAN}SNI-Spoofing-Go Tunnel  ${WHITE}[github.com/aleskxyz/SNI-Spoofing-Go]${NC}"
+		echo -e "${CYAN} 113.${NC} ${CYAN}aestun — AES-256-GCM Tunnel  ${WHITE}[github.com/3aeidkhalili/AES-256-GCM-anti-DPI]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4291,6 +4292,33 @@ main_menu() {
 				chmod +x SNI-Spoofing-Go.sh
                 sudo bash SNI-Spoofing-Go.sh
                 ;;
+113)
+				REPO_URL="https://github.com/3aeidkhalili/AES-256-GCM-anti-DPI.git"
+PROJECT_DIR="AES-256-GCM-anti-DPI"
+
+if [ -d "$PROJECT_DIR" ]; then
+    echo "WARNING: Directory '$PROJECT_DIR' already exists."
+    read -p "Do you want to update it (git pull)? (y/n): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "Updating the project..."
+        cd "$PROJECT_DIR" || exit
+        git pull
+        cd ..
+    else
+        echo "Using the existing version."
+    fi
+else
+    echo "Cloning the project for the first time..."
+    git clone "$REPO_URL"
+fi
+
+cd "$PROJECT_DIR" || exit
+
+echo "Preparing the executable file and installing..."
+chmod +x aestun.sh
+sudo ./aestun.sh
+;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
                 update 
