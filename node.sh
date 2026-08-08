@@ -3685,6 +3685,7 @@ main_menu() {
 		echo -e "${CYAN} 111.${NC} ${CYAN}XRayMesh Tunnel  ${WHITE}[github.com/Erfan-XRay/XRayMesh]${NC}"
 		echo -e "${CYAN} 112.${NC} ${CYAN}SNI-Spoofing-Go Tunnel  ${WHITE}[github.com/aleskxyz/SNI-Spoofing-Go]${NC}"
 		echo -e "${CYAN} 113.${NC} ${CYAN}aestun — AES-256-GCM Tunnel  ${WHITE}[github.com/3aeidkhalili/AES-256-GCM-anti-DPI]${NC}"
+		echo -e "${CYAN} 114.${NC} ${CYAN}fou gre Tunnel  ${WHITE}[github.com/3aeidkhalili/AES-256-GCM-anti-DPI]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4319,6 +4320,13 @@ echo "Preparing the executable file and installing..."
 chmod +x aestun.sh
 sudo ./aestun.sh
 ;;
+			114)
+                echo -e "${YELLOW} Fou-tunnel.sh...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/3aeidkhalili/Fou-tunnel/main/setup_fou_tunnel.sh -o setup_fou_tunnel.sh
+				chmod +x setup_fou_tunnel.sh
+                sudo bash setup_fou_tunnel.sh
+                ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
                 update 
