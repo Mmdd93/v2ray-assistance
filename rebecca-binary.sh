@@ -640,12 +640,12 @@ prompt_for_db_user() {
         echo "rebecca"
         return
     fi
-    # چاپ گزینه‌ها به stderr (برای نمایش حتماً در ترمینال)
+    # ??? ???????? ?? stderr (???? ????? ????? ?? ???????)
     >&2 echo ""
     >&2 echo "Which database user should Rebecca use to connect?"
     >&2 echo "  1) rebecca (dedicated user, recommended)"
     >&2 echo "  2) root (full privileges, use with caution)"
-    # استفاده از read با پرامپت ساده (که به stdout می‌رود، اما در اینجا اشکالی ندارد)
+    # ??????? ?? read ?? ?????? ???? (?? ?? stdout ??????? ??? ?? ????? ?????? ?????)
     read -p "Select user [1]: " choice
     case "$choice" in
         2|root|Root) echo "root" ;;
@@ -2680,7 +2680,7 @@ install_host_database() {
 
     detect_os
 
-    # نصب سرور دیتابیس
+    # ??? ???? ???????
     if ! command -v mysql >/dev/null 2>&1 && ! command -v mariadb >/dev/null 2>&1; then
         install_package "$package_name" || {
             if [ "$database_type" = "mysql" ]; then
@@ -2691,7 +2691,7 @@ install_host_database() {
         }
     fi
 
-    # نصب کلاینت (در صورت نیاز)
+    # ??? ?????? (?? ???? ????)
     if ! command -v mysql >/dev/null 2>&1 && ! command -v mariadb >/dev/null 2>&1; then
         install_package "$client_package" || {
             colorized_echo red "Failed to install $client_package. Please install it manually."
@@ -2699,10 +2699,10 @@ install_host_database() {
         }
     fi
 
-    # راه‌اندازی سرویس
+    # ?????????? ?????
     systemctl enable --now "$service_name" >/dev/null 2>&1 || systemctl enable --now mysql >/dev/null 2>&1 || true
 
-    # تنظیمات my.cnf
+    # ??????? my.cnf
     mkdir -p "$(dirname "$config_file")"
     cat > "$config_file" <<EOF
 [mysqld]
@@ -2716,13 +2716,13 @@ max_connections=200
 EOF
     systemctl restart "$service_name" >/dev/null 2>&1 || systemctl restart mysql >/dev/null 2>&1 || true
 
-    # دریافت/تولید رمزهای عبور
-    # 1. رمز برای یوزر rebecca
+    # ??????/????? ?????? ????
+    # 1. ??? ???? ???? rebecca
     if [ -z "${MYSQL_PASSWORD:-}" ]; then
         prompt_for_rebecca_password
     fi
 
-    # 2. رمز برای یوزر root (اگر از قبل تعیین نشده)
+    # 2. ??? ???? ???? root (??? ?? ??? ????? ????)
     if [ -z "${MYSQL_ROOT_PASSWORD:-}" ]; then
         if [ -t 0 ] && ui_read_yes_no "Do you want to set a separate password for MySQL root user? (otherwise auto-generate)" "n"; then
             MYSQL_ROOT_PASSWORD=$(prompt_for_root_password)
@@ -2732,24 +2732,24 @@ EOF
         fi
     fi
 
-    # انتخاب یوزر اتصال برنامه
+    # ?????? ???? ????? ??????
     db_user=$(prompt_for_db_user)
 
-    # Escape کردن پسوردها برای استفاده در SQL
+    # Escape ???? ??????? ???? ??????? ?? SQL
     local escaped_rebecca_password
     local escaped_root_password
     escaped_rebecca_password=$(sql_escape_literal "$MYSQL_PASSWORD")
     escaped_root_password=$(sql_escape_literal "$MYSQL_ROOT_PASSWORD")
 
-    # ایجاد فایل SQL
+    # ????? ???? SQL
     local sql_file
     sql_file=$(mktemp)
 
     cat > "$sql_file" <<EOF
--- ایجاد دیتابیس rebecca
+-- ????? ??????? rebecca
 CREATE DATABASE IF NOT EXISTS \`rebecca\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- ایجاد یا به‌روزرسانی یوزر rebecca (دسترسی کامل به دیتابیس rebecca)
+-- ????? ?? ??????????? ???? rebecca (?????? ???? ?? ??????? rebecca)
 CREATE USER IF NOT EXISTS 'rebecca'@'127.0.0.1' IDENTIFIED BY '${escaped_rebecca_password}';
 CREATE USER IF NOT EXISTS 'rebecca'@'localhost' IDENTIFIED BY '${escaped_rebecca_password}';
 ALTER USER 'rebecca'@'127.0.0.1' IDENTIFIED BY '${escaped_rebecca_password}';
@@ -2757,20 +2757,20 @@ ALTER USER 'rebecca'@'localhost' IDENTIFIED BY '${escaped_rebecca_password}';
 GRANT ALL PRIVILEGES ON \`rebecca\`.* TO 'rebecca'@'127.0.0.1';
 GRANT ALL PRIVILEGES ON \`rebecca\`.* TO 'rebecca'@'localhost';
 
--- ایجاد یا به‌روزرسانی یوزر root با دسترسی کامل به همه دیتابیس‌ها
+-- ????? ?? ??????????? ???? root ?? ?????? ???? ?? ??? ??????????
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${escaped_root_password}';
 CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '${escaped_root_password}';
 ALTER USER 'root'@'127.0.0.1' IDENTIFIED BY '${escaped_root_password}';
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;
 
--- حذف کاربران ناشناس و دیتابیس تست
+-- ??? ??????? ?????? ? ??????? ???
 DELETE FROM mysql.user WHERE User='';
 DROP DATABASE IF EXISTS test;
 FLUSH PRIVILEGES;
 EOF
 
-    # اجرای دستورات SQL با استفاده از mysql_root_command (از سوکت محلی)
+    # ????? ??????? SQL ?? ??????? ?? mysql_root_command (?? ???? ????)
     if ! mysql_root_command < "$sql_file"; then
         rm -f "$sql_file"
         colorized_echo red "Failed to configure local $database_type. Make sure root can access MySQL/MariaDB through the local socket."
@@ -2778,25 +2778,25 @@ EOF
     fi
     rm -f "$sql_file"
 
-    # URL-encode کردن پسوردها برای استفاده در .env
+    # URL-encode ???? ??????? ???? ??????? ?? .env
     local mysql_password_url_encoded
     local mysql_root_password_url_encoded
     mysql_password_url_encoded=$(urlencode_value "$MYSQL_PASSWORD")
     mysql_root_password_url_encoded=$(urlencode_value "$MYSQL_ROOT_PASSWORD")
 
-    # تنظیم متغیرهای .env بر اساس یوزر انتخاب‌شده
+    # ????? ???????? .env ?? ???? ???? ??????????
     upsert_env_assignment "REBECCA_DATABASE_FLAVOR" "$database_type"
     upsert_env_assignment "MYSQL_DATABASE" "rebecca"
     upsert_env_assignment "MYSQL_PASSWORD" "$MYSQL_PASSWORD"
     upsert_env_assignment "MYSQL_ROOT_PASSWORD" "$MYSQL_ROOT_PASSWORD"
 
     if [ "$db_user" = "root" ]; then
-        # استفاده از یوزر root برای اتصال برنامه
+        # ??????? ?? ???? root ???? ????? ??????
         upsert_env_assignment "MYSQL_USER" "root"
         upsert_env_assignment "SQLALCHEMY_DATABASE_URL" "mysql+pymysql://root:${mysql_root_password_url_encoded}@127.0.0.1:3306/rebecca"
         colorized_echo yellow "Rebecca will connect to the database as 'root'."
     else
-        # استفاده از یوزر rebecca (پیش‌فرض)
+        # ??????? ?? ???? rebecca (???????)
         upsert_env_assignment "MYSQL_USER" "rebecca"
         upsert_env_assignment "SQLALCHEMY_DATABASE_URL" "mysql+pymysql://rebecca:${mysql_password_url_encoded}@127.0.0.1:3306/rebecca"
         colorized_echo green "Rebecca will connect to the database as 'rebecca'."
@@ -2928,7 +2928,7 @@ uninstall_rebecca_data_files() {
         rm -r "$DATA_DIR"
     fi
 }
-# ======================== تابع تشخیص وجود دیتابیس (مستقل از Rebecca) ========================
+# ======================== ???? ????? ???? ??????? (????? ?? Rebecca) ========================
 check_database_exists() {
     local db_name="${MYSQL_DATABASE:-rebecca}"
     if command -v mysql >/dev/null 2>&1; then
@@ -2941,9 +2941,9 @@ check_database_exists() {
     return 1
 }
 
-# ======================== تابع تشخیص وجود phpMyAdmin (مستقل از Rebecca) ========================
+# ======================== ???? ????? ???? phpMyAdmin (????? ?? Rebecca) ========================
 check_phpmyadmin_exists() {
-    # بررسی فایل‌های پیکربندی nginx یا وجود پکیج
+    # ????? ???????? ???????? nginx ?? ???? ????
     if [ -f "$(phpmyadmin_nginx_config_path 2>/dev/null || echo "/etc/nginx/sites-available/${APP_NAME}-phpmyadmin")" ] || \
        [ -f "/etc/nginx/sites-enabled/${APP_NAME}-phpmyadmin" ] || \
        dpkg -l phpmyadmin 2>/dev/null | grep -q "^ii" || \
@@ -2953,7 +2953,7 @@ check_phpmyadmin_exists() {
     return 1
 }
 
-# ======================== تابع حذف دیتابیس و phpMyAdmin (مستقل از Rebecca) ========================
+# ======================== ???? ??? ??????? ? phpMyAdmin (????? ?? Rebecca) ========================
 uninstall_database_and_phpmyadmin() {
     local db_type
     if [ -f "$ENV_FILE" ]; then
@@ -2982,7 +2982,7 @@ uninstall_database_and_phpmyadmin() {
         colorized_echo red "mysql command not found, cannot drop database."
     fi
 
-    # غیرفعال کردن phpMyAdmin
+    # ??????? ???? phpMyAdmin
     if check_phpmyadmin_exists; then
         colorized_echo yellow "Disabling phpMyAdmin..."
         if type disable_host_phpmyadmin &>/dev/null; then
@@ -2996,7 +2996,7 @@ uninstall_database_and_phpmyadmin() {
         colorized_echo green "phpMyAdmin disabled."
     fi
 
-    # حذف پکیج‌های phpMyAdmin (اختیاری)
+    # ??? ???????? phpMyAdmin (???????)
     if ui_read_yes_no "Remove phpMyAdmin packages (phpmyadmin, php-fpm, php-mysql)?" "n"; then
         detect_os
         if [[ "$OS" == "Ubuntu"* ]] || [[ "$OS" == "Debian"* ]]; then
@@ -3010,7 +3010,7 @@ uninstall_database_and_phpmyadmin() {
         fi
     fi
 
-    # حذف کرون‌جاب پشتیبان (در صورت وجود)
+    # ??? ???????? ??????? (?? ???? ????)
     if type remove_backup_service &>/dev/null; then
         remove_backup_service 2>/dev/null || true
     else
@@ -3029,7 +3029,7 @@ uninstall_command() {
         app_exists=1
     fi
 
-    # اگر Rebecca نصب نیست، فقط گزینه‌های پاک‌سازی دیتابیس و MySQL را نشان بده
+    # ??? Rebecca ??? ????? ??? ????????? ???????? ??????? ? MySQL ?? ???? ???
     if [ "$app_exists" -eq 0 ]; then
         colorized_echo yellow "Rebecca is not installed."
         if ui_read_yes_no "Do you want to clean up the database (if MySQL/MariaDB) and phpMyAdmin configuration?" "n"; then
@@ -3044,7 +3044,7 @@ uninstall_command() {
         return
     fi
 
-    # در غیر این صورت، روال عادی حذف Rebecca
+    # ?? ??? ??? ????? ???? ???? ??? Rebecca
     read -p "Do you really want to uninstall Rebecca? (y/n) "
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         colorized_echo red "Aborted"
@@ -3058,13 +3058,13 @@ uninstall_command() {
     uninstall_rebecca_script
     uninstall_rebecca
 
-    # حذف داده‌ها
+    # ??? ???????
     read -p "Do you want to remove Rebecca's data files too ($DATA_DIR)? (y/n) "
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         uninstall_rebecca_data_files
     fi
 
-    # پاک‌سازی دیتابیس و phpMyAdmin
+    # ???????? ??????? ? phpMyAdmin
     local db_exists=0
     local phpmyadmin_exists=0
     check_database_exists && db_exists=1
@@ -3078,7 +3078,7 @@ uninstall_command() {
         colorized_echo yellow "No Rebecca database or phpMyAdmin found."
     fi
 
-    # حذف کامل MySQL/MariaDB
+    # ??? ???? MySQL/MariaDB
     if check_mysql_installed; then
         if ui_read_yes_no "Do you want to completely remove MySQL/MariaDB server and all its data? (This affects all databases!)" "n"; then
             remove_mysql_completely
@@ -4683,7 +4683,7 @@ dispatch_command() {
     esac
 }
 
-# حلقه اصلی منو
+# ???? ???? ???
 while true; do
     if [ $# -eq 0 ]; then
         read_menu_command
@@ -4701,12 +4701,12 @@ while true; do
         esac
     fi
 
-    # اجرای دستور (با نادیده گرفتن خطاها)
+    # ????? ????? (?? ?????? ????? ?????)
     dispatch_command "$@" || true
 
-    # بعد از اتمام دستور، منتظر Enter می‌مانیم تا کاربر خروجی را ببیند
+    # ??? ?? ????? ?????? ????? Enter ???????? ?? ????? ????? ?? ?????
     read -p "Press Enter to continue..."
 
-    # پاک کردن آرگومان‌ها برای بازگشت به منو
+    # ??? ???? ?????????? ???? ?????? ?? ???
     set --
 done
