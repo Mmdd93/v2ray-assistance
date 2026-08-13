@@ -4254,7 +4254,7 @@ main_menu() {
 			109)
                 echo -e "${YELLOW} rebecca...${NC}"
 				sleep 1
-                curl -Ls https://raw.githubusercontent.com/rebeccapanel/Rebecca/dev/scripts/rebecca/rebecca-binary.sh -o rebecca-binary.sh
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/rebecca-binary.sh -o rebecca-binary.sh
 				chmod +x rebecca-binary.sh
                 sudo bash rebecca-binary.sh
                 ;; 
