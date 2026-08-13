@@ -270,8 +270,6 @@ add_discovered_node_instance() {
     DISCOVERED_NODE_NAMES+=("$name")
 }
 
-
-
 set_app_context
 
 check_running_as_root() {
@@ -560,13 +558,203 @@ EOF
     systemctl daemon-reload
 }
 
+# ====================== شروع توابع جدید برای نصب Xray ======================
+
+# تابع برای دریافت معماری سیستم (مشابه identify_the_operating_system_and_architecture اما خروجی متغیر ARCH را تنظیم می‌کند)
+get_xray_arch() {
+    case "$(uname -m)" in
+        'i386' | 'i686') echo "32" ;;
+        'amd64' | 'x86_64') echo "64" ;;
+        'armv5tel') echo "arm32-v5" ;;
+        'armv6l')
+            local arch="arm32-v6"
+            grep Features /proc/cpuinfo | grep -qw 'vfp' || arch="arm32-v5"
+            echo "$arch"
+            ;;
+        'armv7' | 'armv7l')
+            local arch="arm32-v7a"
+            grep Features /proc/cpuinfo | grep -qw 'vfp' || arch="arm32-v5"
+            echo "$arch"
+            ;;
+        'armv8' | 'aarch64') echo "arm64-v8a" ;;
+        'mips') echo "mips32" ;;
+        'mipsle') echo "mips32le" ;;
+        'mips64')
+            if lscpu | grep -q "Little Endian"; then
+                echo "mips64le"
+            else
+                echo "mips64"
+            fi
+            ;;
+        'mips64le') echo "mips64le" ;;
+        'ppc64') echo "ppc64" ;;
+        'ppc64le') echo "ppc64le" ;;
+        'riscv64') echo "riscv64" ;;
+        's390x') echo "s390x" ;;
+        *)
+            colorized_echo red "Unsupported architecture: $(uname -m)"
+            return 1
+            ;;
+    esac
+}
+
+# تابع نصب Xray-core با نسخه مشخص
+install_xray_core() {
+    local version="$1"
+    local data_dir="${DATA_MAIN_DIR}"
+    local install_dir="${data_dir}/xray-core"
+    local assets_dir="${install_dir}"
+
+    if [ -z "$version" ]; then
+        version="$DEFAULT_XRAY_CORE_VERSION"
+    fi
+
+    # نصب پیش‌نیازها
+    if ! command -v unzip >/dev/null 2>&1; then
+        install_package unzip
+    fi
+    if ! command -v curl >/dev/null 2>&1; then
+        install_package curl
+    fi
+
+    # تشخیص معماری
+    local arch
+    arch=$(get_xray_arch) || return 1
+
+    # ساخت دایرکتوری‌ها
+    mkdir -p "$install_dir" "$assets_dir"
+
+    # تعیین لینک دانلود
+    local download_link
+    if [[ "$version" == "latest" ]]; then
+        download_link="https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-${arch}.zip"
+    else
+        if [[ "$version" != v* ]]; then
+            version="v$version"
+        fi
+        download_link="https://github.com/XTLS/Xray-core/releases/download/${version}/Xray-linux-${arch}.zip"
+    fi
+
+    # دانلود در دایرکتوری موقت
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
+    local zip_file="${tmp_dir}/Xray-linux-${arch}.zip"
+
+    colorized_echo blue "Downloading Xray-core ${version} from $download_link"
+    if ! curl -fsSL -o "$zip_file" "$download_link"; then
+        colorized_echo red "Download failed!"
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! unzip -q "$zip_file" -d "$tmp_dir"; then
+        colorized_echo red "Extraction failed!"
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    # نصب فایل‌ها
+    install -m 755 "${tmp_dir}/xray" "${install_dir}/xray"
+    install -m 644 "${tmp_dir}/geoip.dat" "${assets_dir}/geoip.dat"
+    install -m 644 "${tmp_dir}/geosite.dat" "${assets_dir}/geosite.dat"
+
+    # ایجاد symlink برای سازگاری
+    mkdir -p /usr/local/bin /usr/local/share
+    ln -sf "${install_dir}/xray" /usr/local/bin/xray 2>/dev/null || true
+    ln -sfn "${assets_dir}" /usr/local/share/xray 2>/dev/null || true
+
+    rm -rf "$tmp_dir"
+    colorized_echo green "Xray-core ${version} installed successfully."
+    return 0
+}
+
+# تابع برای انتخاب نسخه Xray از گیت‌هاب (با منوی تعاملی)
+select_xray_version() {
+    local versions=()
+    local selected_version=""
+
+    # دریافت لیست نسخه‌ها از گیت‌هاب
+    colorized_echo blue "Fetching available Xray-core versions..."
+    local latest_releases
+    latest_releases=$(curl -s "https://api.github.com/repos/XTLS/Xray-core/releases?per_page=$LAST_XRAY_CORES")
+    if [ -z "$latest_releases" ]; then
+        colorized_echo red "Failed to fetch versions. Using default version."
+        echo "$DEFAULT_XRAY_CORE_VERSION"
+        return 0
+    fi
+
+    # استخراج tag_nameها
+    mapfile -t versions < <(echo "$latest_releases" | grep -oP '"tag_name": "\K(.*?)(?=")')
+    if [ ${#versions[@]} -eq 0 ]; then
+        colorized_echo red "No versions found. Using default."
+        echo "$DEFAULT_XRAY_CORE_VERSION"
+        return 0
+    fi
+
+    # نمایش منو
+    echo
+    colorized_echo cyan "Available Xray-core versions:"
+    for i in "${!versions[@]}"; do
+        printf "  %2s) %s\n" "$((i+1))" "${versions[i]}"
+    done
+    echo "  M) Enter version manually"
+    echo "  Q) Cancel (use default)"
+    echo
+
+    while true; do
+        read -p "Choose a version (1-${#versions[@]}, M, Q): " choice
+        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#versions[@]}" ]; then
+            selected_version="${versions[$((choice-1))]}"
+            break
+        elif [[ "$choice" =~ ^[Mm]$ ]]; then
+            read -p "Enter version manually (e.g., v1.2.3): " custom_version
+            if [[ -n "$custom_version" ]]; then
+                # اعتبارسنجی ساده با curl
+                if curl -s -o /dev/null -I -w "%{http_code}" "https://github.com/XTLS/Xray-core/releases/tag/${custom_version}" | grep -q 200; then
+                    selected_version="$custom_version"
+                    break
+                else
+                    colorized_echo red "Version not found. Try again."
+                fi
+            fi
+        elif [[ "$choice" =~ ^[Qq]$ ]]; then
+            selected_version="$DEFAULT_XRAY_CORE_VERSION"
+            colorized_echo yellow "Using default version: $selected_version"
+            break
+        else
+            colorized_echo red "Invalid choice. Please enter a number between 1 and ${#versions[@]}, M, or Q."
+        fi
+    done
+
+    echo "$selected_version"
+}
+
+# ====================== پایان توابع جدید ======================
+
+# تابع نصب Xray که قبلاً وجود داشت را بازنویسی می‌کنیم
 install_latest_xray_for_binary_node() {
     mkdir -p "$APP_DIR/scripts" "$DATA_DIR/xray-core"
     colorized_echo blue "Installing Xray core for node"
-    curl -fsSL "$REBECCA_SCRIPT_BASE_URL/install_latest_xray.sh" -o "$APP_DIR/scripts/install_latest_xray.sh"
-    sed -i 's/\r$//' "$APP_DIR/scripts/install_latest_xray.sh"
-    chmod +x "$APP_DIR/scripts/install_latest_xray.sh"
-    REBECCA_DATA_DIR="$DATA_DIR" XRAY_INSTALL_DIR="$DATA_DIR/xray-core" XRAY_ASSETS_DIR="$DATA_DIR/xray-core" XRAY_CORE_VERSION="${XRAY_CORE_VERSION:-$DEFAULT_XRAY_CORE_VERSION}" bash "$APP_DIR/scripts/install_latest_xray.sh"
+
+    # از کاربر بپرسیم که آیا نسخه خاصی می‌خواهد یا نه
+    local version=""
+    echo
+    colorized_echo cyan "Do you want to select a specific Xray-core version?"
+    read -p "Select version? (y/n, default n): " choose_version
+    if [[ "$choose_version" =~ ^[Yy]$ ]]; then
+        version=$(select_xray_version)
+        if [ -z "$version" ]; then
+            version="$DEFAULT_XRAY_CORE_VERSION"
+        fi
+    else
+        version="$DEFAULT_XRAY_CORE_VERSION"
+        colorized_echo yellow "Using default version: $version"
+    fi
+
+    if ! install_xray_core "$version"; then
+        colorized_echo red "Xray installation failed. Node may not work correctly."
+        return 1
+    fi
 }
 
 read_node_certificate_bundle() {
@@ -1113,86 +1301,25 @@ up_command() {
     fi
 }
 
+# تابع get_xray_core قبلی رو بازنویسی می‌کنیم تا از توابع جدید استفاده کنه
 get_xray_core() {
-    identify_the_operating_system_and_architecture
-    clear
-    
-    validate_version() {
-        local version="$1"
-        local response=$(curl -s "https://api.github.com/repos/XTLS/Xray-core/releases/tags/$version")
-        if echo "$response" | grep -q '"message": "Not Found"'; then
-            echo "invalid"
-        else
-            echo "valid"
-        fi
-    }
-    
-    print_xray_menu() {
-        clear
-        echo -e "\033[1;32m==============================\033[0m"
-        echo -e "\033[1;32m      Xray-core Installer     \033[0m"
-        echo -e "\033[1;32m==============================\033[0m"
-        current_version=$(get_current_xray_core_version)
-        echo -e "\033[1;33m>>>> Current Xray-core version: \033[1;1m$current_version\033[0m"
-        echo -e "\033[1;32m==============================\033[0m"
-        echo -e "\033[1;33mAvailable Xray-core versions:\033[0m"
-        for ((i=0; i<${#versions[@]}; i++)); do
-            echo -e "\033[1;34m$((i + 1)):\033[0m ${versions[i]}"
-        done
-        echo -e "\033[1;32m==============================\033[0m"
-        echo -e "\033[1;35mM:\033[0m Enter a version manually"
-        echo -e "\033[1;31mQ:\033[0m Quit"
-        echo -e "\033[1;32m==============================\033[0m"
-    }
-    
-    latest_releases=$(curl -s "https://api.github.com/repos/XTLS/Xray-core/releases?per_page=$LAST_XRAY_CORES")
-    versions=($(echo "$latest_releases" | grep -oP '"tag_name": "\K(.*?)(?=")'))
-    
-    while true; do
-        print_xray_menu
-        read -p "Choose a version to install (1-${#versions[@]}), or press M to enter manually, Q to quit: " choice
-        
-        if [[ "$choice" =~ ^[1-9][0-9]*$ ]] && [ "$choice" -le "${#versions[@]}" ]; then
-            choice=$((choice - 1))
-            selected_version=${versions[choice]}
-            break
-        elif [ "$choice" == "M" ] || [ "$choice" == "m" ]; then
-            while true; do
-                read -p "Enter the version manually (e.g., v1.2.3): " custom_version
-                if [ "$(validate_version "$custom_version")" == "valid" ]; then
-                    selected_version="$custom_version"
-                    break 2
-                else
-                    echo -e "\033[1;31mInvalid version or version does not exist. Please try again.\033[0m"
-                fi
-            done
-        elif [ "$choice" == "Q" ] || [ "$choice" == "q" ]; then
-            echo -e "\033[1;31mExiting.\033[0m"
-            selected_version=""
-            return 0
-        else
-            echo -e "\033[1;31mInvalid choice. Please try again.\033[0m"
-            sleep 2
-        fi
-    done
-    
-    if ! dpkg -s unzip >/dev/null 2>&1; then
-        echo -e "\033[1;33mInstalling required packages...\033[0m"
-        detect_os
-        install_package unzip
+    # این تابع برای منوی core-update استفاده می‌شود
+    local version
+    version=$(select_xray_version)
+    if [ -z "$version" ]; then
+        colorized_echo yellow "No version selected, aborting."
+        return 1
     fi
-
-    mkdir -p $DATA_MAIN_DIR/xray-core
-    cd $DATA_MAIN_DIR/xray-core
-    
-    xray_filename="Xray-linux-$ARCH.zip"
-    xray_download_url="https://github.com/XTLS/Xray-core/releases/download/${selected_version}/${xray_filename}"
-    
-    wget "${xray_download_url}" -q &
-    wait
-    unzip -o "${xray_filename}" >/dev/null 2>&1 &
-    wait
-    rm "${xray_filename}"
+    if install_xray_core "$version"; then
+        # به‌روزرسانی متغیرهای env
+        set_env_value "XRAY_EXECUTABLE_PATH" "$DATA_MAIN_DIR/xray-core/xray"
+        set_env_value "XRAY_ASSETS_PATH" "$DATA_MAIN_DIR/xray-core"
+        colorized_echo green "Xray-core updated to $version"
+        return 0
+    else
+        colorized_echo red "Installation failed."
+        return 1
+    fi
 }
 
 get_current_xray_core_version() {
@@ -1210,17 +1337,20 @@ get_current_xray_core_version() {
 
 update_core_command() {
     check_running_as_root
-    selected_version=""
-    get_xray_core
-    
-    if [ -z "$selected_version" ]; then return 0; fi
+    if ! is_rebecca_node_installed; then
+        colorized_echo red "$APP_NAME not installed!"
+        return 1
+    fi
 
-    set_env_value "XRAY_EXECUTABLE_PATH" "$DATA_MAIN_DIR/xray-core/xray"
-    set_env_value "XRAY_ASSETS_PATH" "$DATA_MAIN_DIR/xray-core"
-    colorized_echo red "Restarting $APP_NAME..."
-    systemctl restart "$APP_NAME.service"
-    colorized_echo blue "Installation of XRAY-CORE version $selected_version completed."
-    return 0
+    # استفاده از تابع get_xray_core که منو دارد
+    if get_xray_core; then
+        colorized_echo blue "Restarting $APP_NAME service..."
+        systemctl restart "$APP_NAME.service"
+        colorized_echo green "Xray-core update completed."
+    else
+        colorized_echo red "Update cancelled or failed."
+        return 1
+    fi
 }
 
 check_editor() {
@@ -1359,32 +1489,24 @@ map_choice_to_command() {
     echo "$1"
 }
 
-
 discover_node_instances() {
     DISCOVERED_NODE_PATHS=()
     DISCOVERED_NODE_NAMES=()
 
-    # فقط نودهای باینری را شناسایی کن (نادیده گرفتن پوشه‌های دارای docker-compose.yml)
     if [ -d "$NODE_DISCOVERY_BASE" ]; then
-        # 1. جستجوی مستقیم بر اساس فایل متادیتا .binary-release.json
         while IFS= read -r -d '' metadata_file; do
             local dir name
             dir=$(dirname "$metadata_file")
             name=$(basename "$dir")
-            # اطمینان از اینکه پوشه داکر نیست (فایل docker-compose.yml نداشته باشد)
             if [ ! -f "$dir/docker-compose.yml" ]; then
                 add_discovered_node_instance "$dir" "$name"
             fi
         done < <(find "$NODE_DISCOVERY_BASE" -mindepth 2 -maxdepth 3 -type f -name ".binary-release.json" -print0 2>/dev/null || true)
 
-        # 2. جستجوی پشتیبان: پوشه‌هایی که bin/rebecca-node یا .env دارند ولی فایل متادیتا ندارند
         while IFS= read -r -d '' dir; do
             local name
             name=$(basename "$dir")
-            # فقط پوشه‌هایی که docker-compose.yml ندارند و دارای نشانه‌های باینری هستند
-            # حذف شرط name="rebecca" چون ممکن است پنل اصلی باشد و نود نباشد
             if [ ! -f "$dir/docker-compose.yml" ] && ( [ -f "$dir/.env" ] || [ -f "$dir/bin/rebecca-node" ] ); then
-                # بررسی کنیم که قبلاً اضافه نشده باشد
                 local already_added=0
                 for existing in "${DISCOVERED_NODE_PATHS[@]}"; do
                     if [ "$existing" = "$dir" ]; then
@@ -1408,7 +1530,7 @@ startup_node_selection() {
         ui_header "Node Selection" "Select an existing binary node or create a new one"
 
         local count=${#DISCOVERED_NODE_PATHS[@]}
-        local idx=2  # discovered nodes start from 2
+        local idx=2
 
         if [ "$count" -gt 0 ]; then
             colorized_echo yellow "   Discovered Binary Nodes:"
@@ -1416,7 +1538,6 @@ startup_node_selection() {
                 local name="${DISCOVERED_NODE_NAMES[$i]}"
                 local path="${DISCOVERED_NODE_PATHS[$i]}"
                 local extra_info=""
-                # اگر نام پوشه 'rebecca' باشد، احتمالاً پنل اصلی است
                 if [[ "${name,,}" == "rebecca" ]]; then
                     extra_info=" \033[38;5;214m(Probably the main panel)\033[0m"
                 fi
@@ -1429,7 +1550,6 @@ startup_node_selection() {
             echo
         fi
 
-        
         printf "   \033[38;5;45;1m%2s)\033[0m \033[38;5;231;1m%-25s\033[0m\n" "1" "Create a new node"
         printf "   \033[38;5;117;1m%2s)\033[0m \033[38;5;231;1m%-25s\033[0m\n" "S" "Search custom directory"
         printf "   \033[38;5;45;1m%2s)\033[0m \033[38;5;231;1m%-25s\033[0m\n" "0" "Exit"
@@ -1466,7 +1586,6 @@ startup_node_selection() {
                     while IFS= read -r -d '' dir; do
                         local name
                         name=$(basename "$dir")
-                        # فقط پوشه‌های بدون docker-compose.yml و دارای نشانه‌های باینری
                         if [ ! -f "$dir/docker-compose.yml" ] && ( [ -f "$dir/.env" ] || [ -f "$dir/bin/rebecca-node" ] || [ -f "$dir/.binary-release.json" ] ); then
                             add_discovered_node_instance "$dir" "$name"
                             found_any=1
@@ -1502,6 +1621,7 @@ startup_node_selection() {
         esac
     done
 }
+
 read_menu_command() {
     local commands=($(menu_commands))
     local total=${#commands[@]}
