@@ -2597,33 +2597,41 @@ mysql_root_command() {
     elif command -v mariadb >/dev/null 2>&1; then
         mariadb --protocol=socket -uroot "$@"
     else
+        colorized_echo red "Neither mysql nor mariadb client found. Please install mysql-client or mariadb-client."
         return 1
     fi
 }
-
+sql_escape_literal() {
+    printf "%s" "$1" | sed "s/'/''/g"
+}
 install_host_database() {
     local database_type="$1"
     local package_name
     local service_name
     local config_file
+    local client_package
 
     case "$database_type" in
         mysql)
             package_name="mysql-server"
             service_name="mysql"
             config_file="/etc/mysql/mysql.conf.d/rebecca.cnf"
-        ;;
+            client_package="mysql-client"
+            ;;
         mariadb)
             package_name="mariadb-server"
             service_name="mariadb"
             config_file="/etc/mysql/mariadb.conf.d/60-rebecca.cnf"
-        ;;
+            client_package="mariadb-client"
+            ;;
         *)
             return 0
-        ;;
+            ;;
     esac
 
     detect_os
+
+    # نصب سرور دیتابیس
     if ! command -v mysql >/dev/null 2>&1 && ! command -v mariadb >/dev/null 2>&1; then
         install_package "$package_name" || {
             if [ "$database_type" = "mysql" ]; then
@@ -2634,8 +2642,18 @@ install_host_database() {
         }
     fi
 
+    # نصب کلاینت (در صورتی که وجود نداشته باشد)
+    if ! command -v mysql >/dev/null 2>&1 && ! command -v mariadb >/dev/null 2>&1; then
+        install_package "$client_package" || {
+            colorized_echo red "Failed to install $client_package. Please install it manually."
+            return 1
+        }
+    fi
+
+    # راه‌اندازی سرویس
     systemctl enable --now "$service_name" >/dev/null 2>&1 || systemctl enable --now mysql >/dev/null 2>&1 || true
 
+    # تنظیمات my.cnf
     mkdir -p "$(dirname "$config_file")"
     cat > "$config_file" <<EOF
 [mysqld]
@@ -2649,6 +2667,7 @@ max_connections=200
 EOF
     systemctl restart "$service_name" >/dev/null 2>&1 || systemctl restart mysql >/dev/null 2>&1 || true
 
+    # تولید/دریافت رمزهای عبور
     if [ -z "${MYSQL_PASSWORD:-}" ]; then
         prompt_for_rebecca_password
     fi
@@ -2657,6 +2676,7 @@ EOF
     local escaped_password
     escaped_password=$(sql_escape_literal "$MYSQL_PASSWORD")
 
+    # اجرای دستورات SQL با استفاده از mysql_root_command
     local sql_file
     sql_file=$(mktemp)
     cat > "$sql_file" <<EOF
@@ -2671,6 +2691,7 @@ DELETE FROM mysql.user WHERE User='';
 DROP DATABASE IF EXISTS test;
 FLUSH PRIVILEGES;
 EOF
+
     if ! mysql_root_command < "$sql_file"; then
         rm -f "$sql_file"
         colorized_echo red "Failed to configure local $database_type. Make sure root can access MySQL/MariaDB through the local socket."
@@ -2678,6 +2699,7 @@ EOF
     fi
     rm -f "$sql_file"
 
+    # ذخیره اطلاعات در .env
     local mysql_password_url_encoded
     mysql_password_url_encoded=$(urlencode_value "$MYSQL_PASSWORD")
     upsert_env_assignment "REBECCA_DATABASE_FLAVOR" "$database_type"
@@ -2686,6 +2708,8 @@ EOF
     upsert_env_assignment "MYSQL_PASSWORD" "$MYSQL_PASSWORD"
     upsert_env_assignment "MYSQL_ROOT_PASSWORD" "$MYSQL_ROOT_PASSWORD"
     upsert_env_assignment "SQLALCHEMY_DATABASE_URL" "mysql+pymysql://rebecca:${mysql_password_url_encoded}@127.0.0.1:3306/rebecca"
+
+    colorized_echo green "Database $database_type configured successfully."
 }
 
 configure_binary_database() {
@@ -2811,44 +2835,220 @@ uninstall_rebecca_data_files() {
         rm -r "$DATA_DIR"
     fi
 }
+# ======================== تابع تشخیص وجود دیتابیس (مستقل از Rebecca) ========================
+check_database_exists() {
+    local db_name="${MYSQL_DATABASE:-rebecca}"
+    if command -v mysql >/dev/null 2>&1; then
+        local result
+        result=$(mysql --protocol=socket -uroot -e "SHOW DATABASES LIKE '$db_name';" 2>/dev/null | grep -c "$db_name" || true)
+        if [ "$result" -gt 0 ]; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
+# ======================== تابع تشخیص وجود phpMyAdmin (مستقل از Rebecca) ========================
+check_phpmyadmin_exists() {
+    # بررسی فایل‌های پیکربندی nginx یا وجود پکیج
+    if [ -f "$(phpmyadmin_nginx_config_path 2>/dev/null || echo "/etc/nginx/sites-available/${APP_NAME}-phpmyadmin")" ] || \
+       [ -f "/etc/nginx/sites-enabled/${APP_NAME}-phpmyadmin" ] || \
+       dpkg -l phpmyadmin 2>/dev/null | grep -q "^ii" || \
+       rpm -q phpmyadmin 2>/dev/null | grep -q "phpmyadmin"; then
+        return 0
+    fi
+    return 1
+}
+
+# ======================== تابع حذف دیتابیس و phpMyAdmin (مستقل از Rebecca) ========================
+uninstall_database_and_phpmyadmin() {
+    local db_type
+    if [ -f "$ENV_FILE" ]; then
+        db_type=$(get_configured_database_type)
+    else
+        db_type="mysql"
+    fi
+
+    if [ "$db_type" = "sqlite" ]; then
+        colorized_echo yellow "SQLite database will be removed with data files."
+        return
+    fi
+
+    if [ -f "$ENV_FILE" ]; then
+        source "$ENV_FILE" 2>/dev/null || true
+    fi
+
+    local mysql_user="${MYSQL_USER:-rebecca}"
+    local mysql_db="${MYSQL_DATABASE:-rebecca}"
+
+    colorized_echo yellow "Dropping Rebecca database '$mysql_db' and user '$mysql_user'..."
+    if command -v mysql >/dev/null 2>&1; then
+        local sql="DROP DATABASE IF EXISTS \`$mysql_db\`; DROP USER IF EXISTS '$mysql_user'@'127.0.0.1'; DROP USER IF EXISTS '$mysql_user'@'localhost'; FLUSH PRIVILEGES;"
+        mysql --protocol=socket -uroot -e "$sql" 2>/dev/null && colorized_echo green "Done." || colorized_echo red "Failed. You may need to do it manually."
+    else
+        colorized_echo red "mysql command not found, cannot drop database."
+    fi
+
+    # غیرفعال کردن phpMyAdmin
+    if check_phpmyadmin_exists; then
+        colorized_echo yellow "Disabling phpMyAdmin..."
+        if type disable_host_phpmyadmin &>/dev/null; then
+            disable_host_phpmyadmin
+        else
+            rm -f "/etc/nginx/sites-enabled/${APP_NAME}-phpmyadmin" "/etc/nginx/sites-available/${APP_NAME}-phpmyadmin" 2>/dev/null
+            if command -v nginx >/dev/null 2>&1; then
+                nginx -t >/dev/null 2>&1 && systemctl reload nginx >/dev/null 2>&1 || true
+            fi
+        fi
+        colorized_echo green "phpMyAdmin disabled."
+    fi
+
+    # حذف پکیج‌های phpMyAdmin (اختیاری)
+    if ui_read_yes_no "Remove phpMyAdmin packages (phpmyadmin, php-fpm, php-mysql)?" "n"; then
+        detect_os
+        if [[ "$OS" == "Ubuntu"* ]] || [[ "$OS" == "Debian"* ]]; then
+            DEBIAN_FRONTEND=noninteractive apt-get remove -y phpmyadmin php-fpm php-mysql 2>/dev/null || true
+            colorized_echo green "phpMyAdmin packages removed."
+        elif [[ "$OS" == "CentOS"* ]] || [[ "$OS" == "AlmaLinux"* ]] || [[ "$OS" == "Fedora"* ]]; then
+            yum remove -y phpmyadmin php-fpm php-mysql 2>/dev/null || dnf remove -y phpmyadmin php-fpm php-mysql 2>/dev/null || true
+            colorized_echo green "phpMyAdmin packages removed."
+        else
+            colorized_echo yellow "Automatic removal not supported. Please remove manually."
+        fi
+    fi
+
+    # حذف کرون‌جاب پشتیبان (در صورت وجود)
+    if type remove_backup_service &>/dev/null; then
+        remove_backup_service 2>/dev/null || true
+    else
+        local temp_cron=$(mktemp)
+        crontab -l 2>/dev/null | grep -v "# rebecca-backup-service" > "$temp_cron" || true
+        crontab "$temp_cron" 2>/dev/null || true
+        rm -f "$temp_cron"
+    fi
+}
 
 uninstall_command() {
     check_running_as_root || return 1
+
     local app_exists=0
     if is_rebecca_installed; then
         app_exists=1
     fi
 
+    # اگر Rebecca نصب نیست، فقط گزینه‌های پاک‌سازی دیتابیس و MySQL را نشان بده
     if [ "$app_exists" -eq 0 ]; then
-        colorized_echo red "Rebecca's not installed!"
-        return 1
+        colorized_echo yellow "Rebecca is not installed."
+        if ui_read_yes_no "Do you want to clean up the database (if MySQL/MariaDB) and phpMyAdmin configuration?" "n"; then
+            uninstall_database_and_phpmyadmin
+        fi
+        if check_mysql_installed; then
+            if ui_read_yes_no "Do you want to completely remove MySQL/MariaDB server and all its data?" "n"; then
+                remove_mysql_completely
+            fi
+        fi
+        colorized_echo green "Cleanup completed."
+        return
     fi
 
+    # در غیر این صورت، روال عادی حذف Rebecca
     read -p "Do you really want to uninstall Rebecca? (y/n) "
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         colorized_echo red "Aborted"
         return 1
     fi
 
-    if [ "$app_exists" -eq 1 ]; then
-        if is_rebecca_up; then
-            down_rebecca
-        fi
+    if is_rebecca_up; then
+        down_rebecca
     fi
-    uninstall_rebecca_script
 
-    if [ "$app_exists" -eq 1 ]; then
-        uninstall_rebecca
-        read -p "Do you want to remove Rebecca's data files too ($DATA_DIR)? (y/n) "
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            colorized_echo green "Rebecca uninstalled successfully"
-        else
-            uninstall_rebecca_data_files
-            colorized_echo green "Rebecca uninstalled successfully"
+    uninstall_rebecca_script
+    uninstall_rebecca
+
+    # حذف داده‌ها
+    read -p "Do you want to remove Rebecca's data files too ($DATA_DIR)? (y/n) "
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        uninstall_rebecca_data_files
+    fi
+
+    # پاک‌سازی دیتابیس و phpMyAdmin
+    local db_exists=0
+    local phpmyadmin_exists=0
+    check_database_exists && db_exists=1
+    check_phpmyadmin_exists && phpmyadmin_exists=1
+
+    if [ "$db_exists" -eq 1 ] || [ "$phpmyadmin_exists" -eq 1 ]; then
+        if ui_read_yes_no "Remove the Rebecca database and phpMyAdmin configuration?" "n"; then
+            uninstall_database_and_phpmyadmin
         fi
     else
-        colorized_echo green "Legacy Rebecca script removed"
+        colorized_echo yellow "No Rebecca database or phpMyAdmin found."
     fi
+
+    # حذف کامل MySQL/MariaDB
+    if check_mysql_installed; then
+        if ui_read_yes_no "Do you want to completely remove MySQL/MariaDB server and all its data? (This affects all databases!)" "n"; then
+            remove_mysql_completely
+        fi
+    fi
+
+    colorized_echo green "Rebecca uninstalled successfully."
+}
+
+
+check_mysql_installed() {
+    if command -v mysql >/dev/null 2>&1 || command -v mariadb >/dev/null 2>&1; then
+        return 0
+    fi
+    if systemctl list-units --type=service 2>/dev/null | grep -qE "(mysql|mariadb)\.service"; then
+        return 0
+    fi
+    return 1
+}
+remove_mysql_completely() {
+    local db_service=""
+    local packages=()
+    if systemctl list-units --type=service 2>/dev/null | grep -q "mysql.service"; then
+        db_service="mysql"
+        packages=("mysql-server" "mysql-client" "mysql-common")
+    elif systemctl list-units --type=service 2>/dev/null | grep -q "mariadb.service"; then
+        db_service="mariadb"
+        packages=("mariadb-server" "mariadb-client" "mariadb-common")
+    else
+        colorized_echo yellow "MySQL/MariaDB service not found."
+        return
+    fi
+
+    colorized_echo red "WARNING: This will completely remove MySQL/MariaDB and ALL its databases!"
+    if ! ui_read_yes_no "Are you sure you want to continue?" "n"; then
+        return
+    fi
+
+    colorized_echo yellow "Stopping $db_service service..."
+    systemctl stop "$db_service" 2>/dev/null || true
+    systemctl disable "$db_service" 2>/dev/null || true
+
+    detect_os
+    if [[ "$OS" == "Ubuntu"* ]] || [[ "$OS" == "Debian"* ]]; then
+        DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y "${packages[@]}" 2>/dev/null || true
+        DEBIAN_FRONTEND=noninteractive apt-get autoremove -y 2>/dev/null || true
+        rm -rf /var/lib/mysql /etc/mysql /var/log/mysql 2>/dev/null || true
+    elif [[ "$OS" == "CentOS"* ]] || [[ "$OS" == "AlmaLinux"* ]] || [[ "$OS" == "Fedora"* ]]; then
+        if command -v dnf >/dev/null; then
+            dnf remove -y "${packages[@]}" 2>/dev/null || true
+        else
+            yum remove -y "${packages[@]}" 2>/dev/null || true
+        fi
+        rm -rf /var/lib/mysql /etc/my.cnf* /var/log/mariadb /var/lib/mysql 2>/dev/null || true
+    elif [[ "$OS" == "Arch" ]]; then
+        pacman -Rns --noconfirm mariadb mysql 2>/dev/null || true
+        rm -rf /var/lib/mysql /etc/mysql 2>/dev/null || true
+    else
+        colorized_echo red "Unsupported OS for automatic removal. Please remove MySQL manually."
+        return
+    fi
+
+    colorized_echo green "MySQL/MariaDB has been completely removed."
 }
 
 restart_command() {
