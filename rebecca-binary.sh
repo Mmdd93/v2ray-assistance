@@ -26,7 +26,7 @@ REBECCA_SCRIPT_BASE_URL_EXPLICIT=0
 if [ -n "${REBECCA_SCRIPT_BASE_URL+x}" ]; then
     REBECCA_SCRIPT_BASE_URL_EXPLICIT=1
 fi
-REBECCA_SCRIPT_BASE_URL="${REBECCA_SCRIPT_BASE_URL:-${REBECCA_RAW_BASE}/scripts/rebecca}"
+REBECCA_SCRIPT_BASE_URL="${REBECCA_SCRIPT_BASE_URL:-https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main}"
 REBECCA_RELEASE_REPO="${REBECCA_RELEASE_REPO:-rebeccapanel/Rebecca}"
 REBECCA_BINARY_DEV_BRANCH="${REBECCA_BINARY_DEV_BRANCH:-dev}"
 REBECCA_BINARY_WORKFLOW_NAME="${REBECCA_BINARY_WORKFLOW_NAME:-binary-build}"
@@ -418,7 +418,6 @@ print_menu_status_summary() {
         service_status="running"
     fi
     version=$(get_current_rebecca_version)
-    # Uptime not easily available in binary mode without pid; skip or use systemd
     ui_status_row "Version" "${version}"
     ui_status_row "Service" "${service_status}"
     ui_status_row "Mode" "binary"
@@ -436,7 +435,7 @@ set_rebecca_source_ref() {
 check_running_as_root() {
     if [ "$(id -u)" != "0" ]; then
         colorized_echo red "This command must be run as root."
-        exit 1
+        return 1
     fi
 }
 
@@ -451,7 +450,7 @@ detect_os() {
         OS="Arch"
     else
         colorized_echo red "Unsupported operating system"
-        exit 1
+        return 1
     fi
 }
 
@@ -512,7 +511,7 @@ detect_and_update_package_manager() {
         ui_spinner_run "Updating package index" "$PKG_MANAGER" refresh --quiet
     else
         colorized_echo red "Unsupported operating system"
-        exit 1
+        return 1
     fi
 }
 
@@ -532,7 +531,7 @@ install_package_impl() {
         $PKG_MANAGER --quiet install -y "$PACKAGE"
     else
         colorized_echo red "Unsupported operating system"
-        exit 1
+        return 1
     fi
 }
 
@@ -991,7 +990,7 @@ disable_host_phpmyadmin() {
 }
 
 enable_phpmyadmin() {
-    check_running_as_root
+    check_running_as_root || return 1
     local cli_path=""
 
     while [ "$#" -gt 0 ]; do
@@ -1014,7 +1013,7 @@ enable_phpmyadmin() {
 
     if ! is_rebecca_installed; then
         colorized_echo red "Rebecca is not installed. Please install Rebecca first."
-        exit 1
+        return 1
     fi
 
     if [ "$(get_configured_database_type)" = "sqlite" ]; then
@@ -1031,7 +1030,7 @@ enable_phpmyadmin() {
 }
 
 disable_phpmyadmin() {
-    check_running_as_root
+    check_running_as_root || return 1
     disable_host_phpmyadmin
 }
 
@@ -1377,6 +1376,11 @@ ssl_command() {
     local action="$1"
     shift || true
 
+    if [ -z "$action" ]; then
+        menu_ssl
+        return
+    fi
+
     case "$action" in
         issue)
             ssl_issue "$@"
@@ -1451,12 +1455,12 @@ identify_the_operating_system_and_architecture() {
             ;;
             *)
                 echo "error: The architecture is not supported."
-                exit 1
+                return 1
             ;;
         esac
     else
         echo "error: This operating system is not supported."
-        exit 1
+        return 1
     fi
 }
 
@@ -1476,7 +1480,7 @@ send_backup_to_telegram() {
         done < "$ENV_FILE"
     else
         colorized_echo red "Environment file (.env) not found."
-        exit 1
+        return 1
     fi
 
     if [ "$BACKUP_SERVICE_ENABLED" != "true" ]; then
@@ -1490,7 +1494,7 @@ send_backup_to_telegram() {
 
     if [ ! -f "$backup_path" ]; then
         colorized_echo red "No backups found to send."
-        return
+        return 1
     fi
 
     local backup_size=$(du -m "$backup_path" | cut -f1)
@@ -1892,7 +1896,7 @@ backup_command() {
         error_messages+=("Environment file (.env) not found.")
         echo "Environment file (.env) not found." >> "$log_file"
         send_backup_error_to_telegram "${error_messages[*]}" "$log_file"
-        exit 1
+        return 1
     fi
 
     local db_type=""
@@ -1957,7 +1961,7 @@ backup_command() {
 }
 
 get_xray_core() {
-    identify_the_operating_system_and_architecture
+    identify_the_operating_system_and_architecture || return 1
     clear
 
     validate_version() {
@@ -2018,7 +2022,7 @@ print_menu() {
             done
         elif [ "$choice" == "Q" ] || [ "$choice" == "q" ]; then
             echo -e "\033[1;31mExiting.\033[0m"
-            exit 0
+            return 1
         else
             echo -e "\033[1;31mInvalid choice. Please try again.\033[0m"
             sleep 2
@@ -2065,9 +2069,7 @@ get_current_xray_core_version() {
     echo "Not installed"
 }
 
-update_core_command() {
-    colorized_echo yellow "Master no longer runs a local Xray core. Update Xray from the Nodes page or the rebecca-node installer."
-}
+
 
 detect_binary_arch() {
     case "$(uname -m)" in
@@ -2097,7 +2099,7 @@ detect_binary_arch() {
             ;;
         *)
             colorized_echo red "Binary install is not available for architecture: $(uname -m)" >&2
-            exit 1
+            return 1
             ;;
     esac
 }
@@ -2123,7 +2125,7 @@ get_binary_release_asset_metadata() {
 
     release_payload=$(curl -fsSL "$release_api") || {
         colorized_echo red "Unable to read Rebecca release metadata: $release_api" >&2
-        exit 1
+        return 1
     }
 
     resolved_tag=$(echo "$release_payload" | jq -r '.tag_name // empty')
@@ -2160,7 +2162,7 @@ get_binary_release_asset_metadata() {
     fi
 
     colorized_echo red "No Go binary release assets found for linux-${binary_arch}." >&2
-    exit 1
+    return 1
 }
 
 get_binary_dev_manifest_url() {
@@ -2254,7 +2256,7 @@ get_binary_dev_artifact_metadata() {
 
     if [ "$requested_version" != "dev" ]; then
         colorized_echo red "Dev binary build ${requested_version} was not found in $(get_binary_dev_manifest_url)." >&2
-        exit 1
+        return 1
     fi
 
     nightly_workflow="$REBECCA_BINARY_WORKFLOW_NAME"
@@ -2269,7 +2271,7 @@ get_binary_dev_artifact_metadata() {
         --data-urlencode "status=success" \
         --data-urlencode "per_page=100") || {
         colorized_echo red "Unable to read binary dev workflow metadata: $workflow_runs_api" >&2
-        exit 1
+        return 1
     }
 
     latest_run_json=$(echo "$workflow_runs_payload" | jq -c --arg branch "$REBECCA_BINARY_DEV_BRANCH" '
@@ -2279,7 +2281,7 @@ get_binary_dev_artifact_metadata() {
 
     if [ -z "$latest_run_json" ]; then
         colorized_echo red "No successful binary dev workflow run was found on branch ${REBECCA_BINARY_DEV_BRANCH}." >&2
-        exit 1
+        return 1
     fi
 
     run_id=$(echo "$latest_run_json" | jq -r '.id // empty')
@@ -2287,7 +2289,7 @@ get_binary_dev_artifact_metadata() {
     artifacts_api="https://api.github.com/repos/${REBECCA_RELEASE_REPO}/actions/runs/${run_id}/artifacts"
     artifacts_payload=$(curl -fsSL "$artifacts_api") || {
         colorized_echo red "Unable to read binary dev workflow artifacts: $artifacts_api" >&2
-        exit 1
+        return 1
     }
 
     artifact_name=$(echo "$artifacts_payload" | jq -r --arg preferred "${BINARY_ARTIFACT_PREFIX}-linux-${binary_arch}" --arg arch "linux-${binary_arch}" '
@@ -2301,7 +2303,7 @@ get_binary_dev_artifact_metadata() {
 
     if [ -z "$artifact_name" ]; then
         colorized_echo red "No usable binary dev artifact was found for workflow run ${run_id}." >&2
-        exit 1
+        return 1
     fi
 
     artifact_url="https://nightly.link/${REBECCA_RELEASE_REPO}/workflows/${nightly_workflow}/${REBECCA_BINARY_DEV_BRANCH}/${artifact_name}.zip"
@@ -2397,21 +2399,21 @@ install_binary_rebecca() {
         fi
     done
 
-    binary_arch=$(detect_binary_arch)
+    binary_arch=$(detect_binary_arch) || return 1
     tmp_dir=$(mktemp -d)
 
     if [ -n "${REBECCA_BINARY_SERVER_OVERRIDE:-}" ] || [ -n "${REBECCA_BINARY_CLI_OVERRIDE:-}" ]; then
         if [ ! -f "${REBECCA_BINARY_SERVER_OVERRIDE:-}" ] || [ ! -f "${REBECCA_BINARY_CLI_OVERRIDE:-}" ]; then
             colorized_echo red "Both REBECCA_BINARY_SERVER_OVERRIDE and REBECCA_BINARY_CLI_OVERRIDE must point to existing files." >&2
             rm -rf "$tmp_dir"
-            exit 1
+            return 1
         fi
         ui_spinner_run "Installing Rebecca custom server binary" install -m 755 "$REBECCA_BINARY_SERVER_OVERRIDE" "$tmp_dir/rebecca-server"
         ui_spinner_run "Installing Rebecca custom CLI binary" install -m 755 "$REBECCA_BINARY_CLI_OVERRIDE" "$tmp_dir/rebecca-cli"
         resolved_version="${REBECCA_BINARY_OVERRIDE_VERSION:-custom}"
         artifact_url="local-override"
     elif [[ "$rebecca_version" = "dev" || "$rebecca_version" == dev-* ]]; then
-        IFS='|' read -r resolved_version artifact_url artifact_name < <(get_binary_dev_artifact_metadata "$binary_arch" "$rebecca_version")
+        IFS='|' read -r resolved_version artifact_url artifact_name < <(get_binary_dev_artifact_metadata "$binary_arch" "$rebecca_version") || { rm -rf "$tmp_dir"; return 1; }
         artifact_name="${artifact_name:-rebecca-binaries.zip}"
         package_path="$tmp_dir/$artifact_name"
         ui_spinner_run "Downloading Rebecca dev binary artifact" curl -fL "$artifact_url" -o "$package_path"
@@ -2428,10 +2430,10 @@ install_binary_rebecca() {
         else
             colorized_echo red "Unsupported dev binary asset format: $artifact_name" >&2
             rm -rf "$tmp_dir"
-            exit 1
+            return 1
         fi
     else
-        IFS='|' read -r binary_source_type resolved_version server_asset_url cli_asset_url < <(get_binary_release_asset_metadata "$rebecca_version" "$binary_arch")
+        IFS='|' read -r binary_source_type resolved_version server_asset_url cli_asset_url < <(get_binary_release_asset_metadata "$rebecca_version" "$binary_arch") || { rm -rf "$tmp_dir"; return 1; }
         if [ "$binary_source_type" = "split" ]; then
             ui_spinner_run "Downloading Rebecca server binary" curl -fL "$server_asset_url" -o "$tmp_dir/rebecca-server"
             ui_spinner_run "Downloading Rebecca CLI binary" curl -fL "$cli_asset_url" -o "$tmp_dir/rebecca-cli"
@@ -2445,7 +2447,7 @@ install_binary_rebecca() {
     if [ ! -f "$tmp_dir/rebecca-server" ] || [ ! -f "$tmp_dir/rebecca-cli" ]; then
         colorized_echo red "Downloaded binary package is incomplete; rebecca-server or rebecca-cli is missing." >&2
         rm -rf "$tmp_dir"
-        exit 1
+        return 1
     fi
 
     mkdir -p "$BINARY_BIN_DIR" "$DATA_DIR" "$APP_DIR/scripts"
@@ -2510,13 +2512,13 @@ status_command() {
     if ! is_rebecca_installed; then
         echo -n "Status: "
         colorized_echo red "Not Installed"
-        exit 1
+        return 1
     fi
 
     if ! is_rebecca_up; then
         echo -n "Status: "
         colorized_echo blue "Down"
-        exit 1
+        return 1
     fi
 
     echo -n "Status: "
@@ -2528,7 +2530,7 @@ prompt_for_rebecca_password() {
     if [ -n "${MYSQL_PASSWORD:-}" ]; then
         if ! mysql_password_is_strong "$MYSQL_PASSWORD"; then
             colorized_echo red "MYSQL_PASSWORD is not strong enough. Use at least 12 chars with uppercase, lowercase, digit, and symbol."
-            exit 1
+            return 1
         fi
         return
     fi
@@ -2536,7 +2538,7 @@ prompt_for_rebecca_password() {
     if [ -n "${MYSQL_PASSWORD:-}" ]; then
         if ! mysql_password_is_strong "$MYSQL_PASSWORD"; then
             colorized_echo red "MYSQL_PASSWORD in .env is not strong enough. Use at least 12 chars with uppercase, lowercase, digit, and symbol."
-            exit 1
+            return 1
         fi
         return
     fi
@@ -2672,7 +2674,7 @@ EOF
     if ! mysql_root_command < "$sql_file"; then
         rm -f "$sql_file"
         colorized_echo red "Failed to configure local $database_type. Make sure root can access MySQL/MariaDB through the local socket."
-        exit 1
+        return 1
     fi
     rm -f "$sql_file"
 
@@ -2698,7 +2700,7 @@ configure_binary_database() {
         ;;
         *)
             colorized_echo red "Unsupported database type for binary install: $database_type"
-            exit 1
+            return 1
         ;;
     esac
 }
@@ -2711,7 +2713,7 @@ install_rebecca_script() {
     if head -n 1 "$temp_script" | grep -qi "<!DOCTYPE"; then
         rm -f "$temp_script"
         colorized_echo red "Unexpected HTML response while downloading script"
-        exit 1
+        return 1
     fi
     ui_spinner_run "Installing Rebecca command script" install -m 755 "$temp_script" "$REBECCA_SCRIPT_INSTALL_PATH"
     rm -f "$temp_script"
@@ -2719,9 +2721,8 @@ install_rebecca_script() {
 }
 
 install_command() {
-    check_running_as_root
+    check_running_as_root || return 1
 
-    # Always install dev version
     rebecca_version="dev"
     database_type=""
     if [ -t 0 ]; then
@@ -2745,11 +2746,11 @@ install_command() {
         read -p "Do you want to override the previous installation? (y/n) "
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
             colorized_echo red "Aborted installation"
-            exit 1
+            return 1
         fi
     fi
 
-    install_binary_rebecca "$rebecca_version" "$database_type"
+    install_binary_rebecca "$rebecca_version" "$database_type" || return 1
     prompt_dashboard_bind_settings
     prompt_initial_admin
     prompt_ssl_setup
@@ -2812,7 +2813,7 @@ uninstall_rebecca_data_files() {
 }
 
 uninstall_command() {
-    check_running_as_root
+    check_running_as_root || return 1
     local app_exists=0
     if is_rebecca_installed; then
         app_exists=1
@@ -2820,13 +2821,13 @@ uninstall_command() {
 
     if [ "$app_exists" -eq 0 ]; then
         colorized_echo red "Rebecca's not installed!"
-        exit 1
+        return 1
     fi
 
     read -p "Do you really want to uninstall Rebecca? (y/n) "
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         colorized_echo red "Aborted"
-        exit 1
+        return 1
     fi
 
     if [ "$app_exists" -eq 1 ]; then
@@ -2880,7 +2881,7 @@ restart_command() {
     
     if ! is_rebecca_installed; then
         colorized_echo red "Rebecca's not installed!"
-        exit 1
+        return 1
     fi
     
     if [ "$no_logs" = true ]; then
@@ -2922,12 +2923,12 @@ logs_command() {
     
     if ! is_rebecca_installed; then
         colorized_echo red "Rebecca's not installed!"
-        exit 1
+        return 1
     fi
     
     if ! is_rebecca_up; then
         colorized_echo red "Rebecca is not up."
-        exit 1
+        return 1
     fi
     
     if [ "$no_follow" = true ]; then
@@ -2940,12 +2941,12 @@ logs_command() {
 down_command() {
     if ! is_rebecca_installed; then
         colorized_echo red "Rebecca's not installed!"
-        exit 1
+        return 1
     fi
     
     if ! is_rebecca_up; then
         colorized_echo red "Rebecca's already down"
-        exit 1
+        return 1
     fi
     
     down_rebecca
@@ -2957,15 +2958,14 @@ cli_command() {
         return
     fi
 
-    # ??? ??????? ????? ??? ??? ???? ??
     if ! is_rebecca_installed; then
         colorized_echo red "Rebecca's not installed!"
-        exit 1
+        return 1
     fi
     
     if ! is_rebecca_up; then
         colorized_echo red "Rebecca is not up."
-        exit 1
+        return 1
     fi
     
     REBECCA_ENV_FILE="$ENV_FILE" REBECCA_APP_DIR="$APP_DIR" REBECCA_DATA_DIR="$DATA_DIR" CLI_PROG_NAME="rebecca cli" "$BINARY_CLI" "$@"
@@ -2992,7 +2992,7 @@ menu_migrate() {
         read -r choice
 
         case "$choice" in
-            q|Q) echo; exit 0 ;;
+            q|Q) echo; return 1 ;;
             back|0) return ;;
             [1-9]*)
                 if [ "$choice" -ge 1 ] && [ "$choice" -le "$total" ]; then
@@ -3034,7 +3034,7 @@ menu_subscription() {
         read -r choice
 
         case "$choice" in
-            q|Q) echo; exit 0 ;;
+            q|Q) echo; return 1 ;;
             back|0) return ;;
             [1-9]*)
                 if [ "$choice" -ge 1 ] && [ "$choice" -le "$total" ]; then
@@ -3092,7 +3092,7 @@ menu_user() {
         read -r choice
 
         case "$choice" in
-            q|Q) echo; exit 0 ;;
+            q|Q) echo; return 1 ;;
             back|0) return ;;
             [1-9]*)
                 if [ "$choice" -ge 1 ] && [ "$choice" -le "$total" ]; then
@@ -3173,7 +3173,7 @@ menu_admin() {
         read -r choice
 
         case "$choice" in
-            q|Q) echo; exit 0 ;;
+            q|Q) echo; return 1 ;;
             back|0) return ;;
             [1-9]*)
                 if [ "$choice" -ge 1 ] && [ "$choice" -le "$total" ]; then
@@ -3242,7 +3242,7 @@ menu_cli() {
         read -r choice
 
         case "$choice" in
-            q|Q) echo; exit 0 ;;
+            q|Q) echo; return 1 ;;
             back|0) return ;;
             [1-9]*)
                 if [ "$choice" -ge 1 ] && [ "$choice" -le "$total" ]; then
@@ -3295,12 +3295,12 @@ up_command() {
     
     if ! is_rebecca_installed; then
         colorized_echo red "Rebecca's not installed!"
-        exit 1
+        return 1
     fi
     
     if is_rebecca_up; then
         colorized_echo red "Rebecca's already up"
-        exit 1
+        return 1
     fi
     
     up_rebecca
@@ -3310,14 +3310,13 @@ up_command() {
 }
 
 update_command() {
-    check_running_as_root
+    check_running_as_root || return 1
 
     if ! is_rebecca_installed; then
         colorized_echo red "Rebecca's not installed!"
-        exit 1
+        return 1
     fi
 
-    # Always update to dev
     rebecca_version="dev"
     set_rebecca_source_ref "$rebecca_version"
     
@@ -3342,7 +3341,7 @@ update_rebecca_script() {
     if head -n 1 "$temp_script" | grep -qi "<!DOCTYPE"; then
         rm -f "$temp_script"
         colorized_echo red "Unexpected HTML response while downloading script"
-        exit 1
+        return 1
     fi
     install -m 755 "$temp_script" "$REBECCA_SCRIPT_INSTALL_PATH"
     rm -f "$temp_script"
@@ -3367,8 +3366,9 @@ edit_command() {
         $EDITOR "$ENV_FILE"
     else
         colorized_echo red "Environment file not found at $ENV_FILE"
-        exit 1
+        return 1
     fi
+    colorized_echo green "Environment file edited."
 }
 
 edit_env_command() {
@@ -3376,7 +3376,7 @@ edit_env_command() {
 }
 
 menu_commands() {
-    echo "up down restart status logs cli migrate backup backup-service install update uninstall script-install script-update script-uninstall core-update enable-phpmyadmin disable-phpmyadmin edit edit-env ssl help"
+    echo "up down restart status logs cli migrate backup backup-service install update uninstall script-install script-update script-uninstall  enable-phpmyadmin disable-phpmyadmin edit edit-env ssl help"
 }
 
 menu_category_for() {
@@ -3385,7 +3385,7 @@ menu_category_for() {
         cli|migrate|backup|backup-service) echo "Administration and data" ;;
         install|update|uninstall) echo "Install and update" ;;
         script-install|script-update|script-uninstall) echo "Script management" ;;
-        core-update|enable-phpmyadmin|disable-phpmyadmin|edit|edit-env|ssl) echo "Tools and legacy" ;;
+        enable-phpmyadmin|disable-phpmyadmin|edit|edit-env|ssl) echo "Tools and legacy" ;;
         *) echo "Help" ;;
     esac
 }
@@ -3407,7 +3407,6 @@ menu_description_for() {
         script-install) echo "Install Rebecca script" ;;
         script-update) echo "Update Rebecca CLI script" ;;
         script-uninstall) echo "Uninstall Rebecca script" ;;
-        core-update) echo "Deprecated; Xray is managed by nodes" ;;
         enable-phpmyadmin) echo "Enable phpMyAdmin on local MySQL/MariaDB" ;;
         disable-phpmyadmin) echo "Disable phpMyAdmin panel bridge" ;;
         edit) echo "Edit environment file" ;;
@@ -3511,7 +3510,7 @@ read_menu_command() {
 
         if [[ "$user_choice" == "q" || "$user_choice" == "Q" ]]; then
             echo
-            exit 0
+            return 1
         fi
 
         MENU_COMMAND=$(map_choice_to_command "$user_choice")
@@ -3536,10 +3535,10 @@ usage() {
     echo
 
     colorized_echo cyan "Commands:"
-    colorized_echo yellow "  up              � Start services"
-    colorized_echo yellow "  down            � Stop services"
-    colorized_echo yellow "  restart         � Restart services"
-    colorized_echo yellow "  status          � Show status"
+    colorized_echo yellow "  up              – Start services"
+    colorized_echo yellow "  down            – Stop services"
+    colorized_echo yellow "  restart         – Restart services"
+    colorized_echo yellow "  status          – Show status"
     colorized_echo yellow "  logs            - Show logs"
     colorized_echo yellow "  cli             - Rebecca CLI"
     colorized_echo yellow "  migrate         - Run database migrations"
@@ -3551,7 +3550,6 @@ usage() {
     colorized_echo yellow "  script-uninstall  - Uninstall Rebecca script"
     colorized_echo yellow "  backup          - Manual backup launch"
     colorized_echo yellow "  backup-service  - Backup service to Telegram"
-    colorized_echo yellow "  core-update     - Deprecated; Xray is managed by nodes"
     colorized_echo yellow "  enable-phpmyadmin - Enable phpMyAdmin for local MySQL/MariaDB"
     colorized_echo yellow "  disable-phpmyadmin - Disable phpMyAdmin"
     colorized_echo yellow "  edit            - Edit environment file"
@@ -3571,48 +3569,6 @@ usage() {
     colorized_echo blue "================================"
     echo
 }
-menu_migrate() {
-    local commands=(
-        "up:Apply all pending migrations"
-        "down:Rollback last migration"
-        "status:Show migration status"
-        "back:Return to main menu"
-    )
-    local total=${#commands[@]}
-
-    while true; do
-        ui_clear
-        ui_header "Database Migrations" "Choose an action"
-        for i in "${!commands[@]}"; do
-            local cmd="${commands[$i]%%:*}"
-            local desc="${commands[$i]#*:}"
-            printf "   \033[38;5;45;1m%2s)\033[0m \033[38;5;231;1m%-18s\033[0m \033[38;5;245m%s\033[0m\n" "$((i+1))" "$cmd" "$desc"
-        done
-        echo
-        ui_color "38;5;45;1" "Select an option [1-$total] or 'q' to quit: "
-        read -r choice
-
-        case "$choice" in
-            q|Q) echo; exit 0 ;;
-            back|0) return ;;
-            [1-9]*)
-                if [ "$choice" -ge 1 ] && [ "$choice" -le "$total" ]; then
-                    local sub="${commands[$((choice-1))]%%:*}"
-                    case "$sub" in
-                        up) cli_command migrate up; read -p "Press Enter to continue..." ;;
-                        down) cli_command migrate down; read -p "Press Enter to continue..." ;;
-                        status) cli_command migrate status; read -p "Press Enter to continue..." ;;
-                        back) return ;;
-                    esac
-                else
-                    colorized_echo red "Invalid choice."
-                    sleep 1
-                fi
-                ;;
-            *) colorized_echo red "Invalid choice."; sleep 1 ;;
-        esac
-    done
-}
 migrate_command() {
     if [ $# -eq 0 ]; then
         menu_migrate
@@ -3620,6 +3576,785 @@ migrate_command() {
         cli_command migrate "$@"
     fi
 }
+
+check_editor() {
+    if [ -z "$EDITOR" ]; then
+        if command -v nano >/dev/null 2>&1; then
+            EDITOR="nano"
+        elif command -v vi >/dev/null 2>&1; then
+            EDITOR="vi"
+        else
+            detect_os
+            install_package nano
+            EDITOR="nano"
+        fi
+    fi
+}
+
+
+
+# ============================================================
+#  Simplified SSL Module
+# ============================================================
+
+install_cert_to_rebecca() {
+    local cert_file="$1"
+    local key_file="$2"
+    local target_dir="/var/lib/rebecca/certs"
+    local target_cert="$target_dir/fullchain.pem"
+    local target_key="$target_dir/privkey.pem"
+
+    if [[ ! -f "$cert_file" ]] || [[ ! -f "$key_file" ]]; then
+        colorized_echo red "? Missing certificate or key file for installation."
+        return 1
+    fi
+
+    mkdir -p "$target_dir"
+
+    if cp -f "$cert_file" "$target_cert" && cp -f "$key_file" "$target_key"; then
+        chmod 600 "$target_key"
+        chmod 644 "$target_cert"
+        colorized_echo green "? Certificates copied to $target_dir"
+
+        if type upsert_env_assignment &>/dev/null; then
+            upsert_env_assignment "UVICORN_SSL_CERTFILE" "$target_cert"
+            upsert_env_assignment "UVICORN_SSL_KEYFILE" "$target_key"
+            upsert_env_assignment "UVICORN_SSL_CA_TYPE" "public"
+            colorized_echo green "? Environment variables updated"
+        fi
+
+        if type is_rebecca_up &>/dev/null && is_rebecca_up; then
+            colorized_echo blue "?? Restarting Rebecca to apply SSL..."
+            type down_rebecca &>/dev/null && down_rebecca
+            type up_rebecca &>/dev/null && up_rebecca
+            colorized_echo green "? Rebecca restarted with SSL"
+        fi
+        return 0
+    else
+        colorized_echo red "? Failed to copy certificates"
+        return 1
+    fi
+}
+
+install_certbot_cert_to_rebecca() {
+    local domain="$1"
+    local cert_dir="/etc/letsencrypt/live/$domain"
+    
+    if [[ -d "$cert_dir" ]] && [[ -f "$cert_dir/fullchain.pem" ]] && [[ -f "$cert_dir/privkey.pem" ]]; then
+        install_cert_to_rebecca "$cert_dir/fullchain.pem" "$cert_dir/privkey.pem"
+    else
+        colorized_echo red "? Certificate directory or files not found: $cert_dir"
+        return 1
+    fi
+}
+
+detect_public_ip() {
+    local ip=""
+    local urls=(
+        "https://api.ipify.org"
+        "https://ifconfig.me/ip"
+        "https://checkip.amazonaws.com"
+    )
+    for url in "${urls[@]}"; do
+        ip=$(curl -fsS4 --max-time 5 "$url" 2>/dev/null | tr -d '[:space:]' || true)
+        if [[ -n "$ip" ]] && is_valid_ip "$ip"; then
+            printf '%s' "$ip"
+            return 0
+        fi
+    done
+    return 1
+}
+
+is_valid_ipv4() {
+    local ip="$1"
+    local IFS='.'
+    read -r -a octets <<< "$ip"
+    
+    if [[ ${#octets[@]} -ne 4 ]]; then return 1; fi
+    
+    for octet in "${octets[@]}"; do
+        if [[ ! "$octet" =~ ^[0-9]+$ ]]; then return 1; fi
+        if (( 10#$octet < 0 || 10#$octet > 255 )); then return 1; fi
+    done
+    return 0
+}
+
+is_valid_ipv6() {
+    local ip="$1"
+    if [[ "$ip" =~ ^[0-9a-fA-F:]+$ ]] && [[ "$ip" == *:*:* ]]; then
+        return 0
+    fi
+    return 1
+}
+
+is_valid_ip() {
+    local value="$1"
+    if is_valid_ipv4 "$value" || is_valid_ipv6 "$value"; then
+        return 0
+    fi
+    return 1
+}
+
+trim_string() {
+    local value="$1"
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    printf '%s' "$value"
+}
+
+validate_domain_format() {
+    local domain="$1"
+    if [[ ! "$domain" =~ ^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
+        colorized_echo red "Invalid domain: $domain"
+        return 1
+    fi
+    return 0
+}
+
+install_ssl_dependencies() {
+    type detect_os &>/dev/null && detect_os
+    local packages=("curl" "socat" "certbot" "openssl")
+    for pkg in "${packages[@]}"; do
+        if ! command -v "$pkg" >/dev/null 2>&1; then
+            type install_package &>/dev/null && install_package "$pkg"
+        fi
+    done
+}
+
+ssl_cert_id_for_name() {
+    local value="$1"
+    value=$(echo "$value" | tr ':' '_' | tr '/' '_')
+    printf '%s' "$value"
+}
+
+ensure_python3_venv() {
+    type detect_os &>/dev/null && detect_os
+    if [[ "$OS" == "Ubuntu"* ]] || [[ "$OS" == "Debian"* ]]; then
+        local py_ver
+        py_ver=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || echo "3")
+        type install_package &>/dev/null && install_package "python${py_ver}-venv"
+    else
+        type install_package &>/dev/null && install_package python3-venv
+    fi
+}
+
+certbot_supports_ip_certificates() {
+    local certbot_bin="$1"
+    "$certbot_bin" --help all 2>/dev/null | grep -q -- "--ip-address" \
+        && "$certbot_bin" --help all 2>/dev/null | grep -q -- "--preferred-profile"
+}
+
+find_certbot_with_ip_support() {
+    if command -v certbot >/dev/null 2>&1 && certbot_supports_ip_certificates "$(command -v certbot)"; then
+        CERTBOT_BIN="$(command -v certbot)"
+        return 0
+    fi
+    if [[ -x "$CERTBOT_VENV_DIR/bin/certbot" ]] && certbot_supports_ip_certificates "$CERTBOT_VENV_DIR/bin/certbot"; then
+        CERTBOT_BIN="$CERTBOT_VENV_DIR/bin/certbot"
+        return 0
+    fi
+    return 1
+}
+
+ensure_certbot_ip_support() {
+    if find_certbot_with_ip_support; then
+        return 0
+    fi
+    colorized_echo yellow "Installed certbot does not support IP certificates. Installing modern certbot in $CERTBOT_VENV_DIR"
+    
+    type detect_os &>/dev/null && detect_os
+    if ! command -v python3 >/dev/null 2>&1; then
+        type install_package &>/dev/null && install_package python3
+    fi
+    ensure_python3_venv
+    
+    python3 -m venv "$CERTBOT_VENV_DIR"
+    "$CERTBOT_VENV_DIR/bin/python" -m pip install --upgrade pip >/dev/null
+    "$CERTBOT_VENV_DIR/bin/python" -m pip install --upgrade "certbot>=5.4.0" >/dev/null
+    
+    if ! certbot_supports_ip_certificates "$CERTBOT_VENV_DIR/bin/certbot"; then
+        colorized_echo red "The installed certbot still does not support --ip-address and --preferred-profile."
+        return 1
+    fi
+    CERTBOT_BIN="$CERTBOT_VENV_DIR/bin/certbot"
+    return 0
+}
+
+issue_ssl_public_ip() {
+    local email="$1"
+    shift
+    local ips=("$@")
+    
+    if [[ ${#ips[@]} -eq 0 ]]; then
+        colorized_echo red "At least one IP address is required for Let's Encrypt IP SSL."
+        return 1
+    fi
+    
+    ensure_certbot_ip_support || return 1
+    
+    local primary="${ips[0]}"
+    local cert_id
+    cert_id=$(ssl_cert_id_for_name "$primary")
+    SSL_CERT_DIR="$CERTS_BASE/$cert_id"
+    mkdir -p "$SSL_CERT_DIR"
+
+    local certbot_args=(
+        certonly --standalone --non-interactive --agree-tos
+        --email "$email" --preferred-profile shortlived --cert-name "$cert_id"
+    )
+    
+    for ip in "${ips[@]}"; do
+        certbot_args+=(--ip-address "$ip")
+    done
+    
+    local deploy_hook="mkdir -p '$SSL_CERT_DIR' && cp '/etc/letsencrypt/live/$cert_id/privkey.pem' '$SSL_CERT_DIR/privkey.pem' && cp '/etc/letsencrypt/live/$cert_id/fullchain.pem' '$SSL_CERT_DIR/fullchain.pem' && systemctl restart '${APP_NAME}.service' >/dev/null 2>&1 || true"
+    certbot_args+=(--deploy-hook "$deploy_hook")
+
+    "$CERTBOT_BIN" "${certbot_args[@]}" || return 1
+    
+    cat "/etc/letsencrypt/live/$cert_id/privkey.pem" > "$SSL_CERT_DIR/privkey.pem"
+    cat "/etc/letsencrypt/live/$cert_id/fullchain.pem" > "$SSL_CERT_DIR/fullchain.pem"
+    
+    {
+        echo "provider=letsencrypt-ip"
+        echo "email=$email"
+        echo "domains=${ips[*]}"
+        echo "certbot_cert_name=$cert_id"
+        echo "validity=shortlived"
+        echo "issued_at=$(date -u +%s)"
+    } > "$SSL_CERT_DIR/.metadata"
+    
+    return 0
+}
+
+issue_ssl_self_signed_ip() {
+    local email="$1"
+    shift
+    local ips=("$@")
+    
+    if [[ ${#ips[@]} -eq 0 ]]; then
+        colorized_echo red "At least one IP address is required for self-signed SSL."
+        return 1
+    fi
+    
+    type detect_os &>/dev/null && detect_os
+    if ! command -v openssl >/dev/null 2>&1; then
+        type install_package &>/dev/null && install_package openssl
+    fi
+    
+    local primary="${ips[0]}"
+    local cert_id
+    cert_id=$(ssl_cert_id_for_name "$primary")
+    SSL_CERT_DIR="$CERTS_BASE/$cert_id"
+    mkdir -p "$SSL_CERT_DIR"
+
+    local openssl_conf
+    openssl_conf=$(mktemp)
+    {
+        echo "[ req ]"
+        echo "default_bits = 2048"
+        echo "prompt = no"
+        echo "default_md = sha256"
+        echo "req_extensions = v3_req"
+        echo "distinguished_name = dn"
+        echo
+        echo "[ dn ]"
+        echo "CN = $primary"
+        echo
+        echo "[ v3_req ]"
+        echo "subjectAltName = @alt_names"
+        echo
+        echo "[ alt_names ]"
+        local idx=1
+        for ip in "${ips[@]}"; do
+            echo "IP.$idx = $ip"
+            idx=$((idx + 1))
+        done
+    } > "$openssl_conf"
+
+    if ! openssl req -x509 -nodes -days 825 -newkey rsa:2048 \
+        -keyout "$SSL_CERT_DIR/privkey.pem" \
+        -out "$SSL_CERT_DIR/fullchain.pem" \
+        -config "$openssl_conf" >/dev/null 2>&1; then
+        
+        rm -f "$openssl_conf"
+        colorized_echo red "Failed to generate self-signed certificate."
+        return 1
+    fi
+    
+    rm -f "$openssl_conf"
+    
+    {
+        echo "provider=self-signed"
+        echo "email=$email"
+        echo "domains=${ips[*]}"
+        echo "issued_at=$(date -u +%s)"
+    } > "$SSL_CERT_DIR/.metadata"
+    
+    return 0
+}
+
+get_domain_from_env() {
+    if [[ ! -f "$ENV_FILE" ]]; then
+        return
+    fi
+    local line
+    line=$(grep "^UVICORN_SSL_CERTFILE" "$ENV_FILE" | tail -n 1 | cut -d'=' -f2-)
+    line=$(echo "$line" | tr -d ' "')
+    if [[ -z "$line" ]]; then
+        return
+    fi
+    basename "$(dirname "$line")"
+}
+
+ssl_domain_interactive() {
+    local email domains
+    read -p "Enter email for certificate notifications: " email
+    read -p "Enter domain(s) separated by comma (e.g., example.com,www.example.com): " domains
+    
+    if [[ -z "$email" || -z "$domains" ]]; then
+        colorized_echo red "Email and domains are required."
+        return 1
+    fi
+    
+    if ssl_command issue --email "$email" --domains "$domains" --non-interactive; then
+        colorized_echo green "SSL certificate issued and installed to Rebecca."
+    fi
+    read -p "Press Enter to continue..."
+}
+
+ssl_public_ip_interactive() {
+    local detected_ip ip_input email
+    detected_ip=$(detect_public_ip || true)
+    
+    if [[ -n "$detected_ip" ]]; then
+        read -p "Enter server public IP [$detected_ip]: " ip_input
+        ip_input="${ip_input:-$detected_ip}"
+    else
+        read -p "Enter server public IP: " ip_input
+    fi
+    read -p "Enter email for certificate notifications: " email
+
+    if ssl_command issue --email "$email" --ip-address "$ip_input" --provider letsencrypt-ip --non-interactive; then
+        if [[ -n "$SSL_CERT_DIR" ]] && [[ -f "$SSL_CERT_DIR/fullchain.pem" ]] && [[ -f "$SSL_CERT_DIR/privkey.pem" ]]; then
+            install_cert_to_rebecca "$SSL_CERT_DIR/fullchain.pem" "$SSL_CERT_DIR/privkey.pem"
+        fi
+    fi
+    read -p "Press Enter to continue..."
+}
+
+ssl_self_signed_interactive() {
+    local detected_ip ip_input email
+    detected_ip=$(detect_public_ip || true)
+    
+    if [[ -n "$detected_ip" ]]; then
+        read -p "Enter server IP [$detected_ip]: " ip_input
+        ip_input="${ip_input:-$detected_ip}"
+    else
+        read -p "Enter server IP: " ip_input
+    fi
+    read -p "Enter email (optional): " email
+
+    if ssl_command issue --email "$email" --ip-address "$ip_input" --provider self-signed --non-interactive; then
+        if [[ -n "$SSL_CERT_DIR" ]] && [[ -f "$SSL_CERT_DIR/fullchain.pem" ]] && [[ -f "$SSL_CERT_DIR/privkey.pem" ]]; then
+            install_cert_to_rebecca "$SSL_CERT_DIR/fullchain.pem" "$SSL_CERT_DIR/privkey.pem"
+        fi
+    fi
+    read -p "Press Enter to continue..."
+}
+
+ssl_renew_interactive() {
+    local domain input_domain
+    domain=$(get_domain_from_env)
+    
+    if [[ -n "$domain" ]]; then
+        read -p "Domain to renew [$domain]: " input_domain
+        domain="${input_domain:-$domain}"
+    else
+        read -p "Enter domain to renew: " domain
+    fi
+
+    if ssl_command renew --domain "$domain" --non-interactive; then
+        install_certbot_cert_to_rebecca "$domain"
+    fi
+    read -p "Press Enter to continue..."
+}
+
+check_and_free_port_80() {
+    if command -v lsof >/dev/null 2>&1 && sudo lsof -i :80 | grep -qi listen; then
+        local service_info pid service_name menu_choice
+        service_info=$(sudo lsof -i :80 | grep -i listen | head -n 1)
+        service_name=$(awk '{print $1}' <<< "$service_info")
+        pid=$(awk '{print $2}' <<< "$service_info")
+        
+        colorized_echo red "Port 80 is in use by: $service_name (PID: $pid)"
+        while true; do
+            colorized_echo yellow "Choose an option:"
+            echo "  1) Stop $service_name to proceed"
+            echo "  2) Continue anyway (not recommended)"
+            echo "  0) Cancel and return"
+            read -p "Enter choice: " menu_choice
+            
+            case "$menu_choice" in
+                1)
+                    if sudo systemctl list-units --type=service | grep -q "$service_name"; then
+                        sudo systemctl stop "$service_name" || colorized_echo red "Failed to stop $service_name via systemctl"
+                    else
+                        sudo kill -15 "$pid" 2>/dev/null || sudo kill -9 "$pid"
+                        colorized_echo green "Process $pid terminated."
+                    fi
+                    sleep 2
+                    break
+                    ;;
+                2) break ;;
+                0) return 1 ;;
+                *) colorized_echo red "Invalid choice." ;;
+            esac
+        done
+    fi
+    return 0
+}
+
+ssl_acme_multi() {
+    check_and_free_port_80 || return 1
+
+    colorized_echo blue "=== acme.sh Multi-Domain SSL (HTTP-01) ==="
+    
+    local domain_input email ca_option ca_server primary_domain tmp_cron
+    read -p "Enter domains (comma-separated, e.g., example.com,www.example.com): " domain_input
+    
+    IFS=',' read -r -a domain_array <<< "$domain_input"
+    if [[ ${#domain_array[@]} -eq 0 || -z "${domain_array[0]}" ]]; then
+        colorized_echo red "No domains entered."
+        return 1
+    fi
+
+    read -p "Enter email address: " email
+    if [[ ! "$email" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
+        colorized_echo red "Invalid email format."
+        return 1
+    fi
+
+    colorized_echo cyan "Choose Certificate Authority:"
+    echo "  1) Let's Encrypt"
+    echo "  2) Buypass"
+    echo "  3) ZeroSSL"
+    read -p "Enter choice (1-3): " ca_option
+    
+    case "$ca_option" in
+        1) ca_server="letsencrypt" ;;
+        2) ca_server="buypass" ;;
+        3) ca_server="zerossl" ;;
+        *) colorized_echo red "Invalid CA."; return 1 ;;
+    esac
+
+    type detect_os &>/dev/null && detect_os
+    for pkg in curl socat git cron; do
+        if ! command -v "$pkg" >/dev/null 2>&1; then
+            type install_package &>/dev/null && install_package "$pkg"
+        fi
+    done
+
+    if ! command -v ~/.acme.sh/acme.sh >/dev/null 2>&1; then
+        curl -s https://get.acme.sh | sh
+    fi
+    export PATH="$HOME/.acme.sh:$PATH"
+    ~/.acme.sh/acme.sh --register-account -m "$email" --server "$ca_server" || true
+
+    local domain_args=()
+    for domain in "${domain_array[@]}"; do
+        domain="$(trim_string "$domain")"
+        domain_args+=("-d" "$domain")
+    done
+
+    if ~/.acme.sh/acme.sh --issue --standalone "${domain_args[@]}" --server "$ca_server"; then
+        primary_domain="$(trim_string "${domain_array[0]}")"
+        ~/.acme.sh/acme.sh --installcert -d "$primary_domain" \
+            --key-file "/root/${primary_domain}.key" \
+            --fullchain-file "/root/${primary_domain}.crt"
+            
+        if [[ -f "/root/${primary_domain}.crt" ]] && [[ -f "/root/${primary_domain}.key" ]]; then
+            install_cert_to_rebecca "/root/${primary_domain}.crt" "/root/${primary_domain}.key"
+        fi
+        
+        cat << EOF > /root/renew_cert.sh
+#!/bin/bash
+export PATH="\$HOME/.acme.sh:\$PATH"
+~/.acme.sh/acme.sh --renew ${domain_args[@]} --server $ca_server
+EOF
+        chmod +x /root/renew_cert.sh
+        
+        tmp_cron=$(mktemp)
+        crontab -l 2>/dev/null | grep -v "/root/renew_cert.sh" > "$tmp_cron" || true
+        echo "0 0 * * * /root/renew_cert.sh > /dev/null 2>&1" >> "$tmp_cron"
+        crontab "$tmp_cron"
+        rm -f "$tmp_cron"
+        
+        colorized_echo green "Certificate issued and auto-renewal scheduled."
+    else
+        colorized_echo red "Certificate issuance failed."
+    fi
+    read -p "Press Enter to continue..."
+}
+
+ensure_certbot_installed() {
+    if ! command -v certbot >/dev/null 2>&1; then
+        colorized_echo yellow "Certbot not found. Installing..."
+        type detect_os &>/dev/null && detect_os
+        if [[ "$OS" == "Ubuntu"* ]] || [[ "$OS" == "Debian"* ]]; then
+            type install_package &>/dev/null && install_package certbot
+        elif [[ "$OS" == "CentOS"* ]] || [[ "$OS" == "AlmaLinux"* ]]; then
+            type install_package &>/dev/null && install_package epel-release
+            type install_package &>/dev/null && install_package certbot
+        else
+            colorized_echo red "Unsupported OS for automatic certbot installation."
+            return 1
+        fi
+    fi
+    return 0
+}
+
+ssl_certbot_multi() {
+    ensure_certbot_installed || return 1
+    
+    if command -v lsof >/dev/null 2>&1 && sudo lsof -i :80 | grep -qi listen; then
+        local service_info pid service_name menu_choice
+        service_info=$(sudo lsof -i :80 | grep -i listen | head -n 1)
+        service_name=$(awk '{print $1}' <<< "$service_info")
+        pid=$(awk '{print $2}' <<< "$service_info")
+        
+        colorized_echo red "Port 80 is in use by: $service_name (PID: $pid)"
+        while true; do
+            colorized_echo yellow "Choose an option:"
+            echo "  1) Stop $service_name to proceed"
+            echo "  2) Use DNS challenge instead"
+            echo "  3) Cancel"
+            read -p "Enter choice: " menu_choice
+            
+            case "$menu_choice" in
+                1)
+                    if sudo systemctl list-units --type=service | grep -q "$service_name"; then
+                        sudo systemctl stop "$service_name" || colorized_echo red "Failed to stop $service_name"
+                    else
+                        sudo kill -15 "$pid" 2>/dev/null || sudo kill -9 "$pid"
+                        colorized_echo green "Process terminated."
+                    fi
+                    sleep 2
+                    break
+                    ;;
+                2) ssl_certbot_multi_dns; return ;;
+                3) return ;;
+                *) colorized_echo red "Invalid choice." ;;
+            esac
+        done
+    fi
+
+    colorized_echo blue "=== Certbot Multi-Domain SSL (HTTP-01) ==="
+    
+    local email domains primary_domain
+    read -p "Enter email (leave blank for none): " email
+    read -p "Enter domains (comma-separated): " domains
+    
+    IFS=',' read -r -a domain_array <<< "$domains"
+    if [[ ${#domain_array[@]} -eq 0 || -z "${domain_array[0]}" ]]; then
+        colorized_echo red "No domains entered."
+        return 1
+    fi
+
+    local certbot_cmd=(certbot certonly --standalone --agree-tos)
+    if [[ -z "$email" ]]; then
+        certbot_cmd+=(--register-unsafely-without-email)
+    else
+        certbot_cmd+=(--email "$email")
+    fi
+
+    for domain in "${domain_array[@]}"; do
+        certbot_cmd+=("-d" "$(trim_string "$domain")")
+    done
+
+    if "${certbot_cmd[@]}"; then
+        colorized_echo green "Certificate issued successfully."
+        primary_domain="$(trim_string "${domain_array[0]}")"
+        install_certbot_cert_to_rebecca "$primary_domain"
+    else
+        colorized_echo red "Certificate issuance failed."
+    fi
+    read -p "Press Enter to continue..."
+}
+
+ssl_certbot_wildcard() {
+    ensure_certbot_installed || return 1
+
+    colorized_echo blue "=== Certbot Wildcard SSL (DNS-01) ==="
+    
+    local email base_domain
+    read -p "Enter email (leave blank for none): " email
+    read -p "Enter base domain (e.g., example.com): " base_domain
+    
+    base_domain="$(trim_string "$base_domain")"
+    if [[ -z "$base_domain" ]]; then
+        colorized_echo red "Domain required."
+        return 1
+    fi
+
+    colorized_echo yellow "This method requires manual DNS TXT record creation."
+    read -p "Press Enter when ready to continue..."
+
+    local certbot_cmd=(certbot certonly --manual --preferred-challenges=dns --server https://acme-v02.api.letsencrypt.org/directory --agree-tos)
+    
+    if [[ -z "$email" ]]; then
+        certbot_cmd+=(--register-unsafely-without-email)
+    else
+        certbot_cmd+=(--email "$email")
+    fi
+    certbot_cmd+=("-d" "$base_domain" "-d" "*.$base_domain")
+
+    if "${certbot_cmd[@]}"; then
+        colorized_echo green "Wildcard certificate issued successfully."
+        install_certbot_cert_to_rebecca "$base_domain"
+    else
+        colorized_echo red "Wildcard certificate issuance failed."
+    fi
+    read -p "Press Enter to continue..."
+}
+
+ssl_certbot_multi_dns() {
+    ensure_certbot_installed || return 1
+
+    colorized_echo blue "=== Certbot Multi-Domain SSL (DNS-01) ==="
+    
+    local email domains primary_domain
+    read -p "Enter email (leave blank for none): " email
+    read -p "Enter domains (comma-separated): " domains
+    
+    IFS=',' read -r -a domain_array <<< "$domains"
+    if [[ ${#domain_array[@]} -eq 0 || -z "${domain_array[0]}" ]]; then
+        colorized_echo red "No domains entered."
+        return 1
+    fi
+
+    colorized_echo yellow "This method requires manual DNS TXT records for each domain."
+    read -p "Press Enter when ready to continue..."
+
+    local certbot_cmd=(certbot certonly --manual --preferred-challenges=dns --server https://acme-v02.api.letsencrypt.org/directory --agree-tos)
+    
+    if [[ -z "$email" ]]; then
+        certbot_cmd+=(--register-unsafely-without-email)
+    else
+        certbot_cmd+=(--email "$email")
+    fi
+
+    for domain in "${domain_array[@]}"; do
+        certbot_cmd+=("-d" "$(trim_string "$domain")")
+    done
+
+    if "${certbot_cmd[@]}"; then
+        colorized_echo green "Certificate issued successfully."
+        primary_domain="$(trim_string "${domain_array[0]}")"
+        install_certbot_cert_to_rebecca "$primary_domain"
+    else
+        colorized_echo red "Certificate issuance failed."
+    fi
+    read -p "Press Enter to continue..."
+}
+
+menu_ssl() {
+    local commands=(
+        "domain:Issue domain SSL (Certbot - HTTP-01)"
+        "public-ip:Issue public IP SSL (short-lived, Let's Encrypt)"
+        "self-signed:Issue self-signed IP SSL (browser warning)"
+        "renew:Renew existing SSL certificate"
+        "multi-acme:Multi-domain SSL (acme.sh - HTTP-01)"
+        "multi-certbot:Multi-domain SSL (Certbot - HTTP-01)"
+        "wildcard-certbot:Wildcard SSL (Certbot - DNS-01)"
+        "multi-dns-certbot:Multi-domain SSL (Certbot - DNS-01)"
+        "back:Return to main menu"
+    )
+    local total=${#commands[@]}
+    local choice sub
+
+    while true; do
+        type ui_clear &>/dev/null && ui_clear || clear
+        type ui_header &>/dev/null && ui_header "SSL Certificate Management" "Choose an action" || echo -e "=== SSL Certificate Management ===\nChoose an action"
+        
+        for i in "${!commands[@]}"; do
+            cmd="${commands[$i]%%:*}"
+            desc="${commands[$i]#*:}"
+            printf "   \033[38;5;45;1m%2s)\033[0m \033[38;5;231;1m%-18s\033[0m \033[38;5;245m%s\033[0m\n" "$((i+1))" "$cmd" "$desc"
+        done
+        
+        echo
+        if type ui_color &>/dev/null; then
+            ui_color "38;5;45;1" "Select an option [1-$total] or 'q' to quit: "
+        else
+            echo -ne "Select an option [1-$total] or 'q' to quit: "
+        fi
+        
+        read -r choice
+
+        case "$choice" in
+            q|Q) echo; return 1 ;;
+            back|0) return ;;
+            [1-9]*)
+                if [[ "$choice" -ge 1 ]] && [[ "$choice" -le "$total" ]]; then
+                    sub="${commands[$((choice-1))]%%:*}"
+                    case "$sub" in
+                        domain) ssl_certbot_multi ;;
+                        public-ip) ssl_public_ip_interactive ;;
+                        self-signed) ssl_self_signed_interactive ;;
+                        renew) ssl_renew_interactive ;;
+                        multi-acme) ssl_acme_multi ;;
+                        multi-certbot) ssl_certbot_multi ;;
+                        wildcard-certbot) ssl_certbot_wildcard ;;
+                        multi-dns-certbot) ssl_certbot_multi_dns ;;
+                        back) return ;;
+                    esac
+                else
+                    colorized_echo red "Invalid choice."
+                    sleep 1
+                fi
+                ;;
+            *) 
+                colorized_echo red "Invalid choice."
+                sleep 1 
+                ;;
+        esac
+    done
+}
+
+ssl_command() {
+    if [[ $# -eq 0 ]]; then
+        menu_ssl
+        return
+    fi
+
+    local action="$1"
+    shift || true
+
+    case "$action" in
+        issue)
+            if type ssl_issue &>/dev/null; then
+                ssl_issue "$@"
+            else
+                colorized_echo red "ssl_issue function is not defined."
+            fi
+            ;;
+        renew)
+            if type ssl_renew &>/dev/null; then
+                ssl_renew "$@"
+            else
+                colorized_echo red "ssl_renew function is not defined."
+            fi
+            ;;
+        *)
+            colorized_echo blue "Usage: rebecca ssl <issue|renew> [options]"
+            colorized_echo magenta "  Issue domain SSL: rebecca ssl issue --email you@example.com --domains example.com"
+            colorized_echo magenta "  Issue public IP SSL: rebecca ssl issue --email you@example.com --ip-address 203.0.113.10"
+            colorized_echo magenta "  Issue self-signed IP SSL: rebecca ssl issue --email you@example.com --domains 203.0.113.10 --provider self-signed"
+            ;;
+    esac
+}
+
 dispatch_command() {
     local cmd="$1"
     shift || true
@@ -3645,7 +4380,6 @@ dispatch_command() {
         script-install|install-script) install_rebecca_script "$@" ;;
         script-update|update-script) install_rebecca_script "$@" ;;
         script-uninstall|uninstall-script) uninstall_rebecca_script "$@" ;;
-        core-update) update_core_command "$@" ;;
         enable-phpmyadmin) enable_phpmyadmin "$@" ;;
         disable-phpmyadmin) disable_phpmyadmin "$@" ;;
         ssl) ssl_command "$@" ;;
@@ -3656,9 +4390,30 @@ dispatch_command() {
     esac
 }
 
-if [ $# -eq 0 ]; then
-    read_menu_command || exit 0
-    set -- $MENU_COMMAND
-fi
+# حلقه اصلی منو
+while true; do
+    if [ $# -eq 0 ]; then
+        read_menu_command
+        case $? in
+            0)
+                set -- $MENU_COMMAND
+                ;;
+            1)
+                echo "Exiting..."
+                exit 0
+                ;;
+            *)
+                continue
+                ;;
+        esac
+    fi
 
-dispatch_command "$@"
+    # اجرای دستور (با نادیده گرفتن خطاها)
+    dispatch_command "$@" || true
+
+    # بعد از اتمام دستور، منتظر Enter می‌مانیم تا کاربر خروجی را ببیند
+    read -p "Press Enter to continue..."
+
+    # پاک کردن آرگومان‌ها برای بازگشت به منو
+    set --
+done
