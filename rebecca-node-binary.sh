@@ -34,7 +34,12 @@ set_app_context() {
     fi
     ensure_valid_app_name
 
-    if [ -z "${APP_DIR:-}" ] || [ ! -d "$APP_DIR" ]; then
+    # اگر نام نود به‌صورت صریح توسط کاربر یا آرگومان تعیین شده باشد
+    if [ "$APP_NAME_FROM_ARG" -eq 1 ]; then
+        # فقط از مسیر دقیق با همان نام استفاده کن (بدون fallback)
+        APP_DIR="$INSTALL_DIR/$APP_NAME"
+    else
+        # حالت پیش‌فرض: fallback به پوشه‌های موجود
         if [ -d "$INSTALL_DIR/$APP_NAME" ]; then
             APP_DIR="$INSTALL_DIR/$APP_NAME"
         elif [ -d "$INSTALL_DIR/Rebecca-node" ]; then
@@ -598,7 +603,70 @@ get_xray_arch() {
     esac
 }
 
-# تابع نصب Xray-core با نسخه مشخص
+# تابع اصلاح‌شده برای انتخاب نسخه Xray (خروجی فقط نسخه به stdout، پیام‌ها به stderr)
+select_xray_version() {
+    local versions=()
+    local selected_version=""
+
+    # دریافت لیست نسخه‌ها از گیت‌هاب
+    >&2 colorized_echo blue "Fetching available Xray-core versions..."
+    local latest_releases
+    latest_releases=$(curl -s "https://api.github.com/repos/XTLS/Xray-core/releases?per_page=$LAST_XRAY_CORES")
+    if [ -z "$latest_releases" ]; then
+        >&2 colorized_echo red "Failed to fetch versions. Using default version."
+        echo "$DEFAULT_XRAY_CORE_VERSION"
+        return 0
+    fi
+
+    # استخراج tag_nameها
+    mapfile -t versions < <(echo "$latest_releases" | grep -oP '"tag_name": "\K(.*?)(?=")')
+    if [ ${#versions[@]} -eq 0 ]; then
+        >&2 colorized_echo red "No versions found. Using default."
+        echo "$DEFAULT_XRAY_CORE_VERSION"
+        return 0
+    fi
+
+    # نمایش منو (به stderr)
+    >&2 echo
+    >&2 colorized_echo cyan "Available Xray-core versions:"
+    for i in "${!versions[@]}"; do
+        >&2 printf "  %2s) %s\n" "$((i+1))" "${versions[i]}"
+    done
+    >&2 echo "  M) Enter version manually"
+    >&2 echo "  Q) Cancel (use default)"
+    >&2 echo
+
+    while true; do
+        >&2 read -p "Choose a version (1-${#versions[@]}, M, Q): " choice
+        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#versions[@]}" ]; then
+            selected_version="${versions[$((choice-1))]}"
+            break
+        elif [[ "$choice" =~ ^[Mm]$ ]]; then
+            >&2 read -p "Enter version manually (e.g., v1.2.3): " custom_version
+            if [[ -n "$custom_version" ]]; then
+                # اعتبارسنجی ساده با curl
+                if curl -s -o /dev/null -I -w "%{http_code}" "https://github.com/XTLS/Xray-core/releases/tag/${custom_version}" | grep -q 200; then
+                    selected_version="$custom_version"
+                    break
+                else
+                    >&2 colorized_echo red "Version not found. Try again."
+                fi
+            fi
+        elif [[ "$choice" =~ ^[Qq]$ ]]; then
+            selected_version="$DEFAULT_XRAY_CORE_VERSION"
+            >&2 colorized_echo yellow "Using default version: $selected_version"
+            break
+        else
+            >&2 colorized_echo red "Invalid choice. Please enter a number between 1 and ${#versions[@]}, M, or Q."
+        fi
+    done
+
+    # فقط نسخه را به خروجی استاندارد چاپ کن (بدون هیچ خروجی اضافی)
+    echo "$selected_version"
+    return 0
+}
+
+# تابع install_xray_core (بدون تغییر اساسی، فقط برای اطمینان از صحت لینک)
 install_xray_core() {
     local version="$1"
     local data_dir="${DATA_MAIN_DIR}"
@@ -624,16 +692,12 @@ install_xray_core() {
     # ساخت دایرکتوری‌ها
     mkdir -p "$install_dir" "$assets_dir"
 
-    # تعیین لینک دانلود
-    local download_link
-    if [[ "$version" == "latest" ]]; then
-        download_link="https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-${arch}.zip"
-    else
-        if [[ "$version" != v* ]]; then
-            version="v$version"
-        fi
-        download_link="https://github.com/XTLS/Xray-core/releases/download/${version}/Xray-linux-${arch}.zip"
+    # اطمینان از اینکه نسخه با v شروع می‌شود
+    if [[ "$version" != v* ]]; then
+        version="v$version"
     fi
+
+    local download_link="https://github.com/XTLS/Xray-core/releases/download/${version}/Xray-linux-${arch}.zip"
 
     # دانلود در دایرکتوری موقت
     local tmp_dir
@@ -668,75 +732,11 @@ install_xray_core() {
     return 0
 }
 
-# تابع برای انتخاب نسخه Xray از گیت‌هاب (با منوی تعاملی)
-select_xray_version() {
-    local versions=()
-    local selected_version=""
-
-    # دریافت لیست نسخه‌ها از گیت‌هاب
-    colorized_echo blue "Fetching available Xray-core versions..."
-    local latest_releases
-    latest_releases=$(curl -s "https://api.github.com/repos/XTLS/Xray-core/releases?per_page=$LAST_XRAY_CORES")
-    if [ -z "$latest_releases" ]; then
-        colorized_echo red "Failed to fetch versions. Using default version."
-        echo "$DEFAULT_XRAY_CORE_VERSION"
-        return 0
-    fi
-
-    # استخراج tag_nameها
-    mapfile -t versions < <(echo "$latest_releases" | grep -oP '"tag_name": "\K(.*?)(?=")')
-    if [ ${#versions[@]} -eq 0 ]; then
-        colorized_echo red "No versions found. Using default."
-        echo "$DEFAULT_XRAY_CORE_VERSION"
-        return 0
-    fi
-
-    # نمایش منو
-    echo
-    colorized_echo cyan "Available Xray-core versions:"
-    for i in "${!versions[@]}"; do
-        printf "  %2s) %s\n" "$((i+1))" "${versions[i]}"
-    done
-    echo "  M) Enter version manually"
-    echo "  Q) Cancel (use default)"
-    echo
-
-    while true; do
-        read -p "Choose a version (1-${#versions[@]}, M, Q): " choice
-        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#versions[@]}" ]; then
-            selected_version="${versions[$((choice-1))]}"
-            break
-        elif [[ "$choice" =~ ^[Mm]$ ]]; then
-            read -p "Enter version manually (e.g., v1.2.3): " custom_version
-            if [[ -n "$custom_version" ]]; then
-                # اعتبارسنجی ساده با curl
-                if curl -s -o /dev/null -I -w "%{http_code}" "https://github.com/XTLS/Xray-core/releases/tag/${custom_version}" | grep -q 200; then
-                    selected_version="$custom_version"
-                    break
-                else
-                    colorized_echo red "Version not found. Try again."
-                fi
-            fi
-        elif [[ "$choice" =~ ^[Qq]$ ]]; then
-            selected_version="$DEFAULT_XRAY_CORE_VERSION"
-            colorized_echo yellow "Using default version: $selected_version"
-            break
-        else
-            colorized_echo red "Invalid choice. Please enter a number between 1 and ${#versions[@]}, M, or Q."
-        fi
-    done
-
-    echo "$selected_version"
-}
-
-# ====================== پایان توابع جدید ======================
-
-# تابع نصب Xray که قبلاً وجود داشت را بازنویسی می‌کنیم
+# تابع install_latest_xray_for_binary_node (با اصلاح فراخوانی select_xray_version)
 install_latest_xray_for_binary_node() {
     mkdir -p "$APP_DIR/scripts" "$DATA_DIR/xray-core"
     colorized_echo blue "Installing Xray core for node"
 
-    # از کاربر بپرسیم که آیا نسخه خاصی می‌خواهد یا نه
     local version=""
     echo
     colorized_echo cyan "Do you want to select a specific Xray-core version?"
@@ -756,6 +756,9 @@ install_latest_xray_for_binary_node() {
         return 1
     fi
 }
+
+
+
 
 read_node_certificate_bundle() {
     local bundle_file
@@ -1038,7 +1041,13 @@ reexec_updated_node_script() {
 }
 
 is_rebecca_node_installed() {
-    if [ -d "$APP_DIR" ]; then return 0; else return 1; fi
+    # بررسی دقیق بر اساس APP_NAME و پوشه در /opt
+    if [ -d "$INSTALL_DIR/$APP_NAME" ]; then
+        if [ -f "$INSTALL_DIR/$APP_NAME/.env" ] || [ -f "$INSTALL_DIR/$APP_NAME/bin/rebecca-node" ] || [ -f "$INSTALL_DIR/$APP_NAME/.binary-release.json" ]; then
+            return 0
+        fi
+    fi
+    return 1
 }
 
 is_rebecca_node_up() {
@@ -1072,17 +1081,29 @@ identify_the_operating_system_and_architecture() {
 install_command() {
     check_running_as_root
 
-    if [[ "$APP_NAME_FROM_ARG" -eq 0 ]]; then
+    # اگر نام نود از قبل مشخص نشده، از کاربر بپرس
+    if [[ "$APP_NAME_FROM_ARG" -eq 0 ]] || [ -z "$APP_NAME" ]; then
         echo
         colorized_echo cyan "Do you want to install this node with a custom name? (Useful for multi-node on one server)"
         read -p "Enter node name (e.g., node-2) or press Enter to use default [$SCRIPT_DEFAULT_APP_NAME]: " custom_app_name
         if [[ -n "$custom_app_name" ]]; then
             APP_NAME="$custom_app_name"
             APP_NAME_FROM_ARG=1
-            set_app_context
         fi
     fi
 
+    # اگر APP_NAME_FROM_ARG هنوز 0 است (یعنی کاربر Enter زده)، از نام پیش‌فرض استفاده کن
+    if [ "$APP_NAME_FROM_ARG" -eq 0 ]; then
+        APP_NAME="$SCRIPT_DEFAULT_APP_NAME"
+    fi
+
+    # تنظیم دقیق APP_DIR و DATA_DIR بر اساس APP_NAME
+    ensure_valid_app_name
+    APP_DIR="$INSTALL_DIR/$APP_NAME"
+    DATA_DIR="/var/lib/$APP_NAME"
+    set_app_context
+
+    # بررسی نصب قبلی با نام دقیق
     if is_rebecca_node_installed; then
         colorized_echo red "$APP_NAME is already installed at $APP_DIR"
         read -p "Do you want to override the previous installation? (y/n) "
@@ -1090,6 +1111,14 @@ install_command() {
             colorized_echo red "Aborted installation"
             return 1
         fi
+        # در صورت اورراید، سرویس قبلی را متوقف و حذف کن
+        if [ -f "$BINARY_SERVICE_UNIT" ]; then
+            systemctl stop "$APP_NAME.service" 2>/dev/null || true
+            systemctl disable "$APP_NAME.service" 2>/dev/null || true
+        fi
+        # پوشه قدیمی را پاک می‌کنیم تا نصب تمیز انجام شود
+        rm -rf "$APP_DIR"
+        mkdir -p "$APP_DIR"
     fi
 
     detect_os
@@ -1610,6 +1639,7 @@ startup_node_selection() {
                         APP_NAME="${DISCOVERED_NODE_NAMES[$chosen]}"
                         APP_DIR="${DISCOVERED_NODE_PATHS[$chosen]}"
                         DATA_DIR="/var/lib/$APP_NAME"
+                        APP_NAME_FROM_ARG=1
                         set_app_context
                         return 0
                     fi
