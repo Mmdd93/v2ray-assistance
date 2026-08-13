@@ -616,23 +616,41 @@ upsert_env_assignment() {
 
 urlencode_value() {
     local value="$1"
+    local length="${#value}"
+    local encoded=""
+    local i c
 
-    if command -v python3 >/dev/null 2>&1; then
-        python3 -c "import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=''))" "$value"
+    for (( i=0; i<length; i++ )); do
+        c="${value:i:1}"
+        case "$c" in
+            [a-zA-Z0-9.~_-])
+                encoded="$encoded$c"
+                ;;
+            *)
+                printf -v hex '%02X' "'$c"
+                encoded="$encoded%$hex"
+                ;;
+        esac
+    done
+    printf "%s" "$encoded"
+}
+prompt_for_db_user() {
+    local choice
+    if [ ! -t 0 ]; then
+        echo "rebecca"
         return
     fi
-
-    if command -v python >/dev/null 2>&1; then
-        python -c "import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=''))" "$value"
-        return
-    fi
-
-    if command -v jq >/dev/null 2>&1; then
-        printf '%s' "$value" | jq -sRr @uri
-        return
-    fi
-
-    printf '%s' "$value"
+    # چاپ گزینه‌ها به stderr (برای نمایش حتماً در ترمینال)
+    >&2 echo ""
+    >&2 echo "Which database user should Rebecca use to connect?"
+    >&2 echo "  1) rebecca (dedicated user, recommended)"
+    >&2 echo "  2) root (full privileges, use with caution)"
+    # استفاده از read با پرامپت ساده (که به stdout می‌رود، اما در اینجا اشکالی ندارد)
+    read -p "Select user [1]: " choice
+    case "$choice" in
+        2|root|Root) echo "root" ;;
+        *) echo "rebecca" ;;
+    esac
 }
 
 normalize_url_path() {
@@ -2590,7 +2608,35 @@ get_configured_database_type() {
         echo "sqlite"
     fi
 }
-
+prompt_for_root_password() {
+    local password
+    if [ ! -t 0 ]; then
+        password=$(generate_secure_mysql_password)
+        colorized_echo green "A secure root password has been generated automatically."
+        echo "$password"
+        return
+    fi
+    colorized_echo cyan "Enter a strong password for MySQL root user."
+    while true; do
+        password=$(read_secret "Root password: ")
+        if [ -z "$password" ]; then
+            password=$(generate_secure_mysql_password)
+            colorized_echo green "A secure password has been generated automatically."
+            break
+        fi
+        if mysql_password_is_strong "$password"; then
+            local confirm
+            confirm=$(read_secret "Confirm root password: ")
+            if [ "$password" = "$confirm" ]; then
+                break
+            fi
+            colorized_echo red "Passwords do not match."
+        else
+            colorized_echo red "Password must be at least 12 chars and include uppercase, lowercase, digit, and symbol. Press Enter for auto-generation."
+        fi
+    done
+    echo "$password"
+}
 mysql_root_command() {
     if command -v mysql >/dev/null 2>&1; then
         mysql --protocol=socket -uroot "$@"
@@ -2604,12 +2650,15 @@ mysql_root_command() {
 sql_escape_literal() {
     printf "%s" "$1" | sed "s/'/''/g"
 }
+
+
 install_host_database() {
     local database_type="$1"
     local package_name
     local service_name
     local config_file
     local client_package
+    local db_user
 
     case "$database_type" in
         mysql)
@@ -2642,7 +2691,7 @@ install_host_database() {
         }
     fi
 
-    # نصب کلاینت (در صورتی که وجود نداشته باشد)
+    # نصب کلاینت (در صورت نیاز)
     if ! command -v mysql >/dev/null 2>&1 && ! command -v mariadb >/dev/null 2>&1; then
         install_package "$client_package" || {
             colorized_echo red "Failed to install $client_package. Please install it manually."
@@ -2667,31 +2716,61 @@ max_connections=200
 EOF
     systemctl restart "$service_name" >/dev/null 2>&1 || systemctl restart mysql >/dev/null 2>&1 || true
 
-    # تولید/دریافت رمزهای عبور
+    # دریافت/تولید رمزهای عبور
+    # 1. رمز برای یوزر rebecca
     if [ -z "${MYSQL_PASSWORD:-}" ]; then
         prompt_for_rebecca_password
     fi
-    MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-$(generate_secure_mysql_password)}"
-    MYSQL_PASSWORD="${MYSQL_PASSWORD:-$(generate_secure_mysql_password)}"
-    local escaped_password
-    escaped_password=$(sql_escape_literal "$MYSQL_PASSWORD")
 
-    # اجرای دستورات SQL با استفاده از mysql_root_command
+    # 2. رمز برای یوزر root (اگر از قبل تعیین نشده)
+    if [ -z "${MYSQL_ROOT_PASSWORD:-}" ]; then
+        if [ -t 0 ] && ui_read_yes_no "Do you want to set a separate password for MySQL root user? (otherwise auto-generate)" "n"; then
+            MYSQL_ROOT_PASSWORD=$(prompt_for_root_password)
+        else
+            MYSQL_ROOT_PASSWORD=$(generate_secure_mysql_password)
+            colorized_echo green "A secure root password has been generated automatically."
+        fi
+    fi
+
+    # انتخاب یوزر اتصال برنامه
+    db_user=$(prompt_for_db_user)
+
+    # Escape کردن پسوردها برای استفاده در SQL
+    local escaped_rebecca_password
+    local escaped_root_password
+    escaped_rebecca_password=$(sql_escape_literal "$MYSQL_PASSWORD")
+    escaped_root_password=$(sql_escape_literal "$MYSQL_ROOT_PASSWORD")
+
+    # ایجاد فایل SQL
     local sql_file
     sql_file=$(mktemp)
+
     cat > "$sql_file" <<EOF
+-- ایجاد دیتابیس rebecca
 CREATE DATABASE IF NOT EXISTS \`rebecca\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS 'rebecca'@'127.0.0.1' IDENTIFIED BY '${escaped_password}';
-CREATE USER IF NOT EXISTS 'rebecca'@'localhost' IDENTIFIED BY '${escaped_password}';
-ALTER USER 'rebecca'@'127.0.0.1' IDENTIFIED BY '${escaped_password}';
-ALTER USER 'rebecca'@'localhost' IDENTIFIED BY '${escaped_password}';
+
+-- ایجاد یا به‌روزرسانی یوزر rebecca (دسترسی کامل به دیتابیس rebecca)
+CREATE USER IF NOT EXISTS 'rebecca'@'127.0.0.1' IDENTIFIED BY '${escaped_rebecca_password}';
+CREATE USER IF NOT EXISTS 'rebecca'@'localhost' IDENTIFIED BY '${escaped_rebecca_password}';
+ALTER USER 'rebecca'@'127.0.0.1' IDENTIFIED BY '${escaped_rebecca_password}';
+ALTER USER 'rebecca'@'localhost' IDENTIFIED BY '${escaped_rebecca_password}';
 GRANT ALL PRIVILEGES ON \`rebecca\`.* TO 'rebecca'@'127.0.0.1';
 GRANT ALL PRIVILEGES ON \`rebecca\`.* TO 'rebecca'@'localhost';
+
+-- ایجاد یا به‌روزرسانی یوزر root با دسترسی کامل به همه دیتابیس‌ها
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${escaped_root_password}';
+CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '${escaped_root_password}';
+ALTER USER 'root'@'127.0.0.1' IDENTIFIED BY '${escaped_root_password}';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;
+
+-- حذف کاربران ناشناس و دیتابیس تست
 DELETE FROM mysql.user WHERE User='';
 DROP DATABASE IF EXISTS test;
 FLUSH PRIVILEGES;
 EOF
 
+    # اجرای دستورات SQL با استفاده از mysql_root_command (از سوکت محلی)
     if ! mysql_root_command < "$sql_file"; then
         rm -f "$sql_file"
         colorized_echo red "Failed to configure local $database_type. Make sure root can access MySQL/MariaDB through the local socket."
@@ -2699,17 +2778,31 @@ EOF
     fi
     rm -f "$sql_file"
 
-    # ذخیره اطلاعات در .env
+    # URL-encode کردن پسوردها برای استفاده در .env
     local mysql_password_url_encoded
+    local mysql_root_password_url_encoded
     mysql_password_url_encoded=$(urlencode_value "$MYSQL_PASSWORD")
+    mysql_root_password_url_encoded=$(urlencode_value "$MYSQL_ROOT_PASSWORD")
+
+    # تنظیم متغیرهای .env بر اساس یوزر انتخاب‌شده
     upsert_env_assignment "REBECCA_DATABASE_FLAVOR" "$database_type"
     upsert_env_assignment "MYSQL_DATABASE" "rebecca"
-    upsert_env_assignment "MYSQL_USER" "rebecca"
     upsert_env_assignment "MYSQL_PASSWORD" "$MYSQL_PASSWORD"
     upsert_env_assignment "MYSQL_ROOT_PASSWORD" "$MYSQL_ROOT_PASSWORD"
-    upsert_env_assignment "SQLALCHEMY_DATABASE_URL" "mysql+pymysql://rebecca:${mysql_password_url_encoded}@127.0.0.1:3306/rebecca"
 
-    colorized_echo green "Database $database_type configured successfully."
+    if [ "$db_user" = "root" ]; then
+        # استفاده از یوزر root برای اتصال برنامه
+        upsert_env_assignment "MYSQL_USER" "root"
+        upsert_env_assignment "SQLALCHEMY_DATABASE_URL" "mysql+pymysql://root:${mysql_root_password_url_encoded}@127.0.0.1:3306/rebecca"
+        colorized_echo yellow "Rebecca will connect to the database as 'root'."
+    else
+        # استفاده از یوزر rebecca (پیش‌فرض)
+        upsert_env_assignment "MYSQL_USER" "rebecca"
+        upsert_env_assignment "SQLALCHEMY_DATABASE_URL" "mysql+pymysql://rebecca:${mysql_password_url_encoded}@127.0.0.1:3306/rebecca"
+        colorized_echo green "Rebecca will connect to the database as 'rebecca'."
+    fi
+
+    colorized_echo green "Database $database_type configured successfully with both users 'rebecca' and 'root'."
 }
 
 configure_binary_database() {
