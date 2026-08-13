@@ -4253,7 +4253,7 @@ main_menu() {
 			109)
                 echo -e "${YELLOW} rebecca...${NC}"
 				sleep 1
-                curl -Ls https://raw.githubusercontent.com/rebeccapanel/Rebecca/master/scripts/rebecca/rebecca-binary.sh -o rebecca-binary.sh
+                curl -Ls https://raw.githubusercontent.com/rebeccapanel/Rebecca/dev/scripts/rebecca/rebecca-binary.sh -o rebecca-binary.sh
 				chmod +x rebecca-binary.sh
                 sudo bash rebecca-binary.sh
                 ;; 
@@ -4261,7 +4261,7 @@ main_menu() {
 			110)
                 echo -e "${YELLOW} Rebecca-node...${NC}"
 				sleep 1
-                curl -Ls https://raw.githubusercontent.com/rebeccapanel/Rebecca/master/scripts/rebecca/rebecca-node-binary.sh -o rebecca-node-binary.sh
+                curl -Ls https://raw.githubusercontent.com/rebeccapanel/Rebecca/dev/scripts/rebecca/rebecca-node-binary.sh -o rebecca-node-binary.sh
 				chmod +x rebecca-node-binary.sh
                 sudo bash rebecca-node-binary.sh
                 ;;  	
