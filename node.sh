@@ -4247,9 +4247,10 @@ main_menu() {
 			106)
                 echo -e "${YELLOW} Rebecca-node...${NC}"
 				sleep 1
-                sudo bash -c "$(curl -sL https://raw.githubusercontent.com/rebeccapanel/Rebecca/dev/scripts/rebecca/rebecca-node.sh)" @ install-script
-				rebecca-node
-                ;; 
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/rebecca-node-docker.sh -o rebecca-node-docker.sh
+				chmod +x rrebecca-node-docker.sh
+                sudo bash rebecca-node-docker.sh
+                ;;  
 			109)
                 echo -e "${YELLOW} rebecca...${NC}"
 				sleep 1
@@ -4261,7 +4262,7 @@ main_menu() {
 			110)
                 echo -e "${YELLOW} Rebecca-node...${NC}"
 				sleep 1
-                curl -Ls https://raw.githubusercontent.com/rebeccapanel/Rebecca/dev/scripts/rebecca/rebecca-node-binary.sh -o rebecca-node-binary.sh
+                curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/rebecca-node-binary.sh -o rebecca-node-binary.sh
 				chmod +x rebecca-node-binary.sh
                 sudo bash rebecca-node-binary.sh
                 ;;  	
