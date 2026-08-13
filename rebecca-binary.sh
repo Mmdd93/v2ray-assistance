@@ -179,6 +179,111 @@ ui_menu_item() {
     printf "\n"
 }
 
+
+
+set_root_privilege() {
+    check_running_as_root || return 1
+
+    if ! is_rebecca_installed; then
+        colorized_echo red "Rebecca is not installed. Please install first."
+        return 1
+    fi
+
+    if [[ ! -f "$ENV_FILE" ]]; then
+        colorized_echo red ".env file not found."
+        return 1
+    fi
+
+    # Read current .env values
+    local current_user=$(get_env_value "MYSQL_USER")
+    local current_password=$(get_env_value "MYSQL_PASSWORD")
+    local current_root_password=$(get_env_value "MYSQL_ROOT_PASSWORD")
+    local current_db=$(get_env_value "MYSQL_DATABASE")
+    local current_url=$(get_env_value "SQLALCHEMY_DATABASE_URL")
+
+    if [[ -z "$current_db" ]]; then
+        current_db="rebecca"
+    fi
+
+    # Find MySQL client
+    local mysql_bin
+    if command -v mysql >/dev/null 2>&1; then
+        mysql_bin="mysql"
+    elif command -v mariadb >/dev/null 2>&1; then
+        mysql_bin="mariadb"
+    else
+        colorized_echo red "MySQL client not found. Please install mysql-client or mariadb-client."
+        return 1
+    fi
+
+    # Try to connect as root (via socket without password first, then with stored root password)
+    local connect_cmd=("$mysql_bin" --protocol=socket -uroot)
+    if ! "$mysql_bin" --protocol=socket -uroot -e "SELECT 1" >/dev/null 2>&1; then
+        if [[ -n "$current_root_password" ]]; then
+            if ! "$mysql_bin" --protocol=socket -uroot -p"$current_root_password" -e "SELECT 1" >/dev/null 2>&1; then
+                colorized_echo red "Cannot connect to MySQL as root. Please ensure root access is available."
+                return 1
+            else
+                connect_cmd=("$mysql_bin" --protocol=socket -uroot -p"$current_root_password")
+            fi
+        else
+            colorized_echo red "Cannot connect to MySQL as root without password. Please set MYSQL_ROOT_PASSWORD in .env or ensure root access."
+            return 1
+        fi
+    fi
+
+    # Generate root password if not set
+    local new_root_password="$current_root_password"
+    if [[ -z "$new_root_password" ]]; then
+        new_root_password=$(generate_secure_mysql_password)
+        colorized_echo green "Generated new root password: $new_root_password"
+    fi
+
+    # Confirm action
+    if ! ui_read_yes_no "This will configure Rebecca to connect as MySQL root. Continue?" "y"; then
+        colorized_echo yellow "Aborted."
+        return 0
+    fi
+
+    # Create/update root@127.0.0.1
+    local sql_file=$(mktemp)
+    cat > "$sql_file" <<EOF
+CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '${new_root_password//\'/\\\'}';
+ALTER USER 'root'@'127.0.0.1' IDENTIFIED BY '${new_root_password//\'/\\\'}';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+EOF
+
+    if ! "${connect_cmd[@]}" < "$sql_file"; then
+        rm -f "$sql_file"
+        colorized_echo red "Failed to set up root@'127.0.0.1'."
+        return 1
+    fi
+    rm -f "$sql_file"
+
+    # Update .env
+    local escaped_root_password=$(urlencode_value "$new_root_password")
+    local new_url="mysql+pymysql://root:${escaped_root_password}@127.0.0.1:3306/${current_db}"
+
+    upsert_env_assignment "MYSQL_USER" "root"
+    upsert_env_assignment "MYSQL_PASSWORD" "$new_root_password"
+    upsert_env_assignment "MYSQL_ROOT_PASSWORD" "$new_root_password"
+    upsert_env_assignment "SQLALCHEMY_DATABASE_URL" "$new_url"
+
+    colorized_echo green "Updated .env to use root user for database connection."
+    colorized_echo green "New root password: $new_root_password"
+
+    # Restart Rebecca if running
+    if is_rebecca_up; then
+        colorized_echo blue "Restarting Rebecca to apply new database configuration..."
+        schedule_binary_service_restart 1
+        colorized_echo green "Rebecca restart scheduled."
+    else
+        colorized_echo yellow "Rebecca is not running. Start it with 'rebecca up' to apply changes."
+    fi
+
+    return 0
+}
 ui_menu_category() {
     printf "\n"
     ui_color "38;5;117;1" "  $1"
@@ -3669,7 +3774,7 @@ edit_env_command() {
 }
 
 menu_commands() {
-    echo "up down restart status logs cli migrate backup backup-service install update uninstall script-install script-update script-uninstall  enable-phpmyadmin disable-phpmyadmin edit edit-env ssl help"
+    echo "up down restart status logs cli migrate backup backup-service install update uninstall script-install script-update script-uninstall enable-phpmyadmin disable-phpmyadmin set-root edit edit-env ssl help"
 }
 
 menu_category_for() {
@@ -3678,7 +3783,8 @@ menu_category_for() {
         cli|migrate|backup|backup-service) echo "Administration and data" ;;
         install|update|uninstall) echo "Install and update" ;;
         script-install|script-update|script-uninstall) echo "Script management" ;;
-        enable-phpmyadmin|disable-phpmyadmin|edit|edit-env|ssl) echo "Tools and legacy" ;;
+        enable-phpmyadmin|disable-phpmyadmin|set-root) echo "Database" ;;
+        edit|edit-env|ssl) echo "Tools and legacy" ;;
         *) echo "Help" ;;
     esac
 }
@@ -3702,6 +3808,7 @@ menu_description_for() {
         script-uninstall) echo "Uninstall Rebecca script" ;;
         enable-phpmyadmin) echo "Enable phpMyAdmin on local MySQL/MariaDB" ;;
         disable-phpmyadmin) echo "Disable phpMyAdmin panel bridge" ;;
+        set-root) echo "Set database connection to MySQL root user" ;;
         edit) echo "Edit environment file" ;;
         edit-env) echo "Edit environment file" ;;
         ssl) echo "Issue or renew SSL certificates" ;;
@@ -3845,6 +3952,7 @@ usage() {
     colorized_echo yellow "  backup-service  - Backup service to Telegram"
     colorized_echo yellow "  enable-phpmyadmin - Enable phpMyAdmin for local MySQL/MariaDB"
     colorized_echo yellow "  disable-phpmyadmin - Disable phpMyAdmin"
+    colorized_echo yellow "  set-root        - Set database connection to MySQL root user"
     colorized_echo yellow "  edit            - Edit environment file"
     colorized_echo yellow "  edit-env        - Edit environment file"
     colorized_echo yellow "  ssl             - Issue or renew SSL certificates"
@@ -4652,7 +4760,7 @@ dispatch_command() {
     local cmd="$1"
     shift || true
     case "$cmd" in
-        help|install|script-install|install-script|script-update|update-script|script-uninstall|uninstall-script)
+        help|install|script-install|install-script|script-update|update-script|script-uninstall|uninstall-script|set-root)
             ;;
         *)
             ;;
@@ -4675,6 +4783,7 @@ dispatch_command() {
         script-uninstall|uninstall-script) uninstall_rebecca_script "$@" ;;
         enable-phpmyadmin) enable_phpmyadmin "$@" ;;
         disable-phpmyadmin) disable_phpmyadmin "$@" ;;
+        set-root) set_root_privilege "$@" ;;
         ssl) ssl_command "$@" ;;
         edit) edit_command "$@" ;;
         edit-env) edit_env_command "$@" ;;
