@@ -3711,8 +3711,8 @@ main_menu() {
         echo
         # Rebecca Public section - ORANGE
         echo -e "${ORANGE}Rebecca ${RED}[Multi]${NC}${NC}"
-		echo -e "${ORANGE} 109.${NC} ${ORANGE}Rebecca-panel (binary) ${NC}"
-        echo -e "${ORANGE} 110.${NC} ${ORANGE}Rebecca-node (binary) ${NC}"
+		echo -e "${ORANGE} 109.${NC} ${ORANGE}Rebecca-panel DEV (binary) ${NC}"
+        echo -e "${ORANGE} 110.${NC} ${ORANGE}Rebecca-node DEV (binary) ${NC}"
         echo -e "${ORANGE} 105.${NC} ${ORANGE}Rebecca-panel (docker) ${NC}"
         echo -e "${ORANGE} 106.${NC} ${ORANGE}Rebecca-node (docker) ${NC}"
         echo
