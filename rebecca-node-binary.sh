@@ -104,7 +104,7 @@ ensure_valid_app_name
 LAST_XRAY_CORES=5
 REBECCA_REPO="${REBECCA_REPO:-rebeccapanel/Rebecca}"
 REBECCA_REF="${REBECCA_REF:-master}"
-REBECCA_SCRIPT_BASE_URL="${REBECCA_SCRIPT_BASE_URL:-https://raw.githubusercontent.com/rebeccapanel/Rebecca/dev/scripts/rebecca/rebecca-binary.sh}"
+REBECCA_SCRIPT_BASE_URL="${REBECCA_SCRIPT_BASE_URL:-https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/rebecca-node-binary.sh}"
 REBECCA_NODE_RELEASE_REPO="${REBECCA_NODE_RELEASE_REPO:-rebeccapanel/Rebecca-node}"
 REBECCA_NODE_BINARY_DEV_BRANCH="${REBECCA_NODE_BINARY_DEV_BRANCH:-dev}"
 REBECCA_NODE_BINARY_DEV_RELEASE_TAG="${REBECCA_NODE_BINARY_DEV_RELEASE_TAG:-dev-binaries}"
