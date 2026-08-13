@@ -4248,7 +4248,7 @@ main_menu() {
                 echo -e "${YELLOW} Rebecca-node...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/Mmdd93/v2ray-assistance/refs/heads/main/rebecca-node-docker.sh -o rebecca-node-docker.sh
-				chmod +x rrebecca-node-docker.sh
+				chmod +x rebecca-node-docker.sh
                 sudo bash rebecca-node-docker.sh
                 ;;  
 			109)
