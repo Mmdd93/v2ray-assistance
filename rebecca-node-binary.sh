@@ -1429,9 +1429,10 @@ startup_node_selection() {
             echo
         fi
 
-        printf "   \033[38;5;45;1m%2s)\033[0m \033[38;5;231;1m%-25s\033[0m\n" "0" "Exit"
+        
         printf "   \033[38;5;45;1m%2s)\033[0m \033[38;5;231;1m%-25s\033[0m\n" "1" "Create a new node"
         printf "   \033[38;5;117;1m%2s)\033[0m \033[38;5;231;1m%-25s\033[0m\n" "S" "Search custom directory"
+        printf "   \033[38;5;45;1m%2s)\033[0m \033[38;5;231;1m%-25s\033[0m\n" "0" "Exit"
         echo
         colorized_echo cyan "Select an option: "
         read -r choice
