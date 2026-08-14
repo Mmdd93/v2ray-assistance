@@ -3684,8 +3684,8 @@ main_menu() {
 		echo -e "${CYAN} 107.${NC} ${CYAN}Phormal Tunnel  ${WHITE}[github.com/Schmi7zz/Phormal]${NC}"
 		echo -e "${CYAN} 108.${NC} ${CYAN}Paqctl Tunnel  ${WHITE}[github.com/SamNet-dev/paqctl]${NC}"
 		echo -e "${CYAN} 111.${NC} ${CYAN}XRayMesh Tunnel  ${WHITE}[github.com/Erfan-XRay/XRayMesh]${NC}"
-		echo -e "${CYAN} 112.${NC} ${CYAN}SNI-Spoofing-Go Tunnel  ${WHITE}[github.com/aleskxyz/SNI-Spoofing-Go]${NC}"
-
+		echo -e "${CYAN} 112.${NC} ${CYAN}SNI-Spoofing-Go Tunnel  ${WHITE}[github.com/aleskxyz/SNI-Spoofing-Go]${NC}"	
+		echo -e "${CYAN} 114.${NC} ${CYAN}Hedioum-Pool Tunnel  ${WHITE}[github.com/hedioum/Hedioum-Pool-Tunnel]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4321,6 +4321,13 @@ echo "Preparing the executable file and installing..."
 chmod +x aestun.sh
 sudo ./aestun.sh
 ;;
+			114)
+                echo -e "${YELLOW} hedioum-tunnel.sh...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/hedioum/Hedioum-Pool-Tunnel/main/install.sh -o hedioum-tunnel.sh
+				chmod +x hedioum-tunnel.sh
+                sudo bash hedioum-tunnel.sh
+                ;;
 
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
