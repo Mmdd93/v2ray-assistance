@@ -323,7 +323,7 @@ tcpudp_forwarding() {
     if [[ -z "$raddr_ip" || -z "$lports" ]]; then
         echo -e "\033[1;31mError: All fields are required!\033[0m"
         return
-    @fi
+    fi
     
     # Check if input is an IPv6 address and format it properly
     if [[ $raddr_ip =~ : ]]; then
@@ -677,10 +677,10 @@ configure_port_forwarding() {
             done
 
             # Validate inputs
-            if [[ -z "$raddr_ip" || -z "$raddr_port" || -z "$lports" ]]; then
-                echo -e "\033[1;31mError: All fields are required!\033[0m"
-                return
-            fi
+              if [[ -z "$raddr_ip" || -z "$lports" ]]; then
+        echo -e "\033[1;31mError: All fields are required!\033[0m"
+        return
+    fi
             
             # Mapping protocols - using + prefix for most protocols
             case $proto_choice in
