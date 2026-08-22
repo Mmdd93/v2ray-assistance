@@ -114,14 +114,7 @@ main_menu() {
 configure_tun_transmission() {
     echo -e "\n\033[1;34m=== Configure TUN + Transmission (L3 Tunnel) ===\033[0m"
     
-    # Check Gost v3 Support for TUN
-    if [[ "$gost_version" != *"gost 3"* && "$gost_version" != *"gost/v3"* ]]; then
-        echo -e "\033[1;33m⚠ Warning: TUN interface works best with GOST v3.\033[0m"
-        read -p "Do you want to continue anyway? [y/N]: " continue_v3
-        if [[ ! "$continue_v3" =~ ^[Yy]$ ]]; then
-            return
-        fi
-    fi
+
 
     # Core selection
     echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
