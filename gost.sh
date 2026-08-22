@@ -13,7 +13,7 @@ check_and_install_gost() {
         echo -e "\033[1;31m? GOST is not installed!\033[0m"
         install_gost
     else
-        echo -e "\033[1;32m✓ GOST is already installed.\033[0m"
+        echo -e "\033[1;32m? GOST is already installed.\033[0m"
     fi
 }
 
@@ -24,13 +24,13 @@ create_gost_core() {
     
     # Check if original gost exists
     if [[ ! -f "/usr/local/bin/gost" ]]; then
-        echo -e "\033[1;31m✗ Original GOST binary not found. Please install GOST first.\033[0m"
+        echo -e "\033[1;31m? Original GOST binary not found. Please install GOST first.\033[0m"
         return 1
     fi
     
     # Check if core already exists
     if [[ -f "$gost_binary" ]]; then
-        echo -e "\033[1;33m⚠ Using existing GOST core: $core_name\033[0m"
+        echo -e "\033[1;33m? Using existing GOST core: $core_name\033[0m"
         return 0
     fi
     
@@ -38,17 +38,17 @@ create_gost_core() {
     echo -e "\033[1;32mCreating new GOST core: $core_name\033[0m"
     if cp /usr/local/bin/gost "$gost_binary"; then
         chmod +x "$gost_binary"
-        echo -e "\033[1;32m✓ Successfully created GOST core: $core_name\033[0m"
+        echo -e "\033[1;32m? Successfully created GOST core: $core_name\033[0m"
         return 0
     else
-        echo -e "\033[1;31m✗ Failed to create GOST core. Using original.\033[0m"
+        echo -e "\033[1;31m? Failed to create GOST core. Using original.\033[0m"
         return 1
     fi
 }
 
 # Function to list all GOST cores
 list_gost_cores() {
-    echo -e "\033[1;34m📋 List of GOST Cores:\033[0m"
+    echo -e "\033[1;34m?? List of GOST Cores:\033[0m"
     echo -e "\033[1;33mAvailable cores in /usr/local/bin:\033[0m"
     ls -la /usr/local/bin/gost* 2>/dev/null | grep -v "\.bak" || echo "No GOST cores found"
 }
@@ -75,7 +75,7 @@ main_menu() {
         echo -e " \033[1;34m3.\033[0m relay + Transmission (multi-port) "
         echo -e " \033[1;34m4.\033[0m forward + Transmissions (single port) "
         echo -e " \033[1;34m5.\033[0m simple port forward (only client-side) (multi-port)"
-        echo -e " \033[1;36m6.\033[0m \033[1;33mTUN + Transmissions (L3 Anti-Filter Tunnel)\033[0m"
+        echo -e " \033[1;36m6.\033[0m \033[1;33mTUN + Transmissions (L3 Anti-Filter Tunnel + SNI)\033[0m"
         echo -e " \033[1;34m7.\033[0m Manage Tunnels Services"
         echo -e " \033[1;34m8.\033[0m List GOST Cores"
         echo -e " \033[1;34m9.\033[0m Remove GOST"
@@ -109,15 +109,22 @@ main_menu() {
 }
 
 # ==============================================================================
-# NEW MODULE: Gost TUN + Transmissions
+# NEW MODULE: Gost TUN + Transmissions (with SNI & Raw TCP/UDP support)
 # ==============================================================================
 configure_tun_transmission() {
     echo -e "\n\033[1;34m=== Configure TUN + Transmission (L3 Tunnel) ===\033[0m"
     
-
+    # Check Gost v3 Support for TUN
+    if [[ "$gost_version" != *"gost 3"* && "$gost_version" != *"gost/v3"* ]]; then
+        echo -e "\033[1;33m? Warning: TUN interface works best with GOST v3.\033[0m"
+        read -p "Do you want to continue anyway? [y/N]: " continue_v3
+        if [[ ! "$continue_v3" =~ ^[Yy]$ ]]; then
+            return
+        fi
+    fi
 
     # Core selection
-    echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+    echo -e "\n\033[1;34m?? Core Configuration:\033[0m"
     read -p $'\033[1;33mEnter a unique name for this GOST core (default: gost-tun): \033[0m' core_name
     if [[ -z "$core_name" ]]; then
         core_name="gost-tun"
@@ -142,7 +149,9 @@ configure_tun_transmission() {
     echo -e "\033[1;32m6.\033[0m KCP (kcp)"
     echo -e "\033[1;32m7.\033[0m HTTP/2 (h2)"
     echo -e "\033[1;32m8.\033[0m Plain HTTP/1.1 (http)"
-    read -p "Transmission [1-8] (default: 2): " TRANS_CHOICE
+    echo -e "\033[1;32m9.\033[0m TCP (tcp - Raw TCP Tunnel)"
+    echo -e "\033[1;32m10.\033[0m UDP (udp - Raw UDP Tunnel)"
+    read -p "Transmission [1-10] (default: 2): " TRANS_CHOICE
     TRANS_CHOICE=${TRANS_CHOICE:-2}
 
     read -p $'\n\033[1;33mEnter Tunnel Port (default: 8443): \033[0m' TUN_PORT
@@ -175,6 +184,8 @@ configure_tun_transmission() {
         6) SCHEME="kcp" ;;
         7) SCHEME="h2" ;;
         8) SCHEME="http" ;;
+        9) SCHEME="tcp" ;;
+        10) SCHEME="udp" ;;
         *) SCHEME="grpc" ;; # Fallback
     esac
 
@@ -191,11 +202,33 @@ configure_tun_transmission() {
                 return
             fi
             
+            # Ask for SNI/Host Spoofing (Only if not raw TCP/UDP and not KCP)
+            SNI_FLAG=""
+            if [[ "$SCHEME" != "tcp" && "$SCHEME" != "udp" && "$SCHEME" != "kcp" ]]; then
+                echo -e "\n\033[1;34mSNI / Host Spoofing (Domain Fronting):\033[0m"
+                echo -e "Do you want to use a fake SNI/Host to bypass filtering? (e.g., speedtest.net)"
+                read -p "Use SNI? [y/N]: " SNI_CHOICE
+                
+                if [[ "$SNI_CHOICE" =~ ^[Yy]$ ]]; then
+                    read -p $'\033[1;33mEnter Fake Domain (e.g., speedtest.net): \033[0m' FAKE_SNI
+                    if [[ -n "$FAKE_SNI" ]]; then
+                        # Apply host parameter for Web-based protocols
+                        if [[ "$SCHEME" == "https" || "$SCHEME" == "wss" || "$SCHEME" == "ws" || "$SCHEME" == "grpc" || "$SCHEME" == "h2" || "$SCHEME" == "http" ]]; then
+                            SNI_FLAG="&host=${FAKE_SNI}"
+                            # Also apply sni parameter specifically for TLS connections
+                            if [[ "$SCHEME" == "https" || "$SCHEME" == "wss" || "$SCHEME" == "quic" || "$SCHEME" == "h2" ]]; then
+                                SNI_FLAG="${SNI_FLAG}&sni=${FAKE_SNI}"
+                            fi
+                        fi
+                    fi
+                fi
+            fi
+
             # Enable IP Forwarding on Client silently
             sysctl -w net.ipv4.ip_forward=1 >/dev/null 2>&1
             
             echo -e "\n\033[1;34mDirect Port Forwarding via TUN:\033[0m"
-            echo -e "Forward a local port to Kharej backend (e.g., Forward Iran 443 -> Kharej 445)"
+            echo -e "Forward a local port to Kharej backend (e.g., Forward Iran 444 -> Kharej 445)"
             read -p "Forward port? [Y/n] (default: y): " FWD_CHOICE
             FWD_CHOICE=${FWD_CHOICE:-y}
             
@@ -212,11 +245,24 @@ configure_tun_transmission() {
             # Determine if we need secure=0 for TLS-based protocols
             if [[ "$SCHEME" == "https" || "$SCHEME" == "grpc" || "$SCHEME" == "wss" || "$SCHEME" == "quic" || "$SCHEME" == "h2" ]]; then
                 SECURE_FLAG="?secure=0"
+                
+                # If we have SNI, we need to handle the ? and & correctly
+                if [[ -n "$SNI_FLAG" ]]; then
+                    CONNECTION_PARAMS="${SECURE_FLAG}${SNI_FLAG}"
+                else
+                    CONNECTION_PARAMS="${SECURE_FLAG}"
+                fi
             else
-                SECURE_FLAG=""
+                # For non-TLS, start params with ? if we have SNI
+                if [[ -n "$SNI_FLAG" ]]; then
+                    # Remove the leading & from SNI_FLAG and replace with ?
+                    CONNECTION_PARAMS="?${SNI_FLAG:1}"
+                else
+                    CONNECTION_PARAMS=""
+                fi
             fi
 
-            GOST_OPTIONS="-L \"tun://:0?net=${LOCAL_TUN_IP}/24&peer=${PEER_TUN_IP}\" -F \"${SCHEME}://${REMOTE_HOST}:${TUN_PORT}${SECURE_FLAG}\" ${FWD_FLAG}"
+            GOST_OPTIONS="-L \"tun://:0?net=${LOCAL_TUN_IP}/24&peer=${PEER_TUN_IP}\" -F \"${SCHEME}://${REMOTE_HOST}:${TUN_PORT}${CONNECTION_PARAMS}\" ${FWD_FLAG}"
             service_prefix="tun_client"
             ;;
         *)
@@ -243,7 +289,7 @@ tcpudp_forwarding() {
     echo -e "\033[1;34mConfigure Multi-Port Forwarding (Client Side Only)\033[0m"
 
     # Ask for core name
-    echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+    echo -e "\n\033[1;34m?? Core Configuration:\033[0m"
     read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-forward1, gost-tunnel2): \033[0m' core_name
     if [[ -z "$core_name" ]]; then
         core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
@@ -277,7 +323,7 @@ tcpudp_forwarding() {
     if [[ -z "$raddr_ip" || -z "$lports" ]]; then
         echo -e "\033[1;31mError: All fields are required!\033[0m"
         return
-    fi
+    @fi
     
     # Check if input is an IPv6 address and format it properly
     if [[ $raddr_ip =~ : ]]; then
@@ -287,7 +333,7 @@ tcpudp_forwarding() {
     echo "Formatted IP: $raddr_ip"
 
     # Ask about connection stability
-    echo -e "\n\033[1;34m🔧 Connection Stability\033[0m"
+    echo -e "\n\033[1;34m?? Connection Stability\033[0m"
     echo -e "Do you have an unstable connection or frequent disconnections?"
     echo -e "\033[1;32m1.\033[0m \033[1;36mYes - I need stability options\033[0m"
     echo -e "\033[1;32m2.\033[0m \033[1;36mNo - Use default settings\033[0m"
@@ -302,11 +348,11 @@ tcpudp_forwarding() {
     
     # If user has unstable connection, show advanced options
     if [[ "$stability_choice" == "1" ]]; then
-        echo -e "\n\033[1;34m⚡ Advanced Stability Options (for unstable connections)\033[0m"
+        echo -e "\n\033[1;34m? Advanced Stability Options (for unstable connections)\033[0m"
         
         # Ask about timeout
         echo -e "\n\033[1;34mConnection Timeout:\033[0m"
-        echo -e "\033[1;32m1.\033[0m Short (10 seconds - faster detection of disconnections) 🔥"
+        echo -e "\033[1;32m1.\033[0m Short (10 seconds - faster detection of disconnections) ??"
         echo -e "\033[1;32m2.\033[0m Default (30 seconds)"
         echo -e "\033[1;32m3.\033[0m Long (60 seconds - for unstable networks)"
         echo -e "\033[1;32m4.\033[0m Custom value"
@@ -331,7 +377,7 @@ tcpudp_forwarding() {
         
         # Ask about read/write timeout
         echo -e "\n\033[1;34mRead/Write Timeout:\033[0m"
-        echo -e "\033[1;32m1.\033[0m Short (15 seconds) 🔥"
+        echo -e "\033[1;32m1.\033[0m Short (15 seconds) ??"
         echo -e "\033[1;32m2.\033[0m Default (30 seconds)"
         echo -e "\033[1;32m3.\033[0m Same as connection timeout ($TIMEOUT_VALUE)"
         read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' rwtimeout_choice
@@ -346,7 +392,7 @@ tcpudp_forwarding() {
         
         # Ask about retry attempts
         echo -e "\n\033[1;34mRetry Attempts (reconnect on failure):\033[0m"
-        echo -e "\033[1;32m1.\033[0m 5 retries (for very unstable connections) 🔥"
+        echo -e "\033[1;32m1.\033[0m 5 retries (for very unstable connections) ??"
         echo -e "\033[1;32m2.\033[0m Infinite retry (always reconnect)"
         echo -e "\033[1;32m3.\033[0m 3 retries (normal)"
         echo -e "\033[1;32m4.\033[0m Custom retry count"
@@ -371,7 +417,7 @@ tcpudp_forwarding() {
         
         # Ask about heartbeat (keepalive interval)
         echo -e "\n\033[1;34mHeartbeat Interval (keepalive ping):\033[0m"
-        echo -e "\033[1;32m1.\033[0m Frequent (10 seconds - faster detection) 🔥"
+        echo -e "\033[1;32m1.\033[0m Frequent (10 seconds - faster detection) ??"
         echo -e "\033[1;32m2.\033[0m Default (30 seconds)"
         echo -e "\033[1;32m3.\033[0m Custom interval"
         read -p $'\033[1;33mEnter your choice (default: 1): \033[0m' heartbeat_choice
@@ -393,14 +439,14 @@ tcpudp_forwarding() {
         esac
         
         # Display recommended settings
-        echo -e "\n\033[1;32m✅ Optimized for unstable connections:\033[0m"
+        echo -e "\n\033[1;32m? Optimized for unstable connections:\033[0m"
         echo -e "   • Timeout: $TIMEOUT_VALUE (quick disconnection detection)"
         echo -e "   • Retries: $RETRY_VALUE (auto-reconnect)"
         echo -e "   • Heartbeat: $HEARTBEAT_VALUE (frequent keepalive)"
     fi
 
     # Basic options for all users
-    echo -e "\n\033[1;34m🔧 Basic Options\033[0m"
+    echo -e "\n\033[1;34m?? Basic Options\033[0m"
     
     # Ask about keepAlive
     echo -e "\n\033[1;34mEnable KeepAlive?\033[0m"
@@ -492,13 +538,13 @@ tcpudp_forwarding() {
     
     # Show summary
     if [[ "$stability_choice" == "1" ]]; then
-        echo -e "\n\033[1;32m📊 Connection Settings Summary:\033[0m"
+        echo -e "\n\033[1;32m?? Connection Settings Summary:\033[0m"
         echo -e "   • Timeout: $TIMEOUT_VALUE"
         echo -e "   • Read/Write Timeout: $RWTIMEOUT_VALUE"
         echo -e "   • Retries: $RETRY_VALUE"
         echo -e "   • Heartbeat: $HEARTBEAT_VALUE"
     else
-        echo -e "\n\033[1;36m📊 Using default stable connection settings\033[0m"
+        echo -e "\n\033[1;36m?? Using default stable connection settings\033[0m"
     fi
 
     # Call the function to create the service and start it
@@ -512,7 +558,7 @@ configure_port_forwarding() {
     echo -e "\033[1;34mConfigure Port Forwarding\033[0m"
 
     # Ask for core name
-    echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+    echo -e "\n\033[1;34m?? Core Configuration:\033[0m"
     read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-pf1, gost-tunnel2): \033[0m' core_name
     if [[ -z "$core_name" ]]; then
         core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
@@ -658,7 +704,7 @@ configure_port_forwarding() {
             esac
             
             # Ask about connection stability
-            echo -e "\n\033[1;34m🔧 Connection Stability Settings\033[0m"
+            echo -e "\n\033[1;34m?? Connection Stability Settings\033[0m"
             echo -e "Do you want to configure connection stability options?"
             echo -e "\033[1;32m1.\033[0m Yes - Configure advanced options"
             echo -e "\033[1;32m2.\033[0m No - Use default settings"
@@ -673,7 +719,7 @@ configure_port_forwarding() {
             
             # If user wants advanced options
             if [[ "$stability_choice" == "1" ]]; then
-                echo -e "\n\033[1;34m⚡ Advanced Stability Options\033[0m"
+                echo -e "\n\033[1;34m? Advanced Stability Options\033[0m"
                 
                 # Connection Timeout
                 read -p $'\033[1;33mEnter connection timeout in seconds (default: 30): \033[0m' custom_timeout
@@ -707,7 +753,7 @@ configure_port_forwarding() {
                 custom_heartbeat=${custom_heartbeat:-30}
                 HEARTBEAT_VALUE="${custom_heartbeat}s"
                 
-                echo -e "\n\033[1;32m✅ Stability Settings:\033[0m"
+                echo -e "\n\033[1;32m? Stability Settings:\033[0m"
                 echo -e "   • Timeout: $TIMEOUT_VALUE"
                 echo -e "   • Read/Write Timeout: $RWTIMEOUT_VALUE"
                 echo -e "   • Retries: $RETRY_VALUE"
@@ -838,7 +884,7 @@ configure_port_forwarding() {
             done
             
             # Ask about connection stability for server side
-            echo -e "\n\033[1;34m🔧 Connection Stability Settings\033[0m"
+            echo -e "\n\033[1;34m?? Connection Stability Settings\033[0m"
             echo -e "Do you want to configure connection stability options?"
             echo -e "\033[1;32m1.\033[0m Yes - Configure advanced options"
             echo -e "\033[1;32m2.\033[0m No - Use default settings"
@@ -853,7 +899,7 @@ configure_port_forwarding() {
             
             # If user wants advanced options
             if [[ "$stability_choice" == "1" ]]; then
-                echo -e "\n\033[1;34m⚡ Advanced Stability Options\033[0m"
+                echo -e "\n\033[1;34m? Advanced Stability Options\033[0m"
                 
                 # Connection Timeout
                 read -p $'\033[1;33mEnter connection timeout in seconds (default: 30): \033[0m' custom_timeout
@@ -887,7 +933,7 @@ configure_port_forwarding() {
                 custom_heartbeat=${custom_heartbeat:-30}
                 HEARTBEAT_VALUE="${custom_heartbeat}s"
                 
-                echo -e "\n\033[1;32m✅ Stability Settings:\033[0m"
+                echo -e "\n\033[1;32m? Stability Settings:\033[0m"
                 echo -e "   • Timeout: $TIMEOUT_VALUE"
                 echo -e "   • Read/Write Timeout: $RWTIMEOUT_VALUE"
                 echo -e "   • Retries: $RETRY_VALUE"
@@ -1000,7 +1046,7 @@ configure_relay() {
             echo -e "\n\033[1;34m Configure Server-Side (Kharej)\033[0m"
 
             # Ask for core name
-            echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+            echo -e "\n\033[1;34m?? Core Configuration:\033[0m"
             read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-relay1, gost-tunnel2): \033[0m' core_name
             if [[ -z "$core_name" ]]; then
                 core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
@@ -1069,7 +1115,7 @@ configure_relay() {
             esac
             
             # Ask about connection stability
-            echo -e "\n\033[1;34m🔧 Connection Stability Settings\033[0m"
+            echo -e "\n\033[1;34m?? Connection Stability Settings\033[0m"
             echo -e "Do you want to configure connection stability options?"
             echo -e "\033[1;32m1.\033[0m Yes - Configure advanced options"
             echo -e "\033[1;32m2.\033[0m No - Use default settings"
@@ -1084,7 +1130,7 @@ configure_relay() {
             
             # If user wants advanced options
             if [[ "$stability_choice" == "1" ]]; then
-                echo -e "\n\033[1;34m⚡ Advanced Stability Options\033[0m"
+                echo -e "\n\033[1;34m? Advanced Stability Options\033[0m"
                 
                 # Connection Timeout
                 read -p $'\033[1;33mEnter connection timeout in seconds (default: 30): \033[0m' custom_timeout
@@ -1118,7 +1164,7 @@ configure_relay() {
                 custom_heartbeat=${custom_heartbeat:-30}
                 HEARTBEAT_VALUE="${custom_heartbeat}s"
                 
-                echo -e "\n\033[1;32m✅ Stability Settings:\033[0m"
+                echo -e "\n\033[1;32m? Stability Settings:\033[0m"
                 echo -e "   • Timeout: $TIMEOUT_VALUE"
                 echo -e "   • Read/Write Timeout: $RWTIMEOUT_VALUE"
                 echo -e "   • Retries: $RETRY_VALUE"
@@ -1204,7 +1250,7 @@ configure_relay() {
             echo -e "\n\033[1;34mConfigure Client-Side (Iran)\033[0m"
             
             # Ask for core name
-            echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+            echo -e "\n\033[1;34m?? Core Configuration:\033[0m"
             read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-relay1, gost-tunnel2): \033[0m' core_name
             if [[ -z "$core_name" ]]; then
                 core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
@@ -1286,7 +1332,7 @@ configure_relay() {
             done
             
             # Ask about connection stability for client side
-            echo -e "\n\033[1;34m🔧 Connection Stability Settings\033[0m"
+            echo -e "\n\033[1;34m?? Connection Stability Settings\033[0m"
             echo -e "Do you want to configure connection stability options?"
             echo -e "\033[1;32m1.\033[0m Yes - Configure advanced options"
             echo -e "\033[1;32m2.\033[0m No - Use default settings"
@@ -1301,7 +1347,7 @@ configure_relay() {
             
             # If user wants advanced options
             if [[ "$stability_choice" == "1" ]]; then
-                echo -e "\n\033[1;34m⚡ Advanced Stability Options\033[0m"
+                echo -e "\n\033[1;34m? Advanced Stability Options\033[0m"
                 
                 # Connection Timeout
                 read -p $'\033[1;33mEnter connection timeout in seconds (default: 30): \033[0m' custom_timeout
@@ -1335,7 +1381,7 @@ configure_relay() {
                 custom_heartbeat=${custom_heartbeat:-30}
                 HEARTBEAT_VALUE="${custom_heartbeat}s"
                 
-                echo -e "\n\033[1;32m✅ Stability Settings:\033[0m"
+                echo -e "\n\033[1;32m? Stability Settings:\033[0m"
                 echo -e "   • Timeout: $TIMEOUT_VALUE"
                 echo -e "   • Read/Write Timeout: $RWTIMEOUT_VALUE"
                 echo -e "   • Retries: $RETRY_VALUE"
@@ -1473,7 +1519,7 @@ configure_forward() {
             echo -e "\n\033[1;34m Configure Server-Side (Kharej)\033[0m"
             
             # Ask for core name
-            echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+            echo -e "\n\033[1;34m?? Core Configuration:\033[0m"
             read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-forward1, gost-tunnel2): \033[0m' core_name
             if [[ -z "$core_name" ]]; then
                 core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
@@ -1541,7 +1587,7 @@ configure_forward() {
             esac
             
             # Ask about connection stability for server side
-            echo -e "\n\033[1;34m🔧 Connection Stability Settings\033[0m"
+            echo -e "\n\033[1;34m?? Connection Stability Settings\033[0m"
             echo -e "Do you want to configure connection stability options?"
             echo -e "\033[1;32m1.\033[0m Yes - Configure advanced options"
             echo -e "\033[1;32m2.\033[0m No - Use default settings"
@@ -1556,7 +1602,7 @@ configure_forward() {
             
             # If user wants advanced options
             if [[ "$stability_choice" == "1" ]]; then
-                echo -e "\n\033[1;34m⚡ Advanced Stability Options\033[0m"
+                echo -e "\n\033[1;34m? Advanced Stability Options\033[0m"
                 
                 # Connection Timeout
                 read -p $'\033[1;33mEnter connection timeout in seconds (default: 30): \033[0m' custom_timeout
@@ -1590,7 +1636,7 @@ configure_forward() {
                 custom_heartbeat=${custom_heartbeat:-30}
                 HEARTBEAT_VALUE="${custom_heartbeat}s"
                 
-                echo -e "\n\033[1;32m✅ Stability Settings:\033[0m"
+                echo -e "\n\033[1;32m? Stability Settings:\033[0m"
                 echo -e "   • Timeout: $TIMEOUT_VALUE"
                 echo -e "   • Read/Write Timeout: $RWTIMEOUT_VALUE"
                 echo -e "   • Retries: $RETRY_VALUE"
@@ -1665,7 +1711,7 @@ configure_forward() {
             echo -e "\n\033[1;34mConfigure Client-Side (Iran)\033[0m"
             
             # Ask for core name
-            echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+            echo -e "\n\033[1;34m?? Core Configuration:\033[0m"
             read -p $'\033[1;33mEnter a unique name for this GOST core (e.g., gost-forward1, gost-tunnel2): \033[0m' core_name
             if [[ -z "$core_name" ]]; then
                 core_name="gost-$(tr -dc 'a-z0-9' < /dev/urandom | head -c 6)"
@@ -1731,7 +1777,7 @@ configure_forward() {
             echo -e "\033[1;36mFormatted IP:\033[0m $relay_ip"
             
             # Ask about connection stability for client side
-            echo -e "\n\033[1;34m🔧 Connection Stability Settings\033[0m"
+            echo -e "\n\033[1;34m?? Connection Stability Settings\033[0m"
             echo -e "Do you want to configure connection stability options?"
             echo -e "\033[1;32m1.\033[0m Yes - Configure advanced options"
             echo -e "\033[1;32m2.\033[0m No - Use default settings"
@@ -1746,7 +1792,7 @@ configure_forward() {
             
             # If user wants advanced options
             if [[ "$stability_choice" == "1" ]]; then
-                echo -e "\n\033[1;34m⚡ Advanced Stability Options\033[0m"
+                echo -e "\n\033[1;34m? Advanced Stability Options\033[0m"
                 
                 # Connection Timeout
                 read -p $'\033[1;33mEnter connection timeout in seconds (default: 30): \033[0m' custom_timeout
@@ -1780,7 +1826,7 @@ configure_forward() {
                 custom_heartbeat=${custom_heartbeat:-30}
                 HEARTBEAT_VALUE="${custom_heartbeat}s"
                 
-                echo -e "\n\033[1;32m✅ Stability Settings:\033[0m"
+                echo -e "\n\033[1;32m? Stability Settings:\033[0m"
                 echo -e "   • Timeout: $TIMEOUT_VALUE"
                 echo -e "   • Read/Write Timeout: $RWTIMEOUT_VALUE"
                 echo -e "   • Retries: $RETRY_VALUE"
@@ -1802,7 +1848,7 @@ configure_forward() {
             echo -e "\033[1;32m11.\033[0m OBFS4 (OBFS4)"
             echo -e "\033[1;32m12.\033[0m oHTTP (HTTP Obfuscation)"
             echo -e "\033[1;32m13.\033[0m oTLS (TLS Obfuscation)"
-            echo -e "\033[1;32m14.\033[0m mTLS (Multiplex TLS)"
+            echo -e "\033[1;32m14.\033[0m mtls (Multiplex TLS)"
             echo -e "\033[1;32m15.\033[0m MWS (Multiplex Websocket)"
             read -p $'\033[1;33mEnter your choice [tcp]: \033[0m' trans_choice
             
@@ -2212,7 +2258,7 @@ manage_service_action() {
                     # Update the service_name variable for the current session
                     service_name="$new_name"
                     
-                    echo -e "\n\033[1;32m✓ Service renamed successfully!\033[0m"
+                    echo -e "\n\033[1;32m? Service renamed successfully!\033[0m"
                     echo -e "\033[1;36mNew service name: $service_name\033[0m"
                     
                     # Ask if user wants to start the service
@@ -2445,7 +2491,7 @@ fi
 # Remove GOST
 remove_gost() {
     check_root
-    echo -e "\033[1;31m⚠ Warning: This will remove ALL GOST binaries and services!\033[0m"
+    echo -e "\033[1;31m? Warning: This will remove ALL GOST binaries and services!\033[0m"
     read -p $'\033[1;33mAre you sure you want to remove GOST? [y/n] (default: n): \033[0m' confirm_remove
     confirm_remove="${confirm_remove:-n}"
     
@@ -2474,7 +2520,7 @@ remove_gost() {
     # Reload systemd
     systemctl daemon-reload
     
-    echo -e "\033[1;32m✓ GOST and all related files removed successfully!\033[0m"
+    echo -e "\033[1;32m? GOST and all related files removed successfully!\033[0m"
     read -p "Press Enter to continue..."
 }
 
