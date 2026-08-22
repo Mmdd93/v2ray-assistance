@@ -72,12 +72,13 @@ main_menu() {
         echo -e "\033[1;32m===================================\033[0m"
         echo -e " \033[1;34m1.\033[0m Install GOST"
         echo -e " \033[1;34m2.\033[0m Basic Transmission (multi-port) "
-        echo -e " \033[1;34m3.\033[0m rely + Transmission (multi-port) "
+        echo -e " \033[1;34m3.\033[0m relay + Transmission (multi-port) "
         echo -e " \033[1;34m4.\033[0m forward + Transmissions (single port) "
         echo -e " \033[1;34m5.\033[0m simple port forward (only client-side) (multi-port)"
-        echo -e " \033[1;34m6.\033[0m Manage Tunnels Services"
-        echo -e " \033[1;34m7.\033[0m List GOST Cores"
-        echo -e " \033[1;34m8.\033[0m Remove GOST"
+        echo -e " \033[1;36m6.\033[0m \033[1;33mTUN + Transmissions (L3 Anti-Filter Tunnel)\033[0m"
+        echo -e " \033[1;34m7.\033[0m Manage Tunnels Services"
+        echo -e " \033[1;34m8.\033[0m List GOST Cores"
+        echo -e " \033[1;34m9.\033[0m Remove GOST"
         
         echo -e " \033[1;31m0. Exit\033[0m"
         echo -e "\033[1;32m===================================\033[0m"
@@ -90,10 +91,10 @@ main_menu() {
             3) configure_relay ;;
             4) configure_forward ;;
             5) tcpudp_forwarding ;;
-            6) select_service_to_manage ;;
-            7) list_gost_cores; read -p "Press Enter to continue..." ;;
-            8) remove_gost ;;
-            
+            6) configure_tun_transmission ;;
+            7) select_service_to_manage ;;
+            8) list_gost_cores; read -p "Press Enter to continue..." ;;
+            9) remove_gost ;;
             
             0) 
                 echo -e "\033[1;31mExiting... Goodbye!\033[0m"
@@ -106,6 +107,144 @@ main_menu() {
         esac
     done
 }
+
+# ==============================================================================
+# NEW MODULE: Gost TUN + Transmissions
+# ==============================================================================
+configure_tun_transmission() {
+    echo -e "\n\033[1;34m=== Configure TUN + Transmission (L3 Tunnel) ===\033[0m"
+    
+    # Check Gost v3 Support for TUN
+    if [[ "$gost_version" != *"gost 3"* && "$gost_version" != *"gost/v3"* ]]; then
+        echo -e "\033[1;33m⚠ Warning: TUN interface works best with GOST v3.\033[0m"
+        read -p "Do you want to continue anyway? [y/N]: " continue_v3
+        if [[ ! "$continue_v3" =~ ^[Yy]$ ]]; then
+            return
+        fi
+    fi
+
+    # Core selection
+    echo -e "\n\033[1;34m📝 Core Configuration:\033[0m"
+    read -p $'\033[1;33mEnter a unique name for this GOST core (default: gost-tun): \033[0m' core_name
+    if [[ -z "$core_name" ]]; then
+        core_name="gost-tun"
+    fi
+    if ! create_gost_core "$core_name"; then
+        core_name="gost"
+    fi
+    GOST_BINARY="/usr/local/bin/$core_name"
+
+    echo -e "\n\033[1;33mSelect Role for This Server:\033[0m"
+    echo -e "\033[1;32m1.\033[0m \033[1;36mServer (Kharej / Receiver)\033[0m"
+    echo -e "\033[1;32m2.\033[0m \033[1;36mClient (Iran / Sender)\033[0m"
+    read -p "Choice [1-2] (default: 1): " ROLE_CHOICE
+    ROLE_CHOICE=${ROLE_CHOICE:-1}
+
+    echo -e "\n\033[1;33mSelect Transmission Protocol:\033[0m"
+    echo -e "\033[1;32m1.\033[0m HTTP/1.1 over TLS (https)"
+    echo -e "\033[1;32m2.\033[0m gRPC (grpc - Recommended for low latency)"
+    echo -e "\033[1;32m3.\033[0m WebSocket (ws)"
+    echo -e "\033[1;32m4.\033[0m WebSocket Secure (wss)"
+    echo -e "\033[1;32m5.\033[0m QUIC (quic - Handles packet loss well)"
+    echo -e "\033[1;32m6.\033[0m KCP (kcp)"
+    echo -e "\033[1;32m7.\033[0m HTTP/2 (h2)"
+    echo -e "\033[1;32m8.\033[0m Plain HTTP/1.1 (http)"
+    read -p "Transmission [1-8] (default: 2): " TRANS_CHOICE
+    TRANS_CHOICE=${TRANS_CHOICE:-2}
+
+    read -p $'\n\033[1;33mEnter Tunnel Port (default: 8443): \033[0m' TUN_PORT
+    TUN_PORT=${TUN_PORT:-8443}
+
+    # Set default IP logic based on role
+    if [ "$ROLE_CHOICE" == "1" ]; then
+        DEFAULT_LOCAL="10.0.0.1"
+        DEFAULT_PEER="10.0.0.2"
+    else
+        DEFAULT_LOCAL="10.0.0.2"
+        DEFAULT_PEER="10.0.0.1"
+    fi
+
+    read -p $'\033[1;33mEnter Local TUN IP (default: '"$DEFAULT_LOCAL"'): \033[0m' LOCAL_TUN_IP
+    LOCAL_TUN_IP=${LOCAL_TUN_IP:-$DEFAULT_LOCAL}
+
+    read -p $'\033[1;33mEnter Remote Peer TUN IP (default: '"$DEFAULT_PEER"'): \033[0m' PEER_TUN_IP
+    PEER_TUN_IP=${PEER_TUN_IP:-$DEFAULT_PEER}
+
+    GOST_OPTIONS=""
+    
+    # Map selection to protocol scheme
+    case $TRANS_CHOICE in
+        1) SCHEME="https" ;;
+        2) SCHEME="grpc" ;;
+        3) SCHEME="ws" ;;
+        4) SCHEME="wss" ;;
+        5) SCHEME="quic" ;;
+        6) SCHEME="kcp" ;;
+        7) SCHEME="h2" ;;
+        8) SCHEME="http" ;;
+        *) SCHEME="grpc" ;; # Fallback
+    esac
+
+    case $ROLE_CHOICE in
+        1) # Server (Kharej)
+            GOST_OPTIONS="-L \"tun://${LOCAL_TUN_IP}:0/${PEER_TUN_IP}:0?net=${LOCAL_TUN_IP}/24\" -L \"${SCHEME}://:${TUN_PORT}\""
+            service_prefix="tun_server"
+            ;;
+        2) # Client (Iran)
+            read -p $'\033[1;33mEnter Remote Server (Kharej) Public IP/Domain: \033[0m' REMOTE_HOST
+            if [[ -z "$REMOTE_HOST" ]]; then
+                echo -e "\033[1;31mError: Remote Server IP is required for Client mode!\033[0m"
+                sleep 2
+                return
+            fi
+            
+            # Enable IP Forwarding on Client silently
+            sysctl -w net.ipv4.ip_forward=1 >/dev/null 2>&1
+            
+            echo -e "\n\033[1;34mDirect Port Forwarding via TUN:\033[0m"
+            echo -e "Forward a local port to Kharej backend (e.g., Forward Iran 443 -> Kharej 445)"
+            read -p "Forward port? [Y/n] (default: y): " FWD_CHOICE
+            FWD_CHOICE=${FWD_CHOICE:-y}
+            
+            FWD_FLAG=""
+            if [[ "$FWD_CHOICE" =~ ^[Yy]$ ]]; then
+                read -p "Enter Iran Listen Port (default: 444): " L_PORT
+                L_PORT=${L_PORT:-444}
+                read -p "Enter Kharej Destination Port (default: 445): " R_PORT
+                R_PORT=${R_PORT:-445}
+                
+                FWD_FLAG="-L \"tcp://:${L_PORT}/${PEER_TUN_IP}:${R_PORT}\" -L \"udp://:${L_PORT}/${PEER_TUN_IP}:${R_PORT}\""
+            fi
+
+            # Determine if we need secure=0 for TLS-based protocols
+            if [[ "$SCHEME" == "https" || "$SCHEME" == "grpc" || "$SCHEME" == "wss" || "$SCHEME" == "quic" || "$SCHEME" == "h2" ]]; then
+                SECURE_FLAG="?secure=0"
+            else
+                SECURE_FLAG=""
+            fi
+
+            GOST_OPTIONS="-L \"tun://:0?net=${LOCAL_TUN_IP}/24&peer=${PEER_TUN_IP}\" -F \"${SCHEME}://${REMOTE_HOST}:${TUN_PORT}${SECURE_FLAG}\" ${FWD_FLAG}"
+            service_prefix="tun_client"
+            ;;
+        *)
+            echo -e "\033[1;31mInvalid role choice.\033[0m"
+            sleep 1
+            return
+            ;;
+    esac
+
+    read -p $'\n\033[1;33mEnter a custom name for this service (default: '"$service_prefix"'): \033[0m' service_name
+    service_name=${service_name:-$service_prefix}
+
+    echo -e "\n\033[1;32mGenerated GOST options:\033[0m $GOST_OPTIONS"
+    echo -e "\033[1;32mUsing GOST core:\033[0m $core_name"
+
+    create_gost_service "$service_name" "$GOST_BINARY"
+    start_service "$service_name"
+
+    read -p "Press Enter to continue..."
+}
+# ==============================================================================
 
 tcpudp_forwarding() {
     echo -e "\033[1;34mConfigure Multi-Port Forwarding (Client Side Only)\033[0m"
@@ -2063,7 +2202,7 @@ manage_service_action() {
                     mv "$service_file" "/etc/systemd/system/$new_name"
                     
                     # Update service references in the file
-                    sed -i "s/Description=Gost Service.*/Description=Gost Service - ${new_name%.service}/" "/etc/systemd/system/$new_name"
+                    sed -i "s/Description=GOST ${service_name} Service/Description=GOST ${new_name%.service} Service/" "/etc/systemd/system/$new_name"
                     
                     # Reload systemd
                     systemctl daemon-reload
@@ -2095,8 +2234,6 @@ manage_service_action() {
                 done
                 read -p "Press Enter to continue..."
                 ;;
-
-
 
             0)
                 break
@@ -2146,7 +2283,6 @@ install_gost() {
         esac
     done
 }
-
 
 install_gost2() {
     check_root
@@ -2212,7 +2348,6 @@ install_gost2() {
 
     read -p "Press Enter to continue..."
 }
-
 
 install_gost3() {
     check_root
