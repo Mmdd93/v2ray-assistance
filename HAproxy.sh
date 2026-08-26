@@ -1078,7 +1078,7 @@ haproxy_menu() {
       echo -e "\033[1;32m12.\033[0m Reload HAProxy"
       echo -e "\033[1;32m13.\033[0m Clear HAProxy Configuration"
       echo -e "\033[1;32m14.\033[0m Remove HAProxy"
-      echo -e "\033[1;32m18.\033[0m Auto restart haproxy"
+      echo -e "\033[1;32m15.\033[0m Auto restart haproxy"
       echo -e "\033[1;32m16.\033[0m Tune haproxy"
     else
       echo -e "\033[1;90m2. Port Forwarding (simple mode) [Install HAProxy first]\033[0m"
