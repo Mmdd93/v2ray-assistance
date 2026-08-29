@@ -977,57 +977,70 @@ auto_restart_haproxy() {
     read -p "Select an option: " cron_option
 
     case $cron_option in
-1)
-    echo -e "\n\033[1;34mChoose the restart interval type for haproxy:\033[0m"
-    echo -e " \033[1;34m1.\033[0m Every X minutes"
-    echo -e " \033[1;34m2.\033[0m Every X hours"
-    echo -e " \033[1;34m3.\033[0m Every X days"
-    read -p "Select interval type (1-3): " interval_type
-
-    case $interval_type in
         1)
-            read -p "Enter the interval in minutes (1-59): " interval
-            if [[ ! "$interval" =~ ^[1-9]$|^[1-5][0-9]$ ]]; then
-                echo -e "\033[1;31mInvalid input! Please enter a number between 1 and 59.\033[0m"
-                break
+            echo -e "\n\033[1;34mChoose action type:\033[0m"
+            echo -e " \033[1;34m1.\033[0m Reload (Zero-Downtime - Recommended)"
+            echo -e " \033[1;34m2.\033[0m Restart (Full Restart)"
+            read -p "Select action (1-2) [Default: 1]: " action_type
+            
+            if [[ "$action_type" == "2" ]]; then
+                action="restart"
+            else
+                action="reload"
             fi
-            cron_job="*/$interval * * * * /bin/systemctl restart haproxy"
+
+            echo -e "\n\033[1;34mChoose the $action interval type for haproxy:\033[0m"
+            echo -e " \033[1;34m1.\033[0m Every X minutes"
+            echo -e " \033[1;34m2.\033[0m Every X hours"
+            echo -e " \033[1;34m3.\033[0m Every X days"
+            read -p "Select interval type (1-3): " interval_type
+
+            case $interval_type in
+                1)
+                    read -p "Enter the interval in minutes (1-59): " interval
+                    if [[ ! "$interval" =~ ^[1-9]$|^[1-5][0-9]$ ]]; then
+                        echo -e "\033[1;31mInvalid input! Please enter a number between 1 and 59.\033[0m"
+                        break
+                    fi
+                    cron_schedule="*/$interval * * * *"
+                    ;;
+                2)
+                    read -p "Enter the interval in hours (1-23): " interval
+                    if [[ ! "$interval" =~ ^[1-9]$|^1[0-9]$|^2[0-3]$ ]]; then
+                        echo -e "\033[1;31mInvalid input! Please enter a number between 1 and 23.\033[0m"
+                        break
+                    fi
+                    cron_schedule="0 */$interval * * *"
+                    ;;
+                3)
+                    read -p "Enter the interval in days (1-30): " interval
+                    if [[ ! "$interval" =~ ^[1-9]$|^[12][0-9]$|^30$ ]]; then
+                        echo -e "\033[1;31mInvalid input! Please enter a number between 1 and 30.\033[0m"
+                        break
+                    fi
+                    cron_schedule="0 0 */$interval * *"
+                    ;;
+                *)
+                    echo -e "\033[1;31mInvalid option! Returning...\033[0m"
+                    break
+                    ;;
+            esac
+
+            cron_job="$cron_schedule /bin/systemctl $action haproxy"
+
+            # Remove any existing cron job for haproxy (both reload and restart)
+            (crontab -l 2>/dev/null | grep -v "haproxy") | crontab -
+
+            # Add the new cron job
+            (crontab -l 2>/dev/null; echo "$cron_job") | crontab -
+
+            echo -e "\033[1;32mCron job updated: $action haproxy every $interval unit(s).\033[0m"
             ;;
+
         2)
-            read -p "Enter the interval in hours (1-23): " interval
-            if [[ ! "$interval" =~ ^[1-9]$|^1[0-9]$|^2[0-3]$ ]]; then
-                echo -e "\033[1;31mInvalid input! Please enter a number between 1 and 23.\033[0m"
-                break
-            fi
-            cron_job="0 */$interval * * * /bin/systemctl restart haproxy"
-            ;;
-        3)
-            read -p "Enter the interval in days (1-30): " interval
-            if [[ ! "$interval" =~ ^[1-9]$|^[12][0-9]$|^30$ ]]; then
-                echo -e "\033[1;31mInvalid input! Please enter a number between 1 and 30.\033[0m"
-                break
-            fi
-            cron_job="0 0 */$interval * * /bin/systemctl restart haproxy"
-            ;;
-        *)
-            echo -e "\033[1;31mInvalid option! Returning...\033[0m"
-            break
-            ;;
-    esac
-
-    # Remove any existing cron job for restarting haproxy
-    (crontab -l 2>/dev/null | grep -v "/bin/systemctl restart haproxy") | crontab -
-
-    # Add the new cron job
-    (crontab -l 2>/dev/null; echo "$cron_job") | crontab -
-
-    echo -e "\033[1;32mCron job updated: Restart haproxy every $interval unit(s).\033[0m"
-    ;;
-
-        2)
-            # Remove the cron job related to the service
-            crontab -l 2>/dev/null | grep -v "/bin/systemctl restart haproxy" | crontab -
-            echo -e "\033[1;32mCron job for $service_name removed.\033[0m"
+            # Remove all cron jobs related to haproxy
+            (crontab -l 2>/dev/null | grep -v "haproxy") | crontab -
+            echo -e "\033[1;32mCron job for haproxy removed successfully.\033[0m"
             ;;
         3)
             echo -e "\033[1;33mOpening crontab for manual editing...\033[0m"
@@ -1043,7 +1056,7 @@ auto_restart_haproxy() {
             ;;
     esac
     read -p "Press Enter to continue..."
-    }
+}
     
 haproxy_menu() {
   while true; do
