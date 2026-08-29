@@ -48,36 +48,59 @@ tune_haproxy_config() {
         return 1
     }
 
-    read -r -d '' new_global <<'EOF'
+    # 1. تشخیص خودکار تعداد هسته‌های CPU سرور
+    local cpu_cores=$(nproc)
+    echo -e "\033[1;36m[*] Detected $cpu_cores CPU cores. Tuning threads automatically...\033[0m"
+    local thread_config="nbthread $cpu_cores"
+    local cpu_map="cpu-map auto:1/1-$cpu_cores 0-$((cpu_cores-1))"
+
+    # تولید بخش global به صورت داینامیک
+    read -r -d '' new_global <<EOF
 global
     maxconn 100000
-    nbthread 4
-    cpu-map auto:1/1-4 0-3
+    $thread_config
+    $cpu_map
     chroot /var/lib/haproxy
     stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
     stats timeout 30s
     user haproxy
     group haproxy
     daemon
+    spread-checks 5
     ssl-default-bind-options ssl-min-ver TLSv1.2 no-tls-tickets
     ssl-default-bind-ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384
     ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
 EOF
 
+    # تولید بخش DNS Resolvers
+    read -r -d '' new_resolvers <<'EOF'
+resolvers mydns
+    nameserver dns1 1.1.1.1:53
+    nameserver dns2 8.8.8.8:53
+    resolve_retries 3
+    timeout retry 1s
+    hold valid 10s
+EOF
+
+    # تولید بخش defaults مناسب برای تانلینگ (TCP Mode)
     read -r -d '' new_defaults <<'EOF'
 defaults
-    mode http
-    option dontlognull
+    log     global
+    mode    tcp
+    option  tcplog
+    option  dontlognull
+    option  tcp-smart-accept
+    option  tcp-smart-connect
     timeout connect 5s
-    timeout client  50s
-    timeout server  50s
+    timeout client  10m
+    timeout server  10m
     maxconn 100000
 EOF
 
-    # Remove any existing global/defaults blocks, then prepend new ones
+    # حذف بلوک‌های قدیمی global و defaults و اضافه کردن نسخه‌های جدید
     awk '
     BEGIN {skip=0}
-    $1 == "global" || $1 == "defaults" {skip=1; next}
+    $1 == "global" || $1 == "defaults" || $1 == "resolvers" {skip=1; next}
     skip && /^[^ \t]/ {skip=0}
     !skip {print}
     ' "$config_file" > "$tmp_file.rest"
@@ -85,39 +108,48 @@ EOF
     {
         echo "$new_global"
         echo
+        echo "$new_resolvers"
+        echo
         echo "$new_defaults"
         echo
         cat "$tmp_file.rest"
     } > "$config_file"
 
     rm -f "$tmp_file.rest"
+    echo -e "\033[1;32m[✓] HAProxy config blocks updated successfully.\033[0m"
 
-    echo -e "\033[1;32m[✓] global and defaults blocks updated and placed at the top.\033[0m"
+    # 2. بهینه‌سازی Systemd Limits
     echo -e "\033[1;34m[*]\033[0m Tuning HAProxy systemd service limits..."
-
-  # Create systemd override directory if not exists
-  mkdir -p /etc/systemd/system/haproxy.service.d
-
-  # Write the override config
-  cat > /etc/systemd/system/haproxy.service.d/override.conf <<EOF
+    mkdir -p /etc/systemd/system/haproxy.service.d
+    cat > /etc/systemd/system/haproxy.service.d/override.conf <<EOF
 [Service]
 LimitNOFILE=1048576
-LimitNPROC=65535
+LimitNPROC=1048576
 TasksMax=infinity
 EOF
 
-  echo -e "\033[1;32m[✔]\033[0m Limits override created at /etc/systemd/system/haproxy.service.d/override.conf"
+    # 3. بهینه‌سازی پیشرفته شبکه در هسته لینوکس (Sysctl)
+    echo -e "\033[1;34m[*]\033[0m Tuning Linux OS Kernel network limits..."
+    cat > /etc/sysctl.d/99-haproxy-tune.conf <<EOF
+net.ipv4.ip_local_port_range = 1024 65535
+net.ipv4.tcp_tw_reuse = 1
+net.core.somaxconn = 65535
+net.ipv4.tcp_max_syn_backlog = 65535
+net.core.netdev_max_backlog = 65535
+net.ipv4.tcp_fin_timeout = 15
+EOF
+    sysctl -p /etc/sysctl.d/99-haproxy-tune.conf >/dev/null 2>&1
 
-  # Reload systemd and restart haproxy
-  systemctl daemon-reexec
-  systemctl daemon-reload
-  systemctl restart haproxy
+    # اعمال تغییرات و ریستارت
+    systemctl daemon-reexec
+    systemctl daemon-reload
+    systemctl restart haproxy
 
-  echo -e "\033[1;32m[✔]\033[0m HAProxy restarted with updated limits."
+    echo -e "\033[1;32m[✔] HAProxy and OS Kernel tuned and restarted successfully!\033[0m"
 
-  # Show applied limits
-  echo -e "\n\033[1;34m[*]\033[0m Current HAProxy limits:"
-  systemctl show haproxy | grep -E 'LimitNOFILE|LimitNPROC|TasksMax'
+    # نمایش وضعیت اعمال لیمیت‌ها
+    echo -e "\n\033[1;34m[*]\033[0m Current HAProxy limits:"
+    systemctl show haproxy | grep -E 'LimitNOFILE|LimitNPROC|TasksMax'
 }
 # Function to remove HAProxy
 remove_haproxy() {
