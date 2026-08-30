@@ -299,249 +299,171 @@ EOF
     read -p "Press Enter to continue..."
 }
 
-# Function to manage ERSPAN tunnels
 manage_erspan_tunnels() {
-    # List all available ERSPAN tunnel services
-    echo -e "${greEN}Available ERSPAN tunnels:${RESET}"
-    local tunnels=()
+    while true; do
+        clear
+        # List all available ERSPAN tunnel services
+        echo -e "${greEN}Available ERSPAN tunnels:${RESET}"
+        local tunnels=()
 
-    # Get all active ERSPAN tunnel services
-    for dir in /usr/lib/systemd/system; do
-        for file in "$dir"/erspan-*.service; do
-            if [[ -f "$file" ]]; then
-                tunnels+=("$(basename "$file" .service)")
-            fi
+        # Get all active ERSPAN tunnel services
+        for dir in /usr/lib/systemd/system; do
+            for file in "$dir"/erspan-*.service; do
+                if [[ -f "$file" ]]; then
+                    tunnels+=("$(basename "$file" .service)")
+                fi
+            done
         done
-    done
 
-    if [[ ${#tunnels[@]} -eq 0 ]]; then
-        echo -e "${RED}No active ERSPAN tunnels found.${RESET}"
-        read -p "Press Enter to continue..."
-        return 1
-    fi
-
-    # Display the available tunnels
-    for i in "${!tunnels[@]}"; do
-        echo "$((i + 1)). ${tunnels[i]}"
-    done
-
-    echo -e "${greEN}Enter the number corresponding to the tunnel you want to manage:${RESET}"
-    read -r choice
-
-    if ! [[ "$choice" =~ ^[0-9]+$ ]] || ((choice < 1 || choice > ${#tunnels[@]})); then
-        echo -e "${RED}Invalid choice. Please try again.${RESET}"
-        return 1
-    fi
-
-    # Set the selected tunnel for further actions
-    selected_tunnel="${tunnels[choice - 1]}"
-
-    echo -e "${greEN}You selected tunnel: $selected_tunnel${RESET}"
-    
-    local service_file
-    if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
-        service_file="/usr/lib/systemd/system/$selected_tunnel.service"
-    else
-        echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
-        read -p "Press Enter to continue..."
-        return
-    fi
-
-    # Extract tunnel information from the service file
-    route_ip1=$(grep -oP '(?<=route\sadd\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
-    remote_ip1=$(grep -oP '(?<=remote\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
-    local_public_ip1=$(grep -oP '(?<=local\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
-    local_ip1=$(grep -oP '(?<=ip addr add\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
-
-    # Prompt for the next action on the selected tunnel
-    echo -e "\033[1;32m================================================\033[0m"
-    echo -e "\033[1;33mSelect an action to perform on tunnel $selected_tunnel:\033[0m"
-    echo -e "\033[1;34m======================local=====================\033[0m"
-    echo -e "\033[1;32mPublic IP: $local_public_ip1\033[0m"
-    echo -e "\033[1;32mLocal IP: $local_ip1\033[0m"
-    echo -e "\033[1;34m======================remote====================\033[0m"
-    echo -e "\033[1;32mPublic IP: $remote_ip1\033[0m"
-    echo -e "\033[1;32mLocal IP: $route_ip1\033[0m"
-    echo -e "\033[1;32m================================================\033[0m"
-    echo -e "\033[1;34m1.\033[0m \033[1;36mStart tunnel\033[0m"
-    echo -e "\033[1;34m2.\033[0m \033[1;36mStop tunnel\033[0m"
-    echo -e "\033[1;34m3.\033[0m \033[1;36mRestart tunnel\033[0m"
-    echo -e "\033[1;34m4.\033[0m \033[1;36mEnable at boot\033[0m"
-    echo -e "\033[1;34m5.\033[0m \033[1;36mDisable at boot\033[0m"
-    echo -e "\033[1;34m6.\033[0m \033[1;36mCheck status\033[0m"
-    echo -e "\033[1;34m7.\033[0m \033[1;36mRemove tunnel\033[0m"
-    echo -e "\033[1;34m8.\033[0m \033[1;36mEdit with nano\033[0m"
-    echo -e "\033[1;34m9.\033[0m \033[1;36mChange remote IP\033[0m"
-    echo -e "\033[1;34m10.\033[0m \033[1;36mPing remote server local/public IP\033[0m"
-    echo -e "\033[1;34m11.\033[0m \033[1;36mChange local IP\033[0m"
-    echo -e "\033[1;31m0.\033[0m \033[1;37mReturn to main menu\033[0m"
-    echo -e "\033[1;32m================================================\033[0m"
-
-    read -p "Choose an option: " action
-
-    case $action in
-        0) 
-            return
-            ;;
-        1)
-            sudo systemctl start "$selected_tunnel.service"
-            echo -e "${greEN}Tunnel $selected_tunnel started.${RESET}"
+        if [[ ${#tunnels[@]} -eq 0 ]]; then
+            echo -e "${RED}No active ERSPAN tunnels found.${RESET}"
             read -p "Press Enter to continue..."
-            ;;
-        2)
-            sudo systemctl stop "$selected_tunnel.service"
-            sudo systemctl daemon-reload
-            echo -e "${greEN}Tunnel $selected_tunnel stopped.${RESET}"
-            read -p "Press Enter to continue..."
-            ;;
-        3)
-            sudo systemctl restart "$selected_tunnel.service"
-            sudo systemctl daemon-reload
-            echo -e "${greEN}Tunnel $selected_tunnel restarted.${RESET}"
-            read -p "Press Enter to continue..."
-            ;;
-        4)
-            sudo systemctl enable "$selected_tunnel.service"
-            sudo systemctl daemon-reload
-            echo -e "${greEN}Tunnel $selected_tunnel enabled at boot.${RESET}"
-            read -p "Press Enter to continue..."
-            ;;
-        5)
-            sudo systemctl disable "$selected_tunnel.service"
-            sudo systemctl daemon-reload
-            echo -e "${greEN}Tunnel $selected_tunnel disabled at boot.${RESET}"
-            read -p "Press Enter to continue..."
-            ;;
-        6)
-            sudo systemctl status "$selected_tunnel.service"
-            read -p "Press Enter to continue..."
-            ;;
-        7)
-            sudo systemctl stop "$selected_tunnel.service"
-            sudo systemctl disable "$selected_tunnel.service"
-            sudo rm "/usr/lib/systemd/system/$selected_tunnel.service"
-            sudo systemctl daemon-reload
-            echo -e "${greEN}Tunnel $selected_tunnel removed.${RESET}"
-            read -p "Press Enter to continue..."
-            ;;
-        8)
-            sudo nano "$service_file"
-            sudo systemctl restart "$selected_tunnel.service"
-            sudo systemctl daemon-reload
-            read -p "Press Enter to continue..."
-            ;;
-        9)
-            local new_remote_ip
-            local current_remote_ip
+            return 1
+        fi
 
+        # Display the available tunnels
+        for i in "${!tunnels[@]}"; do
+            echo "$((i + 1)). ${tunnels[i]}"
+        done
+
+        echo -e "${greEN}Enter the number corresponding to the tunnel you want to manage:${RESET}"
+        read -r choice
+
+        if ! [[ "$choice" =~ ^[0-9]+$ ]] || ((choice < 1 || choice > ${#tunnels[@]})); then
+            echo -e "${RED}Invalid choice. Please try again.${RESET}"
+            read -p "Press Enter to continue..."
+            continue
+        fi
+
+        # Set the selected tunnel for further actions
+        selected_tunnel="${tunnels[choice - 1]}"
+
+        while true; do
+            clear
+            local service_file
             if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
                 service_file="/usr/lib/systemd/system/$selected_tunnel.service"
             else
                 echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
                 read -p "Press Enter to continue..."
-                return
+                break
             fi
 
-            current_remote_ip=$(grep -oP 'remote \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' "$service_file")
-            
-            if [[ -n "$current_remote_ip" ]]; then
-                echo -e "${CYAN}Current remote IP: ${greEN}$current_remote_ip${RESET}"
-            else
-                echo -e "${YELLOW}No remote IP found in the service file.${RESET}"
-            fi
-            
-            echo -e "${greEN}Enter the new remote IP address or Enter blank to cancel:${RESET}"
-            read -p "> " new_remote_ip
-            
-            if [[ -z "$new_remote_ip" ]]; then
-                echo -e "${YELLOW}No changes made. Returning to the menu.${RESET}"
-                read -p "Press Enter to continue..."
-                return
-            fi
-                
-            sed -i "s/remote [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*/remote $new_remote_ip/" "$service_file"
-            sudo systemctl daemon-reload
-            sudo systemctl restart "$selected_tunnel"
-            echo -e "${greEN}Remote IP has been updated to $new_remote_ip in $selected_tunnel.service.${RESET}"
-            read -p "Press Enter to continue..."
-            ;;
-        10)
+            # Extract tunnel information from the service file
             route_ip1=$(grep -oP '(?<=route\sadd\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
             remote_ip1=$(grep -oP '(?<=remote\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
+            local_public_ip1=$(grep -oP '(?<=local\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
+            local_ip1=$(grep -oP '(?<=ip addr add\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
 
-            if [[ -z "$route_ip1" ]] && [[ -z "$remote_ip1" ]]; then
-                echo -e "\033[1;31mNo route or remote IP found in the service file.\033[0m"
-                read -p "Press Enter to continue..."
-                return
-            fi
+            # Prompt for the next action on the selected tunnel
+            echo -e "\033[1;32m================================================\033[0m"
+            echo -e "\033[1;33mSelect an action to perform on tunnel $selected_tunnel:\033[0m"
+            echo -e "\033[1;34m======================local=====================\033[0m"
+            echo -e "\033[1;32mPublic IP: $local_public_ip1\033[0m"
+            echo -e "\033[1;32mLocal IP: $local_ip1\033[0m"
+            echo -e "\033[1;34m======================remote====================\033[0m"
+            echo -e "\033[1;32mPublic IP: $remote_ip1\033[0m"
+            echo -e "\033[1;32mLocal IP: $route_ip1\033[0m"
+            echo -e "\033[1;32m================================================\033[0m"
+            echo -e "\033[1;34m1.\033[0m \033[1;36mStart tunnel\033[0m"
+            echo -e "\033[1;34m2.\033[0m \033[1;36mStop tunnel\033[0m"
+            echo -e "\033[1;34m3.\033[0m \033[1;36mRestart tunnel\033[0m"
+            echo -e "\033[1;34m4.\033[0m \033[1;36mEnable at boot\033[0m"
+            echo -e "\033[1;34m5.\033[0m \033[1;36mDisable at boot\033[0m"
+            echo -e "\033[1;34m6.\033[0m \033[1;36mCheck status\033[0m"
+            echo -e "\033[1;34m7.\033[0m \033[1;36mRemove tunnel\033[0m"
+            echo -e "\033[1;34m8.\033[0m \033[1;36mEdit with nano\033[0m"
+            echo -e "\033[1;34m9.\033[0m \033[1;36mPing remote server local/public IP\033[0m"
+            echo -e "\033[1;31m0.\033[0m \033[1;37mReturn to main menu\033[0m"
+            echo -e "\033[1;32m================================================\033[0m"
 
-            echo -e "\033[1;32mroute IP: $route_ip1\033[0m"
-            echo -e "\033[1;32mremote IP: $remote_ip1\033[0m"
+            read -p "Choose an option: " action
 
-            echo -e "\033[1;32mPinging route IP: $route_ip1...\033[0m"
-            if ping -c 4 -W 3 "$route_ip1"; then
-                echo -e "\033[1;32mPing to route IP successful.\033[0m"
-            else
-                echo -e "\033[1;31mPing to route IP timed out or failed.\033[0m"
-            fi
+            case $action in
+                0) 
+                    break 
+                    ;;
+                1)
+                    sudo systemctl start "$selected_tunnel.service"
+                    echo -e "${greEN}Tunnel $selected_tunnel started.${RESET}"
+                    read -p "Press Enter to continue..."
+                    ;;
+                2)
+                    sudo systemctl stop "$selected_tunnel.service"
+                    sudo systemctl daemon-reload
+                    echo -e "${greEN}Tunnel $selected_tunnel stopped.${RESET}"
+                    read -p "Press Enter to continue..."
+                    ;;
+                3)
+                    sudo systemctl restart "$selected_tunnel.service"
+                    sudo systemctl daemon-reload
+                    echo -e "${greEN}Tunnel $selected_tunnel restarted.${RESET}"
+                    read -p "Press Enter to continue..."
+                    ;;
+                4)
+                    sudo systemctl enable "$selected_tunnel.service"
+                    sudo systemctl daemon-reload
+                    echo -e "${greEN}Tunnel $selected_tunnel enabled at boot.${RESET}"
+                    read -p "Press Enter to continue..."
+                    ;;
+                5)
+                    sudo systemctl disable "$selected_tunnel.service"
+                    sudo systemctl daemon-reload
+                    echo -e "${greEN}Tunnel $selected_tunnel disabled at boot.${RESET}"
+                    read -p "Press Enter to continue..."
+                    ;;
+                6)
+                    sudo systemctl status "$selected_tunnel.service"
+                    read -p "Press Enter to continue..."
+                    ;;
+                7)
+                    sudo systemctl stop "$selected_tunnel.service"
+                    sudo systemctl disable "$selected_tunnel.service"
+                    sudo rm -f "/usr/lib/systemd/system/$selected_tunnel.service"
+                    sudo systemctl daemon-reload
+                    echo -e "${greEN}Tunnel $selected_tunnel removed.${RESET}"
+                    read -p "Press Enter to continue..."
+                    break
+                    ;;
+                8)
+                    sudo nano "$service_file"
+                    sudo systemctl restart "$selected_tunnel.service"
+                    sudo systemctl daemon-reload
+                    read -p "Press Enter to continue..."
+                    ;;
+                9)
+                    route_ip1=$(grep -oP '(?<=route\sadd\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
+                    remote_ip1=$(grep -oP '(?<=remote\s)(\d+\.\d+\.\d+\.\d+|\[?[0-9a-fA-F:]+\]?)' "$service_file" | head -n 1)
 
-            echo -e "\033[1;32mPinging remote IP: $remote_ip1...\033[0m"
-            if ping -c 4 -W 3 "$remote_ip1"; then
-                echo -e "\033[1;32mPing to remote IP successful.\033[0m"
-            else
-                echo -e "\033[1;31mPing to remote IP timed out or failed.\033[0m"
-            fi
+                    if [[ -z "$route_ip1" ]] && [[ -z "$remote_ip1" ]]; then
+                        echo -e "\033[1;31mNo route or remote IP found in the service file.\033[0m"
+                    else
+                        echo -e "\033[1;32mroute IP: $route_ip1\033[0m"
+                        echo -e "\033[1;32mremote IP: $remote_ip1\033[0m"
 
-            read -p "Press Enter to continue..."
-            ;;
-        11)
-            local new_local_ip
-            local current_local_ip
-            
-            if [[ -f "/usr/lib/systemd/system/$selected_tunnel.service" ]]; then
-                service_file="/usr/lib/systemd/system/$selected_tunnel.service"
-            else
-                echo -e "${RED}Service file not found for $selected_tunnel.${RESET}"
-                read -p "Press Enter to continue..."
-                return
-            fi
-            
-            current_local_ip=$(grep -oP 'local \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' "$service_file")
-            
-            if [[ -n "$current_local_ip" ]]; then
-                echo -e "${CYAN}Current saved local IP: ${RED}$current_local_ip${RESET}"
-            else
-                echo -e "${YELLOW}No local IP found in the service file.${RESET}"
-            fi
-            
-            real_local_ip=$(get_local_ip)
-            
-            if [[ -n "$real_local_ip" ]]; then
-                echo -e "${CYAN}True local IP: ${greEN}$real_local_ip${RESET}"
-            else
-                echo -e "${YELLOW}Unable to retrieve the local IP address.${RESET}"
-            fi
+                        echo -e "\033[1;32mPinging route IP: $route_ip1...\033[0m"
+                        if ping -c 4 -W 3 "$route_ip1"; then
+                            echo -e "\033[1;32mPing to route IP successful.${RESET}"
+                        else
+                            echo -e "\033[1;31mPing to route IP timed out or failed.${RESET}"
+                        fi
 
-            echo -e "${greEN}Enter the new local IP address or press Enter to cancel:${RESET}"
-            read -p "> " new_local_ip
-            
-            if [[ -z "$new_local_ip" ]]; then
-                echo -e "${YELLOW}No changes made. Returning to the menu.${RESET}"
-                read -p "Press Enter to continue..."
-                return
-            fi
-            
-            sed -i "s/local [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*/local $new_local_ip/" "$service_file"
-            sudo systemctl daemon-reload
-            sudo systemctl restart "$selected_tunnel"
-            echo -e "${greEN}Local IP has been updated to $new_local_ip in $selected_tunnel.service.${RESET}"
-            read -p "Press Enter to continue..."
-            ;;
-        *)
-            echo -e "${RED}Invalid option...${RESET}"
-            read -p "Press Enter to continue..."
-            ;;
-    esac
+                        echo -e "\033[1;32mPinging remote IP: $remote_ip1...\033[0m"
+                        if ping -c 4 -W 3 "$remote_ip1"; then
+                            echo -e "\033[1;32mPing to remote IP successful.${RESET}"
+                        else
+                            echo -e "\033[1;31mPing to remote IP timed out or failed.${RESET}"
+                        fi
+                    fi
+                    read -p "Press Enter to continue..."
+                    ;;
+                *)
+                    echo -e "${RED}Invalid option...${RESET}"
+                    read -p "Press Enter to continue..."
+                    ;;
+            esac
+        done
+    done
 }
 
 # Function to stop all ERSPAN tunnel services
