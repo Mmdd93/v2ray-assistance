@@ -227,7 +227,7 @@ After=network.target
 Type=simple
 Environment="AUTOSSH_GATETIME=0"
 ExecStartPre=-/sbin/ip link del dev tun$tun_num
-ExecStart=/usr/bin/ssh $identity_file -w $tun_num:$tun_num root@$remote_ip -p $ssh_port -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=no -o TCPKeepAlive=yes -N
+ExecStart=/usr/bin/ssh $identity_file -w $tun_num:$tun_num root@$remote_ip -p $ssh_port -o Ciphers=chacha20-poly1305@openssh.com,aes128-gcm@openssh.com -o Compression=no -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=no -o TCPKeepAlive=yes -N
 ExecStartPost=/bin/sleep 3
 ExecStartPost=/sbin/ip link set dev tun$tun_num up
 ExecStartPost=/sbin/ip addr add $ipv4_address peer $route_network dev tun$tun_num
