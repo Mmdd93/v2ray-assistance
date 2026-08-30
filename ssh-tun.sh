@@ -139,7 +139,7 @@ create_ssh_tunnel() {
     if [[ "$role_name" == "kharej" ]]; then
         echo -e "\n${YELLOW}--- Configuring Kharej (Remote Server) ---${RESET}"
         echo -e "${CYAN}Checking and enabling 'PermitTunnel yes' in sshd_config...${RESET}"
-        grep -q '^[[:space:]]*PermitTunnel[[:space:]]\+yes' /etc/ssh/sshd_config || (echo 'PermitTunnel yes' >> /etc/ssh/sshd_config && systemctl restart ssh)
+        grep -q '^[[:space:]]*PermitTunnel[[:space:]]\+yes' /etc/ssh/sshd_config || (echo 'PermitTunnel yes' >> /etc/ssh/sshd_config && (systemctl restart ssh || systemctl restart sshd))
         echo -e "${greEN}SSH configured successfully.${RESET}"
 
         echo -e "\n${greEN}Creating Listener systemd service for $service_name...${RESET}"
