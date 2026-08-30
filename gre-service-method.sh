@@ -596,15 +596,6 @@ manage_tunnels() {
     done
 }
 
-    
-    
-        *)
-            echo -e "${RED}Invalid option...${RESET}"
-            read -p "Press Enter to continue..."
-            ;;
-    esac
-}
-
 # Function to stop all gre tunnel services
 stop_all_gre_tunnels() {
     echo -e "${greEN}Stopping all gre tunnel services...${RESET}"
