@@ -3648,7 +3648,9 @@ main_menu() {
         echo -e "${CYAN} 46.${NC} ${CYAN}VXLAN tunnel (IPv4 local)                ${WHITE}[github.com/Mmdd93]${NC}"
 		echo -e "${CYAN} 85.${NC} ${CYAN}IPIP tunnel (IPv4 local)                ${WHITE}[github.com/Mmdd93]${NC}"
 		echo -e "${CYAN} 86.${NC} ${CYAN}ERSPAN tunnel (IPv4 local)                ${WHITE}[github.com/Mmdd93]${NC}"
+		echo -e "${CYAN} 115.${NC} ${CYAN}ssh local tunnel                        ${WHITE}[github.com/Mmdd93]${NC}"
 		echo -e "${CYAN} 113.${NC} ${CYAN}AES TUN tunnel  ${WHITE}[github.com/3aeidkhalili/AES-256-GCM-anti-DPI]${NC}"
+		
 		echo -e "${YELLOW}Port-Forwarding Tunnel${NC}"
         echo -e "${CYAN} 31.${NC} ${CYAN}HAProxy tunnel                           ${WHITE}[github.com/Mmdd93]${NC}"
         echo -e "${CYAN} 27.${NC} ${CYAN}Backhaul tunnel                          ${WHITE}[github.com/Mmdd93]${NC}"
@@ -4328,7 +4330,13 @@ sudo ./aestun.sh
 				chmod +x hedioum-tunnel.sh
                 sudo bash hedioum-tunnel.sh
                 ;;
-
+			115)
+                echo -e "${YELLOW} ssh-tun.sh...${NC}"
+				sleep 1
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/edit/main/ssh-tun.sh -o ssh-tun.sh
+				chmod +x ssh-tun.sh
+                sudo bash ssh-tun.sh
+                ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
                 update 
