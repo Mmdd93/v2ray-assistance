@@ -4333,7 +4333,7 @@ sudo ./aestun.sh
 			115)
                 echo -e "${YELLOW} ssh-tun.sh...${NC}"
 				sleep 1
-                curl -Ls https://github.com/Mmdd93/v2ray-assistance/edit/main/ssh-tun.sh -o ssh-tun.sh
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/ssh-tun.sh -o ssh-tun.sh
 				chmod +x ssh-tun.sh
                 sudo bash ssh-tun.sh
                 ;;
