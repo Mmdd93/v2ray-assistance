@@ -3688,6 +3688,7 @@ main_menu() {
 		echo -e "${CYAN} 111.${NC} ${CYAN}XRayMesh Tunnel  ${WHITE}[github.com/Erfan-XRay/XRayMesh]${NC}"
 		echo -e "${CYAN} 112.${NC} ${CYAN}SNI-Spoofing-Go Tunnel  ${WHITE}[github.com/aleskxyz/SNI-Spoofing-Go]${NC}"	
 		echo -e "${CYAN} 114.${NC} ${CYAN}Hedioum-Pool Tunnel  ${WHITE}[github.com/hedioum/Hedioum-Pool-Tunnel]${NC}"
+		echo -e "${CYAN} 116.${NC} ${CYAN}Backpack Tunnel  ${WHITE}[github.com/AminMGMT/BackPack]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4336,6 +4337,13 @@ sudo ./aestun.sh
                 curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/ssh-tun.sh -o ssh-tun.sh
 				chmod +x ssh-tun.sh
                 sudo bash ssh-tun.sh
+                ;;
+			116)
+                echo -e "${YELLOW} ssh-tun.sh...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/AminMGMT/BackPack/main/install.sh -o Backpack.sh
+				chmod +x Backpack.sh
+                sudo bash Backpack.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
