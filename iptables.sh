@@ -446,7 +446,7 @@ view_rules() {
     read -p "Press Enter to return to menu..."
 }
 
-# --- 7. Delete Rule (Clean & Summarized View) ---
+# --- 7. Delete Rule (Clean View + Multi-Delete Capability) ---
 delete_rule() {
     echo -e "\n${CYAN}========================================================================================${NC}"
     echo -e "${GREEN}                              ACTIVE IPTABLES RULES                                     ${NC}"
@@ -457,7 +457,6 @@ delete_rule() {
     declare -a cmd_list=()
     local counter=1
 
-    # Helper function to parse complex iptables rules into a clean, human-readable format
     print_rule() {
         local table=$1
         local rule=$2
@@ -479,7 +478,6 @@ delete_rule() {
         
         local tbl_short="NAT"; [ "$table" == "filter" ] && tbl_short="FLT"
         
-        # Add color based on the action for easy scanning
         local color=$NC
         [[ "$target" == "ACCEPT" || "$target" == "DNAT" ]] && color=$GREEN
         [[ "$target" == "DROP" || "$target" == "REJECT" ]] && color=$RED
@@ -489,7 +487,6 @@ delete_rule() {
         printf "%-3s | %-15s | ${color}%-11s${NC} | %-5s | %s\n" "$counter" "${tbl_short}:${chain}" "$target" "${proto^^}" "$details"
     }
     
-    # Read NAT table
     while read -r rule; do
         if [[ $rule == -A* ]]; then
             cmd_list+=("iptables -t nat ${rule/-A/-D}")
@@ -498,7 +495,6 @@ delete_rule() {
         fi
     done < <(iptables -t nat -S)
     
-    # Read FILTER table
     while read -r rule; do
         if [[ $rule == -A* ]]; then
             cmd_list+=("iptables -t filter ${rule/-A/-D}")
@@ -514,23 +510,53 @@ delete_rule() {
     fi
     
     echo -e "${CYAN}========================================================================================${NC}"
-    read -p "Enter rule number to delete (or 0 to cancel): " rule_choice
+    read -p "Enter rule number(s) to delete (e.g., 1, 3, 5-10 or 0 to cancel): " raw_choices
     
-    if [[ "$rule_choice" == "0" ]]; then 
+    if [[ "$raw_choices" == "0" ]]; then 
         echo -e "${YELLOW}[*] Cancelled.${NC}"
         read -p "Press Enter to return to menu..."
-    elif [[ "$rule_choice" -ge 1 && "$rule_choice" -le ${#cmd_list[@]} ]]; then
-        local cmd="${cmd_list[$((rule_choice-1))]}"
-        eval "$cmd"
-        if [ $? -eq 0 ]; then 
-            echo -e "${GREEN}[+] Rule deleted successfully!${NC}"
-            ask_save_and_continue
-        else 
-            echo -e "${RED}[ERROR] Failed to delete rule.${NC}"
-            read -p "Press Enter to return to menu..."
+        return
+    fi
+
+    # 1. Parse and expand user input (handling commas, spaces, and ranges)
+    raw_choices=$(echo "$raw_choices" | tr ',' ' ')
+    local expanded_choices=""
+    for item in $raw_choices; do
+        if [[ $item =~ ^([0-9]+)-([0-9]+)$ ]]; then
+            local start=${BASH_REMATCH[1]}
+            local end=${BASH_REMATCH[2]}
+            if [ "$start" -gt "$end" ]; then local temp=$start; start=$end; end=$temp; fi
+            expanded_choices+="$(seq -s ' ' $start $end) "
+        elif [[ $item =~ ^[0-9]+$ ]]; then
+            expanded_choices+="$item "
         fi
-    else 
-        echo -e "${RED}[ERROR] Invalid choice.${NC}"
+    done
+
+    # 2. Get unique valid numbers sorted
+    local unique_choices=$(echo "$expanded_choices" | tr ' ' '\n' | sort -n -u)
+    local deleted_count=0
+
+    # 3. Execute Deletion
+    echo ""
+    for num in $unique_choices; do
+        if [[ "$num" -ge 1 && "$num" -le ${#cmd_list[@]} ]]; then
+            local cmd="${cmd_list[$((num-1))]}"
+            eval "$cmd"
+            if [ $? -eq 0 ]; then 
+                echo -e "${GREEN}[+] Rule $num deleted successfully!${NC}"
+                ((deleted_count++))
+            else 
+                echo -e "${RED}[ERROR] Failed to delete rule $num.${NC}"
+            fi
+        else
+            echo -e "${RED}[ERROR] Rule $num does not exist, skipping.${NC}"
+        fi
+    done
+
+    # 4. Save logic
+    if [ "$deleted_count" -gt 0 ]; then
+        ask_save_and_continue
+    else
         read -p "Press Enter to return to menu..."
     fi
 }
