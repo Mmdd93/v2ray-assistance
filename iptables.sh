@@ -119,8 +119,8 @@ check_port_conflict() {
         echo -e "\n${RED}[WARNING] CONFLICT DETECTED!${NC}"
         echo -e "${YELLOW}The following incoming port(s) are already in use on this server:${NC}"
         echo -e "${RED}$(echo -e "$all_conflicts" | sed '/^$/d')${NC}"
-        read -p "Are you absolutely sure you want to proceed? (y/N): " proceed
-        if [[ ! "$proceed" =~ ^[Yy]$ ]]; then echo -e "${GREEN}[*] Cancelled.${NC}"; return 1; fi
+        read -p "Are you absolutely sure you want to proceed? (y/N) [0 to cancel]: " proceed
+        if [[ "$proceed" == "0" || ! "$proceed" =~ ^[Yy]$ ]]; then echo -e "${GREEN}[*] Cancelled.${NC}"; return 1; fi
     fi
     return 0
 }
@@ -128,7 +128,8 @@ check_port_conflict() {
 # --- Show Listening Ports ---
 show_listening_ports() {
     echo ""
-    read -p "Do you want to see the list of active listening ports? (y/N): " show_ports
+    read -p "Do you want to see the list of active listening ports? (y/N) [0 to cancel]: " show_ports
+    if [[ "$show_ports" == "0" ]]; then echo -e "${YELLOW}[*] Operation cancelled.${NC}"; return 1; fi
     if [[ "$show_ports" =~ ^[Yy]$ ]]; then
         echo -e "\n${CYAN}--- Currently Listening Ports (Active Services) ---${NC}"
         echo -e "${YELLOW}Proto | Local Address   | Port   | Process Name${NC}"
@@ -140,6 +141,7 @@ show_listening_ports() {
         }' | sort -t '|' -k 3 -n
         echo "--------------------------------------------------------"
     fi
+    return 0
 }
 
 # --- Core Save Logic ---
@@ -160,8 +162,10 @@ do_save_persistent() {
 
 ask_save_and_continue() {
     echo ""
-    read -p "Do you want to save these changes persistently (survive reboot)? (y/N): " do_save
-    if [[ "$do_save" =~ ^[Yy]$ ]]; then
+    read -p "Do you want to save these changes persistently (survive reboot)? (y/N) [0 to skip]: " do_save
+    if [[ "$do_save" == "0" ]]; then
+        echo -e "${YELLOW}[*] Save skipped.${NC}"
+    elif [[ "$do_save" =~ ^[Yy]$ ]]; then
         echo -e "${CYAN}[*] Saving rules...${NC}"
         do_save_persistent
     fi
@@ -171,16 +175,26 @@ ask_save_and_continue() {
 # --- 1. Add Remote Rule (DNAT) ---
 add_remote_rule() {
     echo -e "\n${CYAN}--- Configure Remote Forwarding (DNAT) ---${NC}"
+    echo -e "${YELLOW}(Tip: Enter '0' at any prompt to cancel and go back to menu)${NC}"
+    
     read -p "Enter Protocol (tcp / udp / all) [Default: all]: " proto; proto=${proto:-all}
+    if [[ "$proto" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
+    if [[ "$proto" != "tcp" && "$proto" != "udp" && "$proto" != "all" ]]; then echo -e "${RED}[ERROR] Invalid protocol.${NC}"; sleep 2; return; fi
+    
     read -p "Incoming Interface (e.g., eth0) [Leave blank for ANY]: " in_iface
+    if [[ "$in_iface" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     iface_flag=""; [ -n "$in_iface" ] && iface_flag="-i $in_iface"
     
     read -p "Incoming Port(s) or Range (e.g., 80 443, 1000-2000, 3000:4000): " src_port_raw
+    if [[ "$src_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     IFS=',' read -r -a src_ports <<< "$(normalize_ports "$src_port_raw")"
     if ! check_port_conflict "${src_ports[*]}" "$proto"; then return; fi
     
     read -p "Destination Target IP (e.g., 192.168.1.50): " dest_ip
+    if [[ "$dest_ip" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
+    
     read -p "Destination Port(s) [Leave blank to use the same as Incoming] (e.g., 8080): " dest_port_raw
+    if [[ "$dest_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
 
     protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
@@ -200,22 +214,31 @@ add_remote_rule() {
 # --- 2. Add Remote Load Balancing (DNAT) ---
 add_load_balancing() {
     echo -e "\n${CYAN}--- Configure Load Balancing (Round-Robin) ---${NC}"
+    echo -e "${YELLOW}(Tip: Enter '0' at any prompt to cancel and go back to menu)${NC}"
+    
     read -p "Enter Protocol (tcp / udp / all) [Default: all]: " proto; proto=${proto:-all}
+    if [[ "$proto" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
+    if [[ "$proto" != "tcp" && "$proto" != "udp" && "$proto" != "all" ]]; then echo -e "${RED}[ERROR] Invalid protocol.${NC}"; sleep 2; return; fi
+    
     read -p "Incoming Interface (e.g., eth0) [Leave blank for ANY]: " in_iface
+    if [[ "$in_iface" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     iface_flag=""; [ -n "$in_iface" ] && iface_flag="-i $in_iface"
 
     read -p "Incoming Port(s) or Range (e.g., 80 443, 1000-2000, 3000:4000): " src_port_raw
+    if [[ "$src_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     IFS=',' read -r -a src_ports <<< "$(normalize_ports "$src_port_raw")"
     if ! check_port_conflict "${src_ports[*]}" "$proto"; then return; fi
     
     echo -e "${YELLOW}Enter multiple destination IPs separated by commas.${NC}"
     read -p "Destination IPs (e.g., 192.168.1.10, 192.168.1.11, 10.0.0.5): " dest_ips_raw
+    if [[ "$dest_ips_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     IFS=',' read -r -a dest_ips <<< "$(echo "$dest_ips_raw" | tr -d ' ')"
     
     local num_ips=${#dest_ips[@]}
     if [ "$num_ips" -lt 2 ]; then echo -e "${RED}[ERROR] You must provide at least 2 IP addresses for Load Balancing.${NC}"; sleep 2; return; fi
 
     read -p "Destination Port(s) [Leave blank to use the same as Incoming] (e.g., 8080): " dest_port_raw
+    if [[ "$dest_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
 
     protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
@@ -243,17 +266,25 @@ add_load_balancing() {
 # --- 3. Add Local DNAT ---
 add_local_dnat() {
     echo -e "\n${CYAN}--- Configure Local Forwarding (DNAT to 127.0.0.1) ---${NC}"
+    echo -e "${YELLOW}(Tip: Enter '0' at any prompt to cancel and go back to menu)${NC}"
+    
     read -p "Enter Protocol (tcp / udp / all) [Default: all]: " proto; proto=${proto:-all}
+    if [[ "$proto" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
+    if [[ "$proto" != "tcp" && "$proto" != "udp" && "$proto" != "all" ]]; then echo -e "${RED}[ERROR] Invalid protocol.${NC}"; sleep 2; return; fi
+    
     read -p "Incoming Interface (e.g., eth0) [Leave blank for ANY]: " in_iface
+    if [[ "$in_iface" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     iface_flag=""; [ -n "$in_iface" ] && iface_flag="-i $in_iface"
 
     read -p "Incoming Port(s) or Range (e.g., 80 443, 1000-2000, 3000:4000): " src_port_raw
+    if [[ "$src_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     IFS=',' read -r -a src_ports <<< "$(normalize_ports "$src_port_raw")"
     if ! check_port_conflict "${src_ports[*]}" "$proto"; then return; fi
     
-    show_listening_ports
+    if ! show_listening_ports; then return; fi
     
     read -p "Local Dest Port(s) [Leave blank to use the same as Incoming] (e.g., 8080): " dest_port_raw
+    if [[ "$dest_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
     protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
 
@@ -272,17 +303,25 @@ add_local_dnat() {
 # --- 4. Add Local REDIRECT ---
 add_local_redirect() {
     echo -e "\n${CYAN}--- Configure Local Port Redirection (REDIRECT target) ---${NC}"
+    echo -e "${YELLOW}(Tip: Enter '0' at any prompt to cancel and go back to menu)${NC}"
+    
     read -p "Enter Protocol (tcp / udp / all) [Default: all]: " proto; proto=${proto:-all}
+    if [[ "$proto" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
+    if [[ "$proto" != "tcp" && "$proto" != "udp" && "$proto" != "all" ]]; then echo -e "${RED}[ERROR] Invalid protocol.${NC}"; sleep 2; return; fi
+    
     read -p "Incoming Interface (e.g., eth0) [Leave blank for ANY]: " in_iface
+    if [[ "$in_iface" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     iface_flag=""; [ -n "$in_iface" ] && iface_flag="-i $in_iface"
 
     read -p "Incoming Port(s) or Range (e.g., 80 443, 1000-2000, 3000:4000): " src_port_raw
+    if [[ "$src_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     IFS=',' read -r -a src_ports <<< "$(normalize_ports "$src_port_raw")"
     if ! check_port_conflict "${src_ports[*]}" "$proto"; then return; fi
     
-    show_listening_ports
+    if ! show_listening_ports; then return; fi
     
     read -p "Local Dest Port(s) [Leave blank to use the same as Incoming] (e.g., 8080): " dest_port_raw
+    if [[ "$dest_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
     protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
 
@@ -311,8 +350,12 @@ manage_logging() {
 
     case $log_choice in
         1)
+            echo -e "${YELLOW}(Tip: Enter '0' at any prompt to cancel and go back)${NC}"
             read -p "Enter Protocol to log (tcp / udp / all) [Default: all]: " proto; proto=${proto:-all}
+            if [[ "$proto" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
             read -p "Enter Incoming Port to log (e.g., 8080): " log_port
+            if [[ "$log_port" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
+            
             protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
             for p in "${protocols[@]}"; do
                 iptables -t nat -I PREROUTING 1 -p $p --dport $log_port -j LOG --log-prefix " [IPT-FWD-LOG] " --log-level 4
@@ -457,7 +500,12 @@ delete_rule() {
 # --- 8. Flush Rules ---
 flush_rules() {
     echo -e "\n${RED}[WARNING] This will completely reset iptables to an empty state.${NC}"
-    read -p "Are you absolutely sure? (y/N): " confirm
+    read -p "Are you absolutely sure? (y/N) [0 to cancel]: " confirm
+    if [[ "$confirm" == "0" ]]; then
+        echo -e "${YELLOW}[*] Operation cancelled.${NC}"
+        read -p "Press Enter to return to menu..."
+        return
+    fi
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW}[*] Resetting all iptables rules...${NC}"
         iptables -P INPUT ACCEPT; iptables -P FORWARD ACCEPT; iptables -P OUTPUT ACCEPT
@@ -481,14 +529,18 @@ save_persistent_menu() {
 
 # --- 10 & 11. Backup / Restore ---
 backup_rules() {
-    read -p "Enter backup path (default: /root/iptables_backup.txt): " filepath
+    echo -e "\n${CYAN}--- Backup Rules ---${NC}"
+    read -p "Enter backup path (default: /root/iptables_backup.txt) [0 to cancel]: " filepath
+    if [[ "$filepath" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     filepath=${filepath:-/root/iptables_backup.txt}
     iptables-save > "$filepath" && echo -e "${GREEN}[+] Backed up to $filepath${NC}"
     read -p "Press Enter to return to menu..."
 }
 
 restore_rules() {
-    read -p "Enter backup file path to restore: " filepath
+    echo -e "\n${CYAN}--- Restore Rules ---${NC}"
+    read -p "Enter backup file path to restore [0 to cancel]: " filepath
+    if [[ "$filepath" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     if [ -f "$filepath" ]; then iptables-restore < "$filepath" && echo -e "${GREEN}[+] Restored from $filepath${NC}"
     else echo -e "${RED}[ERROR] File not found!${NC}"; fi
     read -p "Press Enter to return to menu..."
