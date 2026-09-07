@@ -6,6 +6,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
+MAGENTA='\033[0;35m'
 
 # --- Root Check ---
 if [ "$EUID" -ne 0 ]; then
@@ -172,6 +173,20 @@ ask_save_and_continue() {
     read -p "Press Enter to return to menu..."
 }
 
+# --- Naming Helper ---
+get_rule_comment() {
+    local rule_name
+    read -p "Enter a name/comment for this rule [Default: iptables-script]: " rule_name
+    if [[ "$rule_name" == "0" ]]; then echo "0"; return; fi
+    if [[ -z "$rule_name" ]]; then
+        echo "-m comment --comment iptables-script"
+    else
+        # Remove quotes to prevent breaking iptables command
+        rule_name=$(echo "$rule_name" | tr -d '"'\')
+        echo "-m comment --comment $rule_name"
+    fi
+}
+
 # --- 1. Add Remote Rule (DNAT) ---
 add_remote_rule() {
     echo -e "\n${CYAN}--- Configure Remote Forwarding (DNAT) ---${NC}"
@@ -197,14 +212,17 @@ add_remote_rule() {
     if [[ "$dest_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
 
+    local comment_flag=$(get_rule_comment)
+    if [[ "$comment_flag" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
+
     protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
 
     for i in "${!src_ports[@]}"; do
         sp="${src_ports[$i]}"; dp="${dest_ports[$i]:-${dest_ports[0]}}"; dp_target=$(echo "$dp" | tr ':' '-')
         for p in "${protocols[@]}"; do
-            iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp -j DNAT --to-destination $dest_ip:$dp_target
-            iptables -t nat -A POSTROUTING -d $dest_ip -p $p --dport $dp -j MASQUERADE
-            iptables -A FORWARD -p $p -d $dest_ip --dport $dp -j ACCEPT
+            iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j DNAT --to-destination $dest_ip:$dp_target
+            iptables -t nat -A POSTROUTING -d $dest_ip -p $p --dport $dp $comment_flag -j MASQUERADE
+            iptables -A FORWARD -p $p -d $dest_ip --dport $dp $comment_flag -j ACCEPT
         done
         echo -e "${GREEN}[+] Rule Added: $sp -> $dest_ip:$dp${NC}"
     done
@@ -241,6 +259,9 @@ add_load_balancing() {
     if [[ "$dest_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
 
+    local comment_flag=$(get_rule_comment)
+    if [[ "$comment_flag" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
+
     protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
 
     for i in "${!src_ports[@]}"; do
@@ -249,13 +270,13 @@ add_load_balancing() {
             for (( j=0; j<$num_ips; j++ )); do
                 dip="${dest_ips[$j]}"
                 if [ $j -eq $((num_ips - 1)) ]; then
-                    iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp -j DNAT --to-destination $dip:$dp_target
+                    iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j DNAT --to-destination $dip:$dp_target
                 else
                     every=$((num_ips - j))
-                    iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp -m statistic --mode nth --every $every --packet 0 -j DNAT --to-destination $dip:$dp_target
+                    iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp -m statistic --mode nth --every $every --packet 0 $comment_flag -j DNAT --to-destination $dip:$dp_target
                 fi
-                iptables -t nat -A POSTROUTING -d $dip -p $p --dport $dp -j MASQUERADE
-                iptables -A FORWARD -p $p -d $dip --dport $dp -j ACCEPT
+                iptables -t nat -A POSTROUTING -d $dip -p $p --dport $dp $comment_flag -j MASQUERADE
+                iptables -A FORWARD -p $p -d $dip --dport $dp $comment_flag -j ACCEPT
             done
         done
         echo -e "${GREEN}[+] Load Balancing Added: Port $sp distributed among ${dest_ips[*]} (Port $dp)${NC}"
@@ -286,14 +307,18 @@ add_local_dnat() {
     read -p "Local Dest Port(s) [Leave blank to use the same as Incoming] (e.g., 8080): " dest_port_raw
     if [[ "$dest_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
+    
+    local comment_flag=$(get_rule_comment)
+    if [[ "$comment_flag" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
+    
     protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
 
     for i in "${!src_ports[@]}"; do
         sp="${src_ports[$i]}"; dp="${dest_ports[$i]:-${dest_ports[0]}}"; dp_target=$(echo "$dp" | tr ':' '-')
         for p in "${protocols[@]}"; do
-            iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp -j DNAT --to-destination 127.0.0.1:$dp_target
-            iptables -t nat -A POSTROUTING -d 127.0.0.1 -p $p --dport $dp -j MASQUERADE
-            iptables -A FORWARD -p $p -d 127.0.0.1 --dport $dp -j ACCEPT
+            iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j DNAT --to-destination 127.0.0.1:$dp_target
+            iptables -t nat -A POSTROUTING -d 127.0.0.1 -p $p --dport $dp $comment_flag -j MASQUERADE
+            iptables -A FORWARD -p $p -d 127.0.0.1 --dport $dp $comment_flag -j ACCEPT
         done
         echo -e "${GREEN}[+] Rule Added: $sp -> 127.0.0.1:$dp${NC}"
     done
@@ -323,13 +348,17 @@ add_local_redirect() {
     read -p "Local Dest Port(s) [Leave blank to use the same as Incoming] (e.g., 8080): " dest_port_raw
     if [[ "$dest_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
+    
+    local comment_flag=$(get_rule_comment)
+    if [[ "$comment_flag" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
+    
     protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
 
     for i in "${!src_ports[@]}"; do
         sp="${src_ports[$i]}"; dp="${dest_ports[$i]:-${dest_ports[0]}}"; dp_target=$(echo "$dp" | tr ':' '-')
         for p in "${protocols[@]}"; do
-            iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp -j REDIRECT --to-ports $dp_target
-            iptables -A INPUT -p $p --dport $dp -j ACCEPT
+            iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j REDIRECT --to-ports $dp_target
+            iptables -A INPUT -p $p --dport $dp $comment_flag -j ACCEPT
         done
         echo -e "${GREEN}[+] Local Redirect Added: $sp -> Local $dp_target${NC}"
     done
@@ -394,14 +423,14 @@ manage_logging() {
     esac
 }
 
-# --- 6. View Rules ---
+# --- 6. View Rules (Updated for Comments) ---
 view_rules() {
-    echo -e "\n${CYAN}========================================================================================${NC}"
-    echo -e "${GREEN}                              ACTIVE IPTABLES RULES                                     ${NC}"
-    echo -e "${CYAN}========================================================================================${NC}"
+    echo -e "\n${CYAN}===================================================================================================${NC}"
+    echo -e "${GREEN}                                      ACTIVE IPTABLES RULES                                        ${NC}"
+    echo -e "${CYAN}===================================================================================================${NC}"
     
-    echo -e "${YELLOW}$(printf "%-20s | %-8s | %-15s | %-25s" "ACTION / TYPE" "PROTO" "SOURCE PORT" "DESTINATION / INFO")${NC}"
-    echo "----------------------------------------------------------------------------------------"
+    echo -e "${YELLOW}$(printf "%-20s | %-6s | %-15s | %-22s | %s" "ACTION / TYPE" "PROTO" "SOURCE PORT" "DESTINATION" "NAME/COMMENT")${NC}"
+    echo "---------------------------------------------------------------------------------------------------"
 
     local rules_found=0
     while read -r rule; do
@@ -417,6 +446,9 @@ view_rules() {
             
             local action="UNKNOWN"
             local dest="-"
+            local comment="-"
+            [[ $rule =~ --comment\ ([^\ ]+) ]] && comment="${BASH_REMATCH[1]}"
+            [[ $rule =~ --comment\ \"([^\"]+)\" ]] && comment="${BASH_REMATCH[1]}"
             
             if [[ $rule =~ -j\ LOG ]]; then
                 action=$(printf "%-20s" "LOGGING (Monitor)")
@@ -437,22 +469,22 @@ view_rules() {
                 [[ $rule =~ --to-destination\ ([0-9\.:-]+) ]] && dest="${BASH_REMATCH[1]}"
             fi
             
-            echo -e "$action | $(printf "%-8s" "${proto^^}") | $(printf "%-15s" "$src_port") | $(printf "%-25s" "$dest")"
+            echo -e "$action | $(printf "%-6s" "${proto^^}") | $(printf "%-15s" "$src_port") | $(printf "%-22s" "$dest") | ${MAGENTA}$comment${NC}"
         fi
     done < <(iptables -t nat -S)
 
     if [ $rules_found -eq 0 ]; then echo -e "${YELLOW}No active PREROUTING rules found.${NC}"; fi
-    echo -e "${CYAN}========================================================================================${NC}"
+    echo -e "${CYAN}===================================================================================================${NC}"
     read -p "Press Enter to return to menu..."
 }
 
-# --- 7. Delete Rule (Clean View + Multi-Delete Capability) ---
+# --- 7. Delete Rule (Multi-Delete with Comments) ---
 delete_rule() {
-    echo -e "\n${CYAN}========================================================================================${NC}"
-    echo -e "${GREEN}                              ACTIVE IPTABLES RULES                                     ${NC}"
-    echo -e "${CYAN}========================================================================================${NC}"
-    echo -e "${YELLOW}$(printf "%-3s | %-15s | %-11s | %-5s | %s" "ID" "TABLE:CHAIN" "ACTION" "PROTO" "DETAILS")${NC}"
-    echo "----------------------------------------------------------------------------------------"
+    echo -e "\n${CYAN}========================================================================================================${NC}"
+    echo -e "${GREEN}                                      ACTIVE IPTABLES RULES                                             ${NC}"
+    echo -e "${CYAN}========================================================================================================${NC}"
+    echo -e "${YELLOW}$(printf "%-3s | %-15s | %-11s | %-5s | %-20s | %s" "ID" "TABLE:CHAIN" "ACTION" "PROTO" "NAME/COMMENT" "DETAILS")${NC}"
+    echo "--------------------------------------------------------------------------------------------------------"
 
     declare -a cmd_list=()
     local counter=1
@@ -474,7 +506,10 @@ delete_rule() {
         [[ $rule =~ --to-ports\ ([0-9\-]+) ]] && details+="-> PORT:${BASH_REMATCH[1]} "
         [[ $rule =~ -i\ ([a-zA-Z0-9\+\-]+) ]] && details+="IN:${BASH_REMATCH[1]} "
         [[ $rule =~ -o\ ([a-zA-Z0-9\+\-]+) ]] && details+="OUT:${BASH_REMATCH[1]} "
-        [[ $rule =~ --comment\ \"([^\"]+)\" ]] && details+="[${BASH_REMATCH[1]}] "
+        
+        local comment="-"
+        [[ $rule =~ --comment\ ([^\ ]+) ]] && comment="${BASH_REMATCH[1]}"
+        [[ $rule =~ --comment\ \"([^\"]+)\" ]] && comment="${BASH_REMATCH[1]}"
         
         local tbl_short="NAT"; [ "$table" == "filter" ] && tbl_short="FLT"
         
@@ -484,7 +519,7 @@ delete_rule() {
         [[ "$target" == "MASQUERADE" || "$target" == "REDIRECT" ]] && color=$CYAN
         [[ "$target" == "LOG" ]] && color=$YELLOW
 
-        printf "%-3s | %-15s | ${color}%-11s${NC} | %-5s | %s\n" "$counter" "${tbl_short}:${chain}" "$target" "${proto^^}" "$details"
+        printf "%-3s | %-15s | ${color}%-11s${NC} | %-5s | ${MAGENTA}%-20s${NC} | %s\n" "$counter" "${tbl_short}:${chain}" "$target" "${proto^^}" "${comment:0:20}" "$details"
     }
     
     while read -r rule; do
@@ -509,7 +544,7 @@ delete_rule() {
         return
     fi
     
-    echo -e "${CYAN}========================================================================================${NC}"
+    echo -e "${CYAN}========================================================================================================${NC}"
     read -p "Enter rule number(s) to delete (e.g., 1, 3, 5-10 or 0 to cancel): " raw_choices
     
     if [[ "$raw_choices" == "0" ]]; then 
@@ -518,7 +553,6 @@ delete_rule() {
         return
     fi
 
-    # 1. Parse and expand user input (handling commas, spaces, and ranges)
     raw_choices=$(echo "$raw_choices" | tr ',' ' ')
     local expanded_choices=""
     for item in $raw_choices; do
@@ -532,11 +566,9 @@ delete_rule() {
         fi
     done
 
-    # 2. Get unique valid numbers sorted
     local unique_choices=$(echo "$expanded_choices" | tr ' ' '\n' | sort -n -u)
     local deleted_count=0
 
-    # 3. Execute Deletion
     echo ""
     for num in $unique_choices; do
         if [[ "$num" -ge 1 && "$num" -le ${#cmd_list[@]} ]]; then
@@ -553,13 +585,13 @@ delete_rule() {
         fi
     done
 
-    # 4. Save logic
     if [ "$deleted_count" -gt 0 ]; then
         ask_save_and_continue
     else
         read -p "Press Enter to return to menu..."
     fi
 }
+
 # --- 8. Flush Rules ---
 flush_rules() {
     echo -e "\n${RED}[WARNING] This will completely reset iptables to an empty state.${NC}"
