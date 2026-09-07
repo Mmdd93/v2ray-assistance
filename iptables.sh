@@ -142,15 +142,45 @@ show_listening_ports() {
     fi
 }
 
+# --- Core Save Logic ---
+do_save_persistent() {
+    if command -v netfilter-persistent &> /dev/null; then
+        netfilter-persistent save > /dev/null && echo -e "${GREEN}[+] Rules saved via netfilter-persistent.${NC}"
+    elif command -v iptables-save &> /dev/null; then
+        if [ -d "/etc/sysconfig" ]; then
+            iptables-save > /etc/sysconfig/iptables && echo -e "${GREEN}[+] Rules saved to /etc/sysconfig/iptables.${NC}"
+        else
+            mkdir -p /etc/iptables
+            iptables-save > /etc/iptables/rules.v4 && echo -e "${GREEN}[+] Rules saved to /etc/iptables/rules.v4.${NC}"
+        fi
+    else 
+        echo -e "${RED}[ERROR] Could not find a method to save rules persistently.${NC}"
+    fi
+}
+
+ask_save_and_continue() {
+    echo ""
+    read -p "Do you want to save these changes persistently (survive reboot)? (y/N): " do_save
+    if [[ "$do_save" =~ ^[Yy]$ ]]; then
+        echo -e "${CYAN}[*] Saving rules...${NC}"
+        do_save_persistent
+    fi
+    read -p "Press Enter to return to menu..."
+}
+
 # --- 1. Add Remote Rule (DNAT) ---
 add_remote_rule() {
     echo -e "\n${CYAN}--- Configure Remote Forwarding (DNAT) ---${NC}"
     read -p "Enter Protocol (tcp / udp / all) [Default: all]: " proto; proto=${proto:-all}
-    read -p "Incoming Port(s) or Range (e.g., 80, 1000-2000): " src_port_raw
+    read -p "Incoming Interface (e.g., eth0) [Leave blank for ANY]: " in_iface
+    iface_flag=""; [ -n "$in_iface" ] && iface_flag="-i $in_iface"
+    
+    read -p "Incoming Port(s) or Range (e.g., 80 443, 1000-2000, 3000:4000): " src_port_raw
     IFS=',' read -r -a src_ports <<< "$(normalize_ports "$src_port_raw")"
     if ! check_port_conflict "${src_ports[*]}" "$proto"; then return; fi
+    
     read -p "Destination Target IP (e.g., 192.168.1.50): " dest_ip
-    read -p "Destination Port(s) [Leave blank to use the same as Incoming]: " dest_port_raw
+    read -p "Destination Port(s) [Leave blank to use the same as Incoming] (e.g., 8080): " dest_port_raw
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
 
     protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
@@ -158,31 +188,34 @@ add_remote_rule() {
     for i in "${!src_ports[@]}"; do
         sp="${src_ports[$i]}"; dp="${dest_ports[$i]:-${dest_ports[0]}}"; dp_target=$(echo "$dp" | tr ':' '-')
         for p in "${protocols[@]}"; do
-            iptables -t nat -A PREROUTING -p $p --dport $sp -j DNAT --to-destination $dest_ip:$dp_target
+            iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp -j DNAT --to-destination $dest_ip:$dp_target
             iptables -t nat -A POSTROUTING -d $dest_ip -p $p --dport $dp -j MASQUERADE
             iptables -A FORWARD -p $p -d $dest_ip --dport $dp -j ACCEPT
         done
         echo -e "${GREEN}[+] Rule Added: $sp -> $dest_ip:$dp${NC}"
     done
-    read -p "Press Enter to continue..."
+    ask_save_and_continue
 }
 
 # --- 2. Add Remote Load Balancing (DNAT) ---
 add_load_balancing() {
     echo -e "\n${CYAN}--- Configure Load Balancing (Round-Robin) ---${NC}"
     read -p "Enter Protocol (tcp / udp / all) [Default: all]: " proto; proto=${proto:-all}
-    read -p "Incoming Port(s) or Range (e.g., 80, 1000-2000): " src_port_raw
+    read -p "Incoming Interface (e.g., eth0) [Leave blank for ANY]: " in_iface
+    iface_flag=""; [ -n "$in_iface" ] && iface_flag="-i $in_iface"
+
+    read -p "Incoming Port(s) or Range (e.g., 80 443, 1000-2000, 3000:4000): " src_port_raw
     IFS=',' read -r -a src_ports <<< "$(normalize_ports "$src_port_raw")"
     if ! check_port_conflict "${src_ports[*]}" "$proto"; then return; fi
     
     echo -e "${YELLOW}Enter multiple destination IPs separated by commas.${NC}"
-    read -p "Destination IPs (e.g., 192.168.1.10, 192.168.1.11): " dest_ips_raw
+    read -p "Destination IPs (e.g., 192.168.1.10, 192.168.1.11, 10.0.0.5): " dest_ips_raw
     IFS=',' read -r -a dest_ips <<< "$(echo "$dest_ips_raw" | tr -d ' ')"
     
     local num_ips=${#dest_ips[@]}
     if [ "$num_ips" -lt 2 ]; then echo -e "${RED}[ERROR] You must provide at least 2 IP addresses for Load Balancing.${NC}"; sleep 2; return; fi
 
-    read -p "Destination Port(s) [Leave blank to use the same as Incoming]: " dest_port_raw
+    read -p "Destination Port(s) [Leave blank to use the same as Incoming] (e.g., 8080): " dest_port_raw
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
 
     protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
@@ -190,72 +223,78 @@ add_load_balancing() {
     for i in "${!src_ports[@]}"; do
         sp="${src_ports[$i]}"; dp="${dest_ports[$i]:-${dest_ports[0]}}"; dp_target=$(echo "$dp" | tr ':' '-')
         for p in "${protocols[@]}"; do
-            # Create Load Balancing Rules
             for (( j=0; j<$num_ips; j++ )); do
                 dip="${dest_ips[$j]}"
                 if [ $j -eq $((num_ips - 1)) ]; then
-                    # Last IP acts as the default fallback
-                    iptables -t nat -A PREROUTING -p $p --dport $sp -j DNAT --to-destination $dip:$dp_target
+                    iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp -j DNAT --to-destination $dip:$dp_target
                 else
-                    # Nth module balances the packets
                     every=$((num_ips - j))
-                    iptables -t nat -A PREROUTING -p $p --dport $sp -m statistic --mode nth --every $every --packet 0 -j DNAT --to-destination $dip:$dp_target
+                    iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp -m statistic --mode nth --every $every --packet 0 -j DNAT --to-destination $dip:$dp_target
                 fi
-                # Allow routing and Masquerade for all targets
                 iptables -t nat -A POSTROUTING -d $dip -p $p --dport $dp -j MASQUERADE
                 iptables -A FORWARD -p $p -d $dip --dport $dp -j ACCEPT
             done
         done
         echo -e "${GREEN}[+] Load Balancing Added: Port $sp distributed among ${dest_ips[*]} (Port $dp)${NC}"
     done
-    read -p "Press Enter to continue..."
+    ask_save_and_continue
 }
 
 # --- 3. Add Local DNAT ---
 add_local_dnat() {
     echo -e "\n${CYAN}--- Configure Local Forwarding (DNAT to 127.0.0.1) ---${NC}"
     read -p "Enter Protocol (tcp / udp / all) [Default: all]: " proto; proto=${proto:-all}
-    read -p "Incoming Port(s) or Range: " src_port_raw
+    read -p "Incoming Interface (e.g., eth0) [Leave blank for ANY]: " in_iface
+    iface_flag=""; [ -n "$in_iface" ] && iface_flag="-i $in_iface"
+
+    read -p "Incoming Port(s) or Range (e.g., 80 443, 1000-2000, 3000:4000): " src_port_raw
     IFS=',' read -r -a src_ports <<< "$(normalize_ports "$src_port_raw")"
     if ! check_port_conflict "${src_ports[*]}" "$proto"; then return; fi
+    
     show_listening_ports
-    read -p "Local Dest Port(s) [Leave blank to use the same as Incoming]: " dest_port_raw
+    
+    read -p "Local Dest Port(s) [Leave blank to use the same as Incoming] (e.g., 8080): " dest_port_raw
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
     protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
 
     for i in "${!src_ports[@]}"; do
         sp="${src_ports[$i]}"; dp="${dest_ports[$i]:-${dest_ports[0]}}"; dp_target=$(echo "$dp" | tr ':' '-')
         for p in "${protocols[@]}"; do
-            iptables -t nat -A PREROUTING -p $p --dport $sp -j DNAT --to-destination 127.0.0.1:$dp_target
+            iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp -j DNAT --to-destination 127.0.0.1:$dp_target
             iptables -t nat -A POSTROUTING -d 127.0.0.1 -p $p --dport $dp -j MASQUERADE
             iptables -A FORWARD -p $p -d 127.0.0.1 --dport $dp -j ACCEPT
         done
         echo -e "${GREEN}[+] Rule Added: $sp -> 127.0.0.1:$dp${NC}"
     done
-    read -p "Press Enter to continue..."
+    ask_save_and_continue
 }
 
 # --- 4. Add Local REDIRECT ---
 add_local_redirect() {
     echo -e "\n${CYAN}--- Configure Local Port Redirection (REDIRECT target) ---${NC}"
     read -p "Enter Protocol (tcp / udp / all) [Default: all]: " proto; proto=${proto:-all}
-    read -p "Incoming Port(s) or Range: " src_port_raw
+    read -p "Incoming Interface (e.g., eth0) [Leave blank for ANY]: " in_iface
+    iface_flag=""; [ -n "$in_iface" ] && iface_flag="-i $in_iface"
+
+    read -p "Incoming Port(s) or Range (e.g., 80 443, 1000-2000, 3000:4000): " src_port_raw
     IFS=',' read -r -a src_ports <<< "$(normalize_ports "$src_port_raw")"
     if ! check_port_conflict "${src_ports[*]}" "$proto"; then return; fi
+    
     show_listening_ports
-    read -p "Local Dest Port(s) [Leave blank to use the same as Incoming]: " dest_port_raw
+    
+    read -p "Local Dest Port(s) [Leave blank to use the same as Incoming] (e.g., 8080): " dest_port_raw
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
     protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
 
     for i in "${!src_ports[@]}"; do
         sp="${src_ports[$i]}"; dp="${dest_ports[$i]:-${dest_ports[0]}}"; dp_target=$(echo "$dp" | tr ':' '-')
         for p in "${protocols[@]}"; do
-            iptables -t nat -A PREROUTING -p $p --dport $sp -j REDIRECT --to-ports $dp_target
+            iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp -j REDIRECT --to-ports $dp_target
             iptables -A INPUT -p $p --dport $dp -j ACCEPT
         done
         echo -e "${GREEN}[+] Local Redirect Added: $sp -> Local $dp_target${NC}"
     done
-    read -p "Press Enter to continue..."
+    ask_save_and_continue
 }
 
 # --- 5. Traffic Logging Management ---
@@ -276,27 +315,31 @@ manage_logging() {
             read -p "Enter Incoming Port to log (e.g., 8080): " log_port
             protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
             for p in "${protocols[@]}"; do
-                # Insert at the very top of PREROUTING so it logs before forwarding
                 iptables -t nat -I PREROUTING 1 -p $p --dport $log_port -j LOG --log-prefix " [IPT-FWD-LOG] " --log-level 4
             done
             echo -e "${GREEN}[+] Logging Enabled for Port $log_port. Logs are saved to Kernel (dmesg).${NC}"
-            read -p "Press Enter to continue..."
+            ask_save_and_continue
             ;;
         2)
-            # Remove any rule in NAT containing the LOG target
             echo -e "${YELLOW}[*] Removing all logging rules...${NC}"
+            local rules_removed=0
             while read -r rule; do
                 if [[ $rule == -A*LOG*IPT-FWD-LOG* ]]; then
                     local del_rule="${rule/-A/-D}"
                     iptables -t nat $del_rule
+                    rules_removed=1
                 fi
             done < <(iptables -t nat -S)
-            echo -e "${GREEN}[+] All Logging rules disabled.${NC}"
-            read -p "Press Enter to continue..."
+            if [ $rules_removed -eq 1 ]; then
+                echo -e "${GREEN}[+] All Logging rules disabled.${NC}"
+                ask_save_and_continue
+            else
+                echo -e "${YELLOW}[!] No active logging rules found.${NC}"
+                read -p "Press Enter to return to menu..."
+            fi
             ;;
         3)
             echo -e "${CYAN}[*] Viewing Live Logs... (Press CTRL+C to stop)${NC}"
-            # Uses journalctl or dmesg based on system capability
             if command -v journalctl &> /dev/null; then
                 journalctl -k -f | grep "IPT-FWD-LOG"
             else
@@ -308,7 +351,7 @@ manage_logging() {
     esac
 }
 
-# --- 6. View Rules (Now detects Logging and Load Balancing) ---
+# --- 6. View Rules ---
 view_rules() {
     echo -e "\n${CYAN}========================================================================================${NC}"
     echo -e "${GREEN}                              ACTIVE IPTABLES RULES                                     ${NC}"
@@ -386,20 +429,29 @@ delete_rule() {
     
     if [ ${#cmd_list[@]} -eq 0 ]; then
         echo -e "${YELLOW}[!] No rules found. Iptables is empty.${NC}"
-        read -p "Press Enter to continue..."
+        read -p "Press Enter to return to menu..."
         return
     fi
     
     echo ""
     read -p "Enter rule number to delete (or 0 to cancel): " rule_choice
-    if [[ "$rule_choice" -eq 0 ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"
+    if [[ "$rule_choice" -eq 0 ]]; then 
+        echo -e "${YELLOW}[*] Cancelled.${NC}"
+        read -p "Press Enter to return to menu..."
     elif [[ "$rule_choice" -ge 1 && "$rule_choice" -le ${#cmd_list[@]} ]]; then
         local cmd="${cmd_list[$((rule_choice-1))]}"
         eval "$cmd"
-        if [ $? -eq 0 ]; then echo -e "${GREEN}[+] Rule deleted successfully!${NC}"
-        else echo -e "${RED}[ERROR] Failed to delete rule.${NC}"; fi
-    else echo -e "${RED}[ERROR] Invalid choice.${NC}"; fi
-    read -p "Press Enter to continue..."
+        if [ $? -eq 0 ]; then 
+            echo -e "${GREEN}[+] Rule deleted successfully!${NC}"
+            ask_save_and_continue
+        else 
+            echo -e "${RED}[ERROR] Failed to delete rule.${NC}"
+            read -p "Press Enter to return to menu..."
+        fi
+    else 
+        echo -e "${RED}[ERROR] Invalid choice.${NC}"
+        read -p "Press Enter to return to menu..."
+    fi
 }
 
 # --- 8. Flush Rules ---
@@ -413,24 +465,18 @@ flush_rules() {
         iptables -F; iptables -t nat -F; iptables -t mangle -F; iptables -t raw -F
         iptables -X; iptables -t nat -X; iptables -t mangle -X; iptables -t raw -X
         echo -e "${GREEN}[+] Iptables has been completely flushed and reset.${NC}"
+        ask_save_and_continue
+    else
+        echo -e "${YELLOW}[!] Operation cancelled.${NC}"
+        read -p "Press Enter to return to menu..."
     fi
-    read -p "Press Enter to continue..."
 }
 
-# --- 9. Save Persistent ---
-save_persistent() {
+# --- 9. Save Persistent (Menu Option) ---
+save_persistent_menu() {
     echo -e "\n${CYAN}--- Saving Rules ---${NC}"
-    if command -v netfilter-persistent &> /dev/null; then
-        netfilter-persistent save && echo -e "${GREEN}[+] Rules saved via netfilter-persistent.${NC}"
-    elif command -v iptables-save &> /dev/null; then
-        if [ -d "/etc/sysconfig" ]; then
-            iptables-save > /etc/sysconfig/iptables && echo -e "${GREEN}[+] Rules saved to /etc/sysconfig/iptables.${NC}"
-        else
-            mkdir -p /etc/iptables
-            iptables-save > /etc/iptables/rules.v4 && echo -e "${GREEN}[+] Rules saved to /etc/iptables/rules.v4.${NC}"
-        fi
-    else echo -e "${RED}[ERROR] Could not find a method to save rules persistently.${NC}"; fi
-    read -p "Press Enter to continue..."
+    do_save_persistent
+    read -p "Press Enter to return to menu..."
 }
 
 # --- 10 & 11. Backup / Restore ---
@@ -438,14 +484,14 @@ backup_rules() {
     read -p "Enter backup path (default: /root/iptables_backup.txt): " filepath
     filepath=${filepath:-/root/iptables_backup.txt}
     iptables-save > "$filepath" && echo -e "${GREEN}[+] Backed up to $filepath${NC}"
-    read -p "Press Enter to continue..."
+    read -p "Press Enter to return to menu..."
 }
 
 restore_rules() {
     read -p "Enter backup file path to restore: " filepath
     if [ -f "$filepath" ]; then iptables-restore < "$filepath" && echo -e "${GREEN}[+] Restored from $filepath${NC}"
     else echo -e "${RED}[ERROR] File not found!${NC}"; fi
-    read -p "Press Enter to continue..."
+    read -p "Press Enter to return to menu..."
 }
 
 # --- Main Execution ---
@@ -465,7 +511,7 @@ while true; do
         6) view_rules ;;
         7) delete_rule ;;
         8) flush_rules ;;
-        9) save_persistent ;;
+        9) save_persistent_menu ;;
         10) backup_rules ;;
         11) restore_rules ;;
         0) echo -e "${GREEN}Exiting...${NC}"; exit 0 ;;
