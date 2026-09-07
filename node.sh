@@ -3652,6 +3652,7 @@ main_menu() {
 		echo -e "${CYAN} 113.${NC} ${CYAN}AES TUN tunnel  ${WHITE}[github.com/3aeidkhalili/AES-256-GCM-anti-DPI]${NC}"
 		
 		echo -e "${YELLOW}Port-Forwarding Tunnel${NC}"
+		echo -e "${CYAN} 117.${NC} ${CYAN}iptables tunnel                           ${WHITE}[github.com/Mmdd93]${NC}"
         echo -e "${CYAN} 31.${NC} ${CYAN}HAProxy tunnel                           ${WHITE}[github.com/Mmdd93]${NC}"
         echo -e "${CYAN} 27.${NC} ${CYAN}Backhaul tunnel                          ${WHITE}[github.com/Mmdd93]${NC}"
         echo -e "${CYAN} 44.${NC} ${CYAN}GOST tunnel by                           ${WHITE}[github.com/Mmdd93]${NC}"
@@ -4339,11 +4340,18 @@ sudo ./aestun.sh
                 sudo bash ssh-tun.sh
                 ;;
 			116)
-                echo -e "${YELLOW} ssh-tun.sh...${NC}"
+                echo -e "${YELLOW} BackPack...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/AminMGMT/BackPack/main/install.sh -o Backpack.sh
 				chmod +x Backpack.sh
                 sudo bash Backpack.sh
+                ;;
+			117)
+                echo -e "${YELLOW} iptables.sh...${NC}"
+				sleep 1
+                curl -Ls https://github.com/Mmdd93/v2ray-assistance/raw/refs/heads/main/iptables.sh -o iptables.sh
+				chmod +x iptables.sh
+                sudo bash iptables.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
