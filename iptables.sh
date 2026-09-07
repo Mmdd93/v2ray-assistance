@@ -446,26 +446,63 @@ view_rules() {
     read -p "Press Enter to return to menu..."
 }
 
-# --- 7. Delete Rule (Unified View) ---
+# --- 7. Delete Rule (Clean & Summarized View) ---
 delete_rule() {
-    echo -e "\n${CYAN}--- All Active Rules (NAT & FILTER) ---${NC}"
+    echo -e "\n${CYAN}========================================================================================${NC}"
+    echo -e "${GREEN}                              ACTIVE IPTABLES RULES                                     ${NC}"
+    echo -e "${CYAN}========================================================================================${NC}"
+    echo -e "${YELLOW}$(printf "%-3s | %-15s | %-11s | %-5s | %s" "ID" "TABLE:CHAIN" "ACTION" "PROTO" "DETAILS")${NC}"
+    echo "----------------------------------------------------------------------------------------"
+
     declare -a cmd_list=()
     local counter=1
+
+    # Helper function to parse complex iptables rules into a clean, human-readable format
+    print_rule() {
+        local table=$1
+        local rule=$2
+        
+        local chain="-"; [[ $rule =~ -A\ ([A-Z]+) ]] && chain="${BASH_REMATCH[1]}"
+        local target="-"; [[ $rule =~ -j\ ([A-Z]+) ]] && target="${BASH_REMATCH[1]}"
+        local proto="ALL"; [[ $rule =~ -p\ ([a-z0-9]+) ]] && proto="${BASH_REMATCH[1]}"
+        
+        local details=""
+        [[ $rule =~ -s\ ([0-9\.\/]+) ]] && details+="SRC:${BASH_REMATCH[1]} "
+        [[ $rule =~ -d\ ([0-9\.\/]+) ]] && details+="DST:${BASH_REMATCH[1]} "
+        [[ $rule =~ --dport\ ([0-9:\-]+) ]] && details+="DPT:${BASH_REMATCH[1]} "
+        [[ $rule =~ --dports\ ([0-9:\-]+) ]] && details+="DPT:${BASH_REMATCH[1]} "
+        [[ $rule =~ --to-destination\ ([0-9\.:\-]+) ]] && details+="-> ${BASH_REMATCH[1]} "
+        [[ $rule =~ --to-ports\ ([0-9\-]+) ]] && details+="-> PORT:${BASH_REMATCH[1]} "
+        [[ $rule =~ -i\ ([a-zA-Z0-9\+\-]+) ]] && details+="IN:${BASH_REMATCH[1]} "
+        [[ $rule =~ -o\ ([a-zA-Z0-9\+\-]+) ]] && details+="OUT:${BASH_REMATCH[1]} "
+        [[ $rule =~ --comment\ \"([^\"]+)\" ]] && details+="[${BASH_REMATCH[1]}] "
+        
+        local tbl_short="NAT"; [ "$table" == "filter" ] && tbl_short="FLT"
+        
+        # Add color based on the action for easy scanning
+        local color=$NC
+        [[ "$target" == "ACCEPT" || "$target" == "DNAT" ]] && color=$GREEN
+        [[ "$target" == "DROP" || "$target" == "REJECT" ]] && color=$RED
+        [[ "$target" == "MASQUERADE" || "$target" == "REDIRECT" ]] && color=$CYAN
+        [[ "$target" == "LOG" ]] && color=$YELLOW
+
+        printf "%-3s | %-15s | ${color}%-11s${NC} | %-5s | %s\n" "$counter" "${tbl_short}:${chain}" "$target" "${proto^^}" "$details"
+    }
     
+    # Read NAT table
     while read -r rule; do
         if [[ $rule == -A* ]]; then
-            local del_rule="${rule/-A/-D}"
-            cmd_list+=("iptables -t nat $del_rule")
-            echo -e "${YELLOW}$counter)${NC} [NAT] $rule"
+            cmd_list+=("iptables -t nat ${rule/-A/-D}")
+            print_rule "nat" "$rule"
             ((counter++))
         fi
     done < <(iptables -t nat -S)
     
+    # Read FILTER table
     while read -r rule; do
         if [[ $rule == -A* ]]; then
-            local del_rule="${rule/-A/-D}"
-            cmd_list+=("iptables -t filter $del_rule")
-            echo -e "${YELLOW}$counter)${NC} [FILTER] $rule"
+            cmd_list+=("iptables -t filter ${rule/-A/-D}")
+            print_rule "filter" "$rule"
             ((counter++))
         fi
     done < <(iptables -t filter -S)
@@ -476,9 +513,10 @@ delete_rule() {
         return
     fi
     
-    echo ""
+    echo -e "${CYAN}========================================================================================${NC}"
     read -p "Enter rule number to delete (or 0 to cancel): " rule_choice
-    if [[ "$rule_choice" -eq 0 ]]; then 
+    
+    if [[ "$rule_choice" == "0" ]]; then 
         echo -e "${YELLOW}[*] Cancelled.${NC}"
         read -p "Press Enter to return to menu..."
     elif [[ "$rule_choice" -ge 1 && "$rule_choice" -le ${#cmd_list[@]} ]]; then
@@ -496,7 +534,6 @@ delete_rule() {
         read -p "Press Enter to return to menu..."
     fi
 }
-
 # --- 8. Flush Rules ---
 flush_rules() {
     echo -e "\n${RED}[WARNING] This will completely reset iptables to an empty state.${NC}"
