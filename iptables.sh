@@ -1,5 +1,33 @@
 #!/bin/bash
 
+# =====================================================================
+# CHANGELOG (fixes applied on top of the original script)
+#  1. FIX: Local-destination DNAT (127.0.0.1) no longer relies on dead
+#     FORWARD/MASQUERADE rules. Traffic to 127.0.0.1 never traverses
+#     FORWARD, it goes through INPUT after DNAT — so an INPUT ACCEPT
+#     rule is added instead. Affects: Local Forwarding (opt 3) and any
+#     127.0.0.1 target inside Load Balancing (opt 2).
+#  2. FIX: check_port_conflict() was building a broken single-element
+#     array from a space-joined string, so multi-port/range conflict
+#     checks silently mis-evaluated. Now properly word-splits.
+#  3. FIX: Rule comments containing spaces caused word-splitting bugs
+#     when the comment flag was expanded unquoted into iptables
+#     commands (could break the command or truncate the comment).
+#     Comments are now sanitized to a single safe token.
+#  4. FIX: dnf/yum package name for iproute2 is actually "iproute" on
+#     RHEL/CentOS/Fedora — install no longer fails on those distros.
+#  5. FIX: enable_ip_forwarding() now appends the sysctl keys if they
+#     are completely missing from /etc/sysctl.conf, not just when a
+#     commented-out or existing line is present.
+#  6. ADD: Port and IP validation before rules are built, so bad input
+#     is caught with a clear error instead of a cryptic iptables error.
+#  7. ADD: ACCEPT rules for INPUT/FORWARD are inserted at the top of
+#     the chain (-I ... 1) instead of appended (-A), so they aren't
+#     shadowed by a pre-existing blanket DROP/REJECT rule further up.
+#  8. ADD: Idempotency checks (-C before -A/-I) on the core rules so
+#     re-running the same configuration doesn't stack duplicate rules.
+# =====================================================================
+
 # --- Color Codes ---
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -17,18 +45,18 @@ fi
 # --- Dependency Check & Installation ---
 install_dependencies() {
     echo -e "${CYAN}--- Checking Dependencies ---${NC}"
-    local packages_needed=("iptables" "iproute2" "gawk")
+    local packages_needed=("iptables" "gawk")
     local pkg_manager=""
 
     if command -v apt-get &> /dev/null; then
         pkg_manager="apt-get"
-        packages_needed+=("iptables-persistent")
+        packages_needed+=("iptables-persistent" "iproute2")
     elif command -v dnf &> /dev/null; then
         pkg_manager="dnf"
-        packages_needed+=("iptables-services")
+        packages_needed+=("iptables-services" "iproute")
     elif command -v yum &> /dev/null; then
         pkg_manager="yum"
-        packages_needed+=("iptables-services")
+        packages_needed+=("iptables-services" "iproute")
     else
         echo -e "${RED}[ERROR] Unsupported package manager.${NC}"
         return 1
@@ -55,14 +83,26 @@ install_dependencies() {
 # --- Ensure IP Forwarding is Enabled ---
 enable_ip_forwarding() {
     local current_status=$(cat /proc/sys/net/ipv4/ip_forward)
-    if [ "$current_status" -eq 0 ]; then
+    if [ "$current_status" -ne 1 ]; then
         sysctl -w net.ipv4.ip_forward=1 > /dev/null 2>&1
-        sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
-        sed -i 's/net.ipv4.ip_forward=0/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
+        if grep -q "^net.ipv4.ip_forward" /etc/sysctl.conf 2>/dev/null; then
+            sed -i 's/^net.ipv4.ip_forward.*/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+        elif grep -q "^#net.ipv4.ip_forward" /etc/sysctl.conf 2>/dev/null; then
+            sed -i 's/^#net.ipv4.ip_forward.*/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+        else
+            echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+        fi
         echo -e "${GREEN}[+] IPv4 Forwarding enabled in Kernel.${NC}"
     fi
+
     sysctl -w net.ipv4.conf.all.route_localnet=1 > /dev/null 2>&1
-    sed -i 's/#net.ipv4.conf.all.route_localnet=1/net.ipv4.conf.all.route_localnet=1/g' /etc/sysctl.conf
+    if grep -q "^net.ipv4.conf.all.route_localnet" /etc/sysctl.conf 2>/dev/null; then
+        sed -i 's/^net.ipv4.conf.all.route_localnet.*/net.ipv4.conf.all.route_localnet=1/' /etc/sysctl.conf
+    elif grep -q "^#net.ipv4.conf.all.route_localnet" /etc/sysctl.conf 2>/dev/null; then
+        sed -i 's/^#net.ipv4.conf.all.route_localnet.*/net.ipv4.conf.all.route_localnet=1/' /etc/sysctl.conf
+    else
+        echo "net.ipv4.conf.all.route_localnet=1" >> /etc/sysctl.conf
+    fi
 }
 
 # --- Menu Function ---
@@ -72,7 +112,7 @@ show_menu() {
     echo -e "${GREEN}      ADVANCED IPTABLES PORT FORWARDING MANAGER     ${NC}"
     echo -e "${CYAN}====================================================${NC}"
     echo -e " 1) Add Remote Forwarding (DNAT - Server to Server)"
-    echo -e " 2) Add Remote Load Balancing (DNAT to Multiple IPs)"
+    echo -e " 2) Add Advanced Load Balancing (Local/Remote/Mixed Ports)"
     echo -e " 3) Add Local Forwarding (DNAT - to 127.0.0.1)"
     echo -e " 4) Add Local Redirection (REDIRECT - Best for Localhost)"
     echo -e " 5) Manage Traffic Logging (Enable / Disable / View Logs)"
@@ -96,12 +136,48 @@ normalize_ports() {
     echo "${clean// /,}"
 }
 
+# --- Port List Validator (catches bad input before it hits iptables) ---
+validate_port_list() {
+    local p start_p end_p
+    for p in "$@"; do
+        if [[ ! "$p" =~ ^[0-9]+(:[0-9]+)?$ ]]; then
+            echo -e "${RED}[ERROR] Invalid port value: '$p'${NC}"
+            return 1
+        fi
+        start_p="${p%%:*}"
+        end_p="${p##*:}"
+        if (( start_p < 1 || start_p > 65535 || end_p < 1 || end_p > 65535 )); then
+            echo -e "${RED}[ERROR] Port out of range (1-65535): '$p'${NC}"
+            return 1
+        fi
+        if (( start_p > end_p )); then
+            echo -e "${RED}[ERROR] Invalid range (start > end): '$p'${NC}"
+            return 1
+        fi
+    done
+    return 0
+}
+
+# --- IPv4 Validator ---
+validate_ip() {
+    local ip="$1" octet
+    [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || return 1
+    IFS='.' read -r -a octets <<< "$ip"
+    for octet in "${octets[@]}"; do
+        (( octet >= 0 && octet <= 255 )) || return 1
+    done
+    return 0
+}
+
 # --- Check Port Conflict ---
 check_port_conflict() {
-    local check_ports_array=("$1")
+    local ports_str="$1"
     local check_proto=$2
     local all_conflicts=""
+    local check_ports_array=()
+    IFS=' ' read -r -a check_ports_array <<< "$ports_str"
     for p in "${check_ports_array[@]}"; do
+        [ -z "$p" ] && continue
         local sp="${p%:*}"; local ep="${p#*:}"
         local conflicts=$(ss -tulnp | awk -v sp="$sp" -v ep="$ep" -v proto="$check_proto" '
             NR>1 {
@@ -173,6 +249,15 @@ ask_save_and_continue() {
     read -p "Press Enter to return to menu..."
 }
 
+# --- Comment Sanitizer (prevents word-splitting bugs downstream) ---
+sanitize_comment() {
+    local input="$1"
+    input=$(echo "$input" | tr -d '"'\''')
+    input=$(echo "$input" | tr -s '[:space:]' '_')
+    input=$(echo "$input" | sed 's/[^A-Za-z0-9_-]/_/g')
+    echo "$input"
+}
+
 # --- Naming Helper ---
 get_rule_comment() {
     local rule_name
@@ -181,8 +266,8 @@ get_rule_comment() {
     if [[ -z "$rule_name" ]]; then
         echo "-m comment --comment iptables-script"
     else
-        # Remove quotes to prevent breaking iptables command
-        rule_name=$(echo "$rule_name" | tr -d '"'\')
+        rule_name=$(sanitize_comment "$rule_name")
+        [[ -z "$rule_name" ]] && rule_name="iptables-script"
         echo "-m comment --comment $rule_name"
     fi
 }
@@ -203,14 +288,17 @@ add_remote_rule() {
     read -p "Incoming Port(s) or Range (e.g., 80 443, 1000-2000, 3000:4000): " src_port_raw
     if [[ "$src_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     IFS=',' read -r -a src_ports <<< "$(normalize_ports "$src_port_raw")"
+    if ! validate_port_list "${src_ports[@]}"; then sleep 2; return; fi
     if ! check_port_conflict "${src_ports[*]}" "$proto"; then return; fi
     
     read -p "Destination Target IP (e.g., 192.168.1.50): " dest_ip
     if [[ "$dest_ip" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
+    if ! validate_ip "$dest_ip"; then echo -e "${RED}[ERROR] Invalid IP address: '$dest_ip'${NC}"; sleep 2; return; fi
     
     read -p "Destination Port(s) [Leave blank to use the same as Incoming] (e.g., 8080): " dest_port_raw
     if [[ "$dest_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
+    if ! validate_port_list "${dest_ports[@]}"; then sleep 2; return; fi
 
     local comment_flag=$(get_rule_comment)
     if [[ "$comment_flag" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
@@ -220,18 +308,26 @@ add_remote_rule() {
     for i in "${!src_ports[@]}"; do
         sp="${src_ports[$i]}"; dp="${dest_ports[$i]:-${dest_ports[0]}}"; dp_target=$(echo "$dp" | tr ':' '-')
         for p in "${protocols[@]}"; do
-            iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j DNAT --to-destination $dest_ip:$dp_target
-            iptables -t nat -A POSTROUTING -d $dest_ip -p $p --dport $dp $comment_flag -j MASQUERADE
-            iptables -A FORWARD -p $p -d $dest_ip --dport $dp $comment_flag -j ACCEPT
+            iptables -t nat -C PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j DNAT --to-destination $dest_ip:$dp_target 2>/dev/null || \
+                iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j DNAT --to-destination $dest_ip:$dp_target
+            if [[ "$dest_ip" == "127.0.0.1" ]]; then
+                iptables -C INPUT -p $p --dport $dp $comment_flag -j ACCEPT 2>/dev/null || \
+                    iptables -I INPUT 1 -p $p --dport $dp $comment_flag -j ACCEPT
+            else
+                iptables -t nat -C POSTROUTING -d $dest_ip -p $p --dport $dp $comment_flag -j MASQUERADE 2>/dev/null || \
+                    iptables -t nat -A POSTROUTING -d $dest_ip -p $p --dport $dp $comment_flag -j MASQUERADE
+                iptables -C FORWARD -p $p -d $dest_ip --dport $dp $comment_flag -j ACCEPT 2>/dev/null || \
+                    iptables -I FORWARD 1 -p $p -d $dest_ip --dport $dp $comment_flag -j ACCEPT
+            fi
         done
         echo -e "${GREEN}[+] Rule Added: $sp -> $dest_ip:$dp${NC}"
     done
     ask_save_and_continue
 }
 
-# --- 2. Add Remote Load Balancing (DNAT) ---
+# --- 2. Add Advanced Load Balancing (DNAT) ---
 add_load_balancing() {
-    echo -e "\n${CYAN}--- Configure Load Balancing (Round-Robin) ---${NC}"
+    echo -e "\n${CYAN}--- Configure Advanced Load Balancing (Round-Robin) ---${NC}"
     echo -e "${YELLOW}(Tip: Enter '0' at any prompt to cancel and go back to menu)${NC}"
     
     read -p "Enter Protocol (tcp / udp / all) [Default: all]: " proto; proto=${proto:-all}
@@ -242,22 +338,32 @@ add_load_balancing() {
     if [[ "$in_iface" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     iface_flag=""; [ -n "$in_iface" ] && iface_flag="-i $in_iface"
 
-    read -p "Incoming Port(s) or Range (e.g., 80 443, 1000-2000, 3000:4000): " src_port_raw
+    read -p "Incoming Port(s) or Range (e.g., 80 443, 1000-2000): " src_port_raw
     if [[ "$src_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     IFS=',' read -r -a src_ports <<< "$(normalize_ports "$src_port_raw")"
+    if ! validate_port_list "${src_ports[@]}"; then sleep 2; return; fi
     if ! check_port_conflict "${src_ports[*]}" "$proto"; then return; fi
     
-    echo -e "${YELLOW}Enter multiple destination IPs separated by commas.${NC}"
-    read -p "Destination IPs (e.g., 192.168.1.10, 192.168.1.11, 10.0.0.5): " dest_ips_raw
-    if [[ "$dest_ips_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
-    IFS=',' read -r -a dest_ips <<< "$(echo "$dest_ips_raw" | tr -d ' ')"
+    echo -e "\n${YELLOW}Enter destination targets. You can mix Localhost (127.0.0.1) and Remote IPs."
+    echo -e "Format: IP or IP:PORT. Separate multiple targets with commas."
+    echo -e "Examples:"
+    echo -e "  - Balance between local ports: 127.0.0.1:8081, 127.0.0.1:8082"
+    echo -e "  - Mix local and remote: 127.0.0.1:8080, 192.168.1.10:80, 10.0.0.5${NC}"
+    read -p "Targets: " targets_raw
     
-    local num_ips=${#dest_ips[@]}
-    if [ "$num_ips" -lt 2 ]; then echo -e "${RED}[ERROR] You must provide at least 2 IP addresses for Load Balancing.${NC}"; sleep 2; return; fi
+    if [[ "$targets_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
+    IFS=',' read -r -a targets <<< "$(echo "$targets_raw" | tr -d ' ')"
+    
+    local num_targets=${#targets[@]}
+    if [ "$num_targets" -lt 2 ]; then echo -e "${RED}[ERROR] You must provide at least 2 targets for Load Balancing.${NC}"; sleep 2; return; fi
 
-    read -p "Destination Port(s) [Leave blank to use the same as Incoming] (e.g., 8080): " dest_port_raw
-    if [[ "$dest_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
-    if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
+    # Validate every target's IP (and port, if given) before touching iptables
+    for target in "${targets[@]}"; do
+        local t_ip="$target" t_port=""
+        if [[ "$target" == *":"* ]]; then t_ip="${target%:*}"; t_port="${target#*:}"; fi
+        if ! validate_ip "$t_ip"; then echo -e "${RED}[ERROR] Invalid target IP: '$t_ip'${NC}"; sleep 2; return; fi
+        if [[ -n "$t_port" ]] && ! validate_port_list "$t_port"; then sleep 2; return; fi
+    done
 
     local comment_flag=$(get_rule_comment)
     if [[ "$comment_flag" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
@@ -265,21 +371,47 @@ add_load_balancing() {
     protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
 
     for i in "${!src_ports[@]}"; do
-        sp="${src_ports[$i]}"; dp="${dest_ports[$i]:-${dest_ports[0]}}"; dp_target=$(echo "$dp" | tr ':' '-')
+        sp="${src_ports[$i]}"
+        
         for p in "${protocols[@]}"; do
-            for (( j=0; j<$num_ips; j++ )); do
-                dip="${dest_ips[$j]}"
-                if [ $j -eq $((num_ips - 1)) ]; then
-                    iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j DNAT --to-destination $dip:$dp_target
+            for (( j=0; j<$num_targets; j++ )); do
+                target="${targets[$j]}"
+                local dip dp dp_target
+                
+                if [[ "$target" == *":"* ]]; then
+                    dip="${target%:*}"
+                    dp="${target#*:}"
                 else
-                    every=$((num_ips - j))
-                    iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp -m statistic --mode nth --every $every --packet 0 $comment_flag -j DNAT --to-destination $dip:$dp_target
+                    dip="$target"
+                    dp="$sp"
                 fi
-                iptables -t nat -A POSTROUTING -d $dip -p $p --dport $dp $comment_flag -j MASQUERADE
-                iptables -A FORWARD -p $p -d $dip --dport $dp $comment_flag -j ACCEPT
+                
+                dp_target=$(echo "$dp" | tr ':' '-')
+
+                if [ $j -eq $((num_targets - 1)) ]; then
+                    iptables -t nat -C PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j DNAT --to-destination $dip:$dp_target 2>/dev/null || \
+                        iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j DNAT --to-destination $dip:$dp_target
+                else
+                    every=$((num_targets - j))
+                    iptables -t nat -C PREROUTING $iface_flag -p $p --dport $sp -m statistic --mode nth --every $every --packet 0 $comment_flag -j DNAT --to-destination $dip:$dp_target 2>/dev/null || \
+                        iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp -m statistic --mode nth --every $every --packet 0 $comment_flag -j DNAT --to-destination $dip:$dp_target
+                fi
+
+                # FIX: destinations of 127.0.0.1 never traverse FORWARD - they hit
+                # INPUT after DNAT. The old script added dead MASQUERADE/FORWARD
+                # rules here that never matched local targets.
+                if [[ "$dip" == "127.0.0.1" ]]; then
+                    iptables -C INPUT -p $p --dport $dp $comment_flag -j ACCEPT 2>/dev/null || \
+                        iptables -I INPUT 1 -p $p --dport $dp $comment_flag -j ACCEPT
+                else
+                    iptables -t nat -C POSTROUTING -d $dip -p $p --dport $dp $comment_flag -j MASQUERADE 2>/dev/null || \
+                        iptables -t nat -A POSTROUTING -d $dip -p $p --dport $dp $comment_flag -j MASQUERADE
+                    iptables -C FORWARD -p $p -d $dip --dport $dp $comment_flag -j ACCEPT 2>/dev/null || \
+                        iptables -I FORWARD 1 -p $p -d $dip --dport $dp $comment_flag -j ACCEPT
+                fi
             done
         done
-        echo -e "${GREEN}[+] Load Balancing Added: Port $sp distributed among ${dest_ips[*]} (Port $dp)${NC}"
+        echo -e "${GREEN}[+] Load Balancing Added: Port $sp distributed among [ ${targets[*]} ]${NC}"
     done
     ask_save_and_continue
 }
@@ -300,6 +432,7 @@ add_local_dnat() {
     read -p "Incoming Port(s) or Range (e.g., 80 443, 1000-2000, 3000:4000): " src_port_raw
     if [[ "$src_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     IFS=',' read -r -a src_ports <<< "$(normalize_ports "$src_port_raw")"
+    if ! validate_port_list "${src_ports[@]}"; then sleep 2; return; fi
     if ! check_port_conflict "${src_ports[*]}" "$proto"; then return; fi
     
     if ! show_listening_ports; then return; fi
@@ -307,6 +440,7 @@ add_local_dnat() {
     read -p "Local Dest Port(s) [Leave blank to use the same as Incoming] (e.g., 8080): " dest_port_raw
     if [[ "$dest_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
+    if ! validate_port_list "${dest_ports[@]}"; then sleep 2; return; fi
     
     local comment_flag=$(get_rule_comment)
     if [[ "$comment_flag" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
@@ -316,9 +450,12 @@ add_local_dnat() {
     for i in "${!src_ports[@]}"; do
         sp="${src_ports[$i]}"; dp="${dest_ports[$i]:-${dest_ports[0]}}"; dp_target=$(echo "$dp" | tr ':' '-')
         for p in "${protocols[@]}"; do
-            iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j DNAT --to-destination 127.0.0.1:$dp_target
-            iptables -t nat -A POSTROUTING -d 127.0.0.1 -p $p --dport $dp $comment_flag -j MASQUERADE
-            iptables -A FORWARD -p $p -d 127.0.0.1 --dport $dp $comment_flag -j ACCEPT
+            iptables -t nat -C PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j DNAT --to-destination 127.0.0.1:$dp_target 2>/dev/null || \
+                iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j DNAT --to-destination 127.0.0.1:$dp_target
+            # FIX: was adding dead POSTROUTING MASQUERADE + FORWARD ACCEPT rules
+            # (traffic to 127.0.0.1 never hits FORWARD). Now correctly opens INPUT.
+            iptables -C INPUT -p $p --dport $dp $comment_flag -j ACCEPT 2>/dev/null || \
+                iptables -I INPUT 1 -p $p --dport $dp $comment_flag -j ACCEPT
         done
         echo -e "${GREEN}[+] Rule Added: $sp -> 127.0.0.1:$dp${NC}"
     done
@@ -341,6 +478,7 @@ add_local_redirect() {
     read -p "Incoming Port(s) or Range (e.g., 80 443, 1000-2000, 3000:4000): " src_port_raw
     if [[ "$src_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     IFS=',' read -r -a src_ports <<< "$(normalize_ports "$src_port_raw")"
+    if ! validate_port_list "${src_ports[@]}"; then sleep 2; return; fi
     if ! check_port_conflict "${src_ports[*]}" "$proto"; then return; fi
     
     if ! show_listening_ports; then return; fi
@@ -348,6 +486,7 @@ add_local_redirect() {
     read -p "Local Dest Port(s) [Leave blank to use the same as Incoming] (e.g., 8080): " dest_port_raw
     if [[ "$dest_port_raw" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
     if [ -z "$dest_port_raw" ]; then dest_ports=("${src_ports[@]}"); else IFS=',' read -r -a dest_ports <<< "$(normalize_ports "$dest_port_raw")"; fi
+    if ! validate_port_list "${dest_ports[@]}"; then sleep 2; return; fi
     
     local comment_flag=$(get_rule_comment)
     if [[ "$comment_flag" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
@@ -357,8 +496,10 @@ add_local_redirect() {
     for i in "${!src_ports[@]}"; do
         sp="${src_ports[$i]}"; dp="${dest_ports[$i]:-${dest_ports[0]}}"; dp_target=$(echo "$dp" | tr ':' '-')
         for p in "${protocols[@]}"; do
-            iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j REDIRECT --to-ports $dp_target
-            iptables -A INPUT -p $p --dport $dp $comment_flag -j ACCEPT
+            iptables -t nat -C PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j REDIRECT --to-ports $dp_target 2>/dev/null || \
+                iptables -t nat -A PREROUTING $iface_flag -p $p --dport $sp $comment_flag -j REDIRECT --to-ports $dp_target
+            iptables -C INPUT -p $p --dport $dp $comment_flag -j ACCEPT 2>/dev/null || \
+                iptables -I INPUT 1 -p $p --dport $dp $comment_flag -j ACCEPT
         done
         echo -e "${GREEN}[+] Local Redirect Added: $sp -> Local $dp_target${NC}"
     done
@@ -384,6 +525,7 @@ manage_logging() {
             if [[ "$proto" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
             read -p "Enter Incoming Port to log (e.g., 8080): " log_port
             if [[ "$log_port" == "0" ]]; then echo -e "${YELLOW}[*] Cancelled.${NC}"; return; fi
+            if ! validate_port_list "$log_port"; then sleep 2; return; fi
             
             protocols=("$proto"); [ "$proto" == "all" ] && protocols=("tcp" "udp")
             for p in "${protocols[@]}"; do
@@ -423,16 +565,20 @@ manage_logging() {
     esac
 }
 
-# --- 6. View Rules (Updated for Comments) ---
+# --- 6. View Rules (Smart Parsing for Load Balance & Local/Remote) ---
 view_rules() {
-    echo -e "\n${CYAN}===================================================================================================${NC}"
-    echo -e "${GREEN}                                      ACTIVE IPTABLES RULES                                        ${NC}"
-    echo -e "${CYAN}===================================================================================================${NC}"
+    echo -e "\n${CYAN}=======================================================================================================${NC}"
+    echo -e "${GREEN}                                        ACTIVE IPTABLES RULES                                          ${NC}"
+    echo -e "${CYAN}=======================================================================================================${NC}"
     
-    echo -e "${YELLOW}$(printf "%-20s | %-6s | %-15s | %-22s | %s" "ACTION / TYPE" "PROTO" "SOURCE PORT" "DESTINATION" "NAME/COMMENT")${NC}"
-    echo "---------------------------------------------------------------------------------------------------"
+    echo -e "${YELLOW}$(printf "%-22s | %-6s | %-15s | %-22s | %s" "ACTION / TYPE" "PROTO" "SOURCE PORT" "DESTINATION" "NAME/COMMENT")${NC}"
+    echo "-------------------------------------------------------------------------------------------------------"
 
     local rules_found=0
+    local prev_src_port=""
+    local prev_proto=""
+    local prev_is_lb=0
+
     while read -r rule; do
         if [[ $rule == -A\ PREROUTING* ]]; then
             rules_found=1
@@ -445,40 +591,56 @@ view_rules() {
             fi
             
             local action="UNKNOWN"
+            local color="${NC}"
             local dest="-"
             local comment="-"
             [[ $rule =~ --comment\ ([^\ ]+) ]] && comment="${BASH_REMATCH[1]}"
             [[ $rule =~ --comment\ \"([^\"]+)\" ]] && comment="${BASH_REMATCH[1]}"
             
             if [[ $rule =~ -j\ LOG ]]; then
-                action=$(printf "%-20s" "LOGGING (Monitor)")
-                action="${CYAN}${action}${NC}"
+                action="LOGGING (Monitor)"
+                color="${CYAN}"
                 dest="Kernel Syslog"
             elif [[ $rule =~ -j\ REDIRECT ]]; then
-                action=$(printf "%-20s" "REDIRECT (Local)")
-                action="${GREEN}${action}${NC}"
-                [[ $rule =~ --to-ports\ ([0-9-]+) ]] && dest="localhost:${BASH_REMATCH[1]}"
+                action="REDIRECT (Local)"
+                color="${GREEN}"
+                [[ $rule =~ --to-ports\ ([0-9-]+) ]] && dest="127.0.0.1:${BASH_REMATCH[1]}"
             elif [[ $rule =~ -j\ DNAT ]]; then
-                if [[ $rule =~ statistic\ --mode\ nth ]]; then
-                    action=$(printf "%-20s" "LOAD BALANCE (DNAT)")
-                    action="${YELLOW}${action}${NC}"
-                else
-                    action=$(printf "%-20s" "DNAT (Remote/Local)")
-                    action="${GREEN}${action}${NC}"
-                fi
                 [[ $rule =~ --to-destination\ ([0-9\.:-]+) ]] && dest="${BASH_REMATCH[1]}"
+                
+                local loc_type="Remote"
+                [[ "$dest" == 127.0.0.* ]] && loc_type="Local"
+
+                if [[ $rule =~ statistic\ --mode\ nth ]]; then
+                    action="LOAD BALANCE ($loc_type)"
+                    color="${YELLOW}"
+                    prev_src_port="$src_port"
+                    prev_proto="$proto"
+                    prev_is_lb=1
+                else
+                    # Check if this rule is the fallback of a previous load balancer group
+                    if [[ "$prev_is_lb" -eq 1 && "$src_port" == "$prev_src_port" && "$proto" == "$prev_proto" ]]; then
+                        action="LOAD BALANCE ($loc_type)"
+                        color="${YELLOW}"
+                    else
+                        action="DNAT ($loc_type)"
+                        color="${GREEN}"
+                    fi
+                    prev_is_lb=0
+                fi
             fi
             
-            echo -e "$action | $(printf "%-6s" "${proto^^}") | $(printf "%-15s" "$src_port") | $(printf "%-22s" "$dest") | ${MAGENTA}$comment${NC}"
+            local formatted_action=$(printf "%-22s" "$action")
+            echo -e "${color}${formatted_action}${NC} | $(printf "%-6s" "${proto^^}") | $(printf "%-15s" "$src_port") | $(printf "%-22s" "$dest") | ${MAGENTA}$comment${NC}"
         fi
     done < <(iptables -t nat -S)
 
     if [ $rules_found -eq 0 ]; then echo -e "${YELLOW}No active PREROUTING rules found.${NC}"; fi
-    echo -e "${CYAN}===================================================================================================${NC}"
+    echo -e "${CYAN}=======================================================================================================${NC}"
     read -p "Press Enter to return to menu..."
 }
 
-# --- 7. Delete Rule (Multi-Delete with Comments) ---
+# --- 7. Delete Rule (Multi-Delete) ---
 delete_rule() {
     echo -e "\n${CYAN}========================================================================================================${NC}"
     echo -e "${GREEN}                                      ACTIVE IPTABLES RULES                                             ${NC}"
