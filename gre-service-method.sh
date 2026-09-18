@@ -465,7 +465,7 @@ manage_tunnels() {
         if ! [[ "$choice" =~ ^[0-9]+$ ]] || ((choice < 1 || choice > ${#tunnels[@]})); then
             echo -e "${RED}Invalid choice. Please try again.${RESET}"
             read -p "Press Enter to continue..."
-            continue
+            return 1
         fi
 
         # Set the selected tunnel for further actions
