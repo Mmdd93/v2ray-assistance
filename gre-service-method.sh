@@ -435,7 +435,7 @@ EOF
 manage_tunnels() {
     while true; do
         clear
-        # List all available gre tunnel services
+      # List all available gre tunnel services
         echo -e "${greEN}Available gre tunnels:${RESET}"
         local tunnels=()
 
@@ -448,27 +448,37 @@ manage_tunnels() {
             done
         done
 
+        # مرحله اول: اگر هیچ تانلی پیدا نشد
         if [[ ${#tunnels[@]} -eq 0 ]]; then
             echo -e "${RED}No active gre tunnels found.${RESET}"
-            read -p "Press Enter to continue..."
-            return 1
+            read -p "Press [Enter] or 'b' to go back..." back_choice
+            return 0
         fi
 
-        # Display the available tunnels
+        # نمایش تانل‌ها به همراه گزینه برگشت
         for i in "${!tunnels[@]}"; do
             echo "$((i + 1)). ${tunnels[i]}"
         done
+        echo -e "0. Back to previous menu"
 
-        echo -e "${greEN}Enter the number corresponding to the tunnel you want to manage:${RESET}"
+        # مرحله دوم: دریافت ورودی کاربر
+        echo -e "${greEN}Enter the number corresponding to the tunnel (or 0/b to back):${RESET}"
         read -r choice
 
+        # بررسی انتخاب دکمه بازگشت
+        if [[ "$choice" == "0" || "$choice" =~ ^[bBqQ]$ ]]; then
+            echo "Returning to previous menu..."
+            return 0
+        fi
+
+        # اعتبارسنجی ورودی نامعتبر
         if ! [[ "$choice" =~ ^[0-9]+$ ]] || ((choice < 1 || choice > ${#tunnels[@]})); then
             echo -e "${RED}Invalid choice. Please try again.${RESET}"
-            read -p "Press Enter to continue..."
+            read -p "Press [Enter] to continue or 'b' to back..." sub_choice
             return 1
         fi
 
-        # Set the selected tunnel for further actions
+        # انتخاب موفق تانل
         selected_tunnel="${tunnels[choice - 1]}"
 
         while true; do
