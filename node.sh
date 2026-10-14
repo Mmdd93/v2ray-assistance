@@ -4363,9 +4363,9 @@ sudo ./aestun.sh
                 sudo bash GRE.sh
                 ;;
 			119)
-                echo -e "${YELLOW} GRE Tunnel Panel...${NC}"
+                echo -e "${YELLOW} golden-gre.sh...${NC}"
 				sleep 1
-                curl -Ls hhttps://raw.githubusercontent.com/LivingG0D/Golden-GRE/main/golden-gre.sh -o golden-gre.sh
+                curl -Ls https://raw.githubusercontent.com/LivingG0D/Golden-GRE/main/golden-gre.sh -o golden-gre.sh
 				chmod +x golden-gre.sh
                 sudo bash golden-gre.sh
                 ;;
