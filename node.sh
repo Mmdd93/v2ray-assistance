@@ -3651,6 +3651,7 @@ main_menu() {
 		echo -e "${CYAN} 115.${NC} ${CYAN}ssh local tunnel                        ${WHITE}[github.com/Mmdd93]${NC}"
 		echo -e "${CYAN} 113.${NC} ${CYAN}AES TUN tunnel  ${WHITE}[github.com/3aeidkhalili/AES-256-GCM-anti-DPI]${NC}"
 		echo -e "${CYAN} 118.${NC} ${CYAN}GRE Tunnel Panel  ${WHITE}[github.com/DrSaeedHub/Tunnel-Panel]${NC}"
+		echo -e "${CYAN} 119.${NC} ${CYAN}golden-gre  ${WHITE}[github.com/LivingG0D/Golden-GRE]${NC}"
 		
 		echo -e "${YELLOW}Port-Forwarding Tunnel${NC}"
 		echo -e "${CYAN} 117.${NC} ${CYAN}iptables tunnel                           ${WHITE}[github.com/Mmdd93]${NC}"
@@ -4360,6 +4361,13 @@ sudo ./aestun.sh
                 curl -Ls https://raw.githubusercontent.com/DrSaeedHub/Tunnel-Panel/main/scripts/install.sh -o GRE.sh
 				chmod +x GRE.sh
                 sudo bash GRE.sh
+                ;;
+			119)
+                echo -e "${YELLOW} GRE Tunnel Panel...${NC}"
+				sleep 1
+                curl -Ls hhttps://raw.githubusercontent.com/LivingG0D/Golden-GRE/main/golden-gre.sh -o golden-gre.sh
+				chmod +x golden-gre.sh
+                sudo bash golden-gre.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
