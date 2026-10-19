@@ -4373,7 +4373,11 @@ sudo ./aestun.sh
 			120)
                 echo -e "${YELLOW} TunnelGuard...${NC}"
 				sleep 1
-                sudo apt update && sudo apt install -y git python3 curl && git clone https://github.com/Mehdi682007/TunnelGuard.git && cd TunnelGuard && sudo python3 setup.py
+                sudo apt update
+				sudo apt install -y git python3 curl
+				git clone https://github.com/Mehdi682007/TunnelGuard.git
+				cd TunnelGuard
+				sudo python3 setup.py
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
