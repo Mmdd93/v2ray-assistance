@@ -4371,19 +4371,32 @@ sudo ./aestun.sh
                 sudo bash golden-gre.sh
                 ;;
 120)
-				echo -e "${YELLOW} Installing and running TunnelGuard...${NC}"
+				echo -e "${YELLOW} Checking TunnelGuard...${NC}"
 				sleep 1
 
-				sudo apt update && sudo apt install -y git python3 python3-pip curl
+				# بررسی و نصب پیش‌نیازها فقط در صورت نیاز
+				sudo apt update && sudo apt install -y git python3 curl
 
-				TARGET_DIR="$HOME/TunnelGuard"
+				TARGET_DIR="TunnelGuard"
+
 				if [ -d "$TARGET_DIR" ]; then
-					echo "TunnelGuard already exists. Updating..."
-					git -C "$TARGET_DIR" pull
+					echo -e "${YELLOW}TunnelGuard is already installed.${NC}"
+					read -rp "Do you want to update it to the latest version? (y/N): " update_choice
+					case "$update_choice" in
+						[yY][eE][sS]|[yY])
+							echo "Updating TunnelGuard..."
+							(cd "$TARGET_DIR" && git pull)
+							;;
+						*)
+							echo "Skipping update..."
+							;;
+					esac
 				else
+					echo "TunnelGuard not found. Downloading..."
 					git clone https://github.com/Mehdi682007/TunnelGuard.git "$TARGET_DIR"
 				fi
 
+				# اجرای اسکریپت داخل پوشه
 				(
 					cd "$TARGET_DIR" || exit 1
 					sudo python3 setup.py
