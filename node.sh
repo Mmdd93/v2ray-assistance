@@ -3692,6 +3692,7 @@ main_menu() {
 		echo -e "${CYAN} 112.${NC} ${CYAN}SNI-Spoofing-Go Tunnel  ${WHITE}[github.com/aleskxyz/SNI-Spoofing-Go]${NC}"	
 		echo -e "${CYAN} 114.${NC} ${CYAN}Hedioum-Pool Tunnel  ${WHITE}[github.com/hedioum/Hedioum-Pool-Tunnel]${NC}"
 		echo -e "${CYAN} 116.${NC} ${CYAN}Backpack Tunnel  ${WHITE}[github.com/AminMGMT/BackPack]${NC}"
+		echo -e "${CYAN} 120.${NC} ${CYAN}Tunnel Guard Multi ${WHITE}[github.com/Mehdi682007/TunnelGuard]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4368,6 +4369,15 @@ sudo ./aestun.sh
                 curl -Ls https://raw.githubusercontent.com/LivingG0D/Golden-GRE/main/golden-gre.sh -o golden-gre.sh
 				chmod +x golden-gre.sh
                 sudo bash golden-gre.sh
+                ;;
+			120)
+                echo -e "${YELLOW} TunnelGuard...${NC}"
+				sleep 1
+                sudo apt update &&
+sudo apt install -y git python3 curl &&
+git clone https://github.com/Mehdi682007/TunnelGuard.git &&
+cd TunnelGuard &&
+sudo python3 setup.py
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
