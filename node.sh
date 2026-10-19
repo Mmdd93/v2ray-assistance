@@ -4370,15 +4370,27 @@ sudo ./aestun.sh
 				chmod +x golden-gre.sh
                 sudo bash golden-gre.sh
                 ;;
-			120)
-                echo -e "${YELLOW} TunnelGuard...${NC}"
+120)
+				echo -e "${YELLOW} Installing and running TunnelGuard...${NC}"
 				sleep 1
-                sudo apt update
-				sudo apt install -y git python3 curl
-				git clone https://github.com/Mehdi682007/TunnelGuard.git
-				cd TunnelGuard
-				sudo python3 setup.py
-                ;;
+
+				sudo apt update && sudo apt install -y git python3 python3-pip curl
+
+				TARGET_DIR="$HOME/TunnelGuard"
+				if [ -d "$TARGET_DIR" ]; then
+					echo "TunnelGuard already exists. Updating..."
+					git -C "$TARGET_DIR" pull
+				else
+					git clone https://github.com/Mehdi682007/TunnelGuard.git "$TARGET_DIR"
+				fi
+
+				(
+					cd "$TARGET_DIR" || exit 1
+					sudo python3 setup.py
+				)
+
+				read -rp "Press Enter to return to menu..."
+				;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
                 update 
