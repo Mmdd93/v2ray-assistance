@@ -3086,15 +3086,44 @@ used_ports_and_select() {
 }
 
 # Function to show initial menu options with improved echo formatting
+# تابع اختصاصی برای نمایش پورت‌های باز UDP
+view_udp_ports() {
+    echo -e "\n\033[1;33mActive UDP Sockets / Ports:\033[0m"
+    echo -e ""
+
+    sudo lsof -iUDP -P -n | awk '
+    BEGIN {
+        printf "\033[1;32m%-15s %-10s %-10s %-10s %-20s\033[0m\n", "COMMAND", "PID", "USER", "PORT", "IP"
+        printf "\033[1;36m---------------------------------------------------------------\033[0m\n"
+    }
+    NR > 1 {
+        # تفکیک آدرس و پورت از فیلد ۹
+        split($9, address, ":");
+        ip = address[1];
+        port = address[2];
+
+        # در صورت خالی بودن پورت یا آدرس
+        if (!port) port = "-";
+        if (!ip) ip = "*";
+
+        if (NR % 2 == 0)
+            printf "\033[1;37m%-15s %-10s %-10s %-10s %-20s\033[0m\n", $1, $2, $3, port, ip;
+        else
+            printf "\033[1;34m%-15s %-10s %-10s %-10s %-20s\033[0m\n", $1, $2, $3, port, ip;
+    }'
+    
+    echo -e "\n\033[1;36m---------------------------------------------------------------\033[0m"
+    read -p "Press Enter to return to menu..."
+}
+
 initial_menu() {
     while true; do
-        # Check if netstat is installed and install if necessary
         check_and_install_netstat
 
-        echo -e "\n\033[1;33mListening Ports:\033[0m"
+        echo -e "\n\033[1;33mListening Ports (TCP):\033[0m"
         echo -e ""
 
-        sudo lsof -i -P -n | grep LISTEN | awk '
+        sudo lsof -iTCP -P -n | grep LISTEN | awk '
         BEGIN {
             printf "\033[1;32m%-15s %-10s %-10s %-10s %-20s\033[0m\n", "COMMAND", "PID", "USER", "PORT", "IP"
             printf "\033[1;36m---------------------------------------------------------------\033[0m\n"
@@ -3104,7 +3133,6 @@ initial_menu() {
             ip = address[1];
             port = address[2];
             
-            # Alternate colors for each row
             if (NR % 2 == 0)
                 printf "\033[1;37m%-15s %-10s %-10s %-10s %-20s\033[0m\n", $1, $2, $3, port, ip;
             else
@@ -3114,20 +3142,20 @@ initial_menu() {
         echo -e "\033[1;36m===========================\033[0m"
         echo -e "\033[1;32mSelect an option from the menu below:\033[0m"
         echo -e "\033[1;36m===========================\033[0m"
-		echo -e "\033[1;34m1)\033[0m \033[1;33mRefresh\033[0m"
+        echo -e "\033[1;34m1)\033[0m \033[1;33mRefresh\033[0m"
         echo -e "\033[1;34m2)\033[0m \033[1;33mKill process\033[0m"
         echo -e "\033[1;34m3)\033[0m \033[1;33mView established IP connections\033[0m"
+        echo -e "\033[1;34m4)\033[0m \033[1;33mView UDP listening ports\033[0m"
         echo -e "\033[1;34m0)\033[0m \033[1;33mReturn\033[0m"
         echo -e "\033[1;36m===========================\033[0m"
         read -p "Your choice: " choice
 
         case $choice in
             1)
-                echo -e "\n\033[1;32mRefresh...\033[0m"
-                initial_menu
+                echo -e "\n\033[1;32mRefreshing...\033[0m"
+                # حلقه while به صورت خودکار صفحه را دوباره لود می‌کند (نیازی به فراخوانی بازگشتی تابع نیست)
                 ;;
-
-			2)
+            2)
                 echo -e "\n\033[1;32mYou selected to kill a process using a port.\033[0m"
                 kill_process
                 ;;
@@ -3135,9 +3163,13 @@ initial_menu() {
                 echo -e "\n\033[1;32mYou selected to view established IP connections.\033[0m"
                 used_ports_and_select
                 ;;
+            4)
+                echo -e "\n\033[1;32mViewing UDP ports...\033[0m"
+                view_udp_ports
+                ;;
             0)
-                echo -e "\n\033[1;32mReturningu...\033[0m"
-                return  # Exit the menu and return to port selection
+                echo -e "\n\033[1;32mReturning...\033[0m"
+                return
                 ;;
             *)
                 echo -e "\n\033[1;31mInvalid choice. Please try again.\033[0m"
