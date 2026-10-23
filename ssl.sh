@@ -28,8 +28,7 @@ echo -e "5.\033[1;34m Copy certs \033[0m"
             ;;
         3) get_wildcard_ssl_with_certbot ;;
 	
-	4) curl -Ls https://github.com/azavaxhuman/VESSL/raw/main/essl.sh -o essl.sh
-            sudo bash essl.sh  ;;
+	4) bash -c "$(curl -fsSL https://raw.githubusercontent.com/azavaxhuman/VESSL/main/vessl.sh)"  ;;
 	5) main  ;;
         0)
             echo -e "\033[1;32mReturning to the previous menu.\033[0m"
