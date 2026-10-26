@@ -3725,6 +3725,7 @@ main_menu() {
 		echo -e "${CYAN} 114.${NC} ${CYAN}Hedioum-Pool Tunnel  ${WHITE}[github.com/hedioum/Hedioum-Pool-Tunnel]${NC}"
 		echo -e "${CYAN} 116.${NC} ${CYAN}Backpack Tunnel  ${WHITE}[github.com/AminMGMT/BackPack]${NC}"
 		echo -e "${CYAN} 120.${NC} ${CYAN}Tunnel Guard Multi ${WHITE}[github.com/Mehdi682007/TunnelGuard]${NC}"
+		echo -e "${CYAN} 120.${NC} ${CYAN}C-Tunnel ${WHITE}[github.com/CIAUB/C-Tunnel]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4436,6 +4437,14 @@ sudo ./aestun.sh
 
 				read -rp "Press Enter to return to menu..."
 				;;
+		121)
+                echo -e "${YELLOW} C-Tunnel.sh...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/CIAUB/C-Tunnel/main/install.sh -o C-Tunnel.sh
+				chmod +x C-Tunnel.sh
+                sudo bash C-Tunnel.sh
+				sudo ctunnel
+                ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
                 update 
