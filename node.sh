@@ -3725,7 +3725,7 @@ main_menu() {
 		echo -e "${CYAN} 114.${NC} ${CYAN}Hedioum-Pool Tunnel  ${WHITE}[github.com/hedioum/Hedioum-Pool-Tunnel]${NC}"
 		echo -e "${CYAN} 116.${NC} ${CYAN}Backpack Tunnel  ${WHITE}[github.com/AminMGMT/BackPack]${NC}"
 		echo -e "${CYAN} 120.${NC} ${CYAN}Tunnel Guard Multi ${WHITE}[github.com/Mehdi682007/TunnelGuard]${NC}"
-		echo -e "${CYAN} 120.${NC} ${CYAN}C-Tunnel ${WHITE}[github.com/CIAUB/C-Tunnel]${NC}"
+		echo -e "${CYAN} 121.${NC} ${CYAN}C-Tunnel ${WHITE}[github.com/CIAUB/C-Tunnel]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
