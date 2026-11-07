@@ -182,37 +182,65 @@ apply_gaming_optimizations() {
 }
 
 apply_streaming_optimizations() {
-    echo -e "${CYAN}Applying STREAMING Optimizations (High Throughput Focus)...${NC}"
+    echo -e "${CYAN}Applying STREAMING & HIGH DATA TRANSFER Optimizations...${NC}"
     backup_configs
     cleanup_bad_settings
 
     declare -A streaming_settings=(
+        # مدیریت بهینه رم و کش برای ترافیک سنگین
         ["vm.swappiness"]="10"
         ["vm.dirty_ratio"]="20"
-        ["vm.dirty_background_ratio"]="10"
-        ["vm.dirty_expire_centisecs"]="3000"
+        ["vm.dirty_background_ratio"]="5"
+        ["vm.dirty_expire_centisecs"]="1500"
         ["vm.dirty_writeback_centisecs"]="500"
-        ["vm.vfs_cache_pressure"]="100"
-        ["net.core.rmem_max"]="67108864"
-        ["net.core.wmem_max"]="67108864"
-        ["net.core.rmem_default"]="4194304"
-        ["net.core.wmem_default"]="4194304"
-        ["net.core.netdev_max_backlog"]="5000"
-        ["net.core.somaxconn"]="65535"
-        ["net.ipv4.tcp_rmem"]="8192 87380 67108864"
-        ["net.ipv4.tcp_wmem"]="8192 65536 67108864"
+        ["vm.vfs_cache_pressure"]="50"
+        ["vm.min_free_kbytes"]="131072"
+        ["vm.overcommit_memory"]="1"
+
+        # بافرهای شبکه (سقف ۱۲۸ مگابایت برای پهنای باند بالا، اما پیش‌فرض استاندارد برای جلوگیری از انفجار مصرف رم)
+        ["net.core.rmem_max"]="134217728"
+        ["net.core.wmem_max"]="134217728"
+        ["net.core.rmem_default"]="262144"
+        ["net.core.wmem_default"]="262144"
+        ["net.core.optmem_max"]="2097152"
+        ["net.ipv4.tcp_rmem"]="4096 131072 134217728"
+        ["net.ipv4.tcp_wmem"]="4096 131072 134217728"
+
+        # صف‌ها و ظرفیت پردازش پکت‌های ورودی (مناسب برای کانکشن‌های همزمان بسیار بالا)
+        ["net.core.netdev_max_backlog"]="250000"
+        ["net.core.netdev_budget"]="600"
+        ["net.core.netdev_budget_usecs"]="8000"
+        ["net.core.somaxconn"]="262144"
+        ["net.ipv4.tcp_max_syn_backlog"]="262144"
+
+        # الگوریتم BBR به همراه fq (بهترین ترکیب برای انتقال داده حجیم)
         ["net.ipv4.tcp_congestion_control"]="bbr"
-        ["net.core.default_qdisc"]="fq_codel"
+        ["net.core.default_qdisc"]="fq"
+
+        # بهینه‌سازی‌های حیاتی TCP برای حداکثر سرعت و پایداری
+        ["net.ipv4.tcp_window_scaling"]="1"
+        ["net.ipv4.tcp_timestamps"]="1"
+        ["net.ipv4.tcp_sack"]="1"
+        ["net.ipv4.tcp_dsack"]="1"
         ["net.ipv4.tcp_fastopen"]="3"
         ["net.ipv4.tcp_slow_start_after_idle"]="0"
-        ["net.ipv4.tcp_notsent_lowat"]="16384"
-        ["net.ipv4.tcp_max_syn_backlog"]="16384"
-        ["net.ipv4.tcp_max_tw_buckets"]="4000000"
+        ["net.ipv4.tcp_mtu_probing"]="1"
+        ["net.ipv4.tcp_notsent_lowat"]="131072"
+        ["net.ipv4.tcp_syncookies"]="1"
+
+        # مدیریت پورت‌ها و تایم‌اوت‌ها (جلوگیری از کمبود پورت و دراپ کانکشن)
+        ["net.ipv4.ip_local_port_range"]="1024 65535"
+        ["net.ipv4.tcp_max_tw_buckets"]="2000000"
         ["net.ipv4.tcp_tw_reuse"]="1"
-        ["net.ipv4.tcp_fin_timeout"]="15"
-        ["net.ipv4.tcp_keepalive_time"]="600"
-        ["net.ipv4.tcp_user_timeout"]="30000"          # NEW: 30s timeout for long downloads
+        ["net.ipv4.tcp_fin_timeout"]="10"
+        ["net.ipv4.tcp_keepalive_time"]="300"
+        ["net.ipv4.tcp_keepalive_intvl"]="30"
+        ["net.ipv4.tcp_keepalive_probes"]="5"
+        ["net.ipv4.tcp_user_timeout"]="60000"
+
+        # افزایش سقف فایل‌های باز در سطح کرنل
         ["fs.file-max"]="4194304"
+        ["fs.nr_open"]="4194304"
     )
 
     for key in "${!streaming_settings[@]}"; do
@@ -220,14 +248,14 @@ apply_streaming_optimizations() {
     done
 
     declare -A streaming_limits=(
-        ["* soft nproc"]="65535"
-        ["* hard nproc"]="65535"
-        ["* soft nofile"]="1048576"
-        ["* hard nofile"]="1048576"
-        ["root soft nproc"]="65535"
-        ["root hard nproc"]="65535"
-        ["root soft nofile"]="1048576"
-        ["root hard nofile"]="1048576"
+        ["* soft nproc"]="262144"
+        ["* hard nproc"]="262144"
+        ["* soft nofile"]="2097152"
+        ["* hard nofile"]="2097152"
+        ["root soft nproc"]="262144"
+        ["root hard nproc"]="262144"
+        ["root soft nofile"]="2097152"
+        ["root hard nofile"]="2097152"
     )
 
     for key in "${!streaming_limits[@]}"; do
@@ -240,7 +268,7 @@ apply_streaming_optimizations() {
     done
 
     reload_sysctl
-    echo -e "${GREEN}STREAMING optimizations applied!${NC}"
+    echo -e "${GREEN}STREAMING & HIGH THROUGHPUT optimizations applied!${NC}"
     echo -e "${YELLOW}Please restart your system for all changes to take effect.${NC}"
 }
 
