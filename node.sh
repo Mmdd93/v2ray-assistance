@@ -3780,6 +3780,7 @@ main_menu() {
 		echo -e "${LIGHT_CYAN} 92.${NC} ${LIGHT_CYAN}Shahan Panel${NC}    ${WHITE}[github.com/HamedAp/ShahanPanel]${NC}"
 		echo -e "${LIGHT_CYAN} 93.${NC} ${LIGHT_CYAN}SlipStream${NC}    ${WHITE}[github.com/mirzaaghazadeh/SlipStreamGUI]${NC}"
 		echo -e "${LIGHT_CYAN} 102.${NC} ${LIGHT_CYAN}MasterDnsVPN${NC}    ${WHITE}[github.com/masterking32/MasterDnsVPN]${NC}"
+		echo -e "${LIGHT_CYAN} 102.${NC} ${LIGHT_CYAN}doctor dns panel${NC}    ${WHITE}[github.com/mehdi047/doctor-dns]${NC}"
         echo
         
         # Panel Backup section - YELLOW
@@ -4407,7 +4408,6 @@ sudo ./aestun.sh
 				echo -e "${YELLOW} Checking TunnelGuard...${NC}"
 				sleep 1
 
-				# بررسی و نصب پیش‌نیازها فقط در صورت نیاز
 				sudo apt update && sudo apt install -y git python3 curl
 
 				TARGET_DIR="TunnelGuard"
@@ -4429,7 +4429,6 @@ sudo ./aestun.sh
 					git clone https://github.com/Mehdi682007/TunnelGuard.git "$TARGET_DIR"
 				fi
 
-				# اجرای اسکریپت داخل پوشه
 				(
 					cd "$TARGET_DIR" || exit 1
 					sudo python3 setup.py
@@ -4438,12 +4437,24 @@ sudo ./aestun.sh
 				read -rp "Press Enter to return to menu..."
 				;;
 		121)
-                echo -e "${YELLOW} C-Tunnel.sh...${NC}"
+                echo -e "${YELLOW}C-Tunnel.sh...${NC}"
 				sleep 1
-                curl -Ls https://raw.githubusercontent.com/CIAUB/C-Tunnel/main/install.sh -o C-Tunnel.sh
-				chmod +x C-Tunnel.sh
-                sudo bash C-Tunnel.sh
-				sudo ctunnel
+
+				# First, try to run ctunnel directly; if not found, download and install it
+				if ! sudo ctunnel; then
+				    echo -e "${YELLOW}ctunnel command not found. Downloading and installing...${NC}"
+				    curl -Ls https://raw.githubusercontent.com/CIAUB/C-Tunnel/main/install.sh -o C-Tunnel.sh
+				    chmod +x C-Tunnel.sh
+				    sudo bash C-Tunnel.sh
+				    sudo ctunnel
+				fi
+				;;
+		122)
+                echo -e "${YELLOW} golden-gre.sh...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/mehdi047/doctor-dns/main/doctor-dns.sh -o doctor-dns.sh
+				chmod +x doctor-dns.sh
+                sudo bash doctor-dns.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
