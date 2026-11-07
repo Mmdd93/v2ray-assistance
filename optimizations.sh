@@ -5,6 +5,8 @@
 # =============================================================================
 SYSCTL_CONF="/etc/sysctl.conf"
 LIMITS_CONF="/etc/security/limits.conf"
+SYSTEMD_LIMITS_DIR="/etc/systemd/system.conf.d"
+SYSTEMD_LIMITS_CONF="$SYSTEMD_LIMITS_DIR/99-optimizer-limits.conf"
 BACKUP_DIR="/root/optimizer_backups"
 TC_SCRIPT_NAME="tc_optimizer.sh"
 TC_SCRIPT_PATH="/root/$TC_SCRIPT_NAME"
@@ -35,7 +37,8 @@ create_backup_dir() {
 backup_configs() {
     create_backup_dir
     echo -e "${GREEN}Backing up configuration files...${NC}"
-    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local timestamp
+    timestamp=$(date +%Y%m%d_%H%M%S)
     
     if [ -f "$SYSCTL_CONF" ]; then
         cp "$SYSCTL_CONF" "${BACKUP_DIR}/sysctl.conf.bak.${timestamp}"
@@ -52,66 +55,126 @@ backup_configs() {
     fi
 }
 
+enable_kernel_modules() {
+    modprobe tcp_bbr 2>/dev/null || true
+    modprobe sch_fq 2>/dev/null || true
+    modprobe sch_fq_codel 2>/dev/null || true
+    modprobe sch_cake 2>/dev/null || true
+}
+
 reload_sysctl() {
+    enable_kernel_modules
     echo -e "${GREEN}Reloading sysctl settings...${NC}"
     if sysctl -p > /dev/null 2>&1; then
         echo -e "${GREEN}Sysctl settings reloaded successfully${NC}"
     else
-        echo -e "${RED}Warning: Some sysctl settings may not have applied${NC}"
+        echo -e "${YELLOW}Note: Some kernel parameters were skipped (unsupported by current kernel build)${NC}"
     fi
 }
 
-# IMPROVED: Safely handles keys with dots and special characters
+# Safely handles keys with dots
 update_config() {
     local file="$1"
     local key="$2"
     local value="$3"
+    local escaped_key="${key//./\\.}"
     
-    # Create file if it doesn't exist
     if [ ! -f "$file" ]; then
         touch "$file"
     fi
     
-    if grep -q "^$key\s*=" "$file"; then
-        local current_value=$(grep "^$key\s*=" "$file" | head -1 | sed 's/.*=\s*//')
+    if grep -q "^[[:space:]]*${escaped_key}[[:space:]]*=" "$file"; then
+        local current_value
+        current_value=$(grep "^[[:space:]]*${escaped_key}[[:space:]]*=" "$file" | head -1 | sed 's/.*=[[:space:]]*//')
         if [[ "$current_value" == "$value" ]]; then
-            echo -e "${YELLOW}Setting $key already configured${NC}"
+            echo -e "${YELLOW}Setting $key already configured ($value)${NC}"
         else
-            sed -i "/^$key\s*=/c\\$key = $value" "$file"
+            sed -i "s|^[[:space:]]*${escaped_key}[[:space:]]*=.*|$key = $value|" "$file"
             echo -e "${GREEN}Updated $key to $value${NC}"
         fi
     else
         echo "$key = $value" >> "$file"
-        echo -e "${GREEN}Added $key with value $value${NC}"
+        echo -e "${GREEN}Added $key = $value${NC}"
     fi
 }
 
-# NEW: Removes dangerous/obsolete settings that hurt gaming
-cleanup_bad_settings() {
-    echo -e "${YELLOW}Cleaning up obsolete/dangerous settings...${NC}"
-    # This line is deadly for gaming if set too low. Let kernel auto-tune it.
-    if grep -q "^net.ipv4.tcp_mem\s*=" "$SYSCTL_CONF"; then
-        sed -i "/^net.ipv4.tcp_mem\s*=/d" "$SYSCTL_CONF"
-        echo -e "${GREEN}Removed dangerously low net.ipv4.tcp_mem (kernel will auto-tune)${NC}"
+# Safely updates both /etc/security/limits.conf AND systemd service limits
+apply_system_limits() {
+    local nofile_val="$1"
+    local nproc_val="$2"
+
+    if [ ! -f "$LIMITS_CONF" ]; then
+        touch "$LIMITS_CONF"
     fi
-    # Obsolete flag ignored by modern kernels
-    if grep -q "^net.ipv4.tcp_low_latency\s*=" "$SYSCTL_CONF"; then
-        sed -i "/^net.ipv4.tcp_low_latency\s*=/d" "$SYSCTL_CONF"
-        echo -e "${GREEN}Removed obsolete net.ipv4.tcp_low_latency${NC}"
+
+    # Remove old optimizer entries first to prevent duplicates and regex asterisk bugs
+    sed -i '/^[[:space:]]*\*[[:space:]]\+\(soft\|hard\)[[:space:]]\+\(nofile\|nproc\)/d' "$LIMITS_CONF" 2>/dev/null
+    sed -i '/^[[:space:]]*root[[:space:]]\+\(soft\|hard\)[[:space:]]\+\(nofile\|nproc\)/d' "$LIMITS_CONF" 2>/dev/null
+
+    cat >> "$LIMITS_CONF" << EOF
+* soft nproc $nproc_val
+* hard nproc $nproc_val
+* soft nofile $nofile_val
+* hard nofile $nofile_val
+root soft nproc $nproc_val
+root hard nproc $nproc_val
+root soft nofile $nofile_val
+root hard nofile $nofile_val
+EOF
+    echo -e "${GREEN}Updated /etc/security/limits.conf (nofile=$nofile_val, nproc=$nproc_val)${NC}"
+
+    # Apply to systemd so services like HAProxy/Xray also get unlimited/high FDs
+    mkdir -p "$SYSTEMD_LIMITS_DIR"
+    cat > "$SYSTEMD_LIMITS_CONF" << EOF
+[Manager]
+DefaultLimitNOFILE=$nofile_val
+DefaultLimitNPROC=$nproc_val
+EOF
+    systemctl daemon-reexec 2>/dev/null || true
+    echo -e "${GREEN}Updated systemd service limits (DefaultLimitNOFILE=$nofile_val)${NC}"
+}
+
+# Cleans previous optimizer keys so switching profiles never leaves conflicting flags
+cleanup_previous_sysctl_keys() {
+    echo -e "${YELLOW}Cleaning up previous profile settings to prevent conflicts...${NC}"
+    local sysctl_keys=(
+        "vm.swappiness" "vm.dirty_ratio" "vm.dirty_background_ratio"
+        "vm.dirty_expire_centisecs" "vm.dirty_writeback_centisecs"
+        "vm.vfs_cache_pressure" "vm.min_free_kbytes" "vm.max_map_count" "vm.overcommit_memory"
+        "net.core.rmem_max" "net.core.wmem_max" "net.core.rmem_default"
+        "net.core.wmem_default" "net.core.netdev_max_backlog"
+        "net.core.netdev_budget" "net.core.netdev_budget_usecs" "net.core.somaxconn" "net.core.optmem_max"
+        "net.ipv4.tcp_mem" "net.ipv4.tcp_rmem" "net.ipv4.tcp_wmem" "net.ipv4.tcp_congestion_control"
+        "net.core.default_qdisc" "net.ipv4.tcp_fastopen" "net.ipv4.tcp_slow_start_after_idle"
+        "net.ipv4.tcp_low_latency" "net.ipv4.tcp_no_metrics_save" "net.ipv4.tcp_timestamps"
+        "net.ipv4.tcp_window_scaling" "net.ipv4.tcp_sack" "net.ipv4.tcp_dsack" "net.ipv4.tcp_fack"
+        "net.ipv4.tcp_mtu_probing" "net.ipv4.ip_local_port_range"
+        "net.ipv4.tcp_max_syn_backlog" "net.ipv4.tcp_max_tw_buckets" "net.ipv4.tcp_tw_reuse"
+        "net.ipv4.tcp_fin_timeout" "net.ipv4.tcp_keepalive_time" "net.ipv4.tcp_keepalive_intvl"
+        "net.ipv4.tcp_keepalive_probes" "net.ipv4.tcp_notsent_lowat" "net.ipv4.tcp_syncookies"
+        "net.ipv4.udp_rmem_min" "net.ipv4.udp_wmem_min" "fs.file-max" "fs.nr_open"
+        "net.ipv4.tcp_user_timeout"
+    )
+
+    if [ -f "$SYSCTL_CONF" ]; then
+        for key in "${sysctl_keys[@]}"; do
+            local escaped_key="${key//./\\.}"
+            sed -i "/^[[:space:]]*${escaped_key}[[:space:]]*=/d" "$SYSCTL_CONF" 2>/dev/null
+        done
     fi
 }
 
 # =============================================================================
-# SYSCTL OPTIMIZATION PROFILES (FIXED)
+# SYSCTL OPTIMIZATION PROFILES
 # =============================================================================
 
 apply_gaming_optimizations() {
     echo -e "${CYAN}Applying GAMING Optimizations (Low Latency Focus)...${NC}"
     backup_configs
-    cleanup_bad_settings
+    cleanup_previous_sysctl_keys
 
     declare -A gaming_settings=(
-        ["vm.swappiness"]="30"
+        ["vm.swappiness"]="20"
         ["vm.dirty_ratio"]="15"
         ["vm.dirty_background_ratio"]="5"
         ["vm.dirty_expire_centisecs"]="1000"
@@ -122,7 +185,7 @@ apply_gaming_optimizations() {
         ["net.core.wmem_max"]="33554432"
         ["net.core.rmem_default"]="262144"
         ["net.core.wmem_default"]="262144"
-        ["net.core.netdev_max_backlog"]="1000"          # FIXED: Lowered for less jitter
+        ["net.core.netdev_max_backlog"]="16384"
         ["net.core.netdev_budget"]="600"
         ["net.core.somaxconn"]="65535"
         ["net.core.optmem_max"]="65536"
@@ -130,18 +193,22 @@ apply_gaming_optimizations() {
         ["net.ipv4.tcp_wmem"]="4096 16384 33554432"
         ["net.ipv4.tcp_congestion_control"]="bbr"
         ["net.core.default_qdisc"]="fq"
+        ["net.ipv4.tcp_window_scaling"]="1"
+        ["net.ipv4.tcp_timestamps"]="1"
+        ["net.ipv4.tcp_sack"]="1"
+        ["net.ipv4.tcp_dsack"]="1"
         ["net.ipv4.tcp_fastopen"]="3"
         ["net.ipv4.tcp_slow_start_after_idle"]="0"
-        # ["net.ipv4.tcp_low_latency"]="1"  REMOVED: Obsolete
-        ["net.ipv4.tcp_max_syn_backlog"]="8192"
+        ["net.ipv4.ip_local_port_range"]="1024 65535"
+        ["net.ipv4.tcp_max_syn_backlog"]="16384"
         ["net.ipv4.tcp_max_tw_buckets"]="2000000"
         ["net.ipv4.tcp_tw_reuse"]="1"
         ["net.ipv4.tcp_fin_timeout"]="10"
-        ["net.ipv4.tcp_keepalive_time"]="180"          # FIXED: 3 minutes
-        ["net.ipv4.tcp_keepalive_intvl"]="15"          # FIXED: 15 seconds
-        ["net.ipv4.tcp_keepalive_probes"]="2"          # FIXED: 2 probes
-        ["net.ipv4.tcp_user_timeout"]="5000"           # NEW: 5 seconds abort
-        ["net.ipv4.tcp_notsent_lowat"]="16384"         # NEW: Low send queue
+        ["net.ipv4.tcp_keepalive_time"]="180"
+        ["net.ipv4.tcp_keepalive_intvl"]="15"
+        ["net.ipv4.tcp_keepalive_probes"]="3"
+        ["net.ipv4.tcp_user_timeout"]="15000"
+        ["net.ipv4.tcp_notsent_lowat"]="16384"
         ["net.ipv4.udp_rmem_min"]="8192"
         ["net.ipv4.udp_wmem_min"]="8192"
         ["net.ipv4.tcp_syncookies"]="1"
@@ -150,44 +217,24 @@ apply_gaming_optimizations() {
         ["net.ipv4.conf.all.accept_source_route"]="0"
         ["net.ipv4.conf.default.accept_source_route"]="0"
         ["fs.file-max"]="2097152"
+        ["fs.nr_open"]="2097152"
     )
 
     for key in "${!gaming_settings[@]}"; do
         update_config "$SYSCTL_CONF" "$key" "${gaming_settings[$key]}"
     done
 
-    declare -A gaming_limits=(
-        ["* soft nproc"]="65535"
-        ["* hard nproc"]="65535"
-        ["* soft nofile"]="524288"
-        ["* hard nofile"]="524288"
-        ["root soft nproc"]="65535"
-        ["root hard nproc"]="65535"
-        ["root soft nofile"]="524288"
-        ["root hard nofile"]="524288"
-    )
-
-    for key in "${!gaming_limits[@]}"; do
-        if grep -q "^$key" "$LIMITS_CONF"; then
-            sed -i "s|^$key.*|$key ${gaming_limits[$key]}|" "$LIMITS_CONF"
-        else
-            echo "$key ${gaming_limits[$key]}" >> "$LIMITS_CONF"
-        fi
-        echo -e "${GREEN}Updated limit: $key ${gaming_limits[$key]}${NC}"
-    done
-
+    apply_system_limits "524288" "65535"
     reload_sysctl
     echo -e "${GREEN}GAMING optimizations applied!${NC}"
-    echo -e "${YELLOW}Please restart your system for all changes to take effect.${NC}"
 }
 
 apply_streaming_optimizations() {
     echo -e "${CYAN}Applying STREAMING & HIGH DATA TRANSFER Optimizations...${NC}"
     backup_configs
-    cleanup_bad_settings
+    cleanup_previous_sysctl_keys
 
     declare -A streaming_settings=(
-        # مدیریت بهینه رم و کش برای ترافیک سنگین
         ["vm.swappiness"]="10"
         ["vm.dirty_ratio"]="20"
         ["vm.dirty_background_ratio"]="5"
@@ -196,8 +243,6 @@ apply_streaming_optimizations() {
         ["vm.vfs_cache_pressure"]="50"
         ["vm.min_free_kbytes"]="131072"
         ["vm.overcommit_memory"]="1"
-
-        # بافرهای شبکه (سقف ۱۲۸ مگابایت برای پهنای باند بالا، اما پیش‌فرض استاندارد برای جلوگیری از انفجار مصرف رم)
         ["net.core.rmem_max"]="134217728"
         ["net.core.wmem_max"]="134217728"
         ["net.core.rmem_default"]="262144"
@@ -205,19 +250,13 @@ apply_streaming_optimizations() {
         ["net.core.optmem_max"]="2097152"
         ["net.ipv4.tcp_rmem"]="4096 131072 134217728"
         ["net.ipv4.tcp_wmem"]="4096 131072 134217728"
-
-        # صف‌ها و ظرفیت پردازش پکت‌های ورودی (مناسب برای کانکشن‌های همزمان بسیار بالا)
         ["net.core.netdev_max_backlog"]="250000"
         ["net.core.netdev_budget"]="600"
         ["net.core.netdev_budget_usecs"]="8000"
         ["net.core.somaxconn"]="262144"
         ["net.ipv4.tcp_max_syn_backlog"]="262144"
-
-        # الگوریتم BBR به همراه fq (بهترین ترکیب برای انتقال داده حجیم)
         ["net.ipv4.tcp_congestion_control"]="bbr"
         ["net.core.default_qdisc"]="fq"
-
-        # بهینه‌سازی‌های حیاتی TCP برای حداکثر سرعت و پایداری
         ["net.ipv4.tcp_window_scaling"]="1"
         ["net.ipv4.tcp_timestamps"]="1"
         ["net.ipv4.tcp_sack"]="1"
@@ -227,8 +266,6 @@ apply_streaming_optimizations() {
         ["net.ipv4.tcp_mtu_probing"]="1"
         ["net.ipv4.tcp_notsent_lowat"]="131072"
         ["net.ipv4.tcp_syncookies"]="1"
-
-        # مدیریت پورت‌ها و تایم‌اوت‌ها (جلوگیری از کمبود پورت و دراپ کانکشن)
         ["net.ipv4.ip_local_port_range"]="1024 65535"
         ["net.ipv4.tcp_max_tw_buckets"]="2000000"
         ["net.ipv4.tcp_tw_reuse"]="1"
@@ -237,8 +274,6 @@ apply_streaming_optimizations() {
         ["net.ipv4.tcp_keepalive_intvl"]="30"
         ["net.ipv4.tcp_keepalive_probes"]="5"
         ["net.ipv4.tcp_user_timeout"]="60000"
-
-        # افزایش سقف فایل‌های باز در سطح کرنل
         ["fs.file-max"]="4194304"
         ["fs.nr_open"]="4194304"
     )
@@ -247,97 +282,63 @@ apply_streaming_optimizations() {
         update_config "$SYSCTL_CONF" "$key" "${streaming_settings[$key]}"
     done
 
-    declare -A streaming_limits=(
-        ["* soft nproc"]="262144"
-        ["* hard nproc"]="262144"
-        ["* soft nofile"]="2097152"
-        ["* hard nofile"]="2097152"
-        ["root soft nproc"]="262144"
-        ["root hard nproc"]="262144"
-        ["root soft nofile"]="2097152"
-        ["root hard nofile"]="2097152"
-    )
-
-    for key in "${!streaming_limits[@]}"; do
-        if grep -q "^$key" "$LIMITS_CONF"; then
-            sed -i "s|^$key.*|$key ${streaming_limits[$key]}|" "$LIMITS_CONF"
-        else
-            echo "$key ${streaming_limits[$key]}" >> "$LIMITS_CONF"
-        fi
-        echo -e "${GREEN}Updated limit: $key ${streaming_limits[$key]}${NC}"
-    done
-
+    apply_system_limits "2097152" "262144"
     reload_sysctl
     echo -e "${GREEN}STREAMING & HIGH THROUGHPUT optimizations applied!${NC}"
-    echo -e "${YELLOW}Please restart your system for all changes to take effect.${NC}"
 }
 
 apply_general_optimizations() {
     echo -e "${CYAN}Applying GENERAL PURPOSE Optimizations (Balanced)...${NC}"
     backup_configs
-    cleanup_bad_settings
+    cleanup_previous_sysctl_keys
 
     declare -A general_settings=(
-        ["vm.swappiness"]="60"
+        ["vm.swappiness"]="30"
         ["vm.dirty_ratio"]="20"
         ["vm.dirty_background_ratio"]="10"
         ["vm.dirty_expire_centisecs"]="3000"
         ["vm.dirty_writeback_centisecs"]="500"
         ["vm.vfs_cache_pressure"]="100"
-        ["net.core.rmem_max"]="16777216"
-        ["net.core.wmem_max"]="16777216"
+        ["net.core.rmem_max"]="33554432"
+        ["net.core.wmem_max"]="33554432"
         ["net.core.rmem_default"]="262144"
         ["net.core.wmem_default"]="262144"
-        ["net.core.netdev_max_backlog"]="3000"
-        ["net.core.somaxconn"]="4096"
-        ["net.ipv4.tcp_rmem"]="4096 87380 16777216"
-        ["net.ipv4.tcp_wmem"]="4096 16384 16777216"
-        ["net.ipv4.tcp_congestion_control"]="cubic"
+        ["net.core.netdev_max_backlog"]="16384"
+        ["net.core.somaxconn"]="65535"
+        ["net.ipv4.tcp_rmem"]="4096 87380 33554432"
+        ["net.ipv4.tcp_wmem"]="4096 16384 33554432"
+        ["net.ipv4.tcp_congestion_control"]="bbr"
         ["net.core.default_qdisc"]="fq_codel"
+        ["net.ipv4.tcp_window_scaling"]="1"
+        ["net.ipv4.tcp_timestamps"]="1"
+        ["net.ipv4.tcp_sack"]="1"
+        ["net.ipv4.tcp_dsack"]="1"
         ["net.ipv4.tcp_fastopen"]="3"
-        ["net.ipv4.tcp_max_syn_backlog"]="1024"
-        ["net.ipv4.tcp_max_tw_buckets"]="262144"
+        ["net.ipv4.ip_local_port_range"]="1024 65535"
+        ["net.ipv4.tcp_max_syn_backlog"]="16384"
+        ["net.ipv4.tcp_max_tw_buckets"]="524288"
         ["net.ipv4.tcp_tw_reuse"]="1"
-        ["net.ipv4.tcp_fin_timeout"]="30"
-        ["net.ipv4.tcp_keepalive_time"]="7200"
-        ["net.ipv4.tcp_user_timeout"]="30000"          # NEW: 30s timeout
+        ["net.ipv4.tcp_fin_timeout"]="15"
+        ["net.ipv4.tcp_keepalive_time"]="600"
+        ["net.ipv4.tcp_user_timeout"]="30000"
         ["net.ipv4.tcp_syncookies"]="1"
-        ["fs.file-max"]="65536"
+        ["fs.file-max"]="1048576"
+        ["fs.nr_open"]="1048576"
     )
 
     for key in "${!general_settings[@]}"; do
         update_config "$SYSCTL_CONF" "$key" "${general_settings[$key]}"
     done
 
-    declare -A general_limits=(
-        ["* soft nproc"]="10240"
-        ["* hard nproc"]="10240"
-        ["* soft nofile"]="65536"
-        ["* hard nofile"]="65536"
-        ["root soft nproc"]="10240"
-        ["root hard nproc"]="10240"
-        ["root soft nofile"]="65536"
-        ["root hard nofile"]="65536"
-    )
-
-    for key in "${!general_limits[@]}"; do
-        if grep -q "^$key" "$LIMITS_CONF"; then
-            sed -i "s|^$key.*|$key ${general_limits[$key]}|" "$LIMITS_CONF"
-        else
-            echo "$key ${general_limits[$key]}" >> "$LIMITS_CONF"
-        fi
-        echo -e "${GREEN}Updated limit: $key ${general_limits[$key]}${NC}"
-    done
-
+    apply_system_limits "524288" "65535"
     reload_sysctl
     echo -e "${GREEN}GENERAL PURPOSE optimizations applied!${NC}"
-    echo -e "${YELLOW}Please restart your system for all changes to take effect.${NC}"
 }
 
 apply_competitive_gaming_optimizations() {
     echo -e "${CYAN}Applying COMPETITIVE GAMING Optimizations (Extreme Low Latency)...${NC}"
     backup_configs
-    cleanup_bad_settings
+    cleanup_previous_sysctl_keys
 
     declare -A comp_settings=(
         ["vm.swappiness"]="1"
@@ -351,7 +352,7 @@ apply_competitive_gaming_optimizations() {
         ["net.core.wmem_max"]="16777216"
         ["net.core.rmem_default"]="131072"
         ["net.core.wmem_default"]="131072"
-        ["net.core.netdev_max_backlog"]="1000"
+        ["net.core.netdev_max_backlog"]="4096"
         ["net.core.netdev_budget"]="300"
         ["net.core.somaxconn"]="65535"
         ["net.core.optmem_max"]="65536"
@@ -361,44 +362,42 @@ apply_competitive_gaming_optimizations() {
         ["net.core.default_qdisc"]="fq"
         ["net.ipv4.tcp_fastopen"]="3"
         ["net.ipv4.tcp_slow_start_after_idle"]="0"
-        # ["net.ipv4.tcp_low_latency"]="1"  REMOVED: Obsolete
         ["net.ipv4.tcp_no_metrics_save"]="1"
-        ["net.ipv4.tcp_timestamps"]="0"
-        ["net.ipv4.tcp_sack"]="0"
-        ["net.ipv4.tcp_dsack"]="0"
-        ["net.ipv4.tcp_fack"]="0"
-        ["net.ipv4.tcp_max_syn_backlog"]="4096"
+        ["net.ipv4.tcp_window_scaling"]="1"
+        ["net.ipv4.tcp_timestamps"]="1"
+        ["net.ipv4.tcp_sack"]="1"
+        ["net.ipv4.tcp_dsack"]="1"
+        ["net.ipv4.ip_local_port_range"]="1024 65535"
+        ["net.ipv4.tcp_max_syn_backlog"]="8192"
         ["net.ipv4.tcp_max_tw_buckets"]="1800000"
         ["net.ipv4.tcp_tw_reuse"]="1"
         ["net.ipv4.tcp_fin_timeout"]="5"
-        ["net.ipv4.tcp_keepalive_time"]="120"          # FIXED: 2 minutes (aggressive)
-        ["net.ipv4.tcp_keepalive_intvl"]="10"          # FIXED: 10 seconds
-        ["net.ipv4.tcp_keepalive_probes"]="2"          # FIXED: 2 probes
-        ["net.ipv4.tcp_user_timeout"]="5000"           # NEW: 5 seconds abort
-        ["net.ipv4.tcp_notsent_lowat"]="16384"         # NEW: Low send queue
+        ["net.ipv4.tcp_keepalive_time"]="120"
+        ["net.ipv4.tcp_keepalive_intvl"]="10"
+        ["net.ipv4.tcp_keepalive_probes"]="2"
+        ["net.ipv4.tcp_user_timeout"]="10000"
+        ["net.ipv4.tcp_notsent_lowat"]="16384"
         ["net.ipv4.udp_rmem_min"]="4096"
         ["net.ipv4.udp_wmem_min"]="4096"
         ["fs.file-max"]="1048576"
+        ["fs.nr_open"]="1048576"
     )
 
     for key in "${!comp_settings[@]}"; do
         update_config "$SYSCTL_CONF" "$key" "${comp_settings[$key]}"
     done
 
+    apply_system_limits "1048576" "65535"
     reload_sysctl
     echo -e "${GREEN}COMPETITIVE GAMING optimizations applied!${NC}"
-    echo -e "${YELLOW}Please restart your system for all changes to take effect.${NC}"
 }
 
 # =============================================================================
-# TC OPTIMIZATION FUNCTIONS (No changes needed, already good)
+# TC OPTIMIZATION FUNCTIONS
 # =============================================================================
 
-# Function to detect available network interfaces
 detect_interfaces() {
     echo -e "${YELLOW}Detecting network interfaces...${NC}"
-    
-    # Get all physical interfaces (excluding virtual ones)
     INTERFACES=($(ls /sys/class/net/ | grep -v -E '^(lo|docker|veth|br-|virbr)'))
     
     if [ ${#INTERFACES[@]} -eq 0 ]; then
@@ -408,34 +407,25 @@ detect_interfaces() {
     
     echo -e "${GREEN}Available interfaces:${NC}"
     for i in "${!INTERFACES[@]}"; do
-        # Get IP address for each interface
-        IP=$(ip addr show ${INTERFACES[$i]} 2>/dev/null | grep -oP 'inet \K[\d.]+' | head -1)
-        STATUS=$(cat /sys/class/net/${INTERFACES[$i]}/operstate 2>/dev/null)
+        IP=$(ip addr show "${INTERFACES[$i]}" 2>/dev/null | grep -oP 'inet \K[\d.]+' | head -1)
+        STATUS=$(cat "/sys/class/net/${INTERFACES[$i]}/operstate" 2>/dev/null)
         if [ "$STATUS" = "up" ]; then
-            STATUS_COLOR="${GREEN}▲${NC}"
+            STATUS_COLOR="${GREEN}UP${NC}"
         else
-            STATUS_COLOR="${RED}▼${NC}"
+            STATUS_COLOR="${RED}DOWN${NC}"
         fi
-        
-        echo -e "  $((i+1)). ${INTERFACES[$i]} $STATUS_COLOR ${WHITE}(${IP:-No IP})${NC}"
+        echo -e "  $((i+1)). ${INTERFACES[$i]} [$STATUS_COLOR] ${WHITE}(${IP:-No IP})${NC}"
     done
     
-    # Find default route interface
     DEFAULT_INTERFACE=$(ip route get 8.8.8.8 2>/dev/null | awk '/dev/ {print $5; exit}')
     if [ -n "$DEFAULT_INTERFACE" ]; then
         echo -e "${CYAN}Default route interface: $DEFAULT_INTERFACE${NC}"
     fi
 }
 
-# Function to select interface
 select_interface() {
-    detect_interfaces
+    detect_interfaces || return 1
     
-    if [ ${#INTERFACES[@]} -eq 0 ]; then
-        return 1
-    fi
-    
-    # If only one interface, use it automatically
     if [ ${#INTERFACES[@]} -eq 1 ]; then
         SELECTED_INTERFACE=${INTERFACES[0]}
         echo -e "${GREEN}Using only available interface: $SELECTED_INTERFACE${NC}"
@@ -450,8 +440,7 @@ select_interface() {
     
     while true; do
         echo -ne "${YELLOW}Enter choice [0-${#INTERFACES[@]}]: ${NC}"
-        read choice
-        
+        read -r choice
         case $choice in
             0)
                 if [ -n "$DEFAULT_INTERFACE" ]; then
@@ -460,11 +449,10 @@ select_interface() {
                     break
                 else
                     echo -e "${RED}Could not auto-detect default interface${NC}"
-                    continue
                 fi
                 ;;
             [1-9]*)
-                if [ $choice -le ${#INTERFACES[@]} ]; then
+                if [ "$choice" -le "${#INTERFACES[@]}" ] 2>/dev/null; then
                     SELECTED_INTERFACE="${INTERFACES[$((choice-1))]}"
                     echo -e "${GREEN}Selected interface: $SELECTED_INTERFACE${NC}"
                     break
@@ -479,58 +467,27 @@ select_interface() {
     done
 }
 
-# Function to select performance profile
 select_performance_profile() {
-    echo -e "\n${CYAN}Select performance profile:${NC}"
-    echo -e "  ${WHITE}1. Gaming Mode${NC}"
-    echo -e "     ${GREEN}✓ Lowest latency for competitive gaming${NC}"
-    echo -e "     ${GREEN}✓ Fast response times${NC}"
-    echo -e "     ${YELLOW}⚠ Lower throughput for large downloads${NC}"
-    
-    echo -e "  ${WHITE}2. High-Loss Network Mode${NC}"
-    echo -e "     ${GREEN}✓ Better performance on lossy connections${NC}"
-    echo -e "     ${GREEN}✓ Improved stability on Wi-Fi/LTE${NC}"
-    echo -e "     ${YELLOW}⚠ Slightly higher latency${NC}"
-    
-    echo -e "  ${WHITE}3. General Purpose Mode${NC}"
-    echo -e "     ${GREEN}✓ Balanced performance${NC}"
-    echo -e "     ${GREEN}✓ Good for browsing/streaming${NC}"
-    echo -e "     ${YELLOW}⚠ Not optimized for gaming${NC}"
-    
-    echo -e "  ${WHITE}4. Custom Mode${NC}"
-    echo -e "     ${GREEN}✓ Manual configuration${NC}"
-    echo -e "     ${YELLOW}⚠ Advanced users only${NC}"
+    echo -e "\n${CYAN}Select TC performance profile:${NC}"
+    echo -e "  ${WHITE}1. Gaming Mode (Low Latency)${NC}"
+    echo -e "  ${WHITE}2. Streaming & Proxy Mode (High Throughput / No Bandwidth Cap)${NC}"
+    echo -e "  ${WHITE}3. High-Loss Network Mode (Anti-Bufferbloat)${NC}"
+    echo -e "  ${WHITE}4. General Purpose Mode (Balanced)${NC}"
+    echo -e "  ${WHITE}5. Custom Mode (Basic pfifo_fast)${NC}"
     
     while true; do
-        echo -ne "${YELLOW}Enter choice [1-4]: ${NC}"
-        read choice
-        
+        echo -ne "${YELLOW}Enter choice [1-5]: ${NC}"
+        read -r choice
         case $choice in
-            1)
-                PROFILE="gaming"
-                echo -e "${GREEN}Selected: Gaming Mode${NC}"
-                break
-                ;;
-            2)
-                PROFILE="high-loss"
-                echo -e "${GREEN}Selected: High-Loss Network Mode${NC}"
-                break
-                ;;
-            3)
-                PROFILE="general"
-                echo -e "${GREEN}Selected: General Purpose Mode${NC}"
-                break
-                ;;
-            4)
-                PROFILE="custom"
-                echo -e "${GREEN}Selected: Custom Mode${NC}"
-                break
-                ;;
-            *)
-                echo -e "${RED}Invalid choice. Please enter 1-4.${NC}"
-                ;;
+            1) PROFILE="gaming"; break ;;
+            2) PROFILE="streaming"; break ;;
+            3) PROFILE="high-loss"; break ;;
+            4) PROFILE="general"; break ;;
+            5) PROFILE="custom"; break ;;
+            *) echo -e "${RED}Invalid choice. Please enter 1-5.${NC}" ;;
         esac
     done
+    echo -e "${GREEN}Selected TC Profile: $PROFILE${NC}"
 }
 
 create_tc_optimizer_script() {
@@ -539,17 +496,11 @@ create_tc_optimizer_script() {
     
     echo -e "${GREEN}Creating TC optimizer script for $profile mode on $interface...${NC}"
     
-    # Create the script with proper error handling
     cat > "$TC_SCRIPT_PATH" << EOF
 #!/bin/bash
 # TC Optimizer - $profile Mode
 # Interface: $interface
 # Created: $(date)
-
-set -e
-
-# Wait for network to be ready
-sleep 30
 
 INTERFACE="$interface"
 
@@ -559,8 +510,8 @@ if ! ip link show "\$INTERFACE" > /dev/null 2>&1; then
     exit 1
 fi
 
-# Wait for interface to be up
-for i in {1..30}; do
+# Wait up to 15s for interface to be up
+for i in {1..15}; do
     if ip link show "\$INTERFACE" | grep -q "state UP"; then
         break
     fi
@@ -572,324 +523,224 @@ echo "Applying $profile optimizations to \$INTERFACE..."
 # Clean existing rules
 tc qdisc del dev "\$INTERFACE" root 2>/dev/null || true
 tc qdisc del dev "\$INTERFACE" ingress 2>/dev/null || true
-
-# Apply $profile optimization
 EOF
 
-    # Add the specific profile configuration
     case "$profile" in
         "gaming")
             cat >> "$TC_SCRIPT_PATH" << 'GAMING_EOF'
-# =============================================================================
-# GAMING OPTIMIZATIONS - Lowest latency for competitive gaming
-# =============================================================================
+ethtool -A "$INTERFACE" rx off tx off 2>/dev/null || true
+ethtool -K "$INTERFACE" gso off tso off gro off lro off 2>/dev/null || true
+echo 1000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null || true
 
-echo "Applying comprehensive gaming optimizations..."
-
-# 1. Disable pause frames (if supported)
-ethtool -A "$INTERFACE" rx off tx off 2>/dev/null && echo "✓ Pause frames disabled" || echo "⚠ Pause frames not supported"
-
-# 2. Disable segmentation offloads for lower latency
-ethtool -K "$INTERFACE" gso off 2>/dev/null && echo "✓ GSO disabled"
-ethtool -K "$INTERFACE" tso off 2>/dev/null && echo "✓ TSO disabled" 
-ethtool -K "$INTERFACE" gro off 2>/dev/null && echo "✓ GRO disabled"
-ethtool -K "$INTERFACE" lro off 2>/dev/null && echo "✓ LRO disabled"
-
-# 3. Ring buffer optimizations for low latency
-ethtool -G "$INTERFACE" rx 256 tx 256 2>/dev/null && echo "✓ Small ring buffers set (256)" || echo "⚠ Ring buffers not supported"
-
-# 4. Interrupt coalescing - disable for lowest latency
-ethtool -C "$INTERFACE" rx-usecs 0 tx-usecs 0 2>/dev/null && echo "✓ Interrupt coalescing disabled" || echo "⚠ Interrupt coalescing not supported"
-
-# 5. TCP stack optimizations for gaming
-echo 10 > /proc/sys/net/ipv4/tcp_fin_timeout 2>/dev/null || true
-echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse 2>/dev/null || true
-
-# 6. TX queue length for low latency
-echo 256 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null && echo "✓ TX queue length set to 256" || echo "⚠ TX queue length not supported"
-
-# 7. Advanced queuing discipline for gaming
-echo "Applying gaming-optimized qdisc..."
-if tc qdisc add dev "$INTERFACE" root cake bandwidth 1000mbit besteffort dual-dsthost nat nowash no-ack-filter 2>/dev/null; then
-    echo "✓ CAKE qdisc applied (gaming optimized)"
+if tc qdisc add dev "$INTERFACE" root cake unlimited besteffort dual-dsthost nat nowash no-ack-filter 2>/dev/null; then
+    echo "CAKE qdisc applied (gaming optimized)"
 elif tc qdisc add dev "$INTERFACE" root fq_codel limit 1000 flows 1024 target 2ms interval 20ms noecn 2>/dev/null; then
-    echo "✓ fq_codel qdisc applied (gaming optimized)"
+    echo "fq_codel qdisc applied (gaming optimized)"
 else
-    tc qdisc add dev "$INTERFACE" root pfifo_fast
-    echo "✓ Fallback to pfifo_fast"
+    tc qdisc add dev "$INTERFACE" root fq 2>/dev/null || tc qdisc add dev "$INTERFACE" root pfifo_fast
+    echo "Fallback qdisc applied"
 fi
 GAMING_EOF
             ;;
-        "high-loss")
-            cat >> "$TC_SCRIPT_PATH" << 'HIGHLOSS_EOF'
-# High-loss network optimizations
-echo "Applying high-loss network optimizations..."
+        "streaming")
+            cat >> "$TC_SCRIPT_PATH" << 'STREAMING_EOF'
+# Enable hardware offloads for maximum throughput and low CPU usage
+ethtool -K "$INTERFACE" gso on tso on gro on 2>/dev/null || true
+echo 10000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null || true
 
-echo 4000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null && echo "✓ TX queue length set to 4000" || echo "⚠ TX queue length not supported"
-echo 1 > /proc/sys/net/ipv4/tcp_ecn 2>/dev/null && echo "✓ ECN enabled" || true
-
-# Buffer bloat control for unstable networks
-if tc qdisc add dev "$INTERFACE" root cake bandwidth 850mbit besteffort ack-filter nat nowash 2>/dev/null; then
-    echo "✓ CAKE qdisc applied (high-loss optimized)"
-elif tc qdisc add dev "$INTERFACE" root fq_codel limit 30000 flows 4096 ecn ce-threshold 1ms 2>/dev/null; then
-    echo "✓ fq_codel qdisc applied (high-loss optimized)"
+if tc qdisc add dev "$INTERFACE" root fq maxrate 100gbit 2>/dev/null || tc qdisc add dev "$INTERFACE" root fq 2>/dev/null; then
+    echo "FQ qdisc applied (ideal for BBR & High Throughput)"
+elif tc qdisc add dev "$INTERFACE" root fq_codel limit 30000 flows 4096 2>/dev/null; then
+    echo "fq_codel qdisc applied (high throughput)"
 else
     tc qdisc add dev "$INTERFACE" root pfifo_fast
-    echo "✓ Fallback to pfifo_fast"
+    echo "Fallback to pfifo_fast"
+fi
+STREAMING_EOF
+            ;;
+        "high-loss")
+            cat >> "$TC_SCRIPT_PATH" << 'HIGHLOSS_EOF'
+ethtool -K "$INTERFACE" gso on tso on gro on 2>/dev/null || true
+echo 5000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null || true
+echo 1 > /proc/sys/net/ipv4/tcp_ecn 2>/dev/null || true
+
+if tc qdisc add dev "$INTERFACE" root cake unlimited besteffort ack-filter nat nowash 2>/dev/null; then
+    echo "CAKE qdisc applied (high-loss optimized)"
+elif tc qdisc add dev "$INTERFACE" root fq_codel limit 30000 flows 4096 ecn ce-threshold 1ms 2>/dev/null; then
+    echo "fq_codel qdisc applied (high-loss optimized)"
+else
+    tc qdisc add dev "$INTERFACE" root pfifo_fast
+    echo "Fallback to pfifo_fast"
 fi
 HIGHLOSS_EOF
             ;;
         "general")
             cat >> "$TC_SCRIPT_PATH" << 'GENERAL_EOF'
-# General purpose optimizations
-echo "Applying general purpose optimizations..."
+ethtool -K "$INTERFACE" gso on tso on gro on 2>/dev/null || true
+echo 2000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null || true
 
-echo 1000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null && echo "✓ TX queue length set to 1000" || echo "⚠ TX queue length not supported"
-
-# Balanced settings for mixed usage
-if tc qdisc add dev "$INTERFACE" root cake bandwidth 1000mbit besteffort nat nowash 2>/dev/null; then
-    echo "✓ CAKE qdisc applied (general purpose)"
+if tc qdisc add dev "$INTERFACE" root cake unlimited besteffort nat nowash 2>/dev/null; then
+    echo "CAKE qdisc applied (general purpose)"
 elif tc qdisc add dev "$INTERFACE" root fq_codel ecn ce-threshold 4ms 2>/dev/null; then
-    echo "✓ fq_codel qdisc applied (general purpose)"
+    echo "fq_codel qdisc applied (general purpose)"
 else
     tc qdisc add dev "$INTERFACE" root pfifo_fast
-    echo "✓ Fallback to pfifo_fast"
+    echo "Fallback to pfifo_fast"
 fi
 GENERAL_EOF
             ;;
         "custom")
             cat >> "$TC_SCRIPT_PATH" << 'CUSTOM_EOF'
-# Custom mode - user configured
-echo "Running in custom mode - no predefined optimizations"
-# Add your custom TC rules here
+ethtool -K "$INTERFACE" gso on tso on gro on 2>/dev/null || true
 tc qdisc add dev "$INTERFACE" root pfifo_fast
-echo "✓ Custom mode: basic pfifo_fast applied"
+echo "Custom mode: basic pfifo_fast applied"
 CUSTOM_EOF
             ;;
     esac
 
-    # Add the footer
     cat >> "$TC_SCRIPT_PATH" << 'EOF'
 
 echo "Optimizations completed successfully for $INTERFACE"
 exit 0
 EOF
 
-    # Make the script executable
     chmod +x "$TC_SCRIPT_PATH"
-    
-    # Verify the script was created
     if [ -f "$TC_SCRIPT_PATH" ] && [ -x "$TC_SCRIPT_PATH" ]; then
-        echo -e "${GREEN}✓ TC optimizer script created at: $TC_SCRIPT_PATH${NC}"
-        echo -e "${CYAN}Profile: $profile | Interface: $interface${NC}"
+        echo -e "${GREEN}TC optimizer script created at: $TC_SCRIPT_PATH${NC}"
         return 0
     else
-        echo -e "${RED}✗ Failed to create TC optimizer script${NC}"
+        echo -e "${RED}Failed to create TC optimizer script${NC}"
         return 1
     fi
 }
 
-# Enhanced startup status check
 check_startup_status() {
     echo -e "${YELLOW}Checking startup status...${NC}"
-    
     if crontab -l 2>/dev/null | grep -q "$TC_SCRIPT_NAME"; then
-        echo -e "${GREEN}✓ TC optimizations are enabled at startup${NC}"
-        echo -e "${WHITE}Cron entry:${NC}"
+        echo -e "${GREEN}TC optimizations are enabled at startup${NC}"
         crontab -l | grep "$TC_SCRIPT_NAME"
-        
-        # Show current interface and profile info
         if [ -f "$TC_SCRIPT_PATH" ]; then
             echo -e "\n${WHITE}Script details:${NC}"
             grep -E "^(# TC Optimizer|# Interface:|# Created:)" "$TC_SCRIPT_PATH" | head -3
         fi
         return 0
     else
-        echo -e "${YELLOW}⚠ TC optimizations are NOT enabled at startup${NC}"
+        echo -e "${YELLOW}TC optimizations are NOT enabled at startup${NC}"
         return 1
     fi
 }
 
-# Enable optimizations at system startup
 enable_startup_optimizations() {
     echo -e "${YELLOW}Enabling TC optimizations at startup...${NC}"
+    local temp_cron
+    temp_cron=$(mktemp)
+    crontab -l 2>/dev/null | grep -v "$TC_SCRIPT_NAME" > "$temp_cron" || true
+    echo "@reboot sleep 15 && $TC_SCRIPT_PATH" >> "$temp_cron"
     
-    # Create a temporary crontab
-    local temp_cron=$(mktemp)
-    crontab -l 2>/dev/null | grep -v "$TC_SCRIPT_NAME" > "$temp_cron"
-    
-    # Add the startup optimization entry
-    echo "@reboot sleep 30 && $TC_SCRIPT_PATH" >> "$temp_cron"
-    
-    # Install the new crontab
     if crontab "$temp_cron"; then
         rm -f "$temp_cron"
-        echo -e "${GREEN}✓ Startup optimizations enabled${NC}"
-        echo -e "${WHITE}Optimizations will run automatically on boot${NC}"
+        echo -e "${GREEN}Startup optimizations enabled${NC}"
         return 0
     else
         rm -f "$temp_cron"
-        echo -e "${RED}✗ Failed to enable startup optimizations${NC}"
+        echo -e "${RED}Failed to enable startup optimizations${NC}"
         return 1
     fi
 }
 
-# Disable optimizations at system startup
 disable_startup_optimizations() {
     echo -e "${YELLOW}Disabling TC optimizations at startup...${NC}"
+    local temp_cron
+    temp_cron=$(mktemp)
+    crontab -l 2>/dev/null | grep -v "$TC_SCRIPT_NAME" > "$temp_cron" || true
     
-    # Remove any existing tc optimization entries from crontab
-    local temp_cron=$(mktemp)
-    crontab -l 2>/dev/null | grep -v "$TC_SCRIPT_NAME" > "$temp_cron"
-    
-    # Install the cleaned crontab
     if crontab "$temp_cron"; then
         rm -f "$temp_cron"
-        echo -e "${GREEN}✓ Removed TC optimizations from crontab${NC}"
+        echo -e "${GREEN}Removed TC optimizations from crontab${NC}"
     else
         rm -f "$temp_cron"
-        echo -e "${RED}✗ Failed to update crontab${NC}"
+        echo -e "${RED}Failed to update crontab${NC}"
         return 1
     fi
     
-    # Remove the script file
     if [ -f "$TC_SCRIPT_PATH" ]; then
         rm -f "$TC_SCRIPT_PATH"
-        echo -e "${GREEN}✓ Removed TC optimizer script${NC}"
+        echo -e "${GREEN}Removed TC optimizer script${NC}"
     fi
-    
-    echo -e "${GREEN}✓ Startup optimizations disabled${NC}"
     return 0
 }
 
-# Ask user about startup configuration
 ask_startup_config() {
-    echo ""
-    echo "=============================================="
-    echo -e "${CYAN}STARTUP CONFIGURATION${NC}"
-    echo "=============================================="
-    echo -e "${WHITE}Do you want to run TC optimizations automatically at system startup?${NC}"
-    echo ""
-    echo -e "${GREEN}Y${NC} - Yes, enable on startup"
-    echo -e "${YELLOW}N${NC} - No, run only once"
-    echo -e "${BLUE}S${NC} - Show current startup status"
-    echo -e "${RED}D${NC} - Disable startup optimizations"
-    echo ""
-    echo -n "Your choice [Y/n/S/d]: "
-    
-    read -r choice
-    case "${choice:-y}" in
-        [Yy]*)
-            enable_startup_optimizations
-            ;;
-        [Nn]*)
-            echo -e "${YELLOW}TC optimizations will run only once (current session)${NC}"
-            ;;
-        [Ss]*)
-            check_startup_status
-            echo ""
-            echo -n "Press Enter to continue..."
-            read -r
-            ask_startup_config
-            ;;
-        [Dd]*)
-            disable_startup_optimizations
-            ;;
-        *)
-            echo -e "${RED}Invalid choice. Please try again.${NC}"
-            ask_startup_config
-            ;;
-    esac
+    while true; do
+        echo ""
+        echo "=============================================="
+        echo -e "${CYAN}STARTUP CONFIGURATION${NC}"
+        echo "=============================================="
+        echo -e "${WHITE}Do you want to run TC optimizations automatically at system startup?${NC}"
+        echo -e "${GREEN}Y${NC} - Yes, enable on startup"
+        echo -e "${YELLOW}N${NC} - No, run only once"
+        echo -e "${BLUE}S${NC} - Show current startup status"
+        echo -e "${RED}D${NC} - Disable startup optimizations"
+        echo ""
+        echo -n "Your choice [Y/n/S/d]: "
+        
+        read -r choice
+        case "${choice:-y}" in
+            [Yy]*) enable_startup_optimizations; break ;;
+            [Nn]*) echo -e "${YELLOW}TC optimizations will run only once${NC}"; break ;;
+            [Ss]*) check_startup_status ;;
+            [Dd]*) disable_startup_optimizations; break ;;
+            *) echo -e "${RED}Invalid choice. Please try again.${NC}" ;;
+        esac
+    done
 }
 
-# Clean up TC rules
 cleanup_tc() {
     local interface="$1"
-    echo -e "${YELLOW}Cleaning existing TC rules...${NC}"
+    echo -e "${YELLOW}Cleaning existing TC rules on $interface...${NC}"
     tc qdisc del dev "$interface" root 2>/dev/null || true
     tc qdisc del dev "$interface" ingress 2>/dev/null || true
+    ethtool -K "$interface" gso on tso on gro on 2>/dev/null || true
     echo 1000 > "/sys/class/net/$interface/tx_queue_len" 2>/dev/null || true
-    echo -e "${GREEN}✓ TC rules cleaned up for $interface${NC}"
+    echo -e "${GREEN}TC rules cleaned up for $interface${NC}"
 }
 
-# Run TC optimizations immediately
 run_tc_optimizations() {
     if [ -f "$TC_SCRIPT_PATH" ] && [ -x "$TC_SCRIPT_PATH" ]; then
         echo -e "${YELLOW}Running TC optimizations now...${NC}"
-        sudo "$TC_SCRIPT_PATH"
+        "$TC_SCRIPT_PATH"
     else
         echo -e "${RED}TC optimizer script not found or not executable${NC}"
-        echo -e "${YELLOW}Please run setup first${NC}"
         return 1
     fi
 }
 
-# Main setup function
 tc_optimize() {
     echo -e "${CYAN}=== TC Optimizer Setup ===${NC}"
-    
-    # Select interface
     if ! select_interface; then
         echo -e "${RED}Failed to select interface. Exiting.${NC}"
         return 1
     fi
     
-    # Select performance profile
     select_performance_profile
     
-    # Create the script
     if create_tc_optimizer_script "$PROFILE" "$SELECTED_INTERFACE"; then
-        echo -e "\n${GREEN}✓ Setup completed successfully!${NC}"
-        echo -e "${WHITE}Interface:${NC} $SELECTED_INTERFACE"
-        echo -e "${WHITE}Profile:${NC} $PROFILE"
-        echo -e "${WHITE}Script:${NC} $TC_SCRIPT_PATH"
-        
-        # Ask about startup configuration
         ask_startup_config
-        
-        # Ask if user wants to run optimizations now
         echo ""
         echo -n "Do you want to apply optimizations now? [Y/n]: "
         read -r apply_now
         case "${apply_now:-y}" in
-            [Yy]*)
-                run_tc_optimizations
-                ;;
-            [Nn]*)
-                echo -e "${YELLOW}Optimizations will run on next boot or manually via: sudo $TC_SCRIPT_PATH${NC}"
-                ;;
+            [Yy]*) run_tc_optimizations ;;
+            *) echo -e "${YELLOW}You can run manually via: sudo $TC_SCRIPT_PATH${NC}" ;;
         esac
-        
     else
-        echo -e "${RED}✗ Setup failed${NC}"
+        echo -e "${RED}Setup failed${NC}"
         return 1
     fi
 }
 
-# Display current TC status
-show_tc_status() {
-    local interface="$1"
-    echo -e "${CYAN}=== Current TC Status for $interface ===${NC}"
-    
-    # Show current qdisc
-    echo -e "${YELLOW}Current qdisc:${NC}"
-    tc qdisc show dev "$interface"
-    
-    # Show interface statistics
-    echo -e "\n${YELLOW}Interface statistics:${NC}"
-    ip -s link show "$interface"
-    
-    # Show ethtool settings
-    echo -e "\n${YELLOW}Ethtool settings:${NC}"
-    ethtool -k "$interface" 2>/dev/null | grep -E "(tso|gso|gro|lro):" || echo "Ethtool not available"
-}
-
-
-
-
 apply_netem_testing() {
     local condition="$1"
-    
     echo -e "${PURPLE}Applying NetEM for testing: $condition${NC}"
     
     INTERFACE=$(ip route get 8.8.8.8 2>/dev/null | awk '/dev/ {print $5; exit}')
@@ -898,57 +749,43 @@ apply_netem_testing() {
         return 1
     fi
     
-    # Apply general optimizations first
     cleanup_tc "$INTERFACE"
-    apply_tc_general_optimizations "$INTERFACE"
-    
-    local handle=$(tc qdisc show dev "$INTERFACE" 2>/dev/null | head -1 | awk '{print $3}')
-    if [ -z "$handle" ]; then
-        echo -e "${RED}Failed to get qdisc handle${NC}"
-        return 1
-    fi
     
     case "$condition" in
         "gaming-latency")
-            tc qdisc change dev "$INTERFACE" root netem delay 10ms 2ms distribution normal
-            echo -e "${GREEN}Added gaming-like latency: 10ms ±2ms${NC}"
+            tc qdisc replace dev "$INTERFACE" root netem delay 10ms 2ms distribution normal
+            echo -e "${GREEN}Added gaming-like latency: 10ms +-2ms${NC}"
             ;;
         "high-loss")
-            tc qdisc change dev "$INTERFACE" root netem loss 5% 25%
+            tc qdisc replace dev "$INTERFACE" root netem loss 5% 25%
             echo -e "${GREEN}Added high packet loss: 5%${NC}"
             ;;
         "wireless")
-            tc qdisc change dev "$INTERFACE" root netem delay 20ms 10ms loss 2% 10% duplicate 1%
+            tc qdisc replace dev "$INTERFACE" root netem delay 20ms 10ms loss 2% 10% duplicate 1%
             echo -e "${GREEN}Added wireless-like conditions${NC}"
             ;;
         "satellite")
-            tc qdisc change dev "$INTERFACE" root netem delay 600ms 100ms loss 1%
+            tc qdisc replace dev "$INTERFACE" root netem delay 600ms 100ms loss 1%
             echo -e "${GREEN}Added satellite-like latency${NC}"
             ;;
         "internet-typical")
-            tc qdisc change dev "$INTERFACE" root netem delay 30ms 5ms loss 0.5% 10%
+            tc qdisc replace dev "$INTERFACE" root netem delay 30ms 5ms loss 0.5% 10%
             echo -e "${GREEN}Added internet typical conditions${NC}"
             ;;
+        "clear")
+            echo -e "${GREEN}Cleared NetEM testing rules on $INTERFACE${NC}"
+            ;;
     esac
-    
-    echo -e "${GREEN}NetEM testing condition '$condition' applied${NC}"
 }
 
 tc_remove_optimizations() {
     echo -e "${RED}Removing ALL TC optimizations...${NC}"
-    
-    # Remove from startup first
     disable_startup_optimizations
-    
-    # Remove TC rules from all interfaces
     for INTERFACE in $(ls /sys/class/net/ | grep -v lo); do
         echo -e "${YELLOW}Cleaning $INTERFACE...${NC}"
-        tc qdisc del dev "$INTERFACE" root 2>/dev/null
-        tc qdisc del dev "$INTERFACE" ingress 2>/dev/null
-        echo 1000 > "/sys/class/net/$INTERFACE/tx_queue_len" 2>/dev/null
+        cleanup_tc "$INTERFACE"
     done
-    
-    echo -e "${GREEN}All TC optimizations removed${NC}"
+    echo -e "${GREEN}All TC optimizations removed and hardware offloads restored${NC}"
 }
 
 # =============================================================================
@@ -957,71 +794,43 @@ tc_remove_optimizations() {
 
 remove_all_optimizations() {
     echo -e "${RED}Removing ALL optimizations and restoring defaults...${NC}"
-    
     backup_configs
-    
-    # Remove TC optimizations first
     tc_remove_optimizations
-    
-    # Remove sysctl optimizations
-    local sysctl_keys=(
-        "vm.swappiness" "vm.dirty_ratio" "vm.dirty_background_ratio"
-        "vm.dirty_expire_centisecs" "vm.dirty_writeback_centisecs"
-        "vm.vfs_cache_pressure" "vm.min_free_kbytes" "vm.max_map_count"
-        "net.core.rmem_max" "net.core.wmem_max" "net.core.rmem_default"
-        "net.core.wmem_default" "net.core.netdev_max_backlog"
-        "net.core.netdev_budget" "net.core.somaxconn" "net.core.optmem_max"
-        "net.ipv4.tcp_rmem" "net.ipv4.tcp_wmem" "net.ipv4.tcp_congestion_control"
-        "net.core.default_qdisc" "net.ipv4.tcp_fastopen" "net.ipv4.tcp_slow_start_after_idle"
-        "net.ipv4.tcp_low_latency" "net.ipv4.tcp_no_metrics_save" "net.ipv4.tcp_timestamps"
-        "net.ipv4.tcp_sack" "net.ipv4.tcp_dsack" "net.ipv4.tcp_fack"
-        "net.ipv4.tcp_max_syn_backlog" "net.ipv4.tcp_max_tw_buckets" "net.ipv4.tcp_tw_reuse"
-        "net.ipv4.tcp_fin_timeout" "net.ipv4.tcp_keepalive_time" "net.ipv4.tcp_keepalive_intvl"
-        "net.ipv4.tcp_keepalive_probes" "net.ipv4.tcp_notsent_lowat" "net.ipv4.tcp_syncookies"
-        "net.ipv4.udp_rmem_min" "net.ipv4.udp_wmem_min" "fs.file-max" "fs.nr_open"
-        "net.ipv4.tcp_user_timeout" # Added to cleanup
-    )
+    cleanup_previous_sysctl_keys
 
-    for key in "${sysctl_keys[@]}"; do
-        sed -i "/^\s*${key}\s*=/d" "$SYSCTL_CONF" 2>/dev/null
-    done
+    sed -i '/^[[:space:]]*\*[[:space:]]\+\(soft\|hard\)[[:space:]]\+\(nofile\|nproc\)/d' "$LIMITS_CONF" 2>/dev/null
+    sed -i '/^[[:space:]]*root[[:space:]]\+\(soft\|hard\)[[:space:]]\+\(nofile\|nproc\)/d' "$LIMITS_CONF" 2>/dev/null
+    rm -f "$SYSTEMD_LIMITS_CONF" 2>/dev/null
+    systemctl daemon-reexec 2>/dev/null || true
 
-    local limit_keys=(
-        "* soft nproc" "* hard nproc" "* soft nofile" "* hard nofile"
-        "root soft nproc" "root hard nproc" "root soft nofile" "root hard nofile"
-    )
-
-    for key in "${limit_keys[@]}"; do
-        sed -i "/^$key/d" "$LIMITS_CONF" 2>/dev/null
-    done
-
-    # Reload settings
     sysctl -p > /dev/null 2>&1
     sysctl --system > /dev/null 2>&1
 
-    # Reset to defaults
-    echo "cubic" > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null
-    echo "fq_codel" > /proc/sys/net/core/default_qdisc 2>/dev/null
+    echo "cubic" > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null || true
+    echo "fq_codel" > /proc/sys/net/core/default_qdisc 2>/dev/null || true
 
     echo -e "${GREEN}ALL optimizations removed!${NC}"
-    echo -e "${YELLOW}Please restart your system for all changes to take effect.${NC}"
 }
 
 # =============================================================================
-# CONTROL FUNCTIONS
+# CONTROL & MONITOR FUNCTIONS
 # =============================================================================
 
 show_current_settings() {
     echo -e "${CYAN}"
     echo "================================================================"
-    echo "                   CURRENT SYSTEM SETTINGS                     "
+    echo "                    CURRENT SYSTEM SETTINGS                     "
     echo "================================================================"
     echo -e "${NC}"
     
     echo -e "${YELLOW}NETWORK SETTINGS:${NC}"
     echo -e "  Congestion Control: ${GREEN}$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null || echo 'default')${NC}"
     echo -e "  Queue Discipline:   ${GREEN}$(sysctl -n net.core.default_qdisc 2>/dev/null || echo 'default')${NC}"
+    echo -e "  Somaxconn:          ${GREEN}$(sysctl -n net.core.somaxconn 2>/dev/null || echo 'N/A')${NC}"
+    echo -e "  Netdev Backlog:     ${GREEN}$(sysctl -n net.core.netdev_max_backlog 2>/dev/null || echo 'N/A')${NC}"
+    echo -e "  Local Port Range:   ${GREEN}$(sysctl -n net.ipv4.ip_local_port_range 2>/dev/null || echo 'N/A')${NC}"
     echo -e "  TCP User Timeout:   ${GREEN}$(sysctl -n net.ipv4.tcp_user_timeout 2>/dev/null || echo 'N/A')${NC}"
+    echo -e "  Max Open Files:     ${GREEN}$(sysctl -n fs.file-max 2>/dev/null || echo 'N/A')${NC}"
     
     echo -e "\n${YELLOW}MEMORY SETTINGS:${NC}"
     echo -e "  Swappiness:         ${GREEN}$(sysctl -n vm.swappiness 2>/dev/null || echo '60')${NC}"
@@ -1041,42 +850,23 @@ show_current_settings() {
 }
 
 edit_sysctl_live() {
-    echo -e "${YELLOW}Live Sysctl Editor - Current Values:${NC}"
-    echo -e "${GREEN}Format: key = value${NC}"
-    echo -e "${YELLOW}Enter 'quit' to exit, 'list' to show current${NC}"
-    
+    echo -e "${YELLOW}Live Sysctl Editor (Format: key = value | Type 'quit' to exit, 'list' to view)${NC}"
     while true; do
-        echo ""
-        echo -e "${CYAN}Enter setting to change:${NC}"
+        echo -ne "\n${CYAN}Enter setting: ${NC}"
         read -r input
-        
         case "$input" in
-            quit|exit)
-                break
-                ;;
-            list|show)
-                show_current_settings
-                ;;
-            "")
-                continue
-                ;;
+            quit|exit) break ;;
+            list|show) show_current_settings ;;
+            "") continue ;;
             *=*)
                 key=$(echo "$input" | cut -d'=' -f1 | xargs)
                 value=$(echo "$input" | cut -d'=' -f2 | xargs)
-                
                 if [[ ! "$key" =~ ^[a-zA-Z0-9_.]+$ ]]; then
                     echo -e "${RED}Invalid key format${NC}"
                     continue
                 fi
-                
                 if sysctl -w "$key=$value" 2>/dev/null; then
-                    echo -e "${GREEN}Live setting applied: $key = $value${NC}"
-                    
-                    if grep -q "^$key" "$SYSCTL_CONF" 2>/dev/null; then
-                        sed -i "s|^$key.*|$key = $value|" "$SYSCTL_CONF"
-                    else
-                        echo "$key = $value" >> "$SYSCTL_CONF"
-                    fi
+                    update_config "$SYSCTL_CONF" "$key" "$value"
                 else
                     echo -e "${RED}Failed to apply setting${NC}"
                 fi
@@ -1094,453 +884,152 @@ edit_sysctl_live() {
 }
 
 apply_settings_immediately() {
-    echo -e "${GREEN}Applying all settings immediately...${NC}"
-    
-    if sysctl -p > /dev/null 2>&1; then
-        echo -e "${GREEN}Sysctl settings applied${NC}"
-    else
-        echo -e "${RED}Error applying sysctl settings${NC}"
-        return 1
-    fi
-    
-    echo -e "${GREEN}All settings applied successfully${NC}"
+    reload_sysctl
 }
 
 test_network_performance() {
-    echo -e "${CYAN}"
-    echo "================================================================"
-    echo "                   NETWORK PERFORMANCE TEST                    "
-    echo "================================================================"
-    echo -e "${NC}"
-    
+    echo -e "${CYAN}=== NETWORK PERFORMANCE TEST ===${NC}"
     INTERFACE=$(ip route get 8.8.8.8 2>/dev/null | awk '/dev/ {print $5; exit}')
     if [ -z "$INTERFACE" ]; then
         echo -e "${RED}No network interface detected${NC}"
         return 1
     fi
-    
     echo -e "${YELLOW}Interface: ${GREEN}$INTERFACE${NC}"
-    
     if command -v ping >/dev/null 2>&1; then
-        echo -e "\n${YELLOW}PING TEST (Google DNS):${NC}"
+        echo -e "\n${YELLOW}PING TEST (8.8.8.8):${NC}"
         ping -c 4 -W 2 8.8.8.8 2>/dev/null | grep -E "packets|rtt|loss" || echo -e "${RED}Ping test failed${NC}"
-    else
-        echo -e "${YELLOW}ping command not available${NC}"
     fi
-    
     if command -v tc >/dev/null 2>&1; then
         echo -e "\n${YELLOW}TRAFFIC CONTROL STATUS:${NC}"
-        tc qdisc show dev "$INTERFACE"
+        tc -s qdisc show dev "$INTERFACE"
     fi
 }
 
 show_sysctl_file() {
-    echo -e "${CYAN}"
-    echo "================================================================"
-    echo "                   SYSCTL.CONF CONTENTS                        "
-    echo "================================================================"
-    echo -e "${NC}"
-    
-    if [ -f "$SYSCTL_CONF" ]; then
-        if [ -s "$SYSCTL_CONF" ]; then
-            grep -v '^#' "$SYSCTL_CONF" | grep -v '^$' | while read line; do
-                echo -e "  ${WHITE}$line${NC}"
-            done
-            
-            total_lines=$(grep -v '^#' "$SYSCTL_CONF" | grep -v '^$' | wc -l)
-            echo -e "\n${YELLOW}Total active settings: ${GREEN}$total_lines${NC}"
-        else
-            echo -e "${YELLOW}sysctl.conf is empty${NC}"
-        fi
+    echo -e "${CYAN}=== SYSCTL.CONF CONTENTS ===${NC}"
+    if [ -f "$SYSCTL_CONF" ] && [ -s "$SYSCTL_CONF" ]; then
+        grep -v '^[[:space:]]*#' "$SYSCTL_CONF" | grep -v '^[[:space:]]*$'
+        total_lines=$(grep -v '^[[:space:]]*#' "$SYSCTL_CONF" | grep -v '^[[:space:]]*$' | wc -l)
+        echo -e "\n${YELLOW}Total active settings: ${GREEN}$total_lines${NC}"
     else
-        echo -e "${RED}sysctl.conf not found${NC}"
+        echo -e "${YELLOW}sysctl.conf is empty or not found${NC}"
     fi
 }
 
 edit_sysctl_conf() {
-    echo -e "${YELLOW}Opening sysctl.conf for editing...${NC}"
-    
-    if command -v nano >/dev/null 2>&1; then
-        editor="nano"
-    elif command -v vim >/dev/null 2>&1; then
-        editor="vim"
-    elif command -v vi >/dev/null 2>&1; then
-        editor="vi"
-    else
-        echo -e "${RED}No text editor found. Install nano, vim, or vi.${NC}"
+    local editor=""
+    for ed in nano vim vi; do
+        if command -v "$ed" >/dev/null 2>&1; then
+            editor="$ed"
+            break
+        fi
+    done
+    if [ -z "$editor" ]; then
+        echo -e "${RED}No text editor found.${NC}"
         return 1
     fi
-    
-    if $editor "$SYSCTL_CONF"; then
-        echo -e "${GREEN}File edited successfully${NC}"
-        
-        echo -e "${YELLOW}Apply changes now? [y/N]: ${NC}"
+    if "$editor" "$SYSCTL_CONF"; then
+        echo -ne "${YELLOW}Apply changes now? [y/N]: ${NC}"
         read -r apply_choice
-        if [[ "$apply_choice" =~ [yY] ]]; then
-            apply_settings_immediately
-        fi
-    else
-        echo -e "${RED}Error editing file${NC}"
+        [[ "$apply_choice" =~ ^[yY]$ ]] && reload_sysctl
     fi
 }
 
 # =============================================================================
-# MENU SYSTEM
+# BLOATWARE REMOVAL FUNCTIONS
 # =============================================================================
 
-show_main_menu() {
-    clear
-    echo -e "${CYAN}"
-    echo "================================================================"
-    echo "           NETWORK OPTIMIZER TOOL - MAIN MENU                  "
-    echo "================================================================"
-    echo
-    echo -e "${GREEN}SYSCTL OPTIMIZATIONS:${CYAN}"
-    echo -e "  ${GREEN}1${NC}${WHITE}. Gaming (Low Latency)${CYAN}"
-    echo -e "  ${GREEN}2${NC}${WHITE}. Streaming (High Throughput)${CYAN}"
-    echo -e "  ${GREEN}3${NC}${WHITE}. General Purpose (Balanced)${CYAN}"
-    echo -e "  ${GREEN}4${NC}${WHITE}. Competitive Gaming (Extreme)${CYAN}"
-    echo
-    echo -e "${BLUE}TC OPTIMIZATIONS:${CYAN}"
-    echo -e "  ${GREEN}5${NC}${WHITE}. TC optimizations${CYAN}"
-    echo -e "  ${GREEN}8${NC}${WHITE}. NetEM Testing${CYAN}"
-    echo
-    echo -e "${YELLOW}TOOLS & MANAGEMENT:${CYAN}"
-    echo -e "  ${GREEN}9${NC}${WHITE}. Show Current Status${CYAN}"
-    echo -e "  ${GREEN}10${NC}${WHITE}. Backup Configurations${CYAN}"
-    echo
-    echo -e "${GREEN}VIEW & MONITOR:${CYAN}"
-    echo -e "  ${GREEN}11${NC}${WHITE}. Show Current Settings${CYAN}"
-    echo -e "  ${GREEN}12${NC}${WHITE}. Show Sysctl.conf File${CYAN}"
-    echo -e "  ${GREEN}13${NC}${WHITE}. Test Network Performance${CYAN}"
-    echo
-    echo -e "${BLUE}EDIT & CONFIGURE:${CYAN}"
-    echo -e "  ${GREEN}14${NC}${WHITE}. Live Sysctl Editor${CYAN}"
-    echo -e "  ${GREEN}15${NC}${WHITE}. Edit Sysctl.conf (Text Editor)${CYAN}"
-    echo -e "  ${GREEN}16${NC}${WHITE}. Apply Settings Immediately${CYAN}"
-    echo
-    echo -e "${PURPLE}MAINTENANCE:${CYAN}"
-    echo -e "  ${GREEN}17${NC}${WHITE}. Backup Configurations${CYAN}"
-    echo -e "  ${GREEN}18${NC}${WHITE}. Remove All Optimizations${CYAN}"
-    echo -e "  ${GREEN}19${NC}${WHITE}. stop system logging${CYAN}"
-    echo -e "  ${GREEN}20${NC}${WHITE}. Restoring system logging${CYAN}"
-    echo -e "  ${GREEN}21${NC}${WHITE}. Remove bloatware${CYAN}"
-    echo
-    echo -e "  ${GREEN}0${NC}${WHITE}. Exit${CYAN}"
-    echo "================================================================"
-    echo -e "${NC}"
-}
-main_menu() {
-    while true; do
-        show_main_menu
-        echo -e "${YELLOW}Select option: ${NC}"
-        read -r choice
-        
-        case $choice in
-            1) apply_gaming_optimizations ;;
-            2) apply_streaming_optimizations ;;
-            3) apply_general_optimizations ;;
-            4) apply_competitive_gaming_optimizations ;;
-            5) tc_optimize;;
-            8) handle_netem_menu ;;
-            9) show_current_settings ;;
-            10) backup_configs ;;
-            11) show_current_settings ;;
-            12) show_sysctl_file ;;
-            13) test_network_performance ;;
-            14) edit_sysctl_live ;;
-            15) edit_sysctl_conf ;;
-            16) apply_settings_immediately ;;
-            17) backup_configs ;;
-        19)
-            echo -e "\033[1;33mWarning:\033[0m Masking journald and rsyslog will stop all system logging!"
-            read -rp "Are you sure you want to continue? (yes/no): " confirm
-            if [[ "$confirm" == "yes" ]]; then
-                echo -e "\033[1;31mStopping and masking journald + rsyslog services...\033[0m"
+print_status() { echo -e "${BLUE}[INFO]${NC} $1"; }
+print_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
+print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-                # Stop and mask journald
-                sudo systemctl stop systemd-journald.service systemd-journald.socket systemd-journald-dev-log.socket 2>/dev/null
-                sudo systemctl mask systemd-journald.service systemd-journald.socket systemd-journald-dev-log.socket 2>/dev/null
-
-                # Stop and mask rsyslog
-                sudo systemctl stop rsyslog.service 2>/dev/null
-                sudo systemctl mask rsyslog.service 2>/dev/null
-
-                echo -e "\033[1;32mJournald and rsyslog have been stopped and masked.\033[0m"
-            else
-                echo -e "\033[1;34mOperation canceled.\033[0m"
-            fi
-            ;;
-        20)
-            echo -e "\033[1;33mRestoring journald and rsyslog services...\033[0m"
-
-            # Unmask and enable journald
-            sudo systemctl unmask systemd-journald.service systemd-journald.socket systemd-journald-dev-log.socket 2>/dev/null
-            sudo systemctl enable systemd-journald.service systemd-journald.socket systemd-journald-dev-log.socket 2>/dev/null
-            sudo systemctl start systemd-journald.service 2>/dev/null
-
-            # Unmask and enable rsyslog
-            sudo systemctl unmask rsyslog.service 2>/dev/null
-            sudo systemctl enable rsyslog.service 2>/dev/null
-            sudo systemctl start rsyslog.service 2>/dev/null
-
-            echo -e "\033[1;32mJournald and rsyslog have been unmasked and restarted.\033[0m"
-            ;;
-
-            18) remove_all_optimizations ;;
-            21) bloatware ;;
-            0)
-                echo -e "${GREEN}Goodbye!${NC}"
-                exit 0
-                ;;
-            *)
-                echo -e "${RED}Invalid option! Please select 0-12${NC}"
-                ;;
-        esac
-        
-        echo -e "\n${CYAN}Press Enter to continue...${NC}"
-        read -r
-    done
-}
-show_netem_menu() {
-    clear
-    echo -e "${PURPLE}"
-    echo "================================================================"
-    echo "                   NETEM TESTING MENU                          "
-    echo "================================================================"
-    echo -e "${WHITE}Simulate network conditions:${PURPLE}                       "
-    echo "                                                                "
-    echo -e "  ${GREEN}1${NC}${WHITE}. Gaming Latency (10ms +-2ms)${PURPLE}                  "
-    echo -e "  ${GREEN}2${NC}${WHITE}. High Packet Loss (5% loss)${PURPLE}                   "
-    echo -e "  ${GREEN}3${NC}${WHITE}. Wireless Conditions (20ms + 2% loss)${PURPLE}         "
-    echo -e "  ${GREEN}4${NC}${WHITE}. Satellite Latency (600ms + 1% loss)${PURPLE}         "
-    echo -e "  ${GREEN}5${NC}${WHITE}. Internet Typical (30ms + 0.5% loss)${PURPLE}          "
-    echo "                                                                "
-    echo -e "  ${GREEN}0${NC}${WHITE}. Back to Main Menu${PURPLE}                         "
-    echo "                                                                "
-    echo "================================================================"
-    echo -e "${NC}"
-}
-
-
-
-handle_netem_menu() {
-    while true; do
-        show_netem_menu
-        echo -e "${YELLOW}Select test condition [0-5]: ${NC}"
-        read -r choice
-        
-        case $choice in
-            1) apply_netem_testing "gaming-latency" ;;
-            2) apply_netem_testing "high-loss" ;;
-            3) apply_netem_testing "wireless" ;;
-            4) apply_netem_testing "satellite" ;;
-            5) apply_netem_testing "internet-typical" ;;
-            0) break ;;
-            *) echo -e "${RED}Invalid option! Please select 0-5${NC}" ;;
-        esac
-        
-        echo -e "\n${CYAN}Press Enter to continue...${NC}"
-        read -r
-    done
-}
-
-
-
-# Function to print colored output
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Check if running as root
-check_root() {
-    if [[ $EUID -eq 0 ]]; then
-        print_warning "Running as root user"
-    else
-        print_error "This script requires root privileges. Please run with sudo."
-        exit 1
-    fi
-}
-
-# Update system
 update_system() {
     print_status "Updating system packages..."
     apt update && apt upgrade -y
     print_success "System updated successfully"
 }
 
-# Remove multipath tools
 remove_multipath() {
     print_status "Removing multipath tools..."
-    systemctl stop multipathd 2>/dev/null
-    systemctl disable multipathd 2>/dev/null
-    apt remove -y --purge multipath-tools 2>/dev/null
+    systemctl stop multipathd 2>/dev/null || true
+    systemctl disable multipathd 2>/dev/null || true
+    apt remove -y --purge multipath-tools 2>/dev/null || true
     print_success "Multipath tools removed"
 }
 
-# Remove snapd
 remove_snapd() {
     print_status "Removing snapd..."
-    systemctl stop snapd 2>/dev/null
-    systemctl disable snapd 2>/dev/null
-    apt remove -y --purge snapd snap-confine 2>/dev/null
+    systemctl stop snapd 2>/dev/null || true
+    systemctl disable snapd 2>/dev/null || true
+    apt remove -y --purge snapd snap-confine 2>/dev/null || true
     rm -rf /var/snap /snap /root/snap
     print_success "Snapd removed"
 }
 
-# Remove fwupd
 remove_fwupd() {
     print_status "Removing fwupd..."
-    apt remove -y --purge fwupd 2>/dev/null
+    apt remove -y --purge fwupd 2>/dev/null || true
     print_success "Fwupd removed"
 }
 
-# Remove desktop components
 remove_desktop_components() {
     print_status "Removing desktop components..."
-    local desktop_packages=(
-        ubuntu-desktop
-        gnome*
-        gdm3
-        xorg
-        lightdm
-        plymouth
-        plymouth-theme-ubuntu-text
-    )
-    
-    for pkg in "${desktop_packages[@]}"; do
-        if dpkg -l | grep -q "$pkg"; then
-            apt remove -y --purge "$pkg" 2>/dev/null
-        fi
-    done
+    apt remove -y --purge ubuntu-desktop "gnome-*" gdm3 xorg lightdm plymouth 2>/dev/null || true
     print_success "Desktop components removed"
 }
 
-# Remove office software
 remove_office_software() {
     print_status "Removing office software..."
-    local office_packages=(
-        libreoffice*
-        abiword
-        gnumeric
-    )
-    
-    for pkg in "${office_packages[@]}"; do
-        apt remove -y --purge "$pkg" 2>/dev/null
-    done
+    apt remove -y --purge "libreoffice*" abiword gnumeric 2>/dev/null || true
     print_success "Office software removed"
 }
 
-# Remove games
 remove_games() {
     print_status "Removing games..."
-    local game_packages=(
-        gnome-games*
-        sudoku
-        mines
-        aisleriot
-        mahjongg
-    )
-    
-    for pkg in "${game_packages[@]}"; do
-        apt remove -y --purge "$pkg" 2>/dev/null
-    done
+    apt remove -y --purge "gnome-games*" sudoku mines aisleriot mahjongg 2>/dev/null || true
     print_success "Games removed"
 }
 
-# Remove multimedia packages
 remove_multimedia() {
     print_status "Removing multimedia packages..."
-    local media_packages=(
-        rhythmbox
-        shotwell
-        cheese
-        vlc*
-        totem
-        brasero
-    )
-    
-    for pkg in "${media_packages[@]}"; do
-        apt remove -y --purge "$pkg" 2>/dev/null
-    done
+    apt remove -y --purge rhythmbox shotwell cheese "vlc*" totem brasero 2>/dev/null || true
     print_success "Multimedia packages removed"
 }
 
-# Remove printing services
 remove_printing() {
     print_status "Removing printing services..."
-    local printing_packages=(
-        cups*
-        printer-driver*
-        hplip
-    )
-    
-    for pkg in "${printing_packages[@]}"; do
-        systemctl stop "$pkg" 2>/dev/null
-        systemctl disable "$pkg" 2>/dev/null
-        apt remove -y --purge "$pkg" 2>/dev/null
-    done
+    systemctl stop cups cups-browsed 2>/dev/null || true
+    systemctl disable cups cups-browsed 2>/dev/null || true
+    apt remove -y --purge "cups*" "printer-driver*" hplip 2>/dev/null || true
     print_success "Printing services removed"
 }
 
-# Remove bluetooth
 remove_bluetooth() {
     print_status "Removing bluetooth..."
-    systemctl stop bluetooth 2>/dev/null
-    systemctl disable bluetooth 2>/dev/null
-    apt remove -y --purge bluez* 2>/dev/null
+    systemctl stop bluetooth 2>/dev/null || true
+    systemctl disable bluetooth 2>/dev/null || true
+    apt remove -y --purge "bluez*" 2>/dev/null || true
     print_success "Bluetooth removed"
 }
 
-# Remove audio services
 remove_audio() {
     print_status "Removing audio services..."
-    local audio_packages=(
-        pulseaudio*
-        alsa*
-        pipewire*
-    )
-    
-    for pkg in "${audio_packages[@]}"; do
-        apt remove -y --purge "$pkg" 2>/dev/null
-    done
+    apt remove -y --purge "pulseaudio*" "alsa*" "pipewire*" 2>/dev/null || true
     print_success "Audio services removed"
 }
 
-# Remove unnecessary services
 remove_unnecessary_services() {
-    print_status "Removing unnecessary services..."
-    local services=(
-        whoopsie
-        popularity-contest
-        apport
-        avahi-daemon
-        modemmanager
-        network-manager
-        cups-browsed
-    )
-    
+    print_status "Removing unnecessary services (preserving NetworkManager)..."
+    local services=(whoopsie popularity-contest apport avahi-daemon modemmanager cups-browsed)
     for service in "${services[@]}"; do
-        systemctl stop "$service" 2>/dev/null
-        systemctl disable "$service" 2>/dev/null
-        systemctl mask "$service" 2>/dev/null
+        systemctl stop "$service" 2>/dev/null || true
+        systemctl disable "$service" 2>/dev/null || true
+        systemctl mask "$service" 2>/dev/null || true
     done
     print_success "Unnecessary services disabled"
 }
 
-# Clean package cache
 clean_system() {
     print_status "Cleaning system..."
     apt autoremove -y --purge
@@ -1550,40 +1039,19 @@ clean_system() {
     print_success "System cleaned"
 }
 
-# Show installed bloatware
 show_bloatware() {
     print_status "Scanning for common bloatware packages..."
-    
-    local bloatware_list=(
-        "snapd" "fwupd" "multipath-tools"
-        "ubuntu-desktop" "gnome" "libreoffice" "cups"
-        "bluetooth" "pulseaudio" "whoopsie" "popularity-contest"
-    )
-    
+    local bloatware_list=("snapd" "fwupd" "multipath-tools" "ubuntu-desktop" "libreoffice" "cups" "bluetooth" "pulseaudio" "whoopsie" "popularity-contest")
     echo -e "\n${YELLOW}Found bloatware packages:${NC}"
     for pkg in "${bloatware_list[@]}"; do
-        if dpkg -l | grep -q "^ii  $pkg"; then
-            echo -e "  ${RED}✓${NC} $pkg"
-        fi
-    done
-    
-    echo -e "\n${YELLOW}Active unnecessary services:${NC}"
-    local unnecessary_services=(
-        "multipathd" "snapd" "cups"
-        "bluetooth" "whoopsie" "avahi-daemon" "modemmanager"
-    )
-    
-    for service in "${unnecessary_services[@]}"; do
-        if systemctl is-active "$service" 2>/dev/null | grep -q "active"; then
-            echo -e "  ${RED}✓${NC} $service"
+        if dpkg -l | grep -q "^ii[[:space:]]\+$pkg"; then
+            echo -e "  ${RED}*${NC} $pkg"
         fi
     done
 }
 
-# Comprehensive bloatware removal (without containerd)
 remove_all_bloatware() {
     print_warning "Starting comprehensive bloatware removal..."
-    
     remove_multipath
     remove_snapd
     remove_fwupd
@@ -1596,21 +1064,13 @@ remove_all_bloatware() {
     remove_audio
     remove_unnecessary_services
     clean_system
-    
     print_success "All bloatware removed successfully!"
 }
 
-# Interactive menu
 bloatware() {
     while true; do
         clear
-        echo -e "${BLUE}"
-        echo "╔══════════════════════════════════════╗"
-        echo "║      Ubuntu Server Bloatware         ║"
-        echo "║            Removal Tool              ║"
-        echo "╚══════════════════════════════════════╝"
-        echo -e "${NC}"
-        echo -e "${YELLOW}Select an option:${NC}"
+        echo -e "${BLUE}=== Ubuntu Server Bloatware Removal Tool ===${NC}"
         echo " 1) Show installed bloatware"
         echo " 2) Remove multipath tools"
         echo " 3) Remove snapd"
@@ -1626,76 +1086,174 @@ bloatware() {
         echo "13) Clean system (autoremove)"
         echo "14) Remove ALL bloatware (Comprehensive)"
         echo "15) Update system"
-        echo "0) Exit"
-        echo
-        
-        read -p "Enter your choice default[14]: " choice
-    choice=${choice:-14}
+        echo " 0) Back to Main Menu"
+        echo ""
+        read -rp "Enter your choice [0-15, default 14]: " choice
+        choice=${choice:-14}
         
         case $choice in
-            1)
-                show_bloatware
-                ;;
-            2)
-                remove_multipath
-                ;;
-            3)
-                remove_snapd
-                ;;
-            4)
-                remove_fwupd
-                ;;
-            5)
-                remove_desktop_components
-                ;;
-            6)
-                remove_office_software
-                ;;
-            7)
-                remove_games
-                ;;
-            8)
-                remove_multimedia
-                ;;
-            9)
-                remove_printing
-                ;;
-            10)
-                remove_bluetooth
-                ;;
-            11)
-                remove_audio
-                ;;
-            12)
-                remove_unnecessary_services
-                ;;
-            13)
-                clean_system
-                ;;
+            1) show_bloatware ;;
+            2) remove_multipath ;;
+            3) remove_snapd ;;
+            4) remove_fwupd ;;
+            5) remove_desktop_components ;;
+            6) remove_office_software ;;
+            7) remove_games ;;
+            8) remove_multimedia ;;
+            9) remove_printing ;;
+            10) remove_bluetooth ;;
+            11) remove_audio ;;
+            12) remove_unnecessary_services ;;
+            13) clean_system ;;
             14)
                 echo -e "${RED}WARNING: This will remove ALL detected bloatware!${NC}"
-                read -p "Are you sure? (y/N): " -n 1 -r
-                echo
-                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                read -rp "Are you sure? (y/N): " confirm_bloat
+                if [[ "$confirm_bloat" =~ ^[Yy]$ ]]; then
                     remove_all_bloatware
                 else
-                    print_status "Comprehensive removal cancelled."
+                    print_status "Cancelled."
                 fi
                 ;;
-            15)
-                update_system
+            15) update_system ;;
+            0) break ;;
+            *) print_error "Invalid option." ;;
+        esac
+        echo ""
+        read -rp "Press Enter to continue..."
+    done
+}
+
+# =============================================================================
+# MENU SYSTEM
+# =============================================================================
+
+show_netem_menu() {
+    clear
+    echo -e "${PURPLE}"
+    echo "================================================================"
+    echo "                     NETEM TESTING MENU                         "
+    echo "================================================================"
+    echo -e "  ${GREEN}1${NC}${WHITE}. Gaming Latency (10ms +-2ms)${NC}"
+    echo -e "  ${GREEN}2${NC}${WHITE}. High Packet Loss (5% loss)${NC}"
+    echo -e "  ${GREEN}3${NC}${WHITE}. Wireless Conditions (20ms + 2% loss)${NC}"
+    echo -e "  ${GREEN}4${NC}${WHITE}. Satellite Latency (600ms + 1% loss)${NC}"
+    echo -e "  ${GREEN}5${NC}${WHITE}. Internet Typical (30ms + 0.5% loss)${NC}"
+    echo -e "  ${GREEN}6${NC}${WHITE}. Clear NetEM Rules${NC}"
+    echo -e "  ${GREEN}0${NC}${WHITE}. Back to Main Menu${NC}"
+    echo "================================================================"
+}
+
+handle_netem_menu() {
+    while true; do
+        show_netem_menu
+        echo -ne "${YELLOW}Select test condition [0-6]: ${NC}"
+        read -r choice
+        case $choice in
+            1) apply_netem_testing "gaming-latency" ;;
+            2) apply_netem_testing "high-loss" ;;
+            3) apply_netem_testing "wireless" ;;
+            4) apply_netem_testing "satellite" ;;
+            5) apply_netem_testing "internet-typical" ;;
+            6) apply_netem_testing "clear" ;;
+            0) break ;;
+            *) echo -e "${RED}Invalid option! Please select 0-6${NC}" ;;
+        esac
+        echo -e "\n${CYAN}Press Enter to continue...${NC}"
+        read -r
+    done
+}
+
+show_main_menu() {
+    clear
+    echo -e "${CYAN}"
+    echo "================================================================"
+    echo "             NETWORK OPTIMIZER TOOL - MAIN MENU                 "
+    echo "================================================================"
+    echo -e "${GREEN}SYSCTL OPTIMIZATIONS:${CYAN}"
+    echo -e "  ${GREEN}1${NC}${WHITE}. Gaming (Low Latency)${NC}"
+    echo -e "  ${GREEN}2${NC}${WHITE}. Streaming & Proxy (High Throughput / Heavy Connections)${NC}"
+    echo -e "  ${GREEN}3${NC}${WHITE}. General Purpose (Balanced)${NC}"
+    echo -e "  ${GREEN}4${NC}${WHITE}. Competitive Gaming (Extreme Low Latency)${NC}"
+    echo ""
+    echo -e "${BLUE}TC OPTIMIZATIONS:${CYAN}"
+    echo -e "  ${GREEN}5${NC}${WHITE}. Configure TC Optimizations${NC}"
+    echo -e "  ${GREEN}6${NC}${WHITE}. Remove TC Optimizations${NC}"
+    echo -e "  ${GREEN}8${NC}${WHITE}. NetEM Network Testing${NC}"
+    echo ""
+    echo -e "${GREEN}VIEW & MONITOR:${CYAN}"
+    echo -e "  ${GREEN}11${NC}${WHITE}. Show Current Settings${NC}"
+    echo -e "  ${GREEN}12${NC}${WHITE}. Show Sysctl.conf File${NC}"
+    echo -e "  ${GREEN}13${NC}${WHITE}. Test Network Performance${NC}"
+    echo ""
+    echo -e "${BLUE}EDIT & CONFIGURE:${CYAN}"
+    echo -e "  ${GREEN}14${NC}${WHITE}. Live Sysctl Editor${NC}"
+    echo -e "  ${GREEN}15${NC}${WHITE}. Edit Sysctl.conf (Text Editor)${NC}"
+    echo -e "  ${GREEN}16${NC}${WHITE}. Apply Settings Immediately${NC}"
+    echo ""
+    echo -e "${PURPLE}MAINTENANCE:${CYAN}"
+    echo -e "  ${GREEN}17${NC}${WHITE}. Backup Configurations${NC}"
+    echo -e "  ${GREEN}18${NC}${WHITE}. Remove All Optimizations${NC}"
+    echo -e "  ${GREEN}19${NC}${WHITE}. Stop System Logging (journald + rsyslog)${NC}"
+    echo -e "  ${GREEN}20${NC}${WHITE}. Restore System Logging${NC}"
+    echo -e "  ${GREEN}21${NC}${WHITE}. Remove Ubuntu Bloatware${NC}"
+    echo ""
+    echo -e "  ${GREEN}0${NC}${WHITE}. Exit${CYAN}"
+    echo "================================================================"
+    echo -e "${NC}"
+}
+
+main_menu() {
+    while true; do
+        show_main_menu
+        echo -ne "${YELLOW}Select option: ${NC}"
+        read -r choice
+        
+        case $choice in
+            1) apply_gaming_optimizations ;;
+            2) apply_streaming_optimizations ;;
+            3) apply_general_optimizations ;;
+            4) apply_competitive_gaming_optimizations ;;
+            5) tc_optimize ;;
+            6) tc_remove_optimizations ;;
+            8) handle_netem_menu ;;
+            9|11) show_current_settings ;;
+            10|17) backup_configs ;;
+            12) show_sysctl_file ;;
+            13) test_network_performance ;;
+            14) edit_sysctl_live ;;
+            15) edit_sysctl_conf ;;
+            16) apply_settings_immediately ;;
+            18) remove_all_optimizations ;;
+            19)
+                echo -e "${YELLOW}Warning:${NC} Masking journald and rsyslog will stop all system logging!"
+                read -rp "Are you sure you want to continue? (yes/no): " confirm
+                if [[ "$confirm" == "yes" ]]; then
+                    systemctl stop systemd-journald.service systemd-journald.socket systemd-journald-dev-log.socket rsyslog.service 2>/dev/null || true
+                    systemctl mask systemd-journald.service systemd-journald.socket systemd-journald-dev-log.socket rsyslog.service 2>/dev/null || true
+                    echo -e "${GREEN}Journald and rsyslog have been stopped and masked.${NC}"
+                else
+                    echo -e "${BLUE}Operation canceled.${NC}"
+                fi
                 ;;
+            20)
+                echo -e "${YELLOW}Restoring journald and rsyslog services...${NC}"
+                systemctl unmask systemd-journald.service systemd-journald.socket systemd-journald-dev-log.socket rsyslog.service 2>/dev/null || true
+                systemctl enable systemd-journald.service systemd-journald.socket systemd-journald-dev-log.socket rsyslog.service 2>/dev/null || true
+                systemctl start systemd-journald.service rsyslog.service 2>/dev/null || true
+                echo -e "${GREEN}Journald and rsyslog have been unmasked and restarted.${NC}"
+                ;;
+            21) bloatware ;;
             0)
-                print_status "Exiting..."
+                echo -e "${GREEN}Goodbye!${NC}"
                 exit 0
                 ;;
             *)
-                print_error "Invalid option. Please try again."
+                echo -e "${RED}Invalid option! Please select a valid number from the menu.${NC}"
                 ;;
         esac
         
-        echo
-        read -p "Press Enter to continue..."
+        echo -e "\n${CYAN}Press Enter to continue...${NC}"
+        read -r
     done
 }
 
@@ -1708,7 +1266,6 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Check required commands
 for cmd in sysctl tc ip; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
         echo -e "${RED}Error: $cmd is required but not installed.${NC}"
@@ -1717,6 +1274,4 @@ for cmd in sysctl tc ip; do
 done
 
 create_backup_dir
-echo -e "${GREEN}Network Optimizer Tool Started${NC}"
-echo -e "${YELLOW}Running as root: $(whoami)${NC}"
 main_menu
