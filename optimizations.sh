@@ -3,7 +3,7 @@
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
-SYSCTL_CONF="/etc/sysctl.conf"
+SYSCTL_CONF="/etc/sysctl.d/99-optimizer.conf"
 LIMITS_CONF="/etc/security/limits.conf"
 SYSTEMD_LIMITS_DIR="/etc/systemd/system.conf.d"
 SYSTEMD_LIMITS_CONF="$SYSTEMD_LIMITS_DIR/99-optimizer-limits.conf"
