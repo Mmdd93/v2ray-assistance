@@ -3,7 +3,7 @@
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
-SYSCTL_CONF="/etc/sysctl.conf"
+SYSCTL_CONF="/etc/sysctl.d/99-optimizer.conf"
 LIMITS_CONF="/etc/security/limits.conf"
 SYSTEMD_LIMITS_DIR="/etc/systemd/system.conf.d"
 SYSTEMD_LIMITS_CONF="$SYSTEMD_LIMITS_DIR/99-optimizer-limits.conf"
@@ -65,10 +65,18 @@ enable_kernel_modules() {
 reload_sysctl() {
     enable_kernel_modules
     echo -e "${GREEN}Reloading sysctl settings...${NC}"
-    if sysctl -p > /dev/null 2>&1; then
-        echo -e "${GREEN}Sysctl settings reloaded successfully${NC}"
+    
+    # تضمین خوانده شدن فایل در اوبونتو 26 و سیستم‌های جدید systemd
+    mkdir -p /etc/sysctl.d
+    if [ "$SYSCTL_CONF" = "/etc/sysctl.conf" ] && [ ! -e "/etc/sysctl.d/99-sysctl.conf" ]; then
+        ln -sf /etc/sysctl.conf /etc/sysctl.d/99-sysctl.conf
+    fi
+
+    if sysctl --system > /dev/null 2>&1; then
+        echo -e "${GREEN}Sysctl settings reloaded successfully (Ubuntu 26 compatible)${NC}"
     else
-        echo -e "${YELLOW}Note: Some kernel parameters were skipped (unsupported by current kernel build)${NC}"
+        sysctl -p "$SYSCTL_CONF" > /dev/null 2>&1 || true
+        echo -e "${YELLOW}Note: Some kernel parameters were skipped${NC}"
     fi
 }
 
