@@ -3780,7 +3780,8 @@ main_menu() {
 		echo -e "${LIGHT_CYAN} 92.${NC} ${LIGHT_CYAN}Shahan Panel${NC}    ${WHITE}[github.com/HamedAp/ShahanPanel]${NC}"
 		echo -e "${LIGHT_CYAN} 93.${NC} ${LIGHT_CYAN}SlipStream${NC}    ${WHITE}[github.com/mirzaaghazadeh/SlipStreamGUI]${NC}"
 		echo -e "${LIGHT_CYAN} 102.${NC} ${LIGHT_CYAN}MasterDnsVPN${NC}    ${WHITE}[github.com/masterking32/MasterDnsVPN]${NC}"
-		echo -e "${LIGHT_CYAN} 102.${NC} ${LIGHT_CYAN}doctor dns panel${NC}    ${WHITE}[github.com/mehdi047/doctor-dns]${NC}"
+		echo -e "${LIGHT_CYAN} 122.${NC} ${LIGHT_CYAN}DOCTOR DNS panel (iran to kharej)${NC}    ${WHITE}[github.com/mehdi047/doctor-dns]${NC}"
+		echo -e "${LIGHT_CYAN} 123.${NC} ${LIGHT_CYAN}Hyper DNS panel${NC}    ${WHITE}[github.com/IzumiRain/hyperdns]${NC}"
         echo
         
         # Panel Backup section - YELLOW
@@ -4450,11 +4451,18 @@ sudo ./aestun.sh
 				fi
 				;;
 		122)
-                echo -e "${YELLOW} golden-gre.sh...${NC}"
+                echo -e "${YELLOW} doctor-dns.sh...${NC}"
 				sleep 1
                 curl -Ls https://raw.githubusercontent.com/mehdi047/doctor-dns/main/doctor-dns.sh -o doctor-dns.sh
 				chmod +x doctor-dns.sh
                 sudo bash doctor-dns.sh
+                ;;
+		123)
+                echo -e "${YELLOW} HyperDNS.sh...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/IzumiRain/HyperDNS/v2.2.0-beta.1/scripts/install.sh -o HyperDNS.sh
+				chmod +x HyperDNS.sh
+                sudo bash HyperDNS.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
