@@ -3726,6 +3726,7 @@ main_menu() {
 		echo -e "${CYAN} 116.${NC} ${CYAN}Backpack Tunnel  ${WHITE}[github.com/AminMGMT/BackPack]${NC}"
 		echo -e "${CYAN} 120.${NC} ${CYAN}Tunnel Guard Multi ${WHITE}[github.com/Mehdi682007/TunnelGuard]${NC}"
 		echo -e "${CYAN} 121.${NC} ${CYAN}C-Tunnel ${WHITE}[github.com/CIAUB/C-Tunnel]${NC}"
+		echo -e "${CYAN} 124.${NC} ${CYAN}KARIZ-Tunnel ${WHITE}[github.com/Erfan-XRay/Kariz]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4463,6 +4464,13 @@ sudo ./aestun.sh
                 curl -Ls https://raw.githubusercontent.com/IzumiRain/HyperDNS/v2.2.0-beta.1/scripts/install.sh -o HyperDNS.sh
 				chmod +x HyperDNS.sh
                 sudo bash HyperDNS.sh
+                ;;
+		124)
+                echo -e "${YELLOW} kariz.sh...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/Erfan-XRay/Kariz/main/scripts/kariz.sh -o kariz.sh
+				chmod +x kariz.sh
+                sudo bash kariz.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
