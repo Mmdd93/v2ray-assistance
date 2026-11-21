@@ -3727,6 +3727,7 @@ main_menu() {
 		echo -e "${CYAN} 120.${NC} ${CYAN}Tunnel Guard Multi ${WHITE}[github.com/Mehdi682007/TunnelGuard]${NC}"
 		echo -e "${CYAN} 121.${NC} ${CYAN}C-Tunnel ${WHITE}[github.com/CIAUB/C-Tunnel]${NC}"
 		echo -e "${CYAN} 124.${NC} ${CYAN}KARIZ-Tunnel ${WHITE}[github.com/Erfan-XRay/Kariz]${NC}"
+		echo -e "${CYAN} 125.${NC} ${CYAN}TunTunnel ${WHITE}[github.com/mahdiweb3/tuntunnel]${NC}"
         echo
         # XUI section - MAGENTA
         echo -e "${MAGENTA} XUI ${NC}"
@@ -4471,6 +4472,13 @@ sudo ./aestun.sh
                 curl -Ls https://raw.githubusercontent.com/Erfan-XRay/Kariz/main/scripts/kariz.sh -o kariz.sh
 				chmod +x kariz.sh
                 sudo bash kariz.sh
+                ;;
+		125)
+                echo -e "${YELLOW} tunnel-extra.sh...${NC}"
+				sleep 1
+                curl -Ls https://raw.githubusercontent.com/mahdiweb3/tuntunnel/main/tunnel-extra.sh -o tunnel-extra.sh
+				chmod +x tunnel-extra.sh
+                sudo bash tunnel-extra.sh
                 ;;
             00) 
                 echo -e "${YELLOW}Updating scripts...${NC}"
